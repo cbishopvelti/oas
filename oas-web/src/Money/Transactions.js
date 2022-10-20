@@ -5,13 +5,15 @@ import {
   TableHead,
   TableRow,
   TableCell,
-  TableBody
+  TableBody,
+  IconButton
 } from '@mui/material';
 import { get } from 'lodash';
 import { useEffect } from 'react';
+import EditIcon from '@mui/icons-material/Edit';
+import { Link, useParams } from "react-router-dom";
 
 export const Transactions = () => {
-  
   let { data: transactions, loading, refetch } = useQuery(gql`query {
     transactions {
       id,
@@ -36,6 +38,7 @@ export const Transactions = () => {
             <TableCell>What</TableCell>
             <TableCell>Who</TableCell>
             <TableCell>Amount</TableCell>
+            <TableCell>Actions</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -47,6 +50,11 @@ export const Transactions = () => {
                 <TableCell>{transaction.what}</TableCell>
                 <TableCell>{transaction.who}</TableCell>
                 <TableCell>{transaction.amount}</TableCell>
+                <TableCell>
+                  <IconButton component={Link} to={`/transaction/${transaction.id}`}>
+                    <EditIcon />
+                  </IconButton>
+                </TableCell>
               </TableRow>
             ))
           }

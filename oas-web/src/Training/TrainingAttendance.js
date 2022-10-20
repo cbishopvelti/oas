@@ -73,7 +73,6 @@ export const TrainingAttendance = ({trainingId}) => {
           options={members.map(({name, id}) => ({label: name, member_id: id }))}
           renderInput={(params) => <TextField {...params} label="Who" />}
           onChange={(event, newValue, a, b, c, d) => {
-            console.log('008', newValue)
             setAddAttendance({
               member_id: newValue.member_id,
               member_name: newValue.label

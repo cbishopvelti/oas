@@ -31,3 +31,18 @@ export const TrainingsLink = React.forwardRef((params, ref) => {
     className={`${params.className} ${isActive ? 'active': ''}`}
   />
 })
+
+export const TransactionLink = React.forwardRef((params, ref) => {
+  const matches = useMatches()
+
+  let isActive = false;
+  isActive =
+    some(matches, ({id}) => includes(["transaction-id", "transactions"], id))
+
+
+  return <NavLink
+    {...params}
+    ref={ref}
+    className={`${params.className} ${isActive ? 'active': ''}`}
+  />
+})

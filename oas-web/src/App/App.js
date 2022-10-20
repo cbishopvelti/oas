@@ -10,7 +10,8 @@ import {
 } from "react-router-dom";
 import {
   MemberLink,
-  TrainingsLink
+  TrainingsLink,
+  TransactionLink
 } from './Links';
 
 function App() {
@@ -27,10 +28,11 @@ function App() {
           <MenuItem
             component={NavLink}
             to={`/transaction`}
+            end
             >
             <ListItemText>New Transaction</ListItemText>
           </MenuItem>
-          <MenuItem component={NavLink} to={`/transactions`}>
+          <MenuItem component={TransactionLink} to={`/transactions`}>
             <ListItemText>Transactions</ListItemText>
           </MenuItem>
           <MenuItem component={NavLink} end to={`/training`}>
