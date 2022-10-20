@@ -25,17 +25,29 @@ defmodule OasWeb.Schema do
   end
 
   object :transaction do
-    field :id, :id
+    field :id, :integer
     field :what, :string
     field :who, :string
+    field :who_member_id, :integer
+    field :type, :string
+    field :bank_details, :string
+    field :notes, :string
     field :when, :string
     field :amount, :string
+    field :tokens, list_of(:token)
   end
 
   object :token do
     field :id, :id
     field :expires_on, :string
-    field :used_on, :string  
+    field :used_on, :string
+    field :member_id, :integer
+    field :member, :member do
+      resolve fn parent, _, _ ->
+        member = Oas.Repo.one!(Ecto.assoc(parent, :member))
+        {:ok, member}
+      end
+    end
   end
 
   object :training do
@@ -51,6 +63,14 @@ defmodule OasWeb.Schema do
     field :member_id, :integer
   end
 
+  object :add_tokens do
+    field :amount, :integer
+  end
+
+  object :success do
+    field :success, :boolean
+  end
+
   defp handle_error(result) do
     case result do
       {:error, %{errors: errors}} -> 
@@ -59,6 +79,8 @@ defmodule OasWeb.Schema do
       x -> x
     end
   end
+
+  # input_object :member_
 
   query do
     field :attendance, list_of(:member) do 
@@ -74,9 +96,6 @@ defmodule OasWeb.Schema do
           tokens = Oas.Attendance.get_token_amount(%{member_id: id})
           Map.put(record, :tokens, tokens)
         end)
-
-        IO.puts("101")
-        IO.inspect(results)
 
         {:ok, results}
       end
@@ -115,14 +134,30 @@ defmodule OasWeb.Schema do
         {:ok, result}
       end
     end
-    field :tokens, list_of(:token) do
-      arg :member_id, non_null(:integer)
-      resolve fn _, %{member_id: member_id}, _ ->
-        query = from(t in Oas.Tokens.Token, select: t, where: t.member_id == ^member_id, order_by: [desc: t.expires_on, desc: t.id])
-        result = Oas.Repo.all(query)
-        {:ok, result}
+    field :transaction, :transaction do
+      arg :id, :integer
+      resolve fn _, %{id: id}, _ ->
+        transaction = Oas.Repo.get!(Oas.Transactions.Transaction, id)
+        {:ok, transaction}
       end
     end
+    field :tokens, list_of(:token) do
+      arg :member_id, :integer
+      arg :transaction_id, :integer
+      resolve fn
+        _, %{member_id: _, transaction_id: _}, _ ->
+          {:error, "member_id and transaction_id can not both be set"}
+        _, %{transaction_id: transaction_id}, _ ->
+          query = from(t in Oas.Tokens.Token, select: t, where: t.transaction_id == ^transaction_id, order_by: [desc: t.expires_on, desc: t.id])
+          result = Oas.Repo.all(query)
+          {:ok, result}
+        _, %{member_id: member_id}, _ ->
+          query = from(t in Oas.Tokens.Token, select: t, where: t.member_id == ^member_id, order_by: [desc: t.expires_on, desc: t.id])
+          result = Oas.Repo.all(query)
+          {:ok, result}
+      end
+    end
+
     field :training, :training do
       arg :id, non_null(:integer)
       resolve fn _, %{id: id}, _ ->
@@ -133,7 +168,6 @@ defmodule OasWeb.Schema do
     end
     field :trainings, list_of(:training) do
       resolve fn _, _, _ ->
-        IO.puts("101 trainings")
 
         # query = from(t in Oas.Trainings.Training, as: :training,
         #   join: c in subquery(
@@ -191,6 +225,7 @@ defmodule OasWeb.Schema do
     end
     @desc "Create transaction"
     field :transaction, type: :transaction do
+      arg :id, :integer
       arg :what, non_null(:string)
       arg :when, non_null(:string)
       arg :who, :string
@@ -201,26 +236,78 @@ defmodule OasWeb.Schema do
       arg :notes, :string
       arg :token_quantity, :integer
       resolve fn _parent, args, context ->
-        {:ok, id} = Oas.Repo.transaction(fn -> 
-          when1 = Date.from_iso8601!(args.when)
-          args = %{args | when: when1}
-  
-          toSave = Map.merge(%Oas.Transactions.Transaction{}, args)
-          {:ok, result} = Oas.Repo.insert(toSave)
-  
-          if (args.token_quantity) do
-            Oas.Attendance.add_tokens(%{
-              member_id: args.who_member_id,
-              transaction_id: result.id,
-              quantity: args.token_quantity,
-              when1: when1
-            })
-          end
+        when1 = Date.from_iso8601!(args.when)
+        args = %{args | when: when1}
 
-          result.id
-        end)
+        toSave = case Map.get(args, :id) do
+          nil -> %Oas.Transactions.Transaction{}
+          id -> Oas.Repo.get!(Oas.Transactions.Transaction, id)
+        end
+        # toSave = Map.merge(%Oas.Transactions.Transaction{}, args)
 
-        {:ok, %{id: id}}
+        changeset = toSave
+          |> Ecto.Changeset.cast(args, [:what, :when, :who, :who_member_id, :type, :amount, :bank_details, :notes])
+        result = 
+          changeset
+          |> (&(case &1 do
+            %{data: %{id: nil}} -> Oas.Repo.insert!(&1)
+            %{data: %{id: _}} -> 
+              Oas.Repo.update!(&1)
+          end)).()
+          |> handle_error
+
+        if (Map.has_key?(args, :token_quantity) and !Map.has_key?(args, :id)) do
+          Oas.Attendance.add_tokens(%{
+            member_id: args.who_member_id,
+            transaction_id: result.id,
+            quantity: args.token_quantity,
+            when1: when1
+          })
+        end
+
+
+        {:ok, %{id: result.id}}
+      end
+    end
+    field :add_tokens, type: :add_tokens do
+      arg :transaction_id, :integer
+      arg :member_id, :integer
+      arg :amount, :integer
+      resolve fn _, %{amount: amount, transaction_id: transaction_id, member_id: member_id}, _ -> 
+        result = Oas.Attendance.add_tokens(%{
+          member_id: member_id,
+          transaction_id: transaction_id,
+          quantity: amount,
+          when1: Oas.Repo.get!(Oas.Transactions.Transaction, transaction_id).when
+        })
+        {:ok, %{amount: amount}}
+      end
+    end
+    field :delete_tokens, type: :success do
+      arg :token_id, non_null(:integer)
+      resolve fn _, %{token_id: token_id}, _ ->
+        token = Oas.Repo.get!(Oas.Tokens.Token, token_id)
+        # The relationship should probably have been the other way around
+        if (token.attendance_id != nil) do
+          {:error, "Token has been used"}
+        else
+          result = Oas.Repo.delete(token)
+          {:ok, %{success: true}}
+        end
+      end
+    end
+    field :transfer_token, type: :token do
+      arg :token_id, non_null(:integer)
+      arg :member_id, non_null(:integer)
+      resolve fn _, %{token_id: token_id, member_id: member_id}, _ ->
+        token = Oas.Repo.get!(Oas.Tokens.Token, token_id)
+        if (token.attendance_id != nil) do
+          {:error, "Token has been used"}
+        else
+          token = Oas.Attendance.transfer_token(%{token: token, member_id: member_id})
+          
+          {:ok, token}
+        end        
       end
     end
     @desc "Insert training"

@@ -15,9 +15,9 @@ import { Members } from './Member/Members';
 import { NewMember } from './Member/NewMember';
 import { Transaction } from './Money/Transaction';
 import { Transactions } from './Money/Transactions';
-import { Tokens } from './Member/Tokens';
 import { Training } from './Training/Training';
 import { Trainings } from './Training/Trainings';
+import { MemberTokens } from './Member/MemberTokens';
 
 
 const router = createBrowserRouter([
@@ -44,17 +44,23 @@ const router = createBrowserRouter([
         element: <NewMember />
       },
       {
+        id: "transaction-id",
+        path: "transaction/:id",
+        element: <Transaction />
+      },
+      {
         path: "transaction",
         element: <Transaction />
       },
       {
+        id: "transactions",
         path: "transactions",
         element: <Transactions />
       },
       {
         id: "member-tokens",
         path: "member/:id/tokens",
-        element: <Tokens />
+        element: <MemberTokens />
       }, {
         id: "training-id",
         path: "training/:id",

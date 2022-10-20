@@ -43,11 +43,10 @@ defmodule Oas.Attendance do
 
   def get_token_amount(%{member_id: member_id}) do
     debtAttendances = from(a in Oas.Trainings.Attendance,
-      left_join: t in assoc(a, :token),
+      left_join: t in assoc(a, :token), on: t.member_id == ^member_id,
       where: a.member_id == ^member_id and is_nil(t.id),
       select: count(a.id)
     ) |> Oas.Repo.one
-
 
     creditTokens = from(t in Oas.Tokens.Token, 
       where: t.member_id == ^member_id and t.expires_on >= from_now(0, "day") and is_nil(t.used_on),
@@ -66,7 +65,7 @@ defmodule Oas.Attendance do
 
   def add_tokens(%{member_id: member_id, transaction_id: transaction_id, quantity: quantity, when1: when1}) do
     debtAttendances = from(a in Oas.Trainings.Attendance,
-      left_join: to in assoc(a, :token),
+      left_join: to in assoc(a, :token), on: to.member_id == ^member_id,
       inner_join: tr in assoc(a, :training),
       where: a.member_id == ^member_id and is_nil(to.id),
       select: a.id,
@@ -92,5 +91,26 @@ defmodule Oas.Attendance do
       |> Enum.map(&Oas.Repo.insert/1)
 
     :ok
+  end
+
+
+  def transfer_token(%{member_id: member_id, token: token}) do
+
+    {attendanceId, when1} = from(a in Oas.Trainings.Attendance,
+      left_join: to in assoc(a, :token), on: to.member_id == ^member_id,
+      inner_join: tr in assoc(a, :training),
+      where: a.member_id == ^member_id and is_nil(to.id),
+      select: {a.id, tr.when},
+      order_by: [asc: tr.when, asc: tr.id],
+      limit: 1
+    ) |> Oas.Repo.one |> case do
+      nil -> {nil, nil}
+      x -> x
+    end
+
+    {:ok, token} = token
+      |> Ecto.Changeset.cast(%{member_id: member_id, attendance_id: attendanceId, used_on: when1}, [:member_id, :attendance_id, :used_on])
+      |> Oas.Repo.update
+    token
   end
 end
