@@ -34,7 +34,7 @@ defmodule Oas.Members.Member do
   """
   def registration_changeset(member, attrs, opts \\ []) do
     member
-    |> cast(attrs, [:email, :password, :name])
+    |> cast(attrs, [:email, :password, :name, :is_member, :is_admin])
     |> validate_required([:name])
     |> validate_email()
     |> validate_password(opts)

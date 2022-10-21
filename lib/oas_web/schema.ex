@@ -1,5 +1,5 @@
 # filename: myapp/schema.ex
-import Ecto.Query, only: [from: 2]
+import Ecto.Query, only: [from: 2, where: 3]
 
 
 defmodule OasWeb.Schema do
@@ -15,6 +15,8 @@ defmodule OasWeb.Schema do
     field :name, :string
     field :email, :string
     field :tokens, :integer
+    field :is_member, :boolean
+    field :is_admin, :boolean
   end
 
   object :memberWithPassword do
@@ -57,6 +59,13 @@ defmodule OasWeb.Schema do
     field :attendance, :integer
   end
 
+  object :analysis do
+    field :transactions_income, :float
+    field :transactions_outgoing, :float
+    field :unused_tokens, :integer
+    field :unused_tokens_amount, :float
+  end
+
   object :add_attendance do
     field :id, :integer
     field :training_id, :integer
@@ -80,6 +89,8 @@ defmodule OasWeb.Schema do
     end
   end
 
+
+
   # input_object :member_
 
   query do
@@ -101,8 +112,14 @@ defmodule OasWeb.Schema do
       end
     end
     field :members, list_of(:member) do
-      resolve fn _, %{context: context} ->
-        query = from m in Oas.Members.Member, select: m
+      arg :show_all, :boolean, default_value: false
+      resolve fn _, %{show_all: show_all}, _ ->
+        query = (from m in Oas.Members.Member, select: m)
+        |> (&(case show_all do
+          false -> where(&1, [m], m.is_member == true)
+          true -> &1
+        end)).()
+
         result = Oas.Repo.all(query)
 
         result = result
@@ -190,6 +207,45 @@ defmodule OasWeb.Schema do
         {:ok, results}
       end
     end
+    field :analysis, :analysis do
+      arg :from, non_null(:string)
+      arg :to, non_null(:string)
+      resolve fn _, %{from: from, to: to}, _ ->
+        from = Date.from_iso8601!(from)
+        to = Date.from_iso8601!(to)
+
+        transactions_income = from(t in Oas.Transactions.Transaction,
+          where: t.when >= ^from and t.when <= ^to and t.type == "INCOMING",
+          select: sum(t.amount)
+        ) |> Oas.Repo.one! || Decimal.new(0)
+      
+        transactions_outgoing = from(t in Oas.Transactions.Transaction,
+          where: t.when >= ^from and t.when <= ^to and t.type == "OUTGOING",
+          select: sum(t.amount)
+        ) |> Oas.Repo.one! || Decimal.new(0)
+
+        unused_tokens = from(t in Oas.Tokens.Token,
+          select: count(t.id),
+          where: t.expires_on > ^to and is_nil(t.used_on),
+        ) |> Oas.Repo.one!
+
+        unused_tokens_amount = from(t in Oas.Tokens.Token,
+          inner_join: tr in assoc(t, :transaction),
+          inner_join: to in assoc(tr, :tokens),
+          group_by: [t.id, tr.id],
+          where: t.expires_on > ^to and is_nil(t.used_on),
+          select: tr.amount / count(to.id)
+        ) |> Oas.Repo.all
+        |> Enum.sum
+
+        {:ok, %{
+          transactions_income: transactions_income |> Decimal.to_float,
+          transactions_outgoing: transactions_outgoing |> Decimal.to_float,
+          unused_tokens: unused_tokens,
+          unused_tokens_amount: unused_tokens_amount
+        }}
+      end
+    end
   end
 
   # object :transaction do
@@ -202,9 +258,9 @@ defmodule OasWeb.Schema do
       arg :id, :integer
       arg :name, non_null(:string)
       arg :email, non_null(:string)
+      arg :is_member, :boolean
+      arg :is_admin, :boolean
       resolve fn _parent, args, context ->
-        # %{id: id} = args
-
         result = case Map.get(args, :id, nil) do
           nil -> length = 12
             password = :crypto.strong_rand_bytes(length) |> Base.encode64 |> binary_part(0, length)
@@ -214,7 +270,7 @@ defmodule OasWeb.Schema do
             end
           id -> 
             result = Oas.Repo.get!(Oas.Members.Member, id)
-              |> Ecto.Changeset.cast(args, [:email, :name])
+              |> Ecto.Changeset.cast(args, [:email, :name, :is_member, :is_admin])
               |> Ecto.Changeset.validate_required([:name, :email])
               |> Oas.Members.Member.validate_email
               |> Oas.Repo.update
@@ -243,30 +299,30 @@ defmodule OasWeb.Schema do
           nil -> %Oas.Transactions.Transaction{}
           id -> Oas.Repo.get!(Oas.Transactions.Transaction, id)
         end
-        # toSave = Map.merge(%Oas.Transactions.Transaction{}, args)
 
-        changeset = toSave
-          |> Ecto.Changeset.cast(args, [:what, :when, :who, :who_member_id, :type, :amount, :bank_details, :notes])
-        result = 
-          changeset
+        result = toSave
+          |> Oas.Transactions.Transaction.changeset(args)
           |> (&(case &1 do
-            %{data: %{id: nil}} -> Oas.Repo.insert!(&1)
-            %{data: %{id: _}} -> 
-              Oas.Repo.update!(&1)
+            %{data: %{id: nil}} -> Oas.Repo.insert(&1)
+            %{data: %{id: _}} -> Oas.Repo.update(&1)
           end)).()
           |> handle_error
 
-        if (Map.has_key?(args, :token_quantity) and !Map.has_key?(args, :id)) do
-          Oas.Attendance.add_tokens(%{
-            member_id: args.who_member_id,
-            transaction_id: result.id,
-            quantity: args.token_quantity,
-            when1: when1
-          })
+      
+        case result do
+          {:error, error} -> {:error, error}
+          result ->
+            if (Map.has_key?(args, :token_quantity) and !Map.has_key?(args, :id)) do
+              Oas.Attendance.add_tokens(%{
+                member_id: args.who_member_id,
+                transaction_id: result.id,
+                quantity: args.token_quantity,
+                when1: when1
+              })
+            end
+
+            result
         end
-
-
-        {:ok, %{id: result.id}}
       end
     end
     field :add_tokens, type: :add_tokens do
