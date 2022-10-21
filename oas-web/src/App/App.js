@@ -2,7 +2,7 @@ import logo from './logo.svg';
 import './App.css';
 import { gql, useQuery } from '@apollo/client';
 import { Members } from '../Member/Members';
-import { MenuList, MenuItem, ListItemText } from '@mui/material';
+import { MenuList, MenuItem, ListItemText, ListItem } from '@mui/material';
 import {
   Link,
   Outlet,
@@ -40,6 +40,9 @@ function App() {
           </MenuItem>
           <MenuItem component={TrainingsLink} to={`/trainings`}>
             <ListItemText>Trainings</ListItemText>
+          </MenuItem>
+          <MenuItem component={NavLink} end to="/">
+            <ListItemText>Analysis</ListItemText>
           </MenuItem>
         </MenuList>
       </div>

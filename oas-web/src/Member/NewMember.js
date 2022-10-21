@@ -5,7 +5,9 @@ import {
   FormControl,
   Button,
   Stack,
-  Alert
+  Alert,
+  Switch,
+  FormControlLabel
 } from "@mui/material"
 import { get } from "lodash";
 import { useMutation, gql, useQuery } from "@apollo/client";
@@ -25,7 +27,9 @@ export const NewMember = () => {
       member (member_id: $id) {
         id,
         name,
-        email
+        email,
+        is_member,
+        is_admin,
       }
     }
   `, {
@@ -38,7 +42,7 @@ export const NewMember = () => {
   useEffect(() => {
     refetch()
     if (!id) {
-      setFormData({})
+      setFormData({is_member: true})
     }
   }, [id])
   useEffect(() => {
@@ -49,15 +53,29 @@ export const NewMember = () => {
     }
   }, [data])
 
-  const onChange = ({formData, setFormData, key}) => (event) => {
+  const onChange = ({formData, setFormData, isCheckbox, key}) => (event) => {
+    if (isCheckbox) {
+      setFormData({
+        ...formData,
+        [key]: event.target.checked
+      })
+      return;
+    }
+    const value = event.target.value
     setFormData({
       ...formData,
-      [key]: !event.target.value ? undefined : event.target.value
+      [key]: !value ? undefined : value
     })
   }
 
-  const [mutate, {error}] = useMutation(gql`mutation ($id: Int, $name: String!, $email: String!){
-    new_member (id: $id, name: $name, email: $email) {
+  const [mutate, {error}] = useMutation(gql`mutation (
+    $id: Int, $name: String!, $email: String!,
+    $is_member: Boolean, $is_admin: Boolean
+  ){
+    new_member (
+      id: $id, name: $name, email: $email,
+      is_member: $is_member, is_admin: $is_admin
+    ) {
       id
     }
   }`)
@@ -94,6 +112,22 @@ export const NewMember = () => {
           value={get(formData, "name", '')}
           onChange={onChange({formData, setFormData, key: 'name'})}
         />
+      </FormControl>
+      <FormControl fullWidth sx={{m:2}}>
+        <FormControlLabel
+            control={
+              <Switch 
+                checked={get(formData, 'is_member', false) || false}
+                onChange={onChange({formData, setFormData, key: 'is_member', isCheckbox: true})}/>
+            }
+            label="Is member" />
+        <FormControlLabel
+            control={
+              <Switch 
+                checked={get(formData, 'is_admin', false) || false}
+                onChange={onChange({formData, setFormData, key: 'is_admin', isCheckbox: true})}/>
+            }
+            label="Is admin" />
       </FormControl>
       <FormControl fullWidth sx={{m: 2}}>
         <Button onClick={save(formData)}>Save</Button>

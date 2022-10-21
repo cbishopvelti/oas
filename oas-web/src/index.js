@@ -18,6 +18,7 @@ import { Transactions } from './Money/Transactions';
 import { Training } from './Training/Training';
 import { Trainings } from './Training/Trainings';
 import { MemberTokens } from './Member/MemberTokens';
+import { Analysis } from './Analysis/Analysis';
 
 
 const router = createBrowserRouter([
@@ -28,7 +29,7 @@ const router = createBrowserRouter([
     children: [
       {
         path: "/",
-        element: <div>Home</div>
+        element: <Analysis />
       },
       {
         id: "members",

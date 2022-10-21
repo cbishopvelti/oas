@@ -4,6 +4,8 @@
 
 Import and infer transactions from bank statements
 
+Login logout
+
 Booking
 
 Deletion
