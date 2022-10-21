@@ -8,14 +8,12 @@ import { Box, FormControl, Autocomplete, TextField, Button,   Table,
   IconButton
 } from "@mui/material"
 import { useQuery, gql, useMutation } from '@apollo/client'
-import { get } from 'lodash';
+import { differenceBy, get } from 'lodash';
 import { Link } from 'react-router-dom'
 import BookOnlineIcon from '@mui/icons-material/BookOnline';
 
 
 export const TrainingAttendance = ({trainingId}) => {
-
-  console.log('201', trainingId)
 
   const [addAttendance, setAddAttendance] = useState({})
 
@@ -35,8 +33,13 @@ export const TrainingAttendance = ({trainingId}) => {
       training_id: trainingId
     }
   });
-  const members = get(data, 'members', []);
   const attendance = get(data, 'attendance', []);
+  const members = differenceBy(
+    get(data, 'members', []),
+    get(data, 'attendance', []),
+    'id'
+  );
+
   useEffect(() => {
     refetch()
   }, [])
