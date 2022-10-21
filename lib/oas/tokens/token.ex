@@ -8,6 +8,7 @@ defmodule Oas.Tokens.Token do
     belongs_to :attendance, Oas.Trainings.Attendance
     field :expires_on, :date
     field :used_on, :date
+    field :value, :decimal
 
     timestamps()
   end

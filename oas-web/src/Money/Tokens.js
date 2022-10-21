@@ -52,6 +52,7 @@ export const Tokens = ({
         expires_on,
         used_on,
         member_id,
+        value,
         ${memberQuery}
       }
     }
@@ -99,6 +100,7 @@ export const Tokens = ({
               {memberQuery && <TableCell>Owner</TableCell>}
               <TableCell>Expires on</TableCell>
               <TableCell>Used on</TableCell>
+              <TableCell>Value</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -117,6 +119,7 @@ export const Tokens = ({
                   {memberQuery && <TableCell sx={sx}>{token.member.name}</TableCell>}
                   <TableCell sx={sx}>{token.expires_on}</TableCell>
                   <TableCell sx={sx}>{token.used_on}</TableCell>
+                  <TableCell sx={sx}>{token.value}</TableCell>
                   <TableCell>
                     {!token.used_on && <IconButton onClick={deleteToken(token.id)}>
                       <DeleteIcon sx={{color: 'red'}} />

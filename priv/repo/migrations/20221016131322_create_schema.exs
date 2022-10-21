@@ -35,11 +35,12 @@ defmodule Oas.Repo.Migrations.CreateSchema do
     end
 
     create table(:tokens) do
-      add :transaction_id, :id, references: :transactions, null: false
+      add :transaction_id, :id, references: :transactions, null: true
       add :member_id, :id, references: :members, null: false
       add :used_on, :date, null: true
       add :expires_on, :date, null: false
       add :attendance_id, :id, references: :attendance, null: true
+      add :value, :decimal, null: false
       timestamps()
     end
   end

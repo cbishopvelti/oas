@@ -10,7 +10,7 @@ import Config
 #   pool_size: 10
 
 config :oas, Oas.Repo,
-  database: "./sqlite-dev.db"
+  database: "./dbs/sqlite-dev.db"
 
 # For development, we disable any cache and enable
 # debugging and code reloading.

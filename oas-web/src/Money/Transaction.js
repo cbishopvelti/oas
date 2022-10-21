@@ -103,7 +103,8 @@ export const Transaction = () => {
     $amount: Float!,
     $bank_details: String,
     $notes: String,
-    $token_quantity: Int
+    $token_quantity: Int,
+    $token_value: Float
   ){
     transaction (
       id: $id,
@@ -115,7 +116,8 @@ export const Transaction = () => {
       amount: $amount,
       bank_details: $bank_details,
       notes: $notes,
-      token_quantity: $token_quantity
+      token_quantity: $token_quantity,
+      token_value: $token_value
     ) {
       id
     }
