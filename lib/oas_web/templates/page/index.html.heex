@@ -1,3 +1,8 @@
 <div>
-Hello world
+<h2>Welcome</h2>
+<%= if @current_member do %>
+You are logged in, click <a href={@app_url}><%= @app_url %></a> to use the app
+<% else %>
+Please login to use the app
+<% end %>
 </div>

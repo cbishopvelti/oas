@@ -80,6 +80,11 @@ defmodule OasWeb.Schema do
     field :success, :boolean
   end
 
+  object :user do
+    field :name, :string
+    field :logout_link, :string
+  end
+
   defp handle_error(result) do
     case result do
       {:error, %{errors: errors}} -> 
@@ -246,11 +251,18 @@ defmodule OasWeb.Schema do
         }}
       end
     end
+    field :user, :user do
+      resolve fn _, _, conn -> 
+        %{context: context} = conn
+
+        {:ok, %{
+          name: Map.get(context, :current_member, %{}) |> Map.get(:name),
+          logout_link: Map.get(context, :logout_link, %{})
+        }}
+      end
+    end
   end
 
-  # object :transaction do
-  #   field :id, :id
-  # end
 
   mutation do 
     @desc "Create or update member"

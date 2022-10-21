@@ -2,7 +2,7 @@ import logo from './logo.svg';
 import './App.css';
 import { gql, useQuery } from '@apollo/client';
 import { Members } from '../Member/Members';
-import { MenuList, MenuItem, ListItemText, ListItem } from '@mui/material';
+import { MenuList, MenuItem, ListItemText, Divider, ListItem } from '@mui/material';
 import {
   Link,
   Outlet,
@@ -13,8 +13,21 @@ import {
   TrainingsLink,
   TransactionLink
 } from './Links';
+import { useEffect } from 'react';
+import { get } from 'lodash';
 
 function App() {
+  const { data, refetch } = useQuery(gql`
+  query {
+    user {
+      name,
+      logout_link
+    }
+  }`)
+  useEffect(() => {
+    refetch();
+  }, [])
+
   return (
     <div className="App">
       <div>
@@ -43,6 +56,22 @@ function App() {
           </MenuItem>
           <MenuItem component={NavLink} end to="/">
             <ListItemText>Analysis</ListItemText>
+          </MenuItem>
+          <Divider />
+          <ListItem>
+            <ListItemText>
+              {get(data, "user.name")}
+            </ListItemText>
+          </ListItem>
+          <MenuItem>
+            <a
+              style={{color: 'inherit', textDecoration: 'none'}}
+              href={`${process.env.REACT_APP_SERVER_URL}${get(data, "user.logout_link")}`}
+              data-method="delete"
+              rel="nofollow"
+              >
+              Logout
+            </a>
           </MenuItem>
         </MenuList>
       </div>

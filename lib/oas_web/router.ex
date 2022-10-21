@@ -84,6 +84,7 @@ defmodule OasWeb.Router do
     pipe_through [:browser]
 
     delete "/members/log_out", MemberSessionController, :delete
+    get "/members/log_out", MemberSessionController, :delete
     get "/members/confirm", MemberConfirmationController, :new
     post "/members/confirm", MemberConfirmationController, :create
     get "/members/confirm/:token", MemberConfirmationController, :edit
