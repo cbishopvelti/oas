@@ -14,8 +14,13 @@ defmodule OasWeb.Context do
     %{assigns: %{current_member: currentMember}} = newConn
 
     out = case currentMember do
-      %{is_admin: true} -> newConn
+      %{is_admin: true} -> Absinthe.Plug.put_options(newConn, %{context: %{
+        current_member: currentMember,
+        logout_link: OasWeb.Router.Helpers.member_session_path(newConn, :delete)
+      }})
       _ -> Plug.Conn.send_resp(conn, :unauthorized, "Unauthorized")
     end
+
+    out
   end
 end
