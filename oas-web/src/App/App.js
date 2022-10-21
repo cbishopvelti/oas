@@ -58,12 +58,12 @@ function App() {
             <ListItemText>Analysis</ListItemText>
           </MenuItem>
           <Divider />
-          <ListItem>
+          {!!get(data, "user") && [<ListItem key="1">
             <ListItemText>
               {get(data, "user.name")}
             </ListItemText>
-          </ListItem>
-          <MenuItem>
+          </ListItem>,
+          <MenuItem key="2">
             <a
               style={{color: 'inherit', textDecoration: 'none'}}
               href={`${process.env.REACT_APP_SERVER_URL}${get(data, "user.logout_link")}`}
@@ -72,7 +72,14 @@ function App() {
               >
               Logout
             </a>
-          </MenuItem>
+          </MenuItem>]}
+          {!get(data, "user") && <MenuItem>
+            <a
+              style={{color: 'inherit', textDecoration: 'none'}}
+              href={`${process.env.REACT_APP_SERVER_URL}/members/log_in`}>
+              Login
+            </a>
+          </MenuItem>}
         </MenuList>
       </div>
       <div className="content">

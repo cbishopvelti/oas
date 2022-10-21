@@ -44,6 +44,7 @@ defmodule OasWeb.Schema do
     field :expires_on, :string
     field :used_on, :string
     field :member_id, :integer
+    field :value, :float
     field :member, :member do
       resolve fn parent, _, _ ->
         member = Oas.Repo.one!(Ecto.assoc(parent, :member))
@@ -172,11 +173,11 @@ defmodule OasWeb.Schema do
         _, %{transaction_id: transaction_id}, _ ->
           query = from(t in Oas.Tokens.Token, select: t, where: t.transaction_id == ^transaction_id, order_by: [desc: t.expires_on, desc: t.id])
           result = Oas.Repo.all(query)
-          {:ok, result}
+          {:ok, result |> Enum.map(fn r -> Map.put(r, :value, Decimal.to_float(r.value)) end)}
         _, %{member_id: member_id}, _ ->
           query = from(t in Oas.Tokens.Token, select: t, where: t.member_id == ^member_id, order_by: [desc: t.expires_on, desc: t.id])
           result = Oas.Repo.all(query)
-          {:ok, result}
+          {:ok, result |> Enum.map(fn r -> Map.put(r, :value, Decimal.to_float(r.value)) end)}
       end
     end
 
@@ -235,19 +236,15 @@ defmodule OasWeb.Schema do
         ) |> Oas.Repo.one!
 
         unused_tokens_amount = from(t in Oas.Tokens.Token,
-          inner_join: tr in assoc(t, :transaction),
-          inner_join: to in assoc(tr, :tokens),
-          group_by: [t.id, tr.id],
           where: t.expires_on > ^to and is_nil(t.used_on),
-          select: tr.amount / count(to.id)
-        ) |> Oas.Repo.all
-        |> Enum.sum
+          select: sum(t.value)
+        ) |> Oas.Repo.one
 
         {:ok, %{
           transactions_income: transactions_income |> Decimal.to_float,
           transactions_outgoing: transactions_outgoing |> Decimal.to_float,
           unused_tokens: unused_tokens,
-          unused_tokens_amount: unused_tokens_amount
+          unused_tokens_amount: unused_tokens_amount |> Decimal.to_float
         }}
       end
     end
@@ -303,6 +300,7 @@ defmodule OasWeb.Schema do
       arg :bank_details, :string
       arg :notes, :string
       arg :token_quantity, :integer
+      arg :token_value, :float
       resolve fn _parent, args, context ->
         when1 = Date.from_iso8601!(args.when)
         args = %{args | when: when1}
@@ -323,17 +321,18 @@ defmodule OasWeb.Schema do
       
         case result do
           {:error, error} -> {:error, error}
-          result ->
+          {:ok, result} ->
             if (Map.has_key?(args, :token_quantity) and !Map.has_key?(args, :id)) do
               Oas.Attendance.add_tokens(%{
                 member_id: args.who_member_id,
                 transaction_id: result.id,
                 quantity: args.token_quantity,
+                value: args.token_value,
                 when1: when1
               })
             end
 
-            result
+            {:ok, result}
         end
       end
     end
@@ -341,12 +340,14 @@ defmodule OasWeb.Schema do
       arg :transaction_id, :integer
       arg :member_id, :integer
       arg :amount, :integer
-      resolve fn _, %{amount: amount, transaction_id: transaction_id, member_id: member_id}, _ -> 
+      arg :value, :float
+      resolve fn _, %{amount: amount, transaction_id: transaction_id, member_id: member_id, value: value}, _ -> 
         result = Oas.Attendance.add_tokens(%{
           member_id: member_id,
           transaction_id: transaction_id,
           quantity: amount,
-          when1: Oas.Repo.get!(Oas.Transactions.Transaction, transaction_id).when
+          when1: Oas.Repo.get!(Oas.Transactions.Transaction, transaction_id).when,
+          value: value
         })
         {:ok, %{amount: amount}}
       end

@@ -63,7 +63,13 @@ defmodule Oas.Attendance do
     end
   end
 
-  def add_tokens(%{member_id: member_id, transaction_id: transaction_id, quantity: quantity, when1: when1}) do
+  def add_tokens(%{
+    member_id: member_id,
+    transaction_id: transaction_id,
+    quantity: quantity,
+    when1: when1,
+    value: value
+  }) do
     debtAttendances = from(a in Oas.Trainings.Attendance,
       left_join: to in assoc(a, :token), on: to.member_id == ^member_id,
       inner_join: tr in assoc(a, :training),
@@ -78,7 +84,8 @@ defmodule Oas.Attendance do
       member_id: member_id,
       transaction_id: transaction_id,
       expires_on: Date.add(when1, 365), # add a year
-      attendance_id: nil
+      attendance_id: nil,
+      value: value
     }
 
     debtAttendancesStream = Stream.concat(debtAttendances, Stream.cycle([nil]))
