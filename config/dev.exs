@@ -77,4 +77,4 @@ config :phoenix, :stacktrace_depth, 20
 config :phoenix, :plug_init_mode, :runtime
 
 config :oas,
-  app_url: System.get_env("APP_URL") || "http://localhost:3999/"
+  app_url: System.get_env("APP_URL") || "http://localhost:3999"

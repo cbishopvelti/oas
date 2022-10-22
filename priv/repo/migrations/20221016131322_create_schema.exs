@@ -5,41 +5,41 @@ defmodule Oas.Repo.Migrations.CreateSchema do
     create table(:transactions) do
       add :what, :string, null: false
       add :when, :date, null: false
-      add :who_member_id, :id, null: true, references: :members
+      add :who_member_id, references(:members, on_delete: :restrict), null: true
       add :who, :string, null: true
       add :type, :string, null: false
-      add :amount, :decimal
+      add :amount, :decimal, null: false
       add :notes, :string
       add :bank_details, :string
       timestamps()
     end
 
     create table(:membership) do
-      add :transaction_id, :id, null: true, references: :transactions
-      add :member_id, :id, null: false, references: :members
-      add :expires_on, :date
+      add :transaction_id, references(:transactions, on_delete: :restrict), null: true
+      add :member_id, references(:members, on_delete: :restrict), null: false
+      add :expires_on, :date, null: true
       add :notes, :string
       timestamps()
     end
 
     create table(:trainings) do
-      add :when, :date
+      add :when, :date, null: false
       add :where, :string
       timestamps()
     end
 
     create table(:attendance) do
-      add :training_id, :id, references: :tranings
-      add :member_id, :id, references: :member
+      add :training_id, references(:trainings, on_delete: :restrict), null: false
+      add :member_id, references(:members, on_delete: :restrict), null: false
       timestamps()
     end
 
     create table(:tokens) do
-      add :transaction_id, :id, references: :transactions, null: true
-      add :member_id, :id, references: :members, null: false
+      add :transaction_id, references(:transactions, on_delete: :restrict), null: true, on_delete: :restrict
+      add :member_id, references(:members, on_delete: :restrict), null: false
       add :used_on, :date, null: true
       add :expires_on, :date, null: false
-      add :attendance_id, :id, references: :attendance, null: true
+      add :attendance_id, references(:attendance, on_delete: :restrict), null: true
       add :value, :decimal, null: false
       timestamps()
     end
