@@ -15,7 +15,6 @@ import DeleteIcon from '@mui/icons-material/Delete';
 
 
 export const TrainingAttendance = ({trainingId}) => {
-
   const [addAttendance, setAddAttendance] = useState({})
 
   let { data, refetch } = useQuery(gql`query ($training_id: Int!) {
@@ -44,7 +43,7 @@ export const TrainingAttendance = ({trainingId}) => {
 
   useEffect(() => {
     refetch()
-  }, [])
+  }, [trainingId])
 
   const [ mutate ] = useMutation(gql`
     mutation ($member_id: Int!, $training_id: Int!) {

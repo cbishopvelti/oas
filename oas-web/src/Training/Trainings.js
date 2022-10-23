@@ -40,8 +40,8 @@ export const Trainings = () => {
       }
     }
   `)
-  const deleteTraningClick = (id) => () => {
-    deleteMutation({
+  const deleteTraningClick = (id) => async () => {
+    await deleteMutation({
       variables: {
         id: id
       }

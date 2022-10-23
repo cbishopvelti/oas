@@ -31,17 +31,30 @@ chirsjbishop155/oas:latest
 
 ## Todo
 
+Hosting
+
 Import and infer transactions from bank statements
+
+Historic data
+- Add tokens without transactions
+- Add attendances to a "historic trainings" for debt
+- Maybe clear all debt / write off
+- Attempt to import historic data (hard)
 
 Backup
 
+DEPLOY
+
+Export for spreadsheets
+
 Booking
+- gather requirements
 
-Delete attendance
-Delete trainings
-
-Add membership
+Membership
+- gather requirements
 
 Track hall bookings
+- gather requirements
+- look at import from bank statements
 
-Hosting
+Members can see their available tokens
