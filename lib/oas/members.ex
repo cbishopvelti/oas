@@ -77,7 +77,6 @@ defmodule Oas.Members do
   def register_member(attrs) do
     %Member{}
     |> Member.registration_changeset(attrs)
-    |> IO.inspect
     |> Repo.insert()
   end
 
