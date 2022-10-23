@@ -19,6 +19,16 @@ defmodule OasWeb.Schema do
     field :is_admin, :boolean
   end
 
+  object :memberAttendance do
+    field :id, :integer
+    field :attendance_id, :integer
+    field :name, :string
+    field :email, :string
+    field :tokens, :integer
+    field :is_member, :boolean
+    field :is_admin, :boolean
+  end
+
   object :memberWithPassword do
     field :id, :id
     field :name, :string
@@ -100,14 +110,17 @@ defmodule OasWeb.Schema do
   # input_object :member_
 
   query do
-    field :attendance, list_of(:member) do 
+    field :attendance, list_of(:memberAttendance) do 
       arg :training_id, non_null(:integer)
       resolve fn _, %{training_id: training_id}, _ ->
         results = from(m in Oas.Members.Member,
-          select: m,
-          inner_join: a in assoc(m, :attendance),
+        inner_join: a in assoc(m, :attendance),
+        select: {m, a},
           where: a.training_id == ^training_id
         ) |> Oas.Repo.all
+        |> Enum.map(fn {member, attendance} -> 
+          Map.put(member, :attendance_id, attendance.id)
+        end)
         |> Enum.map(fn record ->
           %{id: id} = record
           tokens = Oas.Attendance.get_token_amount(%{member_id: id})
@@ -410,12 +423,27 @@ defmodule OasWeb.Schema do
         {:ok, result}
       end
     end
+    field :delete_training, type: :success do
+      arg :id, non_null(:integer)
+      resolve fn _, %{id: id}, _ -> 
+        Oas.Repo.get!(Oas.Trainings.Training, id)
+          |> Oas.Repo.delete
+        {:ok, %{success: true}}
+      end
+    end
     @desc "Add attendance"
     field :add_attendance, type: :add_attendance do
       arg :member_id, non_null(:integer)
       arg :training_id, non_null(:integer)
       resolve fn _, args, _ ->
         Oas.Attendance.add_attendance(args)
+      end
+    end
+
+    field :delete_attendance, type: :success do
+      arg :attendance_id, non_null(:integer)
+      resolve fn _, args, _ ->
+        Oas.Attendance.delete_attendance(args)
       end
     end
   end

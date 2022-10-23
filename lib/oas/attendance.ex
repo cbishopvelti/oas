@@ -41,6 +41,20 @@ defmodule Oas.Attendance do
     {:ok, %{id: attendance.id}}
   end
 
+  def delete_attendance(%{attendance_id: attendance_id}) do
+    attendance = Oas.Repo.get!(Oas.Trainings.Attendance, attendance_id) |> Oas.Repo.preload(:token)
+
+    if (attendance.token != nil) do
+      attendance.token |>
+        Ecto.Changeset.cast(%{used_on: nil, attendance_id: nil}, [:used_on, :attendance_id])
+        |> Oas.Repo.update!
+    end
+    
+    Oas.Repo.delete!(attendance)
+
+    {:ok, %{success: true}}
+  end
+
   def get_token_amount(%{member_id: member_id}) do
     debtAttendances = from(a in Oas.Trainings.Attendance,
       left_join: t in assoc(a, :token), on: t.member_id == ^member_id,

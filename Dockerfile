@@ -1,5 +1,5 @@
-# docker build . -t registry.hub.docker.com/chrisjbishop155/oas:latest
-# docker push registry.hub.docker.com/chrisjbishop155/oas:latest
+# docker build . -t chrisjbishop155/oas:latest
+# docker push chrisjbishop155/oas:latest
 
 from elixir:1.14
 
@@ -20,6 +20,7 @@ ENV ELIXIR_ERL_OPTIONS="-kernel shell_history enabled"
 WORKDIR /app/oas-web
 RUN npm install
 
+WORKDIR /app
 
 VOLUME [ "/dbs" ]
 

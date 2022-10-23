@@ -1,11 +1,6 @@
 defmodule OasWeb.Context do
   @behaviour Plug
 
-  import Plug.Conn
-  import Ecto.Query, only: [where: 2]
-
-  alias MyApp.{Repo, User}
-
   def init(opts), do: opts
 
   def call(conn, _) do
