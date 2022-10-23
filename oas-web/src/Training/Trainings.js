@@ -1,4 +1,4 @@
-import { useQuery, gql } from "@apollo/client"
+import { useQuery, gql, useMutation } from "@apollo/client"
 import { useEffect } from "react"
 import {
   Table,
@@ -11,6 +11,7 @@ import {
 } from '@mui/material';
 import { get } from 'lodash';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { Link } from "react-router-dom"
 
 
@@ -31,6 +32,22 @@ export const Trainings = () => {
     refetch()
   }, [])
   const trainings = get(data, 'trainings', [])
+
+  const [deleteMutation] = useMutation(gql`
+    mutation($id: Int!) {
+      delete_training(id: $id) {
+        success
+      }
+    }
+  `)
+  const deleteTraningClick = (id) => () => {
+    deleteMutation({
+      variables: {
+        id: id
+      }
+    })
+    refetch();
+  }
 
   return <TableContainer>
   <Table>
@@ -55,6 +72,9 @@ export const Trainings = () => {
               <IconButton component={Link} to={`/training/${training.id}`}>
                 <FitnessCenterIcon />
               </IconButton>
+              {!training.attendance && <IconButton onClick={deleteTraningClick(training.id)}>
+                <DeleteIcon />
+              </IconButton>}
             </TableCell>
           </TableRow>
         ))

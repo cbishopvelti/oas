@@ -11,6 +11,7 @@ import { useQuery, gql, useMutation } from '@apollo/client'
 import { differenceBy, get } from 'lodash';
 import { Link } from 'react-router-dom'
 import BookOnlineIcon from '@mui/icons-material/BookOnline';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 
 export const TrainingAttendance = ({trainingId}) => {
@@ -26,7 +27,8 @@ export const TrainingAttendance = ({trainingId}) => {
       id,
       name,
       email,
-      tokens
+      tokens,
+      attendance_id
     }
   }`, {
     variables: {
@@ -61,7 +63,23 @@ export const TrainingAttendance = ({trainingId}) => {
     })
 
     refetch()
-    setAddAttendance({}) // DEBUG ONLY, uncomment
+    setAddAttendance({})
+  }
+
+  const [deleteAttendance ] = useMutation(gql`
+    mutation ($attendance_id: Int!) {
+      delete_attendance(attendance_id: $attendance_id) {
+        success
+      }
+    }
+  `)
+  const deleteAttendanceClick = (attendanceId) => (event) => {
+    deleteAttendance({
+      variables: {
+        attendance_id: attendanceId
+      }
+    })
+    refetch();
   }
 
   return <>
@@ -93,7 +111,8 @@ export const TrainingAttendance = ({trainingId}) => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Id</TableCell>
+              <TableCell>Member Id</TableCell>
+              <TableCell>Attendance Id</TableCell>
               <TableCell>Name</TableCell>
               <TableCell>Email</TableCell>
               <TableCell>Tokens</TableCell>
@@ -105,12 +124,16 @@ export const TrainingAttendance = ({trainingId}) => {
               attendance.map((member) => (
                 <TableRow key={member.id}>
                   <TableCell>{member.id}</TableCell>
+                  <TableCell>{member.attendance_id}</TableCell>
                   <TableCell>{member.name}</TableCell>
                   <TableCell>{member.email}</TableCell>
                   <TableCell sx={{...(member.tokens < 0 ? {color: "red"} : {})}}>{member.tokens}</TableCell>
                   <TableCell>
                     <IconButton component={Link} to={`/member/${member.id}/tokens`}>
                       <BookOnlineIcon />
+                    </IconButton>
+                    <IconButton onClick={deleteAttendanceClick(member.attendance_id)}>
+                      <DeleteIcon sx={{color: 'red'}} />
                     </IconButton>
                   </TableCell>
                 </TableRow>

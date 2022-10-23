@@ -10,7 +10,7 @@ import Config
 #   pool_size: 10
 
 config :oas, Oas.Repo,
-  database: "./dbs/sqlite-dev.db"
+  database: System.get_env("DB_FILE") || "./dbs/sqlite-dev.db"
 
 # For development, we disable any cache and enable
 # debugging and code reloading.
@@ -21,7 +21,7 @@ config :oas, Oas.Repo,
 config :oas, OasWeb.Endpoint,
   # Binding to loopback ipv4 address prevents access from other machines.
   # Change to `ip: {0, 0, 0, 0}` to allow access from other machines.
-  http: [ip: {127, 0, 0, 1}, port: 4000],
+  http: [ip: {0, 0, 0, 0}, port: 4000],
   check_origin: false,
   code_reloader: true,
   debug_errors: true,
