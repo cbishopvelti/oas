@@ -12,7 +12,7 @@ if System.get_env("PHX_SERVER") && System.get_env("RELEASE_NAME") do
   config :oas, OasWeb.Endpoint, server: true
 end
 
-if config_env() == :prod do
+if config_env() == :prod and false do
   database_url =
     System.get_env("DATABASE_URL") ||
       raise """

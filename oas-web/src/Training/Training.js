@@ -1,5 +1,5 @@
 import { gql, useQuery, useMutation } from "@apollo/client";
-import { FormControl, TextField, Box, Button, Stack, Alert } from "@mui/material";
+import { FormControl, TextField, Box, Button, Stack, Alert, Autocomplete } from "@mui/material";
 import { useEffect, useState } from "react";
 import moment from "moment";
 import { get } from 'lodash'
@@ -99,6 +99,17 @@ export const Training = () => {
           label="where"
           value={get(formData, "where", '')}
           onChange={onChange({formData, setFormData, key: "where"})}
+        />
+      </FormControl>
+      <FormControl>
+        <Autocomplete
+          id="trainingTags"
+          value={get(formData, "training_tags") || ''}
+          options={(/* trainingTags */[]).map(({name, id}) => ({label: name, id: id }))}
+          renderInput={(params) => <TextField {...params} required label="Tag" />}
+          onChange={(event, newValue, a, b, c, d) => {
+            console.log('training_tags', newValue)
+          }}
         />
       </FormControl>
       <FormControl fullWidth sx={{m: 2}}>

@@ -13,6 +13,7 @@ config :oas,
 # Configures the endpoint
 config :oas, OasWeb.Endpoint,
   url: [host: "0.0.0.0"],
+  domain: System.get_env("DOMAIN") || "localhost",
   check_origine: false,
   render_errors: [view: OasWeb.ErrorView, accepts: ~w(html json), layout: false],
   pubsub_server: Oas.PubSub,
