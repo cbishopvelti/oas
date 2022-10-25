@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Dialog, IconButton, DialogTitle, FormControl, Autocomplete, TextField, Button } from "@mui/material"
 import TransferWithinAStationIcon from '@mui/icons-material/TransferWithinAStation';
 import { useQuery, gql, useMutation } from '@apollo/client'
-import { get } from 'lodash';
+import { filter, get } from 'lodash';
 
 
 
@@ -16,7 +16,8 @@ export const TransferToken = ({token, refetch}) => {
       name
     }
   }`);
-  const members = get(data, 'members', []);
+  let members = get(data, 'members', []);
+  members = filter(members, ({id}) => id !== token.member_id);
   useEffect(() => {
     refetchMembers()
   }, [token.id])

@@ -8,7 +8,7 @@ defmodule Oas.Members.MemberNotifier do
     email =
       new()
       |> to(recipient)
-      |> from({"Oas", "contact@example.com"})
+      |> from({"Oas", "chris@oxfordshireacrosociety.co.uk"})
       |> subject(subject)
       |> text_body(body)
 

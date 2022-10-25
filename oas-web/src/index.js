@@ -84,7 +84,7 @@ const router = createBrowserRouter([
 
 const client = new ApolloClient({
   // uri: 'http://localhost:3999/',
-  uri: "http://localhost:3999/api/graphql",
+  uri: `${process.env["REACT_APP_ADMIN_URL"]}/api/graphql`,
   cache: new InMemoryCache(),
 });
 
