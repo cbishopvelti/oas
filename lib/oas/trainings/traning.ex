@@ -7,7 +7,7 @@ defmodule Oas.Trainings.Training do
     field :when, :date
     has_many :attendance, Oas.Trainings.Attendance
     many_to_many :training_tags, Oas.Trainings.TrainingTags,
-      join_through: "training_training_tags", join_keys: [training_id: :id, training_tag_id: :id]
+      join_through: "training_training_tags", join_keys: [training_id: :id, training_tag_id: :id], on_replace: :delete
 
     timestamps()
   end

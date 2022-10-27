@@ -173,6 +173,7 @@ export const Transaction = () => {
             options={members.map(({name, id}) => ({label: name, who_member_id: id }))}
             renderInput={(params) => <TextField {...params} label="Who" required />}
             filterOptions={(options, params) => {
+
               const filtered = filter(options, params);
 
               const { inputValue } = params;

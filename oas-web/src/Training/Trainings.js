@@ -1,5 +1,5 @@
 import { useQuery, gql, useMutation } from "@apollo/client"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import {
   Table,
   TableContainer,
@@ -7,30 +7,50 @@ import {
   TableRow,
   TableCell,
   TableBody,
-  IconButton
+  IconButton,
+  Box,
+  FormControl,
+  TextField,
+  Button
 } from '@mui/material';
 import { get } from 'lodash';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { Link } from "react-router-dom"
+import { Link } from "react-router-dom";
+import moment from 'moment';
+import { TrainingTags } from "./TrainingTags";
 
-
+const onChange = ({formData, setFormData, key}) => (event) => {   
+  setFormData({
+    ...formData,
+    [key]: !event.target.value ? undefined : event.target.value
+  })
+}
 
 export const Trainings = () => {
+  const [filterData, setFilterData ] = useState({
+    from: moment().subtract(6, 'month').format("YYYY-MM-DD"),
+    to: moment().format("YYYY-MM-DD")
+  });
 
   const {data, refetch} = useQuery(gql`
-    query {
-      trainings {
+    query ($to: String!, $from: String!, $training_tag_ids: [Int]!) {
+      trainings(to: $to, from: $from, training_tag_ids: $training_tag_ids) {
         id,
         where, 
         when,
         attendance
       }
     }
-  `)
+  `, {
+    variables: {
+      ...filterData,
+      training_tag_ids: get(filterData, "training_tags", []).map(({id}) => id)
+    }
+  })
   useEffect(() => {
     refetch()
-  }, [])
+  }, [filterData])
   const trainings = get(data, 'trainings', [])
 
   const [deleteMutation] = useMutation(gql`
@@ -49,37 +69,68 @@ export const Trainings = () => {
     refetch();
   }
 
-  return <TableContainer>
-  <Table>
-    <TableHead>
-      <TableRow>
-        <TableCell>Id</TableCell>
-        <TableCell>When</TableCell>
-        <TableCell>Where</TableCell>
-        <TableCell>Attendance</TableCell>
-        <TableCell>Actions</TableCell>
-      </TableRow>
-    </TableHead>
-    <TableBody>
-      {
-        trainings.map((training) => (
-          <TableRow key={training.id}>
-            <TableCell>{training.id}</TableCell>
-            <TableCell>{training.when}</TableCell>
-            <TableCell>{training.where}</TableCell>
-            <TableCell>{training.attendance}</TableCell>
-            <TableCell>
-              <IconButton component={Link} to={`/training/${training.id}`}>
-                <FitnessCenterIcon />
-              </IconButton>
-              {!training.attendance && <IconButton onClick={deleteTraningClick(training.id)}>
-                <DeleteIcon />
-              </IconButton>}
-            </TableCell>
-          </TableRow>
-        ))
-      }
-    </TableBody>
-  </Table>
-</TableContainer>
+  return <>
+    <Box sx={{display: 'flex', flexWrap: 'wrap' }}>
+      <FormControl sx={{m: 2, minWidth: 256}}>
+        <TextField
+          required
+          id="from"
+          label="From"
+          type="date"
+          value={get(filterData, "from")}
+          onChange={onChange({formData: filterData, setFormData: setFilterData, key: "from"})}
+        />
+      </FormControl>
+      <FormControl sx={{m: 2, minWidth: 256}}>
+        <TextField
+          required
+          id="from"
+          label="From"
+          type="date"
+          value={get(filterData, "to")}
+          onChange={onChange({formData: filterData, setFormData: setFilterData, key: "to"})}
+        />
+      </FormControl>
+      <FormControl sx={{m: 2, minWidth: 256}}>
+        <TrainingTags 
+          formData={filterData}
+          setFormData={setFilterData}
+          filterMode={true}
+        />
+      </FormControl>
+    </Box>
+    <TableContainer>
+    <Table>
+      <TableHead>
+        <TableRow>
+          <TableCell>Id</TableCell>
+          <TableCell>When</TableCell>
+          <TableCell>Where</TableCell>
+          <TableCell>Attendance</TableCell>
+          <TableCell>Actions</TableCell>
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {
+          trainings.map((training) => (
+            <TableRow key={training.id}>
+              <TableCell>{training.id}</TableCell>
+              <TableCell>{training.when}</TableCell>
+              <TableCell>{training.where}</TableCell>
+              <TableCell>{training.attendance}</TableCell>
+              <TableCell>
+                <IconButton component={Link} to={`/training/${training.id}`}>
+                  <FitnessCenterIcon />
+                </IconButton>
+                {!training.attendance && <IconButton onClick={deleteTraningClick(training.id)}>
+                  <DeleteIcon />
+                </IconButton>}
+              </TableCell>
+            </TableRow>
+          ))
+        }
+      </TableBody>
+    </Table>
+  </TableContainer>
+  </>
 }

@@ -35,6 +35,7 @@ chrisjbishop155/oas:latest
 ## Todo
 
 Tags
+- blocked mui down
 
 Import and infer transactions from bank statements
 
@@ -43,6 +44,7 @@ Historic data
 - Add attendances to a "historic trainings" for debt
 - Maybe clear all debt / write off
 - Attempt to import historic data (hard)
+
 
 Backup
 
