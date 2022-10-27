@@ -5,6 +5,7 @@ import moment from "moment";
 import { get } from 'lodash'
 import { useNavigate, useParams } from "react-router-dom";
 import { TrainingAttendance } from "./TrainingAttendance";
+import { TrainingTags } from "./TrainingTags";
 
 
 export const Training = () => {
@@ -19,7 +20,11 @@ export const Training = () => {
       training(id: $id) {
         id,
         when,
-        where
+        where,
+        training_tags {
+          id,
+          name
+        }
       }
     }
   `, {
@@ -44,7 +49,12 @@ export const Training = () => {
     if (!data) {
       return;
     }
-    setFormData(get(data, "training"))
+    setFormData(
+      {
+        ...get(data, "training")
+        // training_tag_ids: get(data, "training.training_tags").map(({id}) => id)
+      }
+    )
   }, [data])
 
   const onChange = ({formData, setFormData, key, direct}) => (event) => {
@@ -56,15 +66,20 @@ export const Training = () => {
 
 
   const [ insertMutation, {error: error1} ] = useMutation(gql`
-    mutation ($where: String!, $when: String!){
-      insert_training (where: $where, when: $when) {
+    mutation ($where: String!, $when: String!, $training_tag_ids: [Int]!){
+      insert_training (where: $where, when: $when, training_tag_ids: $training_tag_ids) {
         id
       }
     }
   `);
   const [updateMutation, {error: error2}] = useMutation(gql`
-    mutation ($id: Int!, $where: String!, $when: String!){
-      update_training (where: $where, when: $when, id: $id) {
+    mutation ($id: Int!, $where: String!, $when: String!, $training_tag_ids: [Int]!){
+      update_training (
+        where: $where,
+        when: $when,
+        id: $id,
+        training_tag_ids: $training_tag_ids
+      ) {
         id
       }
     }
@@ -73,16 +88,25 @@ export const Training = () => {
   const save = (formData) => async () => {
     if (!formData.id) {
       const { data } = await insertMutation({
-        variables: formData
+        variables: {
+          ...formData,
+          training_tag_ids: get(formData, 'training_tags', []).map(({id}) => id)
+        }
       });
 
       navigate(`/training/${get(data, "insert_training.id")}`)
     } else if (formData.id) {
-      console.log('007', formData)
       const { data } = await updateMutation({
-        variables: formData
+        variables: {
+          ...formData,
+          training_tag_ids: get(formData, 'training_tags', []).map(({id}) => id)
+        }
       });
     }
+    setFormData({
+      ...formData,
+      saveCount: get(formData, "saveCount", 0) + 1
+    })
   }
 
   return <div>
@@ -101,15 +125,10 @@ export const Training = () => {
           onChange={onChange({formData, setFormData, key: "where"})}
         />
       </FormControl>
-      <FormControl>
-        <Autocomplete
-          id="trainingTags"
-          value={get(formData, "training_tags") || ''}
-          options={(/* trainingTags */[]).map(({name, id}) => ({label: name, id: id }))}
-          renderInput={(params) => <TextField {...params} required label="Tag" />}
-          onChange={(event, newValue, a, b, c, d) => {
-            console.log('training_tags', newValue)
-          }}
+      <FormControl fullWidth sx={{m: 2}}>
+        <TrainingTags 
+          formData={formData}
+          setFormData={setFormData}
         />
       </FormControl>
       <FormControl fullWidth sx={{m: 2}}>

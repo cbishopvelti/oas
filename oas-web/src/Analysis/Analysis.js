@@ -43,7 +43,7 @@ export const Analysis = () => {
           label="From"
           type="date"
           value={get(filterData, "from")}
-          onChange={onChange({filterData, setFilterData, key: "from"})}
+          onChange={onChange({formData: filterData, setFormData: setFilterData, key: "from"})}
         />
       </FormControl>
       <FormControl sx={{m: 2, minWidth: 256}}>
@@ -53,10 +53,9 @@ export const Analysis = () => {
           label="From"
           type="date"
           value={get(filterData, "to")}
-          onChange={onChange({filterData, setFilterData, key: "from"})}
+          onChange={onChange({formData: filterData, setFormData: setFilterData, key: "to"})}
         />
       </FormControl>
-      <Button>Apply Filter</Button>
     </Box>
 
     <Box sx={{display: 'flex', flexWrap: 'wrap', m: 2}}>
