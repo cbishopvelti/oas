@@ -7,7 +7,7 @@ import { useEffect } from "react";
 const filter = createFilterOptions();
 
 
-export const TrainingTags = ({
+export const TransactionTags = ({
   formData, 
   setFormData,
   filterMode
@@ -15,30 +15,21 @@ export const TrainingTags = ({
 
   const {data, refetch } = useQuery(gql`
     query {
-      training_tags {
+      transaction_tags {
         id,
         name
       }
     }
   `)
-  let training_tags = get(data, 'training_tags', [])
+  let transaction_tags = get(data, 'transaction_tags', [])
   useEffect(() => {
     refetch()
   }, [formData.saveCount])
-  
-  
-  const [mutate] = useMutation(gql`
-    mutation ($name: String!) {
-      insert_training_tag(name: $name) {
-        id
-      }
-    }
-  `)
 
   return <Autocomplete
-    id="trainingTags"
-    value={get(formData, "training_tags", []) /*|| [{id: 1, name: "existing_test"}]*/}
-    options={(training_tags).map(({name, id}) => ({ label: name, id, name }))}
+    id="transactionTags"
+    value={get(formData, "transaction_tags") || (!transaction_tags.length && transaction_tags) || []}
+    options={(transaction_tags).map(({name, id}) => ({ label: name, id, name }))}
     renderInput={(params) => <TextField {...params} required label="Tags" />}
     multiple
     freeSolo={!filterMode}
@@ -54,9 +45,7 @@ export const TrainingTags = ({
       return option.label || option.name;
     }}
     filterOptions={(options, params, b, c) => {
-
       let filtered = filter(options, params, b, c);
-
       const { inputValue } = params;
 
       const isExisting = options.some((option) => inputValue === option.name);
@@ -68,30 +57,14 @@ export const TrainingTags = ({
       }
 
       // Only allow unique options
-      filtered = differenceBy(filtered, formData.training_tags, "id")
+      filtered = differenceBy(filtered, formData.transaction_tags, "id")
 
       return filtered;
     }}
     onChange={async (event, newValue, a, b, c, d) => {
-      // const createPromises = newValue
-      //   .filter((item) => !item.id)
-      //   .map(async (item) => {
-      //     const result = await mutate({
-      //       variables: {
-      //         name: item.name
-      //       }
-      //     })
-
-      //     set(item, "id", get(result, "data.insert_training_tag.id"))
-      //   })
-      // const result = await Promise.all(createPromises);
-      // if (result.length > 0) {
-      //   refetch();
-      // }
-
       setFormData({
         ...formData,
-        training_tags: newValue.map(({id, name}) => ({id, name: name}))
+        transaction_tags: newValue.map(({id, name}) => ({id, name: name}))
       })
     }}
   />

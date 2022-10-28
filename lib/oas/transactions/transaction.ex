@@ -9,6 +9,8 @@ defmodule Oas.Transactions.Transaction do
     belongs_to :member, Oas.Members.Member, foreign_key: :who_member_id
     field :type, :string
     field :amount, :decimal
+    many_to_many :transaction_tags, Oas.Transactions.TransactionTags,
+      join_through: "transaction_transaction_tags", join_keys: [transaction_id: :id, transaction_tag_id: :id], on_replace: :delete
     field :bank_details, :string
     field :notes, :string
 

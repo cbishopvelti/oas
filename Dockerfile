@@ -11,7 +11,7 @@ RUN apt-get install -y nodejs
 RUN apt-get install -y tmux
 
 WORKDIR /app/oas-web
-RUN npm install
+# RUN npm install
 
 WORKDIR /app
 COPY . .

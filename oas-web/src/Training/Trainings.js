@@ -19,6 +19,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { Link } from "react-router-dom";
 import moment from 'moment';
 import { TrainingTags } from "./TrainingTags";
+import { TrainingWhereFilter } from "./TrainingWhereFilter";
 
 const onChange = ({formData, setFormData, key}) => (event) => {   
   setFormData({
@@ -34,10 +35,13 @@ export const Trainings = () => {
   });
 
   const {data, refetch} = useQuery(gql`
-    query ($to: String!, $from: String!, $training_tag_ids: [Int]!) {
-      trainings(to: $to, from: $from, training_tag_ids: $training_tag_ids) {
+    query ($to: String!, $from: String!, $training_tag_ids: [Int]!, $training_where: [TrainingWhereArg]) {
+      trainings(to: $to, from: $from, training_tag_ids: $training_tag_ids, training_where: $training_where) {
         id,
-        where, 
+        training_where {
+          id,
+          name
+        }, 
         when,
         attendance
       }
@@ -69,6 +73,7 @@ export const Trainings = () => {
     refetch();
   }
 
+  console.log("101", setFilterData)
   return <>
     <Box sx={{display: 'flex', flexWrap: 'wrap' }}>
       <FormControl sx={{m: 2, minWidth: 256}}>
@@ -91,11 +96,17 @@ export const Trainings = () => {
           onChange={onChange({formData: filterData, setFormData: setFilterData, key: "to"})}
         />
       </FormControl>
-      <FormControl sx={{m: 2, minWidth: 256}}>
+      {/* <FormControl sx={{m: 2, minWidth: 256}}>
         <TrainingTags 
           formData={filterData}
           setFormData={setFilterData}
           filterMode={true}
+        />
+      </FormControl> */}
+      <FormControl sx={{m: 2, minWidth: 256}}>
+        <TrainingWhereFilter
+          setFormData={setFilterData}
+          formData={filterData}
         />
       </FormControl>
     </Box>
@@ -116,7 +127,7 @@ export const Trainings = () => {
             <TableRow key={training.id}>
               <TableCell>{training.id}</TableCell>
               <TableCell>{training.when}</TableCell>
-              <TableCell>{training.where}</TableCell>
+              <TableCell>{training.training_where.name}</TableCell>
               <TableCell>{training.attendance}</TableCell>
               <TableCell>
                 <IconButton component={Link} to={`/training/${training.id}`}>

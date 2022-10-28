@@ -1,23 +1,33 @@
 import Ecto.Query, only: [from: 2, where: 3]
 defmodule OasWeb.Schema.SchemaTraining do
-  use Absinthe.Schema.Notation
+  use Absinthe.Schema.Notation  
 
-  
+  object :training_where do
+    field :id, :integer
+    field :name, :string
+  end
+  input_object :training_where_arg do
+    field :id, :integer
+    field :name, non_null(:string)
+  end
 
   object :training_tag do
     field :id, :integer
     field :name, :string
   end
+  input_object :training_tag_arg do
+    field :id, :integer
+    field :name, non_null(:string)
+  end
+
   object :training do
     field :id, :integer
-    field :where, :string
+    field :training_where, :training_where
     field :when, :string
     field :attendance, :integer
     field :training_tags, list_of(:training_tag)
   end
   
-  # import_types OasWeb.Schema.SchemaTypes
-
   object :training_queries do
     field :training, :training do
       arg :id, non_null(:integer)
@@ -28,7 +38,7 @@ defmodule OasWeb.Schema.SchemaTraining do
         #   select: t, where: t.id == ^id
         # )
         # result = Oas.Repo.one(query)
-        result = Oas.Repo.get!(Oas.Trainings.Training, id) |> Oas.Repo.preload(:training_tags)
+        result = Oas.Repo.get!(Oas.Trainings.Training, id) |> Oas.Repo.preload(:training_where) |> Oas.Repo.preload(:training_tags)
         {:ok, result}
       end
     end
@@ -36,16 +46,25 @@ defmodule OasWeb.Schema.SchemaTraining do
       arg :from, non_null(:string)
       arg :to, non_null(:string)
       arg :training_tag_ids, list_of(:integer), default_value: []
-      resolve fn _, %{training_tag_ids: training_tag_ids, from: from, to: to}, _ ->
+      arg :training_where, list_of(:training_where_arg), default_value: []
+      resolve fn _, %{
+        training_tag_ids: training_tag_ids,
+        from: from,
+        to: to,
+        training_where: training_where
+      }, _ ->
 
         results = from(t in Oas.Trainings.Training,
+          preload: [:training_where],
           left_join: a in assoc(t, :attendance),
           group_by: [t.id],
           select: %{training: t, attendance: count(a.id)},
           order_by: [desc: t.when, desc: t.id],
           left_join: tt in assoc(t, :training_tags),
+          join: w in assoc(t, :training_where),
           where: ((0 == ^length(training_tag_ids)) or (tt.id in ^training_tag_ids)) and
-            t.when >= ^from and t.when <= ^to
+            t.when >= ^from and t.when <= ^to and
+            ((0 == ^length(training_where)) or  w.id in ^(training_where |> Enum.map(fn %{id: id} -> id end)))
         ) |> Oas.Repo.all
         |> Enum.map(fn %{training: t, attendance: a} -> %{t | attendance: a} end)
 
@@ -58,33 +77,48 @@ defmodule OasWeb.Schema.SchemaTraining do
         {:ok, result}
       end
     end
+    field :training_where, list_of(:training_where) do
+      resolve fn _,_,_ -> 
+        result = Oas.Repo.all(from(w in Oas.Trainings.TrainingWhere, select: w))
+        {:ok, result}
+      end
+    end
   end
 
   object :training_mutations do
     @desc "Insert training"
     field :insert_training, type: :training do
-      arg :where, non_null(:string)
+      arg :training_where, non_null(:training_where_arg)
       arg :when, non_null(:string)
-      arg :training_tag_ids, list_of(:integer), default_value: []
+      arg :training_tags, non_null(list_of(:training_tag_arg))
       resolve fn _, args, _ ->
-        %{training_tag_ids: training_tag_ids} = args 
+        IO.puts("001")
+        IO.inspect(args)
+        %{training_tags: training_tags, training_where: training_where} = args 
 
-        training_tags = training_tag_ids
-          |> Enum.map(fn id -> Oas.Repo.get!(Oas.Trainings.TrainingTags, id) end)
+        training_tags = training_tags
+          |> Enum.map(fn
+            %{id: id} -> Oas.Repo.get!(Oas.Trainings.TrainingTags, id)
+            rest -> rest
+          end)
+
+        training_where = case training_where do
+          %{id: id} -> Oas.Repo.get!(Oas.Trainings.TrainingWhere, id)
+          rest -> rest
+        end
+
 
 
         when1 = Date.from_iso8601!(args.when)
         args = %{args | when: when1 }
 
         {:ok, result} = %Oas.Trainings.Training{}
-          |> Ecto.Changeset.cast(args, [:where, :when])
+          |> Ecto.Changeset.cast(args, [:when])
           |> Ecto.Changeset.put_assoc(
             :training_tags,
             training_tags
-          )
+          ) |> Ecto.Changeset.put_assoc(:training_where, training_where)
           |> Oas.Repo.insert
-
-        
 
         {:ok, result}
       end
@@ -92,26 +126,33 @@ defmodule OasWeb.Schema.SchemaTraining do
     @desc "update training"
     field :update_training, type: :training do
       arg :id, non_null(:integer)
-      arg :where, non_null(:string)
       arg :when, non_null(:string)
-      arg :training_tag_ids, list_of(:integer), default_value: []
+      arg :training_tags, non_null(list_of(:training_tag_arg))
+      arg :training_where, non_null(:training_where_arg)
       resolve fn _, args, _ ->
         when1 = Date.from_iso8601!(args.when)
         args = %{args | when: when1}
         training = Oas.Repo.get!(Oas.Trainings.Training, args.id)
-          |> Oas.Repo.preload(:training_tags)
+          |> Oas.Repo.preload(:training_tags) |> Oas.Repo.preload(:training_where)
 
-        %{training_tag_ids: training_tag_ids} = args
-        training_tags = training_tag_ids
-          |> Enum.map(fn id -> Oas.Repo.get!(Oas.Trainings.TrainingTags, id) end)
+        %{training_tags: training_tags, training_where: training_where} = args
+        training_tags = training_tags
+          |> Enum.map(fn
+            %{id: id} -> Oas.Repo.get!(Oas.Trainings.TrainingTags, id)
+            rest -> rest
+          end)
 
-        IO.puts("001")
+        training_where = case training_where do
+          %{id: id} -> Oas.Repo.get!(Oas.Trainings.TrainingWhere, id)
+          rest -> rest
+        end
+
         toSave = training
-          |> Ecto.Changeset.cast(args, [:where, :when])
+          |> Ecto.Changeset.cast(args, [:when])
           |> Ecto.Changeset.put_assoc(
             :training_tags,
             training_tags
-          )
+          ) |> Ecto.Changeset.put_assoc(:training_where, training_where)
 
         {:ok, result} = toSave
           |> Oas.Repo.update
@@ -122,9 +163,6 @@ defmodule OasWeb.Schema.SchemaTraining do
             _ -> false
           end)
           |> Enum.map(fn %{data: %{id: id}} -> id end)
-
-        IO.puts("005")
-        IO.inspect(removedTrainingTags)
 
         from(
           tt in Oas.Trainings.TrainingTags,
@@ -138,13 +176,23 @@ defmodule OasWeb.Schema.SchemaTraining do
           )) and tt.id in ^removedTrainingTags
         ) |> Oas.Repo.delete_all
 
-        # removedTrainingTags |>
-        # delete from training_tags where not EXISTS(SELECT 1 from training_training_tags where training_training_tags.training_tag_id = training_tags.id)
+        # See if there are any locations to delete
+        removedTrainingWhere = Ecto.Changeset.get_change(toSave, :training_where)
+        case removedTrainingWhere do
+          nil -> nil
+          %{action: :update, data: %{id: id}} -> from(w in Oas.Trainings.TrainingWhere,
+              as: :training_where,
+              where: not(exists(
+                from(
+                  t in Oas.Trainings.Training, 
+                  where: t.training_where_id == parent_as(:training_where).id
+                )
+              )) and w.id == ^training.training_where.id
+            )  |> Oas.Repo.delete_all
+        end
+        
 
-        # delete from 
-
-
-        # EO see if there are any tags to delete
+        # EO deleting
 
         {:ok, result}
       end
@@ -157,9 +205,12 @@ defmodule OasWeb.Schema.SchemaTraining do
         {:ok, %{success: true}}
       end
     end
+    @desc "insert_training_tag, depricated"
     field :insert_training_tag, type: :training_tag do
       arg :name, non_null(:string)
       resolve fn _, %{name: name}, _ ->
+        # TODO remove
+        raise "Should not happen"
         result = Oas.Repo.insert!(%Oas.Trainings.TrainingTags{name: name})
         {:ok, result}
       end
