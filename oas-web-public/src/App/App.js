@@ -1,24 +1,32 @@
-import logo from './logo.svg';
+// import logo from './logo.svg';
 import './App.css';
+import { Outlet, NavLink } from 'react-router-dom'
+import { Box, MenuList, MenuItem, ListItemText } from '@mui/material'
+import logo from "./acroyoga_logo.png"
+
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+      <div className="App">
+        <div className="menu"
+          style={{backgroundColor: 'mediumpurple'}}
+          >
+          <Box m={2}>
+            <img width={212} src={logo} />
+          </Box>
+          <MenuList sx={{marginTop: 4}}>
+            <MenuItem component={NavLink} end to={`/`}>
+              <ListItemText>Home</ListItemText>
+            </MenuItem>
+            <MenuItem component={NavLink} to={`/membership-info`}>
+              <ListItemText>Member's Info</ListItemText>
+            </MenuItem>
+          </MenuList>
+        </div>
+        <Box className="content" m={2}>
+          <Outlet />
+        </Box>
+      </div>
   );
 }
 

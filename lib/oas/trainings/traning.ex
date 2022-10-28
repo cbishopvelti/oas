@@ -3,7 +3,7 @@ defmodule Oas.Trainings.Training do
   import Ecto.Changeset
 
   schema "trainings" do
-    field :where, :string
+    belongs_to :training_where, Oas.Trainings.TrainingWhere, on_replace: :nilify
     field :when, :date
     has_many :attendance, Oas.Trainings.Attendance
     many_to_many :training_tags, Oas.Trainings.TrainingTags,

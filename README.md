@@ -34,8 +34,11 @@ chrisjbishop155/oas:latest
 
 ## Todo
 
-Tags
-- blocked mui down
+Make where a dropdown
+
+Add sending email
+
+Add transaction Tag
 
 Import and infer transactions from bank statements
 

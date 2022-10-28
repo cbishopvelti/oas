@@ -1,0 +1,73 @@
+import { useEffect, useState } from 'react'
+import { useQuery, gql } from "@apollo/client";
+import { find, get } from "lodash";
+import { Autocomplete, TextField, createFilterOptions } from '@mui/material'
+
+
+export const TrainingWhere = ({
+  formData,
+  setFormData
+}) => {
+  // const [formData, setFormData ] = useState({})
+  console.log("003", formData);
+
+  const filter = createFilterOptions();
+
+  const { data, refetch } = useQuery(gql`
+    query {
+      training_where {
+        id,
+        name
+      }
+    }
+  `);
+  useEffect(() => {
+    refetch()
+  }, [formData.saveCount])
+  const trainingWhere = get(data, 'training_where', [])
+
+  // || get(formData, 'training_where.name')
+  return <Autocomplete
+    id="training_where"
+    freeSolo
+    required
+    value={get(formData, 'training_where.name')  || ''}
+    options={trainingWhere.map(({name, id}) => ({label: name, name, id }))}
+    renderInput={(params) => <TextField {...params} label="Where" required />}
+    filterOptions={(options, params) => {
+
+      const filtered = filter(options, params);
+
+      const { inputValue } = params;
+
+      let add = []
+      const isExisting = options.some((option) => inputValue === option.label);
+      if (inputValue && !isExisting) {
+        add = [{label: `Create "${inputValue}"`, name: inputValue}]
+      }
+
+      return [...filtered, ...add];
+    }}
+    clearOnBlur
+    selectOnFocus
+    handleHomeEndKeys
+    onChange={(event, newValue, a, b, c, d) => {
+      console.log("001 newValue", newValue)
+      if (!newValue) {
+        return;
+      }
+
+      const id = newValue instanceof String ? find(trainingWhere, (name) => name === newValue).id : newValue.id
+
+      console.log("001.1", id)
+      const objToSet = {
+        ...formData,
+        training_where: {
+          name: newValue instanceof String ? newValue : newValue.name,
+          ...(id ? {id: id} : {} )
+        }
+      }
+      setFormData(objToSet)
+    }}
+  />
+}

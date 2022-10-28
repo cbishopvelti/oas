@@ -1,5 +1,13 @@
 .App {
-  text-align: center;
+  display: flex;
+}
+
+.App .content {
+  flex-grow: 99;
+}
+.App .menu {
+  /* position: relative; */
+  height: 100vh;
 }
 
 .App-logo {
@@ -11,6 +19,14 @@
   .App-logo {
     animation: App-logo-spin infinite 20s linear;
   }
+}
+
+a.active {
+  background-color: #1D7C81;
+}
+
+a.active:hover {
+  background-color: #1D7C81;
 }
 
 .App-header {

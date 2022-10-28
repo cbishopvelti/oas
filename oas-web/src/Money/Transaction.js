@@ -20,6 +20,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, gql, useMutation } from '@apollo/client';
 import { TransactionNewToken } from "./TransactionToken";
 import { Tokens } from './Tokens';
+import { TransactionTags } from './TransactionTags';
 
 
 
@@ -50,6 +51,10 @@ export const Transaction = () => {
         notes,
         tokens {
           id
+        },
+        transaction_tags {
+          id,
+          name
         }
       }
     }
@@ -105,6 +110,7 @@ export const Transaction = () => {
     $notes: String,
     $token_quantity: Int,
     $token_value: Float
+    $transaction_tags: [TransactionTagArg]
   ){
     transaction (
       id: $id,
@@ -117,12 +123,14 @@ export const Transaction = () => {
       bank_details: $bank_details,
       notes: $notes,
       token_quantity: $token_quantity,
-      token_value: $token_value
+      token_value: $token_value,
+      transaction_tags: $transaction_tags
     ) {
       id
     }
   }`)
   const save = (formData) => async () => {
+    formData = omit(formData, "training_tags.__typename");
     const { data } = await mutate({
       variables: {
         ...formData,
@@ -131,6 +139,13 @@ export const Transaction = () => {
         ...(formData.token_quantity ? {token_quantity: parseInt(formData.token_quantity)}: {})
       }
     });
+
+    setFormData({
+      ...formData,
+      saveCount: get(formData, "saveCount", 0) + 1
+    })
+
+    return; // DEBUG ONLY, remove
 
     refetch()
     navigate(`/transaction/${get(data, 'transaction.id')}`)
@@ -235,6 +250,13 @@ export const Transaction = () => {
           type="number"
           required
           onChange={onChange({formData, setFormData, key: "amount"})}
+        />
+      </FormControl>
+
+      <FormControl fullWidth sx={{m: 2}}>
+        <TransactionTags 
+          formData={formData}
+          setFormData={setFormData}
         />
       </FormControl>
 

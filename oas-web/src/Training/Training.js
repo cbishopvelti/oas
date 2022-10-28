@@ -2,10 +2,11 @@ import { gql, useQuery, useMutation } from "@apollo/client";
 import { FormControl, TextField, Box, Button, Stack, Alert, Autocomplete } from "@mui/material";
 import { useEffect, useState } from "react";
 import moment from "moment";
-import { get } from 'lodash'
+import { get, omit } from 'lodash'
 import { useNavigate, useParams } from "react-router-dom";
 import { TrainingAttendance } from "./TrainingAttendance";
 import { TrainingTags } from "./TrainingTags";
+import { TrainingWhere } from "./TrainingWhere";
 
 
 export const Training = () => {
@@ -20,7 +21,10 @@ export const Training = () => {
       training(id: $id) {
         id,
         when,
-        where,
+        training_where {
+          id,
+          name
+        }
         training_tags {
           id,
           name
@@ -35,9 +39,11 @@ export const Training = () => {
   })
 
   const defaultData = {
-    when: moment().format("YYYY-MM-DD")
+    when: moment().format("YYYY-MM-DD"),
+    training_tags: []
   }
   const [formData, setFormData] = useState(defaultData);
+  // console.log("004 render formData", formData)
 
   useEffect(() => {
     if (!id) {
@@ -52,7 +58,6 @@ export const Training = () => {
     setFormData(
       {
         ...get(data, "training")
-        // training_tag_ids: get(data, "training.training_tags").map(({id}) => id)
       }
     )
   }, [data])
@@ -66,19 +71,19 @@ export const Training = () => {
 
 
   const [ insertMutation, {error: error1} ] = useMutation(gql`
-    mutation ($where: String!, $when: String!, $training_tag_ids: [Int]!){
-      insert_training (where: $where, when: $when, training_tag_ids: $training_tag_ids) {
+    mutation ($when: String!, $training_tags: [TrainingTagArg]!, $training_where: TrainingWhereArg!){
+      insert_training (when: $when, training_tags: $training_tags, training_where: $training_where) {
         id
       }
     }
   `);
   const [updateMutation, {error: error2}] = useMutation(gql`
-    mutation ($id: Int!, $where: String!, $when: String!, $training_tag_ids: [Int]!){
+    mutation ($id: Int!, $when: String!, $training_tags: [TrainingTagArg]!, $training_where: TrainingWhereArg!){
       update_training (
-        where: $where,
         when: $when,
         id: $id,
-        training_tag_ids: $training_tag_ids
+        training_tags: $training_tags,
+        training_where: $training_where
       ) {
         id
       }
@@ -87,19 +92,19 @@ export const Training = () => {
 
   const save = (formData) => async () => {
     if (!formData.id) {
+      console.log("002", formData);
       const { data } = await insertMutation({
         variables: {
-          ...formData,
-          training_tag_ids: get(formData, 'training_tags', []).map(({id}) => id)
+          ...omit(formData, ["training_tags.__typename", "training_where.__typename"])
         }
       });
 
       navigate(`/training/${get(data, "insert_training.id")}`)
     } else if (formData.id) {
+      console.log("002.2", formData)
       const { data } = await updateMutation({
         variables: {
-          ...formData,
-          training_tag_ids: get(formData, 'training_tags', []).map(({id}) => id)
+          ...omit(formData, ["training_tags.__typename", "training_where.__typename"])
         }
       });
     }
@@ -117,20 +122,16 @@ export const Training = () => {
         ))}
       </Stack>
       <FormControl fullWidth sx={{m: 2}}>
-        <TextField
-          required
-          id="where"
-          label="where"
-          value={get(formData, "where", '')}
-          onChange={onChange({formData, setFormData, key: "where"})}
-        />
+        <TrainingWhere
+          formData={formData}
+          setFormData={setFormData} />
       </FormControl>
-      <FormControl fullWidth sx={{m: 2}}>
+      {/* <FormControl fullWidth sx={{m: 2}}>
         <TrainingTags 
           formData={formData}
           setFormData={setFormData}
         />
-      </FormControl>
+      </FormControl> */}
       <FormControl fullWidth sx={{m: 2}}>
         <TextField
           required
