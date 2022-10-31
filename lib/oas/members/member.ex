@@ -14,7 +14,7 @@ defmodule Oas.Members.Member do
     field :bank_account_name, :string
     has_many :attendance, Oas.Trainings.Attendance
 
-    has_one :member_details, Oas.Members.MemberDetails
+    has_one :member_details, Oas.Members.MemberDetails, on_replace: :nilify
 
     timestamps()
   end
@@ -42,6 +42,13 @@ defmodule Oas.Members.Member do
     |> validate_required([:name])
     |> validate_email()
     |> validate_password(opts)
+  end
+
+  def changeset(member, attrs, opts \\ []) do
+    member
+    |> cast(attrs, [:email, :name, :is_active, :is_admin, :is_reviewer, :bank_account_name])
+    |> validate_required([:name])
+    |> validate_email()
   end
 
   def validate_email(changeset) do

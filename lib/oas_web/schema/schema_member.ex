@@ -2,17 +2,28 @@ import Ecto.Query, only: [from: 2, where: 3]
 defmodule OasWeb.Schema.SchemaMember do
   use Absinthe.Schema.Notation
 
+  object :member_details do
+    field :phone, :string
+    field :address, :string
+    field :dob, :string
+    field :nok_name, :string
+    field :nok_email, :string
+    field :nok_phone, :string
+    field :nok_address, :string
+    field :agreed_to_tac, :boolean
+  end
+
   object :member do
     field :id, :integer
     field :name, :string
     field :email, :string
-    field :bank_reference, :string
+    field :bank_account_name, :string
     field :tokens, :integer
     field :is_active, :boolean
     field :is_admin, :boolean
     field :is_reviewer, :boolean
 
-    # field :member_details, :member_details
+    field :member_details, :member_details
   end
 
 
@@ -20,6 +31,7 @@ defmodule OasWeb.Schema.SchemaMember do
     field :id, :id
     field :name, :string
     field :email, :string
+    field :bank_account_name, :string
     field :password, :string
   end
 
@@ -68,8 +80,7 @@ defmodule OasWeb.Schema.SchemaMember do
     field :member, :member do
       arg :member_id, non_null(:integer)
       resolve fn _, %{member_id: member_id}, _ ->
-        query = from(m in Oas.Members.Member, where: m.id == ^member_id)
-        result = Oas.Repo.one(query)
+        result = Oas.Repo.get!(Oas.Members.Member, member_id) |> Oas.Repo.preload(:member_details)
 
         tokens = Oas.Attendance.get_token_amount(%{member_id: member_id})
 
@@ -105,23 +116,66 @@ defmodule OasWeb.Schema.SchemaMember do
       arg :is_active, :boolean
       arg :is_reviewer, :boolean
       arg :is_admin, :boolean
+      arg :member_details, :member_details_arg
       resolve fn _parent, args, context ->
-        result = case Map.get(args, :id, nil) do
-          nil -> length = 12
+
+        toSave = case Map.get(args, :id) do
+          nil ->
+            length=12
             password = :crypto.strong_rand_bytes(length) |> Base.encode64 |> binary_part(0, length)
-            case Oas.Members.register_member(Map.merge(%{password: password}, args)) do
-              {:ok, result} -> {:ok, Map.merge(result, %{password: password})}
-              errored -> OasWeb.Schema.SchemaUtils.handle_error(errored)
+            attrs = Map.merge(%{password: password}, args)
+            %Oas.Members.Member{}
+            |> Oas.Members.Member.registration_changeset(attrs)
+          id ->
+            member = Oas.Repo.get!(Oas.Members.Member, id) |> Oas.Repo.preload(:member_details)
+            attrs = case member do
+              x = %{member_details: %{id: id}} ->
+                case Map.get(args, :member_details) do
+                  nil -> x
+                  _ -> put_in(args, [:member_details, :id], id)
+                end
+              x -> x
             end
-          id -> 
-            result = Oas.Repo.get!(Oas.Members.Member, id)
-              |> Ecto.Changeset.cast(args, [:email, :name, :is_active, :is_reviewer, :is_admin, :bank_reference])
-              |> Ecto.Changeset.validate_required([:name, :email])
-              |> Oas.Members.Member.validate_email
-              |> Oas.Repo.update
-              |> OasWeb.Schema.SchemaUtils.handle_error
-            result
+            member |> Oas.Members.Member.changeset(attrs)
+        end        
+
+        result = toSave
+        
+        |> (&(case Map.get(args, :member_details) do
+          nil -> &1
+          _ -> Ecto.Changeset.cast_assoc(&1, :member_details)
+        end)).()
+        |> (&(case &1 do
+            %{data: %{id: nil}} -> Oas.Repo.insert(&1)
+            _ -> Oas.Repo.update(&1)
+          end)).()
+        |> OasWeb.Schema.SchemaUtils.handle_error()
+
+        case result do
+          {:error, error} -> {:error, error}
+          {:ok, result} -> {:ok, result}
         end
+
+        # OLD
+        # result = case Map.get(args, :id, nil) do
+        #   nil -> length = 12
+        #     password = :crypto.strong_rand_bytes(length) |> Base.encode64 |> binary_part(0, length)
+        #     attrs = Map.merge(%{password: password}, args)
+
+
+        #     case Oas.Members.register_member(Map.merge(%{password: password}, args)) do
+        #       {:ok, result} -> {:ok, Map.merge(result, %{password: password})}
+        #       errored -> OasWeb.Schema.SchemaUtils.handle_error(errored)
+        #     end
+        #   id -> 
+        #     result = Oas.Repo.get!(Oas.Members.Member, id)
+        #       |> Ecto.Changeset.cast(args, [:email, :name, :is_active, :is_reviewer, :is_admin, :bank_reference])
+        #       |> Ecto.Changeset.validate_required([:name, :email])
+        #       |> Oas.Members.Member.validate_email
+        #       |> Oas.Repo.update
+        #       |> OasWeb.Schema.SchemaUtils.handle_error
+        #     result
+        # end
       end
     end
 

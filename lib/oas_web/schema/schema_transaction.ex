@@ -185,8 +185,10 @@ defmodule OasWeb.Schema.SchemaTransaction do
       
         case result do
           {:error, error} -> {:error, error}
-          {:ok, result} -> # Adds tokens
+          {:ok, result} ->
+            # Adds tokens
             maybeDoTokens(args, result, when1)
+            # Adds membership
             maybeDoMembership(args, result)
 
             {:ok, result}

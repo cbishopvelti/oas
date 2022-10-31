@@ -7,8 +7,6 @@ defmodule Oas.Members.MemberDetails do
   
 
   schema "members_details" do
-    field :name, :string
-    field :email, :string
     field :phone, :string
     field :address, :string
     field :dob, :date

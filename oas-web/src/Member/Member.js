@@ -9,12 +9,15 @@ import {
   Switch,
   FormControlLabel
 } from "@mui/material"
-import { get } from "lodash";
+import { get, set, has } from "lodash";
 import { useMutation, gql, useQuery } from "@apollo/client";
 import { useParams, useNavigate } from 'react-router-dom';
+import { parseErrors } from '../utils/util';
+import { MemberDetails } from "./MemberDetails";
 
 export const Member = () => {
   const navigate = useNavigate();
+  const [editMemberDetails, setEditMemberDetails] = useState(false)
 
   let { id } = useParams();
   if ( id ) {
@@ -28,9 +31,20 @@ export const Member = () => {
         id,
         name,
         email,
+        bank_account_name,
         is_active,
         is_admin,
         is_reviewer
+        member_details {
+          phone,
+          address,
+          dob,
+          nok_name,
+          nok_email,
+          nok_phone,
+          nok_address,
+          agreed_to_tac
+        }
       }
     }
   `, {
@@ -77,17 +91,21 @@ export const Member = () => {
     $is_active: Boolean,
     $is_admin: Boolean,
     $is_reviewer: Boolean
+    $member_details: MemberDetailsArg
   ){
     member (
       id: $id, name: $name, email: $email,
       is_reviewer: $is_reviewer,
       is_active: $is_active,
-      is_admin: $is_admin
+      is_admin: $is_admin,
+      member_details: $member_details
     ) {
       id,
       password
     }
   }`)
+  const errors = parseErrors(error?.graphQLErrors)
+
   const save = (formData) => async () => {
     const { data } = await mutate({
       variables: formData
@@ -97,8 +115,6 @@ export const Member = () => {
   }
 
   if (get(mutationData, 'member.password')) {
-    // test@test.com
-    // fMYk7XxpsM6H
     console.info(
       "This members password is: ",
       get(mutationData, 'member.password')
@@ -108,7 +124,7 @@ export const Member = () => {
   return (
     <Box sx={{display: 'flex', flexWrap: 'wrap' }}>
       <Stack sx={{ width: '100%' }}>
-        {get(error, "graphQLErrors", []).map(({message}, i) => (
+        {errors.global?.map((message, i) => (
             <Alert key={i} sx={{m:2}} severity="error">{message}</Alert>
         ))}
       </Stack>
@@ -119,6 +135,8 @@ export const Member = () => {
           label="Email"
           value={get(formData, "email", '')}
           onChange={onChange({formData, setFormData, key: "email"})}
+          error={has(errors, "email")}
+          helperText={get(errors, "email", []).join(" ")}
         />
       </FormControl>
 
@@ -129,6 +147,18 @@ export const Member = () => {
           label="Name"
           value={get(formData, "name", '')}
           onChange={onChange({formData, setFormData, key: 'name'})}
+          error={has(errors, "name")}
+        helperText={get(errors, "name", []).join(" ")}
+        />
+      </FormControl>
+      <FormControl fullWidth sx={{m: 2}}>
+        <TextField
+          id="bank_account_name"
+          label="Bank Account Name"
+          value={get(formData, "bank_account_name", '') || ''}
+          onChange={onChange({formData, setFormData, key: 'bank_account_name'})}
+          error={has(errors, "bank_account_name")}
+        helperText={get(errors, "bank_account_name", []).join(" ")}
         />
       </FormControl>
       <FormControl fullWidth sx={{m:2}}>
@@ -154,6 +184,23 @@ export const Member = () => {
             }
             label="Is admin" />
       </FormControl>
+
+      <FormControl fullWidth sx={{m:2}}>
+        <FormControlLabel
+          control={
+            <Switch 
+              checked={editMemberDetails}
+              onChange={(event) => setEditMemberDetails(event.target.checked)}/>
+          }
+          label="Edit Member Details" />
+      </FormControl>
+
+      
+      {editMemberDetails && <MemberDetails
+        errors={errors}
+        setFormData={setFormData}
+        formData={formData} />}
+
       <FormControl fullWidth sx={{m: 2}}>
         <Button onClick={save(formData)}>Save</Button>
       </FormControl>
