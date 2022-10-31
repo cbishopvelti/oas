@@ -8,19 +8,18 @@ import {
   MenuItem,
   InputLabel,
   Button,
-  FormControlLabel,
-  Switch,
   Stack,
   Alert
 } from '@mui/material'
 import { createFilterOptions } from '@mui/material/Autocomplete';
-import { get, find, omit } from 'lodash'
+import { get, find, omit, has } from 'lodash'
 import * as moment from 'moment'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, gql, useMutation } from '@apollo/client';
 import { TransactionNewToken } from "./TransactionToken";
 import { Tokens } from './Tokens';
 import { TransactionTags } from './TransactionTags';
+import { TransactionMembershipPeriod } from './TransactionMembershipPeriod';
 
 
 
@@ -49,12 +48,15 @@ export const Transaction = () => {
         amount,
         bank_details,
         notes,
-        tokens {
-          id
-        },
         transaction_tags {
           id,
           name
+        },
+        tokens {
+          id
+        },
+        membership {
+          membership_period_id
         }
       }
     }
@@ -72,7 +74,11 @@ export const Transaction = () => {
   }, [id])
   useEffect(() => {
     if (get(data, "transaction")) {
-      setFormData(get(data, "transaction"));
+      
+      setFormData({
+        ...get(data, "transaction", {}),
+        ...(has(data, "transaction.membership.membership_period_id") ? { membership_period_id: get(data, "transaction.membership.membership_period_id")} : {})
+      });
     }
   }, [data])
   
@@ -109,8 +115,9 @@ export const Transaction = () => {
     $bank_details: String,
     $notes: String,
     $token_quantity: Int,
-    $token_value: Float
-    $transaction_tags: [TransactionTagArg]
+    $token_value: Float,
+    $transaction_tags: [TransactionTagArg],
+    $membership_period_id: Int
   ){
     transaction (
       id: $id,
@@ -124,7 +131,8 @@ export const Transaction = () => {
       notes: $notes,
       token_quantity: $token_quantity,
       token_value: $token_value,
-      transaction_tags: $transaction_tags
+      transaction_tags: $transaction_tags,
+      membership_period_id: $membership_period_id
     ) {
       id
     }
@@ -145,7 +153,7 @@ export const Transaction = () => {
       saveCount: get(formData, "saveCount", 0) + 1
     })
 
-    return; // DEBUG ONLY, remove
+    // return; // DEBUG ONLY, remove
 
     refetch()
     navigate(`/transaction/${get(data, 'transaction.id')}`)
@@ -176,7 +184,10 @@ export const Transaction = () => {
           type="date"
           onChange={
             onChange({formData, setFormData, key: "when"})
-          } />
+          }
+          InputLabelProps={{
+            shrink: true,
+          }} />
       </FormControl>
 
       <FormControl fullWidth sx={{m: 2}}>
@@ -277,13 +288,18 @@ export const Transaction = () => {
           multiline
           onChange={onChange({formData, setFormData, key: "notes"})}
           />
-
       </FormControl>
 
       <TransactionNewToken 
         formData={formData}
         setFormData={setFormData}
         id={id} />
+
+      <TransactionMembershipPeriod
+        formData={formData}
+        setFormData={setFormData}
+        id={id}
+      />
 
       <FormControl fullWidth sx={{m: 2}}>
         <Button onClick={save(formData)}>Save</Button>

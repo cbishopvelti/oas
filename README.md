@@ -17,7 +17,7 @@ docker run -it -d \
 -e DB_FILE=/dbs/qslite-dev.db \
 -e DOMAIN=.oxfordshireacrosociety.co.uk
 -v /Users/chris/playground/oas/dbs:/dbs \
--p 3999:3999 -p 4000:4000 \
+-p 3999:3999 -p 4000:4000 -p 3998:3998 \
 chrisjbishop155/oas:latest
 ```
 
@@ -34,13 +34,31 @@ chrisjbishop155/oas:latest
 
 ## Todo
 
-Make where a dropdown
 
 Add sending email
+- if in debt.
 
-Add transaction Tag
+Delete transaction
+- with confirmation
+- orphaned membership
+- orphaned tokens
+
+add not_transaction field to transactions
+- exclude from analysis.
 
 Import and infer transactions from bank statements
+
+Add membership list to:
+- Members
+- MembershipPeriod
+
+Delete membership (only if no transaction)
+
+add is valid member filter
+  - to training member drop down
+  - to transactions
+  - members list page (think about)
+
 
 Historic data
 - Add tokens without transactions
@@ -48,6 +66,7 @@ Historic data
 - Maybe clear all debt / write off
 - Attempt to import historic data (hard)
 
+Analysis, transaction not_transaction
 
 Backup
 
@@ -61,8 +80,10 @@ Booking
 Membership
 - gather requirements
 
-Track hall bookings
+Track bookings
 - gather requirements
 - look at import from bank statements
 
 Members can see their available tokens
+
+Filter transactions

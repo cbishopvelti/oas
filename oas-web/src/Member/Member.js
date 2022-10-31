@@ -13,7 +13,7 @@ import { get } from "lodash";
 import { useMutation, gql, useQuery } from "@apollo/client";
 import { useParams, useNavigate } from 'react-router-dom';
 
-export const NewMember = () => {
+export const Member = () => {
   const navigate = useNavigate();
 
   let { id } = useParams();
@@ -28,8 +28,9 @@ export const NewMember = () => {
         id,
         name,
         email,
-        is_member,
+        is_active,
         is_admin,
+        is_reviewer
       }
     }
   `, {
@@ -42,7 +43,7 @@ export const NewMember = () => {
   useEffect(() => {
     refetch()
     if (!id) {
-      setFormData({is_member: true})
+      setFormData({is_active: true})
     }
   }, [id])
   useEffect(() => {
@@ -57,7 +58,10 @@ export const NewMember = () => {
     if (isCheckbox) {
       setFormData({
         ...formData,
-        [key]: event.target.checked
+        [key]: event.target.checked,
+        ...(key == "is_admin" && event.target.checked ? {is_reviewer: false, is_active: true} : {}),
+        ...(key == "is_reviewer" && event.target.checked ? {is_admin: false, is_active: true} : {}),
+        ...(key === "is_active" && !event.target.checked ? {is_admin: false, is_reviewer: false} : {})
       })
       return;
     }
@@ -68,15 +72,20 @@ export const NewMember = () => {
     })
   }
 
-  const [mutate, {error}] = useMutation(gql`mutation (
+  const [mutate, {error, data: mutationData}] = useMutation(gql`mutation (
     $id: Int, $name: String!, $email: String!,
-    $is_member: Boolean, $is_admin: Boolean
+    $is_active: Boolean,
+    $is_admin: Boolean,
+    $is_reviewer: Boolean
   ){
-    new_member (
+    member (
       id: $id, name: $name, email: $email,
-      is_member: $is_member, is_admin: $is_admin
+      is_reviewer: $is_reviewer,
+      is_active: $is_active,
+      is_admin: $is_admin
     ) {
-      id
+      id,
+      password
     }
   }`)
   const save = (formData) => async () => {
@@ -84,7 +93,16 @@ export const NewMember = () => {
       variables: formData
     })
 
-    navigate(`/member/${get(data, 'new_member.id')}`);
+    navigate(`/member/${get(data, 'member.id')}`);
+  }
+
+  if (get(mutationData, 'member.password')) {
+    // test@test.com
+    // fMYk7XxpsM6H
+    console.info(
+      "This members password is: ",
+      get(mutationData, 'member.password')
+    );
   }
 
   return (
@@ -117,10 +135,17 @@ export const NewMember = () => {
         <FormControlLabel
             control={
               <Switch 
-                checked={get(formData, 'is_member', false) || false}
-                onChange={onChange({formData, setFormData, key: 'is_member', isCheckbox: true})}/>
+                checked={get(formData, 'is_active', false) || false}
+                onChange={onChange({formData, setFormData, key: 'is_active', isCheckbox: true})}/>
             }
-            label="Is member" />
+            label="Is active" />
+        <FormControlLabel
+            control={
+              <Switch 
+                checked={get(formData, 'is_reviewer', false) || false}
+                onChange={onChange({formData, setFormData, key: 'is_reviewer', isCheckbox: true})}/>
+            }
+            label="Is reviewer" />
         <FormControlLabel
             control={
               <Switch 

@@ -141,8 +141,12 @@ export const Training = () => {
           type="date"
           onChange={
             onChange({formData, setFormData, key: "when"})
-          } />
+          }
+          InputLabelProps={{
+            shrink: true,
+          }}/>
       </FormControl>
+      
 
       <FormControl fullWidth sx={{m: 2}}>
         <Button onClick={save(formData)}>Save</Button>

@@ -9,8 +9,12 @@ defmodule Oas.Members.Member do
     field :hashed_password, :string, redact: true
     field :confirmed_at, :naive_datetime
     field :is_admin, :boolean
-    field :is_member, :boolean
+    field :is_reviewer, :boolean
+    field :is_active, :boolean
+    field :bank_reference, :string
     has_many :attendance, Oas.Trainings.Attendance
+
+    has_one :member_details, Oas.Members.MemberDetails
 
     timestamps()
   end
@@ -34,7 +38,7 @@ defmodule Oas.Members.Member do
   """
   def registration_changeset(member, attrs, opts \\ []) do
     member
-    |> cast(attrs, [:email, :password, :name, :is_member, :is_admin])
+    |> cast(attrs, [:email, :password, :name, :is_active, :is_admin, :is_reviewer, :bank_reference])
     |> validate_required([:name])
     |> validate_email()
     |> validate_password(opts)

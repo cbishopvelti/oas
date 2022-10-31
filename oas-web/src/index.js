@@ -12,13 +12,15 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment';
 
 import { Members } from './Member/Members';
-import { NewMember } from './Member/NewMember';
+import { Member } from './Member/Member';
 import { Transaction } from './Money/Transaction';
 import { Transactions } from './Money/Transactions';
 import { Training } from './Training/Training';
 import { Trainings } from './Training/Trainings';
 import { MemberTokens } from './Member/MemberTokens';
 import { Analysis } from './Analysis/Analysis';
+import { MembershipPeriod } from './MembershipPeriod/MembershipPeriod';
+import { MembershipPeriods } from './MembershipPeriod/MembershipPeriods';
 
 
 const router = createBrowserRouter([
@@ -37,12 +39,12 @@ const router = createBrowserRouter([
         element: <Members />
       },
       {
-        path: "new-member",
-        element: <NewMember />
+        path: "member",
+        element: <Member />
       }, {
         id: "member-id",
         path: "member/:id",
-        element: <NewMember />
+        element: <Member />
       },
       {
         id: "transaction-id",
@@ -75,6 +77,21 @@ const router = createBrowserRouter([
         id: "trainings",
         path: "trainings",
         element: <Trainings />
+      },
+      {
+        id: "membership-period-id",
+        path: "membership-period/:id",
+        element: <MembershipPeriod />
+      },
+      {
+        id: "membership-period",
+        path: "membership-period",
+        element: <MembershipPeriod />
+      },
+      {
+        id: "membership-periods",
+        path: "membership-periods",
+        element: <MembershipPeriods />
       }
     ],
   },
