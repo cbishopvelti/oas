@@ -27,14 +27,28 @@ defmodule Oas.Repo.Migrations.CreateSchema do
 
     # EO Transactions
 
+    # Membership
 
-    create table(:membership) do
-      add :transaction_id, references(:transactions, on_delete: :restrict), null: true
-      add :member_id, references(:members, on_delete: :restrict), null: false
-      add :expires_on, :date, null: true
-      add :notes, :string
+    create table(:membership_periods) do
+      add :name, :string, null: false
+      add :from, :date, null: false
+      add :to, :date, null: false
+      add :value, :decimal, null: false
+
       timestamps()
     end
+
+    create table(:memberships) do
+      add :transaction_id, references(:transactions, on_delete: :restrict), null: true
+      add :member_id, references(:members, on_delete: :restrict), null: false
+      add :membership_period_id, references(:membership_periods, on_delete: :restrict), null: false
+
+      add :notes, :string, null: true
+      timestamps()
+    end
+
+
+    # EO Membership
 
     # TRAININGS
     create table(:training_where) do

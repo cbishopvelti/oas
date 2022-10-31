@@ -11,7 +11,8 @@ import {
 import {
   MemberLink,
   TrainingsLink,
-  TransactionLink
+  TransactionLink,
+  MembershipPeriodLink
 } from './Links';
 import { useEffect } from 'react';
 import { get } from 'lodash';
@@ -32,7 +33,7 @@ function App() {
     <div className="App">
       <div>
         <MenuList>
-          <MenuItem component={NavLink} to={`/new-member`}>
+          <MenuItem component={NavLink} end to={`/member`}>
             <ListItemText>New Member</ListItemText>
           </MenuItem>
           <MenuItem component={MemberLink} to={`/members`}>
@@ -57,6 +58,13 @@ function App() {
           <MenuItem component={NavLink} end to="/">
             <ListItemText>Analysis</ListItemText>
           </MenuItem>
+          <MenuItem component={NavLink} end to="/membership-period">
+            New Membership Period
+          </MenuItem>
+          <MenuItem component={MembershipPeriodLink} to="/membership-periods">
+            Membership Periods
+          </MenuItem>
+
           <Divider />
           {!!get(data, "user") && [<ListItem key="1">
             <ListItemText>

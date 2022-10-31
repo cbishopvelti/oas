@@ -14,7 +14,7 @@ const onChange = ({formData, setFormData, key}) => (event) => {
 
 export const Analysis = () => {
   const [filterData, setFilterData ] = useState({
-    from: moment().subtract(6, 'month').format("YYYY-MM-DD"),
+    from: moment().subtract(1, 'year').format("YYYY-MM-DD"),
     to: moment().format("YYYY-MM-DD")
   });
 
@@ -44,16 +44,22 @@ export const Analysis = () => {
           type="date"
           value={get(filterData, "from")}
           onChange={onChange({formData: filterData, setFormData: setFilterData, key: "from"})}
+          InputLabelProps={{
+            shrink: true,
+          }}
         />
       </FormControl>
       <FormControl sx={{m: 2, minWidth: 256}}>
         <TextField
           required
-          id="from"
-          label="From"
+          id="to"
+          label="To"
           type="date"
           value={get(filterData, "to")}
           onChange={onChange({formData: filterData, setFormData: setFilterData, key: "to"})}
+          InputLabelProps={{
+            shrink: true,
+          }}
         />
       </FormControl>
     </Box>

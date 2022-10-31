@@ -6,6 +6,9 @@ import reportWebVitals from './reportWebVitals';
 import { RouterProvider, createBrowserRouter } from 'react-router-dom';
 import { Home } from './Home/Home';
 import { MembershipInfo } from './Members/Info'
+import { MembershipForm } from './Members/MembershipForm';
+import { ApolloClient, InMemoryCache, ApolloProvider, gql } from '@apollo/client';
+
 
 const router = createBrowserRouter([
   {
@@ -20,17 +23,28 @@ const router = createBrowserRouter([
       {
         path: "membership-info",
         element: <MembershipInfo />
+      }, {
+        path: "register",
+        element: <MembershipForm />
       }
     ],
   },
 ]);
 
+const client = new ApolloClient({
+  // uri: 'http://localhost:3998/',
+  uri: `${process.env["REACT_APP_PUBLIC_URL"]}/api/graphql`,
+  cache: new InMemoryCache(),
+});
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <RouterProvider router={router}>
-      <App />
-    </RouterProvider>
+    <ApolloProvider client={client}>
+      <RouterProvider router={router}>
+        <App />
+      </RouterProvider>
+    </ApolloProvider>
   </React.StrictMode>
 );
 

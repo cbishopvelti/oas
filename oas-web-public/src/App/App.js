@@ -21,9 +21,12 @@ function App() {
             <MenuItem component={NavLink} to={`/membership-info`}>
               <ListItemText>Member's Info</ListItemText>
             </MenuItem>
+            <MenuItem component={NavLink} to={'/register'}>
+              <ListItemText>Register</ListItemText>
+            </MenuItem>
           </MenuList>
         </div>
-        <Box className="content" m={2}>
+        <Box className="content" p={2}>
           <Outlet />
         </Box>
       </div>

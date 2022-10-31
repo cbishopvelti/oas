@@ -12,6 +12,12 @@ defmodule OasWeb.Schema.SchemaTransaction do
     field :name, :string
   end
 
+  object :membership do
+    field :id, :integer
+    field :transaction_id, :integer
+    field :membership_period_id, :integer
+  end
+
   object :transaction do
     field :id, :integer
     field :what, :string
@@ -24,6 +30,7 @@ defmodule OasWeb.Schema.SchemaTransaction do
     field :amount, :string
     field :tokens, list_of(:token)
     field :transaction_tags, list_of(:transaction_tag)
+    field :membership, :membership
   end
 
   object :transaction_queries do
@@ -37,7 +44,10 @@ defmodule OasWeb.Schema.SchemaTransaction do
     field :transaction, :transaction do
       arg :id, :integer
       resolve fn _, %{id: id}, _ ->
-        transaction = Oas.Repo.get!(Oas.Transactions.Transaction, id) |> Oas.Repo.preload(:transaction_tags)
+        transaction = Oas.Repo.get!(Oas.Transactions.Transaction, id)
+        |> Oas.Repo.preload(:transaction_tags)
+        |> Oas.Repo.preload(:membership)
+
         {:ok, transaction}
       end
     end
@@ -46,6 +56,57 @@ defmodule OasWeb.Schema.SchemaTransaction do
         result = Oas.Repo.all(from(t in Oas.Transactions.TransactionTags, select: t))
         {:ok, result}
       end
+    end
+  end
+
+  defp maybeDoTokens(args, result, when1) do
+    if (Map.has_key?(args, :token_quantity) and !Map.has_key?(args, :id)) do
+      Oas.Attendance.add_tokens(%{
+        member_id: args.who_member_id,
+        transaction_id: result.id,
+        quantity: args.token_quantity,
+        value: args.token_value,
+        when1: when1
+      })
+    end
+  end
+  
+  
+  defp maybeDoMembership(
+    args = %{
+      membership_period_id: membership_period_id
+    },
+    result = %{
+      id: id,
+      who_member_id: member_id
+    }
+  ) do
+    membershipPeriod = Oas.Repo.get!(Oas.Members.MembershipPeriod, membership_period_id)
+
+    membership = from(m in Oas.Members.Membership, where: 
+      m.transaction_id == ^id
+    ) |> Oas.Repo.one
+    |> case do
+      nil -> %Oas.Members.Membership{
+        transaction_id: id,
+        member_id: member_id,
+        membership_period_id: membership_period_id
+      }
+      membership -> membership
+    end
+    |> Ecto.Changeset.cast(args, [:membership_period_id])
+    |> (&(case &1 do
+      %{data: %{id: nil}} -> Oas.Repo.insert(&1)
+      %{data: %{id: id}} -> Oas.Repo.update(&1)
+    end)).()
+  end
+  defp maybeDoMembership(args, result) do
+    if (!Map.has_key?(args, :membership_period_id)) do
+      result
+        |> Oas.Repo.preload(:membership)
+        |> Ecto.Changeset.cast(%{}, [])
+        |> Ecto.Changeset.put_assoc(:membership, nil)
+        |> Oas.Repo.update
     end
   end
 
@@ -64,21 +125,19 @@ defmodule OasWeb.Schema.SchemaTransaction do
       arg :token_quantity, :integer
       arg :token_value, :float
       arg :transaction_tags, list_of(:transaction_tag_arg)
+      arg :membership_period_id, :integer
       resolve fn _parent, args, context ->
         when1 = Date.from_iso8601!(args.when)
         args = %{args | when: when1}
 
         doTransactionTags = fn (changeset) -> 
-          IO.puts("001")
           case args do
             %{transaction_tags: transaction_tags} -> 
-              IO.puts("002")
               transaction_tags = transaction_tags
                 |> Enum.map(fn
                   %{id: id} -> Oas.Repo.get!(Oas.Transactions.TransactionTags, id)
                   rest -> rest
                 end)
-              IO.inspect(transaction_tags)
               out = Ecto.Changeset.put_assoc(changeset, :transaction_tags, transaction_tags)
               out
             _ -> changeset
@@ -89,8 +148,8 @@ defmodule OasWeb.Schema.SchemaTransaction do
           nil -> %Oas.Transactions.Transaction{}
           id -> Oas.Repo.get!(Oas.Transactions.Transaction, id) |> Oas.Repo.preload(:transaction_tags)
         end
-          |> Oas.Transactions.Transaction.changeset(args)
-          |> doTransactionTags.()
+        |> Oas.Transactions.Transaction.changeset(args)
+        |> doTransactionTags.()
 
         result = toSave
           |> (&(case &1 do
@@ -122,16 +181,9 @@ defmodule OasWeb.Schema.SchemaTransaction do
       
         case result do
           {:error, error} -> {:error, error}
-          {:ok, result} ->
-            if (Map.has_key?(args, :token_quantity) and !Map.has_key?(args, :id)) do
-              Oas.Attendance.add_tokens(%{
-                member_id: args.who_member_id,
-                transaction_id: result.id,
-                quantity: args.token_quantity,
-                value: args.token_value,
-                when1: when1
-              })
-            end
+          {:ok, result} -> # Adds tokens
+            maybeDoTokens(args, result, when1)
+            maybeDoMembership(args, result)
 
             {:ok, result}
         end

@@ -34,11 +34,10 @@ export const Members = () => {
       show_all: filterData.show_all
     }
   });
-  members = get(members, "members", [])
+  members = get(members, "members", []) || []
   useEffect(() => {
     refetch()
   }, [filterData])
-
 
   return <div>
     <Box>
