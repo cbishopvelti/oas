@@ -7,7 +7,9 @@ defmodule Oas.Repo.Migrations.CreateSchema do
       add :what, :string, null: false
       add :when, :date, null: false
       add :who_member_id, references(:members, on_delete: :restrict), null: true
-      add :who, :string, null: true
+      add :who, :string, null: false
+      add :their_reference, :string, null: true
+      add :my_reference, :string, null: false
       add :type, :string, null: false
       add :amount, :decimal, null: false
       add :notes, :string

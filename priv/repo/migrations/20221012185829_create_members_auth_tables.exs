@@ -10,7 +10,6 @@ defmodule Oas.Repo.Migrations.CreateMembersAuthTables do
       add :is_admin, :boolean
       add :is_reviewer, :boolean
       add :is_active, :boolean # Can they use the site
-      add :bank_reference, :string, null: true
       add :bank_account_name, :string, null: true
 
       timestamps()
