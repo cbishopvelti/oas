@@ -31,6 +31,8 @@ defmodule OasWeb.Schema.SchemaTransaction do
     field :tokens, list_of(:token)
     field :transaction_tags, list_of(:transaction_tag)
     field :membership, :membership
+    field :their_reference, :string
+    field :my_reference, :string
   end
 
   object :transaction_queries do
@@ -54,7 +56,7 @@ defmodule OasWeb.Schema.SchemaTransaction do
     field :transaction_tags, list_of(:transaction_tag) do
       resolve fn _, _, _ ->
         result = Oas.Repo.all(from(t in Oas.Transactions.TransactionTags, select: t))
-        {:ok, result}
+        {:ok, result || []}
       end
     end
   end
@@ -126,6 +128,8 @@ defmodule OasWeb.Schema.SchemaTransaction do
       arg :token_value, :float
       arg :transaction_tags, list_of(:transaction_tag_arg)
       arg :membership_period_id, :integer
+      arg :their_reference, :string
+      arg :my_reference, non_null(:string)
       resolve fn _parent, args, context ->
         when1 = Date.from_iso8601!(args.when)
         args = %{args | when: when1}

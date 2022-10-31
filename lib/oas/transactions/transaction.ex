@@ -8,6 +8,8 @@ defmodule Oas.Transactions.Transaction do
     field :who, :string
     belongs_to :member, Oas.Members.Member, foreign_key: :who_member_id
     field :type, :string
+    field :their_reference, :string
+    field :my_reference, :string
     field :amount, :decimal
     many_to_many :transaction_tags, Oas.Transactions.TransactionTags,
       join_through: "transaction_transaction_tags", join_keys: [transaction_id: :id, transaction_tag_id: :id], on_replace: :delete
@@ -39,7 +41,7 @@ defmodule Oas.Transactions.Transaction do
 
   def changeset(transaction, params \\ %{}) do
     transaction
-    |> cast(params, [:what, :when, :who, :who_member_id, :type, :amount, :bank_details, :notes])
+    |> cast(params, [:what, :when, :who, :who_member_id, :type, :amount, :bank_details, :notes, :their_reference, :my_reference])
     |> validate_required([:what, :when, :who, :type, :amount])
     |> validate_type
     |> validate_amount

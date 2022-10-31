@@ -2,9 +2,9 @@ defmodule OasWeb.Schema.SchemaUtils do
 
   def handle_error(result) do
 
-
     case result do
-      {:error, %{errors: errors}} -> 
+      {:error, %{errors: errors}} ->
+
         outError = errors
         |> Enum.map(fn {key, {value, _}} ->
           message = Atom.to_string(key) <> ": " <> value

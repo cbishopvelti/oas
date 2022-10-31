@@ -30,7 +30,7 @@ export const TransactionTags = ({
     id="transactionTags"
     value={get(formData, "transaction_tags") || (!transaction_tags.length && transaction_tags) || []}
     options={(transaction_tags).map(({name, id}) => ({ label: name, id, name }))}
-    renderInput={(params) => <TextField {...params} required label="Tags" />}
+    renderInput={(params) => <TextField {...params} label="Tags" />}
     multiple
     freeSolo={!filterMode}
     selectOnFocus

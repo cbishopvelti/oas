@@ -20,8 +20,7 @@ import { TransactionNewToken } from "./TransactionToken";
 import { Tokens } from './Tokens';
 import { TransactionTags } from './TransactionTags';
 import { TransactionMembershipPeriod } from './TransactionMembershipPeriod';
-
-
+import { parseErrors } from '../utils/util';
 
 export const Transaction = () => {
   const navigate = useNavigate();
@@ -48,6 +47,8 @@ export const Transaction = () => {
         amount,
         bank_details,
         notes,
+        their_reference,
+        my_reference,
         transaction_tags {
           id,
           name
@@ -81,6 +82,13 @@ export const Transaction = () => {
       });
     }
   }, [data])
+  useEffect(() => {
+    if (formData.type === "INCOMING") {
+      setFormData({
+        ...omit(formData, 'their_reference'),
+      })
+    }
+  }, [formData.type])
   
 
   let { data: membersData, refetch: refetechMembers } = useQuery(gql`query {
@@ -117,7 +125,9 @@ export const Transaction = () => {
     $token_quantity: Int,
     $token_value: Float,
     $transaction_tags: [TransactionTagArg],
-    $membership_period_id: Int
+    $membership_period_id: Int,
+    $their_reference: String
+    $my_reference: String!
   ){
     transaction (
       id: $id,
@@ -132,11 +142,14 @@ export const Transaction = () => {
       token_quantity: $token_quantity,
       token_value: $token_value,
       transaction_tags: $transaction_tags,
-      membership_period_id: $membership_period_id
+      membership_period_id: $membership_period_id,
+      their_reference: $their_reference,
+      my_reference: $my_reference
     ) {
       id
     }
   }`)
+  const errors = parseErrors(error?.graphQLErrors);
   const save = (formData) => async () => {
     formData = omit(formData, "training_tags.__typename");
     const { data } = await mutate({
@@ -162,7 +175,7 @@ export const Transaction = () => {
   return <>
     <Box sx={{display: 'flex', flexWrap: 'wrap' }}>
       <Stack sx={{ width: '100%' }}>
-        {get(error, "graphQLErrors", []).map(({message}, i) => (
+        {errors.global?.map((message, i) => (
           <Alert key={i} sx={{m:2}} severity="error">{message}</Alert>
         ))}
       </Stack>
@@ -173,6 +186,8 @@ export const Transaction = () => {
           label="What"
           value={get(formData, "what", '')}
           onChange={onChange({formData, setFormData, key: "what"})}
+          error={has(errors, "what")}
+          helperText={get(errors, "what", []).join(' ')}
         />
       </FormControl>
       <FormControl fullWidth sx={{m: 2}}>
@@ -187,7 +202,10 @@ export const Transaction = () => {
           }
           InputLabelProps={{
             shrink: true,
-          }} />
+          }}
+          error={has(errors, "when")}
+          helperText={get(errors, "when", []).join(' ')}
+          />
       </FormControl>
 
       <FormControl fullWidth sx={{m: 2}}>
@@ -197,7 +215,14 @@ export const Transaction = () => {
             required
             value={formData.who || find(members, ({id}) => id === formData.who_member_id)?.name || ''}
             options={members.map(({name, id}) => ({label: name, who_member_id: id }))}
-            renderInput={(params) => <TextField {...params} label="Who" required />}
+            renderInput={(params) => <TextField
+              {...params}
+              label="Who"
+              required
+              error={has(errors, "who") || has(errors, "who_member_id")}
+              helperText={[...get(errors, "who", []), get(errors, "who_member_id", [])].join(' ')}
+              />
+            }
             filterOptions={(options, params) => {
 
               const filtered = filter(options, params);
@@ -248,10 +273,33 @@ export const Transaction = () => {
           required
           onChange={onChange({formData, setFormData, key: "type"})}
           value={get(formData, "type", '')}
+          error={has(errors, "type")}
         >
           <MenuItem value={'INCOMING'}>Incoming</MenuItem>
           <MenuItem value={'OUTGOING'}>Outgoing</MenuItem>
         </Select>
+      </FormControl>
+
+      <FormControl fullWidth sx={{m:2, display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: 2, flexDirection: 'row'}}>
+        {(get(formData, 'type') == 'OUTGOING') && <TextField
+          sx={{flexGrow: 1}}
+          label="Their Reference"
+          value={get(formData, "their_reference", '')}
+          required
+          onChange={onChange({formData, setFormData, key: 'their_reference'})}
+          error={has(errors, "their_reference")}
+          helperText={get(errors, "their_reference", []).join(' ')}
+          />}
+
+        <TextField
+          sx={{flexGrow: 1}}
+          label={`${((get(formData, 'type') === 'OUTGOING') ? 'My' : 'Received')} Reference`}
+          value={get(formData, "my_reference", '')}
+          required
+          onChange={onChange({formData, setFormData, key: "my_reference"})}
+          error={has(errors, "my_reference")}
+          helperText={get(errors, "my_reference", []).join(' ')}
+          />
       </FormControl>
 
       <FormControl fullWidth sx={{m: 2}}>
@@ -261,6 +309,8 @@ export const Transaction = () => {
           type="number"
           required
           onChange={onChange({formData, setFormData, key: "amount"})}
+          error={has(errors, "amount")}
+          helperText={get(errors, "amount", []).join(' ')}
         />
       </FormControl>
 
@@ -277,6 +327,8 @@ export const Transaction = () => {
           value={get(formData, "bank_details", '') || ''}
           multiline
           onChange={onChange({formData, setFormData, key: "bank_details"})}
+          error={has(errors, "bank_details")}
+          helperText={get(errors, "bank_details", []).join(' ')}
           />
 
       </FormControl>
@@ -287,6 +339,8 @@ export const Transaction = () => {
           value={get(formData, "notes", '') || ''}
           multiline
           onChange={onChange({formData, setFormData, key: "notes"})}
+          error={has(errors, "notes")}
+          helperText={get(errors, "notes", []).join(' ')}
           />
       </FormControl>
 
