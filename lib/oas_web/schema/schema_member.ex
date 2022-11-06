@@ -112,7 +112,7 @@ defmodule OasWeb.Schema.SchemaMember do
       arg :id, :integer
       arg :name, non_null(:string)
       arg :email, non_null(:string)
-      arg :bank_reference, :string
+      arg :bank_account_name, :string
       arg :is_active, :boolean
       arg :is_reviewer, :boolean
       arg :is_admin, :boolean
@@ -131,10 +131,10 @@ defmodule OasWeb.Schema.SchemaMember do
             attrs = case member do
               x = %{member_details: %{id: id}} ->
                 case Map.get(args, :member_details) do
-                  nil -> x
+                  nil -> args
                   _ -> put_in(args, [:member_details, :id], id)
                 end
-              x -> x
+              x -> args
             end
             member |> Oas.Members.Member.changeset(attrs)
         end        
@@ -214,7 +214,6 @@ defmodule OasWeb.Schema.SchemaMember do
     field :public_register, :success do
       arg :name, non_null(:string)
       arg :email, non_null(:string)
-      arg :bank_reference, :string
       arg :member_details, non_null(:member_details_arg)
       resolve fn _, args, _ ->
         length=12
