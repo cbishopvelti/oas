@@ -1,16 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useQuery, gql } from "@apollo/client";
-import { find, get } from "lodash";
+import { find, get, has } from "lodash";
 import { Autocomplete, TextField, createFilterOptions } from '@mui/material'
 
 
 export const TrainingWhere = ({
   formData,
-  setFormData
+  setFormData,
+  errors
 }) => {
-  // const [formData, setFormData ] = useState({})
-  console.log("003", formData);
-
   const filter = createFilterOptions();
 
   const { data, refetch } = useQuery(gql`
@@ -33,7 +31,13 @@ export const TrainingWhere = ({
     required
     value={get(formData, 'training_where.name')  || ''}
     options={trainingWhere.map(({name, id}) => ({label: name, name, id }))}
-    renderInput={(params) => <TextField {...params} label="Where" required />}
+    renderInput={(params) => <TextField
+      {...params}
+      label="Where"
+      required
+      error={has(errors, "training_where")}
+      helperText={get(errors, "training_where", []).join(" ")}
+      />}
     filterOptions={(options, params) => {
 
       const filtered = filter(options, params);
