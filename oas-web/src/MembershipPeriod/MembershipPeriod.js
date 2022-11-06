@@ -7,10 +7,11 @@ import {
   Stack,
   Alert
 } from '@mui/material'
-import { get } from 'lodash'
+import { get, has } from 'lodash'
 import * as moment from 'moment'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, gql, useMutation, from } from '@apollo/client';
+import { parseErrors } from '../utils/util'
 
 
 const onChange = ({formData, setFormData, key}) => (event) => {
@@ -90,27 +91,31 @@ export const MembershipPeriod = () => {
     navigate(`/membership-period/${get(data, 'membership_period.id')}`);
   }
 
+  const errors = parseErrors(error?.graphQLErrors);
+
   return (
     <Box sx={{display: 'flex', flexWrap: 'wrap' }}>
       <Stack sx={{ width: '100%' }}>
-        {get(error, "graphQLErrors", []).map(({message}, i) => (
+        {errors.global?.map((message, i) => (
             <Alert key={i} sx={{m:2}} severity="error">{message}</Alert>
         ))}
       </Stack>
       <FormControl fullWidth sx={{m: 2}}>
         <TextField
-            required
-            id="from"
-            label="From"
-            value={get(formData, "from", '')}
-            type="date"
-            onChange={
-              onChange({formData, setFormData, key: "from"})
-            }
-            InputLabelProps={{
-              shrink: true,
-            }}
-             />
+          required
+          id="from"
+          label="From"
+          value={get(formData, "from", '')}
+          type="date"
+          onChange={
+            onChange({formData, setFormData, key: "from"})
+          }
+          InputLabelProps={{
+            shrink: true,
+          }}
+          error={has(errors, "from")}
+          helperText={get(errors, "from", []).join(" ")}
+          />
       </FormControl>
 
       <FormControl fullWidth sx={{m: 2}}>
@@ -126,6 +131,8 @@ export const MembershipPeriod = () => {
             InputLabelProps={{
               shrink: true,
             }}
+            error={has(errors, "to")}
+            helperText={get(errors, "to", []).join(" ")}
             />
       </FormControl>
       <FormControl fullWidth sx={{m: 2}}>
@@ -135,6 +142,8 @@ export const MembershipPeriod = () => {
           label="Name"
           value={get(formData, "name", '')}
           onChange={onChange({formData, setFormData, key: "name"})}
+          error={has(errors, "name")}
+          helperText={get(errors, "name", []).join(" ")}
           />
       </FormControl>
       <FormControl fullWidth sx={{m: 2}}>
@@ -145,6 +154,8 @@ export const MembershipPeriod = () => {
           value={get(formData, "value", '')}
           type="number"
           onChange={onChange({formData, setFormData, key: "value"})}
+          error={has(errors, "value")}
+          helperText={get(errors, "value", []).join(" ")}
           />
       </FormControl>
 
