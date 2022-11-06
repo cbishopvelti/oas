@@ -44,7 +44,7 @@ Delete transaction
 - orphaned tokens
 
 add not_transaction field to transactions
-- exclude from analysis.
+- excluded/treated_differently from analysis.
 
 Import and infer transactions from bank statements
 
