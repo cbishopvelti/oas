@@ -2,11 +2,12 @@ import { gql, useQuery, useMutation } from "@apollo/client";
 import { FormControl, TextField, Box, Button, Stack, Alert, Autocomplete } from "@mui/material";
 import { useEffect, useState } from "react";
 import moment from "moment";
-import { get, omit } from 'lodash'
+import { get, omit, has } from 'lodash'
 import { useNavigate, useParams } from "react-router-dom";
 import { TrainingAttendance } from "./TrainingAttendance";
 import { TrainingTags } from "./TrainingTags";
 import { TrainingWhere } from "./TrainingWhere";
+import { parseErrors } from "../utils/util";
 
 
 export const Training = () => {
@@ -43,7 +44,6 @@ export const Training = () => {
     training_tags: []
   }
   const [formData, setFormData] = useState(defaultData);
-  // console.log("004 render formData", formData)
 
   useEffect(() => {
     if (!id) {
@@ -92,7 +92,6 @@ export const Training = () => {
 
   const save = (formData) => async () => {
     if (!formData.id) {
-      console.log("002", formData);
       const { data } = await insertMutation({
         variables: {
           ...omit(formData, ["training_tags.__typename", "training_where.__typename"])
@@ -101,7 +100,6 @@ export const Training = () => {
 
       navigate(`/training/${get(data, "insert_training.id")}`)
     } else if (formData.id) {
-      console.log("002.2", formData)
       const { data } = await updateMutation({
         variables: {
           ...omit(formData, ["training_tags.__typename", "training_where.__typename"])
@@ -114,17 +112,24 @@ export const Training = () => {
     })
   }
 
+  const errors = parseErrors([
+    ...get(error1, "graphQLErrors", []),
+    ...get(error2, "graphQLErrors", [])
+  ]);
+
   return <div>
     <Box sx={{display: 'flex', flexWrap: 'wrap' }}>
       <Stack sx={{ width: '100%' }}>
-        {[...get(error1, "graphQLErrors", []), ...get(error2, "graphQLErrors", [])].map(({message}, i) => (
-            <Alert key={i} sx={{m:2}} severity="error">{message}</Alert>
+        {errors.global?.map((message, i) => (
+          <Alert key={i} sx={{m:2}} severity="error">{message}</Alert>
         ))}
       </Stack>
       <FormControl fullWidth sx={{m: 2}}>
         <TrainingWhere
           formData={formData}
-          setFormData={setFormData} />
+          setFormData={setFormData}
+          errors={errors}
+          />
       </FormControl>
       {/* <FormControl fullWidth sx={{m: 2}}>
         <TrainingTags 
@@ -144,7 +149,10 @@ export const Training = () => {
           }
           InputLabelProps={{
             shrink: true,
-          }}/>
+          }}
+          error={has(errors, "training_where")}
+          helperText={get(errors, "training_where", []).join(" ")}
+          />
       </FormControl>
       
 
