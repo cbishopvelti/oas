@@ -4,7 +4,6 @@ import { FormControl, FormControlLabel, Switch, TextField, Box, Button } from '@
 import { gql, useMutation } from '@apollo/client';
 
 const onChange = ({formData, setFormData, key}) => (event) => {
-  console.log('001', event)
   setFormData({
     ...formData,
     [key]: !event.target.value ? undefined : event.target.value

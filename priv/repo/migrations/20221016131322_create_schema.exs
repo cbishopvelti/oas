@@ -14,6 +14,7 @@ defmodule Oas.Repo.Migrations.CreateSchema do
       add :amount, :decimal, null: false
       add :notes, :string
       add :bank_details, :string
+      add :not_transaction, :boolean
       timestamps()
     end
 
