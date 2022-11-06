@@ -148,7 +148,7 @@ export const Member = () => {
           value={get(formData, "name", '')}
           onChange={onChange({formData, setFormData, key: 'name'})}
           error={has(errors, "name")}
-        helperText={get(errors, "name", []).join(" ")}
+          helperText={get(errors, "name", []).join(" ")}
         />
       </FormControl>
       <FormControl fullWidth sx={{m: 2}}>
@@ -158,7 +158,7 @@ export const Member = () => {
           value={get(formData, "bank_account_name", '') || ''}
           onChange={onChange({formData, setFormData, key: 'bank_account_name'})}
           error={has(errors, "bank_account_name")}
-        helperText={get(errors, "bank_account_name", []).join(" ")}
+          helperText={get(errors, "bank_account_name", []).join(" ")}
         />
       </FormControl>
       <FormControl fullWidth sx={{m:2}}>
