@@ -8,6 +8,7 @@ import { Home } from './Home/Home';
 import { MembershipInfo } from './Members/Info'
 import { MembershipForm } from './Members/MembershipForm';
 import { ApolloClient, InMemoryCache, ApolloProvider, gql } from '@apollo/client';
+import { MembershipSuccess } from './Members/MembershipSuccess';
 
 
 const router = createBrowserRouter([
@@ -26,6 +27,9 @@ const router = createBrowserRouter([
       }, {
         path: "register",
         element: <MembershipForm />
+      }, {
+        path: "register/success",
+        element: <MembershipSuccess />
       }
     ],
   },

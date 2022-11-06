@@ -13,6 +13,7 @@ import {
 } from "@mui/material"
 import { get, setWith, clone, find, snakeCase, has } from 'lodash'
 import { useMutation, gql} from '@apollo/client'
+import { useNavigate } from 'react-router-dom'
 
 const onChange = ({formData, setFormData, isCheckbox, key}) => (event) => {
   let value = event.target.value
@@ -61,11 +62,12 @@ const parseErrors = (errors) => {
 export const MembershipForm = () => {
   const defaultFormData = {member_details: {}};
   const [formData, setFormData] = useState(defaultFormData);
+  const navigate = useNavigate();
 
 
   const [mutation, { error }] = useMutation(gql`
-    mutation ($name: String!, $email: String!, $bank_reference: String, $member_details: MemberDetailsArg!) {
-      public_register (name: $name, email: $email, bank_reference: $bank_reference, member_details: $member_details) {
+    mutation ($name: String!, $email: String!, $member_details: MemberDetailsArg!) {
+      public_register (name: $name, email: $email, member_details: $member_details) {
         success
       }
     }
@@ -77,6 +79,8 @@ export const MembershipForm = () => {
     await mutation({
       variables: formData
     })
+
+    navigate('/register/success');
   }
 
   return <Stack spacing={2}>
