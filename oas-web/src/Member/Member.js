@@ -9,7 +9,7 @@ import {
   Switch,
   FormControlLabel
 } from "@mui/material"
-import { get, set, has } from "lodash";
+import { get, omit, has } from "lodash";
 import { useMutation, gql, useQuery } from "@apollo/client";
 import { useParams, useNavigate } from 'react-router-dom';
 import { parseErrors } from '../utils/util';
@@ -90,15 +90,17 @@ export const Member = () => {
     $id: Int, $name: String!, $email: String!,
     $is_active: Boolean,
     $is_admin: Boolean,
-    $is_reviewer: Boolean
-    $member_details: MemberDetailsArg
+    $is_reviewer: Boolean,
+    $member_details: MemberDetailsArg,
+    $bank_account_name: String
   ){
     member (
       id: $id, name: $name, email: $email,
       is_reviewer: $is_reviewer,
       is_active: $is_active,
       is_admin: $is_admin,
-      member_details: $member_details
+      member_details: $member_details,
+      bank_account_name: $bank_account_name
     ) {
       id,
       password
@@ -108,7 +110,7 @@ export const Member = () => {
 
   const save = (formData) => async () => {
     const { data } = await mutate({
-      variables: formData
+      variables: omit(formData, 'member_details.__typename')
     })
 
     navigate(`/member/${get(data, 'member.id')}`);

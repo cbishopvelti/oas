@@ -111,7 +111,8 @@ export const MemberDetails = ({
       <FormControlLabel
         control={
           <Switch
-            value={get(formData, 'member_details.agreed_to_tac')}
+            checked={get(formData, 'member_details.agreed_to_tac', false)}
+            value={get(formData, 'member_details.agreed_to_tac', false)}
             onChange={onChange({formData, setFormData, key: "member_details.agreed_to_tac", isCheckbox: true})}
           />
         }
