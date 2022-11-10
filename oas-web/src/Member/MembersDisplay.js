@@ -11,16 +11,34 @@ import { Link, useParams } from 'react-router-dom';
 import BookOnlineIcon from '@mui/icons-material/BookOnline';
 import EditIcon from '@mui/icons-material/Edit';
 import CardMembershipIcon from '@mui/icons-material/CardMembership';
+import CopyAllIcon from '@mui/icons-material/CopyAll';
+import { join } from 'lodash'
 
 export const MembersDisplay = ({members}) => {
+
+  const copyAll = () => {
+    navigator.clipboard.writeText(
+      join(
+        members.map(({email}) => email),
+        ', '
+      )
+    )
+  }
 
   return <TableContainer>
       <Table>
         <TableHead>
           <TableRow>
             <TableCell>Id</TableCell>
-            <TableCell>Name</TableCell>
-            <TableCell>Email</TableCell>
+            <TableCell>
+              Name
+            </TableCell>
+            <TableCell>
+              Email
+              <IconButton onClick={copyAll}>
+                <CopyAllIcon />
+              </IconButton>  
+            </TableCell>
             <TableCell>Tokens</TableCell>
             <TableCell>Actions</TableCell>
           </TableRow>
