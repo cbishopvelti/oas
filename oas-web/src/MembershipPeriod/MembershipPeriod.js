@@ -35,7 +35,6 @@ const onChange = ({formData, setFormData, key}) => (event) => {
 
 export const MembershipPeriod = () => {
   const { setTitle } = useOutletContext();
-  setTitle("Membership Period");
   const navigate = useNavigate();
   let { id } = useParams()
   if (id) {
@@ -62,6 +61,7 @@ export const MembershipPeriod = () => {
     skip: !id
   })
   useEffect(() => {
+    setTitle("Membership Period");
     refetch()
     if (!id) {
       setFormData(defaultData)

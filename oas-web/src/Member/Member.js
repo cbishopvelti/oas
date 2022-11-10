@@ -17,7 +17,6 @@ import { MemberDetails } from "./MemberDetails";
 
 export const Member = () => {
   const { setTitle } = useOutletContext();
-  setTitle("Member");
   const navigate = useNavigate();
   const [editMemberDetails, setEditMemberDetails] = useState(false)
 
@@ -57,6 +56,7 @@ export const Member = () => {
   })
 
   useEffect(() => {
+    setTitle("Member");
     refetch()
     if (!id) {
       setFormData({is_active: true})

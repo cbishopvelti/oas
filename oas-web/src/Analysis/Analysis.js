@@ -15,7 +15,7 @@ const onChange = ({formData, setFormData, key}) => (event) => {
 
 export const Analysis = () => {
   const { setTitle } = useOutletContext();
-  setTitle("Analysis");
+  
   const [filterData, setFilterData ] = useState({
     from: moment().subtract(1, 'year').format("YYYY-MM-DD"),
     to: moment().format("YYYY-MM-DD")
@@ -36,6 +36,7 @@ export const Analysis = () => {
     variables: filterData
   });
   useEffect(() => {
+    setTitle("Analysis");
     refetch();
   }, [filterData])
 

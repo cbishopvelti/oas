@@ -12,7 +12,6 @@ import { parseErrors } from "../utils/util";
 
 export const Training = () => {
   const { setTitle } = useOutletContext();
-  setTitle("Training");
   const navigate = useNavigate();
   let { id } = useParams()
   if (id) {
@@ -48,6 +47,7 @@ export const Training = () => {
   const [formData, setFormData] = useState(defaultData);
 
   useEffect(() => {
+    setTitle("Training");
     if (!id) {
       setFormData(defaultData)
     }

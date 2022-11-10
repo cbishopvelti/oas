@@ -235,6 +235,19 @@ defmodule OasWeb.Schema.SchemaMember do
       end
     end
 
+    @desc "Delete membership"
+    field :delete_membership, type: :success do
+      arg :membership_period_id, non_null(:integer)
+      arg :member_id, non_null(:integer)
+      resolve fn _, %{membership_period_id: membership_period_id, member_id: member_id}, _ -> 
+        from(m in Oas.Members.Membership, 
+          where: m.membership_period_id == ^membership_period_id and m.member_id == ^member_id
+        ) |> Oas.Repo.delete_all
+
+        {:ok, %{success: true}}
+      end
+    end
+
     @desc "register"
     field :public_register, :success do
       arg :name, non_null(:string)

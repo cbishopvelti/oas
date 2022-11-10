@@ -43,19 +43,14 @@ Trainings warning
 - if member is running out of tokens.
 - if in debt.
 
-Analysis revamp
-
 Delete transaction
 - with confirmation
 - orphaned membership
 - orphaned tokens
 
-add not_transaction field to transactions
-- excluded/treated_differently from analysis.
-
 Delete membership (only if no transaction)
 
-add is valid member filter
+add is 'valid' member filter
   - to training member drop down
   - to transactions
   - members list page (think about)
@@ -66,8 +61,6 @@ Historic data
 - Add attendances to a "historic trainings" for debt
 - Maybe clear all debt / write off
 - Attempt to import historic data (hard)
-
-Analysis, transaction not_transaction
 
 Backup
 

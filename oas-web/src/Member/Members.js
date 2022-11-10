@@ -20,7 +20,6 @@ import { MembersDisplay } from './MembersDisplay';
 
 export const Members = () => {
   const { setTitle } = useOutletContext();
-  setTitle("Members");
   const [filterData, setFilterData] = useState({})
 
   let { data: members, loading, refetch } = useQuery(gql`query ($show_all: Boolean) {
@@ -37,6 +36,7 @@ export const Members = () => {
   });
   members = get(members, "members", []) || []
   useEffect(() => {
+    setTitle("Members");
     refetch()
   }, [filterData])
 

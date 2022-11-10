@@ -30,7 +30,6 @@ const onChange = ({formData, setFormData, key}) => (event) => {
 
 export const Trainings = () => {
   const { setTitle } = useOutletContext();
-  setTitle("Trainings");
   const [filterData, setFilterData ] = useState({
     from: moment().subtract(1, 'year').format("YYYY-MM-DD"),
     to: moment().format("YYYY-MM-DD")
@@ -55,6 +54,7 @@ export const Trainings = () => {
     }
   })
   useEffect(() => {
+    setTitle("Trainings");
     refetch()
   }, [filterData])
   const trainings = get(data, 'trainings', [])
@@ -75,7 +75,6 @@ export const Trainings = () => {
     refetch();
   }
 
-  console.log("101", setFilterData)
   return <>
     <Box sx={{display: 'flex', flexWrap: 'wrap' }}>
       <FormControl sx={{m: 2, minWidth: 256}}>

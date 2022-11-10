@@ -2,14 +2,21 @@ import { gql, useQuery } from "@apollo/client"
 import { MembersDisplay } from "../Member/MembersDisplay"
 import { get } from 'lodash';
 import { useParams, useOutletContext } from "react-router-dom";
+import { useEffect } from "react";
+
+
+
 
 
 export const MembershipPeriodMembers = () => {
   const { setTitle } = useOutletContext();
-  setTitle("Membership Periods's Members");
 
   let { id } = useParams();
   id = parseInt(id);
+
+  useEffect(() => {
+    setTitle("Membership Periods's Members");
+  }, [])
 
   const {data} = useQuery(gql`
     query ($id: Int!) {
@@ -28,8 +35,7 @@ export const MembershipPeriodMembers = () => {
     }
   })
 
-  console.log("009", data);
   const members = get(data, 'membership_period.members', [])
 
-  return <MembersDisplay members={members} />
+  return <MembersDisplay members={members}/>
 }
