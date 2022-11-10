@@ -120,12 +120,27 @@ defmodule OasWeb.Schema.SchemaMember do
       end
     end
     field :membership_periods, list_of(:membership_period) do
-      resolve fn _, _, _ -> 
-        membershipPeriods = Oas.Repo.all(from(
+      arg :member_id, :integer
+      resolve fn _, args, _ -> 
+        membershipPeriods = from(
           p in Oas.Members.MembershipPeriod,
+          as: :membership_periods,
           select: p,
           order_by: [desc: p.to, desc: p.id]
-        ))
+        )
+        |> (&(case args do 
+          %{member_id: member_id} ->
+            where(&1, [p], 
+              not(exists(from(
+                m in Oas.Members.Membership,
+                where: m.member_id == ^member_id and parent_as(:membership_periods).id == m.membership_period_id
+              )))
+            )
+          _ ->
+            &1
+        end)).()
+        |> Oas.Repo.all
+
         {:ok, membershipPeriods}
       end
     end

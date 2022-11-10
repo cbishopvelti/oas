@@ -49,6 +49,7 @@ defmodule Oas.Repo.Migrations.CreateSchema do
       add :notes, :string, null: true
       timestamps()
     end
+    create unique_index(:memberships, [:member_id, :membership_period_id])
 
 
     # EO Membership

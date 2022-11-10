@@ -38,29 +38,37 @@ chrisjbishop155/oas:latest
 
 ## Todo
 
+Check transaction add membership period doesnt show existing memberships
+
 Trainings warning
 - if member has run out of non membership attendance.
 - if member is running out of tokens.
 - if in debt.
+- email
 
 Delete transaction
 - with confirmation
 - orphaned membership
 - orphaned tokens
 
-Delete membership (only if no transaction)
-
 add is 'valid' member filter
   - to training member drop down
   - to transactions
   - members list page (think about)
 
+Transaction filter
 
-Historic data
+Refactor schema_member, split out membership period
+
+~~ Historic data ~~
 - Add tokens without transactions
 - Add attendances to a "historic trainings" for debt
 - Maybe clear all debt / write off
 - Attempt to import historic data (hard)
+
+Members can look up their token count.
+
+Export all members emails
 
 Backup
 
