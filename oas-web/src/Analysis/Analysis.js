@@ -1,8 +1,9 @@
 import {useEffect, useState} from 'react';
-import { Box, Button, FormControl, TextField} from '@mui/material'
+import { Box, Button, FormControl, TextField, Container} from '@mui/material'
 import moment from 'moment';
 import { get } from 'lodash'
 import { useQuery, gql } from '@apollo/client';
+import { useOutletContext } from 'react-router-dom'
 
 const onChange = ({formData, setFormData, key}) => (event) => {
     
@@ -13,6 +14,8 @@ const onChange = ({formData, setFormData, key}) => (event) => {
 }
 
 export const Analysis = () => {
+  const { setTitle } = useOutletContext();
+  setTitle("Analysis");
   const [filterData, setFilterData ] = useState({
     from: moment().subtract(1, 'year').format("YYYY-MM-DD"),
     to: moment().format("YYYY-MM-DD")
@@ -23,8 +26,10 @@ export const Analysis = () => {
       analysis (from: $from, to: $to) {
         transactions_income,
         transactions_outgoing,
+        transactions_difference,
         unused_tokens,
-        unused_tokens_amount
+        unused_tokens_amount,
+        transactions_ballance
       }
     }
   `, {
@@ -35,56 +40,71 @@ export const Analysis = () => {
   }, [filterData])
 
   return <div>
-    <Box sx={{display: 'flex', flexWrap: 'wrap' }}>
-      <FormControl sx={{m: 2, minWidth: 256}}>
-        <TextField
-          required
-          id="from"
-          label="From"
-          type="date"
-          value={get(filterData, "from")}
-          onChange={onChange({formData: filterData, setFormData: setFilterData, key: "from"})}
-          InputLabelProps={{
-            shrink: true,
-          }}
-        />
-      </FormControl>
-      <FormControl sx={{m: 2, minWidth: 256}}>
-        <TextField
-          required
-          id="to"
-          label="To"
-          type="date"
-          value={get(filterData, "to")}
-          onChange={onChange({formData: filterData, setFormData: setFilterData, key: "to"})}
-          InputLabelProps={{
-            shrink: true,
-          }}
-        />
-      </FormControl>
-    </Box>
+    <Box sx={{display: 'flex', flexWrap: 'wrap',  backgroundColor: (theme) => theme.palette.grey[100]}}>
+      <Container maxWidth="lg" sx={{ m: 2, p: 2, backgroundColor: 'white' }}>
+        <Box sx={{display: 'flex', gap: 2}}>
+          <FormControl sx={{ minWidth: 256}}>
+            <TextField
+              required
+              id="from"
+              label="From"
+              type="date"
+              value={get(filterData, "from")}
+              onChange={onChange({formData: filterData, setFormData: setFilterData, key: "from"})}
+              InputLabelProps={{
+                shrink: true,
+              }}
+            />
+          </FormControl>
+          <FormControl sx={{ minWidth: 256}}>
+            <TextField
+              required
+              id="to"
+              label="To"
+              type="date"
+              value={get(filterData, "to")}
+              onChange={onChange({formData: filterData, setFormData: setFilterData, key: "to"})}
+              InputLabelProps={{
+                shrink: true,
+              }}
+            />
+          </FormControl>
+        </Box>
+        
+        <Box>
+          <Box sx={{width: '100%'}}>
+            <h3>Income (GBP):</h3>
+            <div>{get(data, 'analysis.transactions_income', 'Loading')}</div>
+          </Box>
+          <Box sx={{width: '100%'}}>
+            <h3>Outgoing (GBP):</h3>
+            <div>{get(data, 'analysis.transactions_outgoing', 'Loading')}</div>
+          </Box>
+          <Box sx={{width: '100%'}}>
+            <h3>Difference (GBP):</h3>
+            <div>{get(data, 'analysis.transactions_difference', 'Loading')}</div>
+          </Box>
+        </Box>
+      </Container>
 
-    <Box sx={{display: 'flex', flexWrap: 'wrap', m: 2}}>
-      <Box sx={{width: '100%'}}>
-        <h3>Income (GBP):</h3>
-        <div>{get(data, 'analysis.transactions_income', 'Loading')}</div>
-      </Box>
-      <Box sx={{width: '100%'}}>
-        <h3>Outgoing (GBP):</h3>
-        <div>{get(data, 'analysis.transactions_outgoing', 'Loading')}</div>
-      </Box>
-      
-      <h2>Current State (on 'to')</h2>
+      <Container sx={{backgroundColor: 'white', p: 2, m: 2, mt: 0, pt: 0}}>
+        <h2>Current State</h2>
 
-      <Box sx={{width: '100%'}}>
-        <h3>Total unused tokens</h3>
-        <div>{get(data, 'analysis.unused_tokens', 'Loading')}</div>
-      </Box>
+        <Box sx={{width: '100%'}}>
+          <h3>Total unused tokens:</h3>
+          <div>{get(data, 'analysis.unused_tokens', 'Loading')}</div>
+        </Box>
 
-      <Box sx={{width: '100%'}}>
-        <h3>Total unused tokens amount (GBP)</h3>
-        <div>{get(data, 'analysis.unused_tokens_amount', 'Loading')}</div>
-      </Box>
+        <Box sx={{width: '100%'}}>
+          <h3>Total unused tokens amount (GBP):</h3>
+          <div>{get(data, 'analysis.unused_tokens_amount', 'Loading')}</div>
+        </Box>
+
+        <Box sx={{width: '100%'}}>
+          <h3>Ballance (GBP):</h3>
+          <div>{get(data, 'analysis.transactions_ballance', 'Loading')}</div>
+        </Box>
+      </Container>
     </Box>
   </div>
 }

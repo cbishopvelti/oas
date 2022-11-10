@@ -3,7 +3,7 @@ import { FormControl, TextField, Box, Button, Stack, Alert, Autocomplete } from 
 import { useEffect, useState } from "react";
 import moment from "moment";
 import { get, omit, has } from 'lodash'
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useOutletContext } from "react-router-dom";
 import { TrainingAttendance } from "./TrainingAttendance";
 import { TrainingTags } from "./TrainingTags";
 import { TrainingWhere } from "./TrainingWhere";
@@ -11,6 +11,8 @@ import { parseErrors } from "../utils/util";
 
 
 export const Training = () => {
+  const { setTitle } = useOutletContext();
+  setTitle("Training");
   const navigate = useNavigate();
   let { id } = useParams()
   if (id) {

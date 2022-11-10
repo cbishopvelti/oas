@@ -11,11 +11,13 @@ import {
 } from "@mui/material"
 import { get, omit, has } from "lodash";
 import { useMutation, gql, useQuery } from "@apollo/client";
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
 import { parseErrors } from '../utils/util';
 import { MemberDetails } from "./MemberDetails";
 
 export const Member = () => {
+  const { setTitle } = useOutletContext();
+  setTitle("Member");
   const navigate = useNavigate();
   const [editMemberDetails, setEditMemberDetails] = useState(false)
 

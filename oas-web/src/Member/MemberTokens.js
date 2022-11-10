@@ -1,5 +1,5 @@
 import { gql, useQuery } from "@apollo/client";
-import { useParams } from "react-router-dom";
+import { useParams, useOutletContext } from "react-router-dom";
 
 import { get } from 'lodash'
 import moment from "moment";
@@ -7,6 +7,8 @@ import { Tokens } from "../Money/Tokens";
 
 
 export const MemberTokens = (params) => {
+  const { setTitle } = useOutletContext();
+  setTitle("Member's Tokens");
   let { id } = useParams();
   if (id) {
     id = parseInt(id);

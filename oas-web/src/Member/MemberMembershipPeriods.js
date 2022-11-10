@@ -4,31 +4,38 @@ import { useEffect } from "react";
 import { get } from 'lodash';
 import EditIcon from '@mui/icons-material/Edit';
 import { Link, useParams, useOutletContext } from 'react-router-dom';
-import { MembershipPeriodsDisplay } from "./MembershipPeriodsDisplay";
+import { MembershipPeriodsDisplay } from "../MembershipPeriod/MembershipPeriodsDisplay";
 
-export const MembershipPeriods = () => {
+export const MemberMembershipPeriods = () => {
   const { setTitle } = useOutletContext();
-  setTitle("Membership Periods");
+  setTitle("Member's Memberships");
+
+  let {member_id} = useParams()
+  member_id = parseInt(member_id)
 
   const { data, refetch } = useQuery(gql`
-    query {
-      membership_periods {
-        id,
-        name,
-        from,
-        to,
-        value
+    query($member_id: Int!) {
+      member(member_id: $member_id) {
+        membership_periods {
+          id,
+          name,
+          from,
+          to,
+          value
+        }
       }
     }
-  `)
-
-
+  `, {
+    variables: {
+      member_id
+    }
+  })
 
   useEffect(() => {
     refetch();
   }, []);
 
-  let membershipPeriods = get(data, 'membership_periods', []);
+  let membershipPeriods = get(data, 'member.membership_periods', []);
 
   return (<MembershipPeriodsDisplay membershipPeriods={membershipPeriods} />)
 }

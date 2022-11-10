@@ -1,97 +1,65 @@
-import logo from './logo.svg';
 import './App.css';
 import { gql, useQuery } from '@apollo/client';
 import { Members } from '../Member/Members';
-import { MenuList, MenuItem, ListItemText, Divider, ListItem } from '@mui/material';
-import {
-  Link,
-  Outlet,
-  NavLink
-} from "react-router-dom";
-import {
-  MemberLink,
-  TrainingsLink,
-  TransactionLink,
-  MembershipPeriodLink
-} from './Links';
-import { useEffect } from 'react';
+import { MenuList, MenuItem, ListItemText, Divider, ListItem, Drawer, IconButton, Box } from '@mui/material';
+import { Outlet } from "react-router-dom";
+import { styled, useTheme } from '@mui/material/styles';
+import { useState } from 'react';
 import { get } from 'lodash';
+import { AppMenu } from './AppMenu';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import MenuIcon from '@mui/icons-material/Menu';
+
+const DrawerHeader = styled('div')(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  padding: theme.spacing(0, 1),
+  // necessary for content to be below app bar
+  ...theme.mixins.toolbar,
+  justifyContent: 'flex-end',
+}));
 
 function App() {
-  const { data, refetch } = useQuery(gql`
-  query {
-    user {
-      name,
-      logout_link
-    }
-  }`)
-  useEffect(() => {
-    refetch();
-  }, [])
+  const [open, setOpen] = useState(true);
+  const [title, setTitle] = useState('');
+
+  const drawerWidth = 256;
 
   return (
     <div className="App">
-      <div>
-        <MenuList>
-          <MenuItem component={NavLink} end to={`/member`}>
-            <ListItemText>New Member</ListItemText>
-          </MenuItem>
-          <MenuItem component={MemberLink} to={`/members`}>
-            <ListItemText>Members</ListItemText>
-          </MenuItem>
-          <MenuItem
-            component={NavLink}
-            to={`/transaction`}
-            end
-            >
-            <ListItemText>New Transaction</ListItemText>
-          </MenuItem>
-          <MenuItem component={TransactionLink} to={`/transactions`}>
-            <ListItemText>Transactions</ListItemText>
-          </MenuItem>
-          <MenuItem component={NavLink} end to={`/training`}>
-            <ListItemText>New Training</ListItemText>
-          </MenuItem>
-          <MenuItem component={TrainingsLink} to={`/trainings`}>
-            <ListItemText>Trainings</ListItemText>
-          </MenuItem>
-          <MenuItem component={NavLink} end to="/">
-            <ListItemText>Analysis</ListItemText>
-          </MenuItem>
-          <MenuItem component={NavLink} end to="/membership-period">
-            New Membership Period
-          </MenuItem>
-          <MenuItem component={MembershipPeriodLink} to="/membership-periods">
-            Membership Periods
-          </MenuItem>
-
-          <Divider />
-          {!!get(data, "user") && [<ListItem key="1">
-            <ListItemText>
-              {get(data, "user.name")}
-            </ListItemText>
-          </ListItem>,
-          <MenuItem key="2">
-            <a
-              style={{color: 'inherit', textDecoration: 'none'}}
-              href={`${process.env.REACT_APP_SERVER_URL}${get(data, "user.logout_link")}`}
-              data-method="delete"
-              rel="nofollow"
-              >
-              Logout
-            </a>
-          </MenuItem>]}
-          {!get(data, "user") && <MenuItem>
-            <a
-              style={{color: 'inherit', textDecoration: 'none'}}
-              href={`${process.env.REACT_APP_SERVER_URL}/members/log_in`}>
-              Login
-            </a>
-          </MenuItem>}
-        </MenuList>
-      </div>
+      <Drawer
+        sx={(theme) => ({
+          [theme.breakpoints.up('md')]: {
+            width: open ? drawerWidth : 0,
+          },
+          flexShrink: 0,
+          '& .MuiDrawer-paper': {
+            [theme.breakpoints.up('md')]: {
+              width: open ? drawerWidth : 0,
+            },
+            boxSizing: 'border-box',
+          },
+        })}
+        variant="persistent"
+        anchor="left"
+        open={open}
+      >
+        <DrawerHeader>
+          <IconButton onClick={() => setOpen(false)}>
+            <ChevronLeftIcon />
+          </IconButton>
+        </DrawerHeader>
+        <AppMenu setOpen={setOpen} />
+      </Drawer>
       <div className="content">
-        <Outlet />
+        <Box sx={{backgroundColor: '#1D7C81', display: 'flex'}}>
+          <IconButton sx={{visibility: open ? 'hidden' : 'visible'}} onClick={() => setOpen(true)}>
+            <MenuIcon />
+          </IconButton>
+          <Box sx={{pt: '11px'}}>{title}</Box>
+        </Box>
+        <Outlet context={{setTitle}} />
       </div>
     </div>
   );

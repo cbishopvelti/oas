@@ -25,18 +25,25 @@ chrisjbishop155/oas:latest
 docker run -it -d `
 --name oas `
 --add-host=host.docker.internal:host-gateway `
--e APP_URL="https://admin.oxfordshireacrosociety.co.uk" `
+-e REACT_APP_ADMIN_URL="https://admin.oxfordshireacrosociety.co.uk" `
 -e REACT_APP_SERVER_URL="https://server.oxfordshireacrosociety.co.uk" `
--e DB_FILE="/dbs/sqlite-staging.db"
--v /mnt/d/oas-dbs:/dbs `
+-e REACT_APP_PUBLIC_URL="https://www.oxfordshireacrosociety.co.uk" `
+-e DOMAIN=".oxfordshireacrosociety.co.uk" `
+-e MIX_ENV=prod `
+-e DB_FILE="/dbs/sqlite-prod.db" `
+-p 4000:4000 -p 3999:3999 -p 3998:3998 `
+-v D:/oas-dbs:/dbs `
 chrisjbishop155/oas:latest
 ```
 
 ## Todo
 
-
-Add sending email
+Trainings warning
+- if member has run out of non membership attendance.
+- if member is running out of tokens.
 - if in debt.
+
+Analysis revamp
 
 Delete transaction
 - with confirmation
@@ -45,12 +52,6 @@ Delete transaction
 
 add not_transaction field to transactions
 - excluded/treated_differently from analysis.
-
-Import and infer transactions from bank statements
-
-Add membership list to:
-- Members
-- MembershipPeriod
 
 Delete membership (only if no transaction)
 

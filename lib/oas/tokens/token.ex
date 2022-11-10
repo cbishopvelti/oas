@@ -12,4 +12,8 @@ defmodule Oas.Tokens.Token do
 
     timestamps()
   end
+
+  def getPossibleTokenAmount do
+    [{1, 5}, {10, 4.5}, {20, 4.5}]
+  end
 end

@@ -4,14 +4,17 @@ import Ecto.Query, only: [from: 2, where: 3]
 defmodule OasWeb.Schema do
   use Absinthe.Schema
 
+  import_types Absinthe.Plug.Types
   import_types OasWeb.Schema.SchemaTypes
   import_types OasWeb.Schema.SchemaAttendance
   import_types OasWeb.Schema.SchemaTraining
   import_types OasWeb.Schema.SchemaTransaction
+  import_types OasWeb.Schema.SchemaTransactionsImport
   import_types OasWeb.Schema.SchemaMember
   import_types OasWeb.Schema.SchemaToken
   import_types OasWeb.Schema.SchemaAnalysis
   import_types OasWeb.Schema.SchemaUser
+  
   # import_types OasWeb.Schema.SchemaPublic
 
   query do
@@ -20,6 +23,7 @@ defmodule OasWeb.Schema do
     import_fields :member_queries
 
     import_fields :transaction_queries
+    import_fields :transactions_import_queries
 
     import_fields :token_queries
 
@@ -35,6 +39,7 @@ defmodule OasWeb.Schema do
     import_fields :member_mutations
 
     import_fields :transaction_mutations
+    import_fields :transactions_import_mutations
 
     import_fields :token_mutations
 

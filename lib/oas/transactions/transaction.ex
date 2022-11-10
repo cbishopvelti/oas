@@ -11,6 +11,7 @@ defmodule Oas.Transactions.Transaction do
     field :their_reference, :string
     field :my_reference, :string
     field :amount, :decimal
+    field :not_transaction, :boolean
     many_to_many :transaction_tags, Oas.Transactions.TransactionTags,
       join_through: "transaction_transaction_tags", join_keys: [transaction_id: :id, transaction_tag_id: :id], on_replace: :delete
     field :bank_details, :string

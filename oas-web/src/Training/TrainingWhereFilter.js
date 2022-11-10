@@ -11,9 +11,6 @@ export const TrainingWhereFilter = ({
   formData, 
   setFormData
 }) => {
-  console.log("001", formData);
-  console.log("002", setFormData)
-
   const {data, refetch } = useQuery(gql`
     query {
       training_where {

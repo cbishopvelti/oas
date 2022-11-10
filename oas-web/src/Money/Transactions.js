@@ -11,9 +11,11 @@ import {
 import { get } from 'lodash';
 import { useEffect } from 'react';
 import EditIcon from '@mui/icons-material/Edit';
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams,useOutletContext } from "react-router-dom";
 
 export const Transactions = () => {
+  const { setTitle } = useOutletContext();
+  setTitle("Transactions");
   let { data: transactions, loading, refetch } = useQuery(gql`query {
     transactions {
       id,
