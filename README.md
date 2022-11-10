@@ -38,8 +38,6 @@ chrisjbishop155/oas:latest
 
 ## Todo
 
-Check transaction add membership period doesnt show existing memberships
-
 Trainings warning
 - if member has run out of non membership attendance.
 - if member is running out of tokens.
@@ -58,8 +56,6 @@ add is 'valid' member filter
 
 Transaction filter
 
-Refactor schema_member, split out membership period
-
 ~~ Historic data ~~
 - Add tokens without transactions
 - Add attendances to a "historic trainings" for debt
@@ -68,7 +64,7 @@ Refactor schema_member, split out membership period
 
 Members can look up their token count.
 
-Export all members emails
+Copy all members emails
 
 Backup
 

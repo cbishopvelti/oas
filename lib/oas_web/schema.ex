@@ -11,6 +11,7 @@ defmodule OasWeb.Schema do
   import_types OasWeb.Schema.SchemaTransaction
   import_types OasWeb.Schema.SchemaTransactionsImport
   import_types OasWeb.Schema.SchemaMember
+  import_types OasWeb.Schema.SchemaMembershipPeriod
   import_types OasWeb.Schema.SchemaToken
   import_types OasWeb.Schema.SchemaAnalysis
   import_types OasWeb.Schema.SchemaUser
@@ -21,6 +22,7 @@ defmodule OasWeb.Schema do
     import_fields :attendance_queries
 
     import_fields :member_queries
+    import_fields :membership_period_queries
 
     import_fields :transaction_queries
     import_fields :transactions_import_queries
@@ -37,6 +39,7 @@ defmodule OasWeb.Schema do
 
   mutation do 
     import_fields :member_mutations
+    import_fields :membership_period_mutations
 
     import_fields :transaction_mutations
     import_fields :transactions_import_mutations
