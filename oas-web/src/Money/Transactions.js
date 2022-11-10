@@ -15,7 +15,6 @@ import { Link, useParams,useOutletContext } from "react-router-dom";
 
 export const Transactions = () => {
   const { setTitle } = useOutletContext();
-  setTitle("Transactions");
   let { data: transactions, loading, refetch } = useQuery(gql`query {
     transactions {
       id,
@@ -26,6 +25,7 @@ export const Transactions = () => {
     }
   }`);
   useEffect(() => {
+    setTitle("Transactions");
     refetch()
   }, [])
   transactions = get(transactions, "transactions", [])

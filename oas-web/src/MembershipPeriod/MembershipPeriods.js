@@ -8,7 +8,6 @@ import { MembershipPeriodsDisplay } from "./MembershipPeriodsDisplay";
 
 export const MembershipPeriods = () => {
   const { setTitle } = useOutletContext();
-  setTitle("Membership Periods");
 
   const { data, refetch } = useQuery(gql`
     query {
@@ -25,6 +24,7 @@ export const MembershipPeriods = () => {
 
 
   useEffect(() => {
+    setTitle("Membership Periods");
     refetch();
   }, []);
 

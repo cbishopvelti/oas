@@ -20,6 +20,10 @@ const DrawerHeader = styled('div')(({ theme }) => ({
   justifyContent: 'flex-end',
 }));
 
+const DrawerBar = ({title}) => {
+  return <Box sx={{pt: '11px'}}>{title}</Box>
+}
+
 function App() {
   const [open, setOpen] = useState(true);
   const [title, setTitle] = useState('');
@@ -57,7 +61,7 @@ function App() {
           <IconButton sx={{visibility: open ? 'hidden' : 'visible'}} onClick={() => setOpen(true)}>
             <MenuIcon />
           </IconButton>
-          <Box sx={{pt: '11px'}}>{title}</Box>
+          <DrawerBar title={title} />
         </Box>
         <Outlet context={{setTitle}} />
       </div>

@@ -24,7 +24,7 @@ import { parseErrors } from '../utils/util';
 
 export const Transaction = () => {
   const { setTitle } = useOutletContext();
-  setTitle("Transaction");
+  
   const navigate = useNavigate();
   let { id } = useParams()
   if (id) {
@@ -70,6 +70,7 @@ export const Transaction = () => {
     skip: !id
   })
   useEffect(() => {
+    setTitle("Transaction");
     refetch()
     if (!id) {
       setFormData(defaultData)

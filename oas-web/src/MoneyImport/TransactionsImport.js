@@ -23,7 +23,6 @@ import { useOutletContext } from 'react-router-dom'
 
 export const TransactionsImport = () => {
   const { setTitle } = useOutletContext();
-  setTitle("Import Transactions");
   const [formData, setFormData ] = useState({});
   const fileRef = useRef(null);
 
@@ -50,6 +49,7 @@ export const TransactionsImport = () => {
   `)
 
   useEffect(() => {
+    setTitle("Import Transactions");
     refetch();
   }, [])
 

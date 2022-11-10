@@ -7,7 +7,8 @@ import { Link, useParams } from 'react-router-dom';
 import CardMembershipIcon from '@mui/icons-material/CardMembership';
 
 export const MembershipPeriodsDisplay = ({
-  membershipPeriods
+  membershipPeriods,
+  ExtraActions
 }) => {
   return (<div>
     <TableContainer>
@@ -38,6 +39,7 @@ export const MembershipPeriodsDisplay = ({
                 <IconButton component={Link} to={`/membership-period/${membershipPeriod.id}`}>
                   <EditIcon />
                 </IconButton>
+                {ExtraActions && <ExtraActions membership_period_id={membershipPeriod.id} />}
               </TableCell>
             </TableRow>
           )}
