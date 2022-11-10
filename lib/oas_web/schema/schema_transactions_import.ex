@@ -1,0 +1,157 @@
+import Ecto.Query, only: [from: 2, where: 3]
+defmodule OasWeb.Schema.SchemaTransactionsImport do
+  use Absinthe.Schema.Notation
+
+  object :transactions_import_error do
+    field :transaction_id, :integer
+    field :name, :string
+  end
+
+  object :transactions_import do
+    field :account, :string
+    field :date, :string
+    field :bank_account_name, :string
+    field :my_reference, :string
+    field :member, :member do
+      resolve fn
+        %{who_member_id: member_id}, _, _ ->
+          result = Oas.Repo.get(Oas.Members.Member, member_id)
+          {:ok, result}
+        _, _, _ -> {:ok, nil}
+      end
+    end
+    field :amount, :string
+    field :state, :string
+    field :state_data, :string
+    field :errors, list_of(:transactions_import_error)
+    field :warnings, list_of(:string)
+  end
+
+  object :transactions_import_queries do
+    
+    field :transactions_import, type: list_of :transactions_import do
+      resolve fn _, _, %{context: %{ current_member: current_member, user_table: user_table }} ->
+        # [{_, rows}] = :ets.lookup(user_table, current_member.id)
+        case :ets.lookup(user_table, current_member.id) do
+          [{_, rows}] -> 
+            {:ok, rows}
+          _ -> {:ok, nil}
+        end
+      end
+    end
+  end
+
+  object :transactions_import_mutations do
+    field :import_transactions_reprocess, type: :success do
+      resolve fn _, _, %{context: %{ user_table: user_table, current_member: current_member }} ->
+        [{_, rows}] = :ets.lookup(
+          user_table,
+          current_member.id
+        )
+        result = rows 
+        |> Enum.map(fn (row) -> 
+          Map.delete(row, :errors) |> Map.delete(:warnings)
+        end)
+        |> Oas.ImportTransactions.process
+
+        :ets.insert(
+          user_table,
+          {current_member.id, result}
+        )
+
+        {:ok, %{success: true}}
+      end
+    end
+    field :import_transactions, type: :success do
+      arg :file, non_null(:upload)
+      resolve fn _, %{file: file}, %{context: %{ user_table: user_table, current_member: current_member }} ->
+
+        result = File.stream!(file.path)
+        |> CSV.decode(headers: true, field_transform: fn (field) -> String.trim(field) end, validate_row_length: true)
+        # |> Enum.take(1) # DEBUG ONLY
+        |> Enum.filter(fn
+          {:error, message} -> 
+            !String.contains?(message, ":validate_row_length")
+          _ -> true
+        end)
+        |> Enum.map(fn
+          {:ok, %{"Memo" => memo, "Account" => account, "Amount" => amount, "Date" => date, "Subcategory" => subcategory}} ->
+            %{
+              memo: memo,
+              account: account,
+              amount: Float.parse(amount) |> elem(0),
+              date: Timex.parse!(date, "{0D}/{0M}/{YYYY}") |> Timex.to_date,
+              subcategory: subcategory
+            }
+          {:error, message} ->
+            raise message
+        end)
+        |> Enum.map(fn
+          data = %{memo: memo} ->
+            [bank_account_name, my_reference] = memo
+              |> String.split("\t")
+              |> Enum.map(fn (item) -> String.trim(item) end)
+
+            data
+            |> Map.put(:bank_account_name, bank_account_name)
+            |> Map.put(:my_reference, my_reference)
+        end)
+        |> Oas.ImportTransactions.process
+
+        IO.puts("202 result")
+        IO.inspect(result)
+
+        # Add state
+        # Is duplicate,
+        # Is membership
+        # Is membership, but no match
+        # Is tokens,
+        # Is tokens, but no match
+        # Normal transaction
+        # Normal transaction, with no match
+
+        :ets.insert(
+          user_table,
+          {current_member.id, result}
+        )
+
+        {:ok, %{success: true}}
+      end
+    end
+    field :do_import_transactions, type: :success do
+      arg :indexes_to_import, non_null(list_of(:integer))
+      resolve fn
+        _,
+        %{indexes_to_import: indexes_to_import},
+        %{context: %{ user_table: user_table, current_member: current_member }}
+      -> 
+        IO.puts("001")
+        IO.inspect(indexes_to_import)
+
+        [{_, rows}] = :ets.lookup(user_table, current_member.id)
+        rowsToImport = rows
+        |> Enum.with_index
+        |> Enum.filter(fn ({_, id}) ->
+          IO.puts("001.1")
+          IO.inspect(id)
+          Enum.member?(indexes_to_import, id)
+        end)
+        |> Enum.map(fn ({row, id}) -> row end)
+
+        Oas.ImportTransactions.doImport(rows)
+
+        :ets.delete(user_table, current_member.id)
+
+        {:ok, %{
+          success: true
+        }}
+      end
+    end
+    field :reset_import_transactions, type: :success do
+      resolve fn _, _, %{context: %{ user_table: user_table, current_member: current_member }} ->
+        :ets.delete(user_table, current_member.id)
+        {:ok, %{success: true}}
+      end
+    end
+  end
+end

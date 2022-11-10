@@ -13,6 +13,31 @@ defmodule OasWeb.Schema.SchemaMember do
     field :agreed_to_tac, :boolean
   end
 
+
+  object :membership_period do
+    field :id, :integer
+    field :name, :string
+    field :from, :string
+    field :to, :string
+    field :value, :string
+    field :members, list_of(:member) do
+      resolve fn %{id: id}, _, _ ->
+        membershipPeriod = Oas.Repo.get(Oas.Members.MembershipPeriod, id)
+          |> Oas.Repo.preload(:members)
+          
+        members = membershipPeriod.members
+          |> Enum.map(fn member -> Map.delete(member, :tokens) end)
+          |> Enum.map(fn record ->
+            %{id: id} = record
+            tokens = Oas.Attendance.get_token_amount(%{member_id: id})
+            Map.put(record, :tokens, tokens)
+          end)
+
+        {:ok, members}
+      end
+    end
+  end
+
   object :member do
     field :id, :integer
     field :name, :string
@@ -24,6 +49,13 @@ defmodule OasWeb.Schema.SchemaMember do
     field :is_reviewer, :boolean
 
     field :member_details, :member_details
+    
+    field :membership_periods, list_of(:membership_period) do
+      resolve fn %{id: id}, _, _ -> 
+        member = Oas.Repo.get(Oas.Members.Member, id) |> Oas.Repo.preload(:membership_periods)
+        {:ok, member.membership_periods}
+      end
+    end
   end
 
 
@@ -33,14 +65,6 @@ defmodule OasWeb.Schema.SchemaMember do
     field :email, :string
     field :bank_account_name, :string
     field :password, :string
-  end
-
-  object :membership_period do
-    field :id, :integer
-    field :name, :string
-    field :from, :string
-    field :to, :string
-    field :value, :string
   end
 
   input_object :member_details_arg do
@@ -80,6 +104,7 @@ defmodule OasWeb.Schema.SchemaMember do
     field :member, :member do
       arg :member_id, non_null(:integer)
       resolve fn _, %{member_id: member_id}, _ ->
+
         result = Oas.Repo.get!(Oas.Members.Member, member_id) |> Oas.Repo.preload(:member_details)
 
         tokens = Oas.Attendance.get_token_amount(%{member_id: member_id})

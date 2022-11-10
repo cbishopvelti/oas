@@ -10,7 +10,6 @@ import {
 } from "react-router-dom";
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment';
-
 import { Members } from './Member/Members';
 import { Member } from './Member/Member';
 import { Transaction } from './Money/Transaction';
@@ -21,6 +20,12 @@ import { MemberTokens } from './Member/MemberTokens';
 import { Analysis } from './Analysis/Analysis';
 import { MembershipPeriod } from './MembershipPeriod/MembershipPeriod';
 import { MembershipPeriods } from './MembershipPeriod/MembershipPeriods';
+import { MemberMembershipPeriods } from './Member/MemberMembershipPeriods';
+import { TransactionsImport } from './MoneyImport/TransactionsImport';
+import { createUploadLink } from "apollo-upload-client";
+import { createLink } from "apollo-absinthe-upload-link";
+import { MembershipPeriodMembers } from './MembershipPeriod/MembershipPeriodMembers';
+
 
 
 const router = createBrowserRouter([
@@ -61,10 +66,20 @@ const router = createBrowserRouter([
         element: <Transactions />
       },
       {
+        id: "import-transactions",
+        path: "import-transactions",
+        element: <TransactionsImport />
+      },
+      {
         id: "member-tokens",
         path: "member/:id/tokens",
         element: <MemberTokens />
       }, {
+        id: "member-membership-periods",
+        path: "member/:member_id/membership-periods",
+        element: <MemberMembershipPeriods />
+      },
+      {
         id: "training-id",
         path: "training/:id",
         element: <Training />
@@ -84,6 +99,11 @@ const router = createBrowserRouter([
         element: <MembershipPeriod />
       },
       {
+        id: "membership-period-members",
+        path: "membership-period/:id/members",
+        element: <MembershipPeriodMembers />
+      },
+      {
         id: "membership-period",
         path: "membership-period",
         element: <MembershipPeriod />
@@ -97,11 +117,17 @@ const router = createBrowserRouter([
   },
 ]);
 
-
+// const uploadLink = new createUploadLink({
+//   uri: `${process.env["REACT_APP_ADMIN_URL"]}/api/graphql`
+// });
+const uploadLink = createLink({
+  uri: `${process.env["REACT_APP_ADMIN_URL"]}/api/graphql`
+});
 
 const client = new ApolloClient({
   // uri: 'http://localhost:3999/',
-  uri: `${process.env["REACT_APP_ADMIN_URL"]}/api/graphql`,
+  // uri: `${process.env["REACT_APP_ADMIN_URL"]}/api/graphql`,
+  link: uploadLink,
   cache: new InMemoryCache(),
 });
 

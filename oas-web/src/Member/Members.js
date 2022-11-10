@@ -13,13 +13,14 @@ import {
   Box
 } from '@mui/material';
 import { get } from 'lodash';
-import BookOnlineIcon from '@mui/icons-material/BookOnline';
-import EditIcon from '@mui/icons-material/Edit';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useOutletContext } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import { MembersDisplay } from './MembersDisplay';
 
 
 export const Members = () => {
+  const { setTitle } = useOutletContext();
+  setTitle("Members");
   const [filterData, setFilterData] = useState({})
 
   let { data: members, loading, refetch } = useQuery(gql`query ($show_all: Boolean) {
@@ -41,7 +42,7 @@ export const Members = () => {
 
   return <div>
     <Box>
-      <FormControl fullWidth sx={{m:2}}>
+      <FormControl sx={{m:2}}>
         <FormControlLabel
             control={
               <Switch 
@@ -51,39 +52,6 @@ export const Members = () => {
             label="Show all" />
       </FormControl>
     </Box>
-    <TableContainer>
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell>Id</TableCell>
-            <TableCell>Name</TableCell>
-            <TableCell>Email</TableCell>
-            <TableCell>Tokens</TableCell>
-            <TableCell>Actions</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {
-            members.map((member) => (
-              <TableRow key={member.id}>
-                <TableCell>{member.id}</TableCell>
-                <TableCell>{member.name}</TableCell>
-                <TableCell>{member.email}</TableCell>
-                <TableCell sx={{...(member.tokens < 0 ? {color: "red"} : {})}}>{member.tokens}</TableCell>
-                <TableCell>
-                  <IconButton component={Link} to={`/member/${member.id}/tokens`}>
-                    <BookOnlineIcon />
-                  </IconButton>
-                  <IconButton component={Link} to={`/member/${member.id}`}>
-                    <EditIcon />
-                  </IconButton>
-
-                </TableCell>
-              </TableRow>
-            ))
-          }
-        </TableBody>
-      </Table>
-    </TableContainer>
+    <MembersDisplay members={members} />
   </div>
 }

@@ -14,7 +14,7 @@ import {
 import { createFilterOptions } from '@mui/material/Autocomplete';
 import { get, find, omit, has } from 'lodash'
 import * as moment from 'moment'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useOutletContext } from 'react-router-dom'
 import { useQuery, gql, useMutation } from '@apollo/client';
 import { TransactionNewToken } from "./TransactionToken";
 import { Tokens } from './Tokens';
@@ -23,6 +23,8 @@ import { TransactionMembershipPeriod } from './TransactionMembershipPeriod';
 import { parseErrors } from '../utils/util';
 
 export const Transaction = () => {
+  const { setTitle } = useOutletContext();
+  setTitle("Transaction");
   const navigate = useNavigate();
   let { id } = useParams()
   if (id) {
@@ -152,6 +154,7 @@ export const Transaction = () => {
   const errors = parseErrors(error?.graphQLErrors);
   const save = (formData) => async () => {
     formData = omit(formData, "training_tags.__typename");
+
     const { data } = await mutate({
       variables: {
         ...formData,
@@ -284,8 +287,7 @@ export const Transaction = () => {
         {(get(formData, 'type') == 'OUTGOING') && <TextField
           sx={{flexGrow: 1}}
           label="Their Reference"
-          value={get(formData, "their_reference", '')}
-          required
+          value={get(formData, "their_reference", '') || ''}
           onChange={onChange({formData, setFormData, key: 'their_reference'})}
           error={has(errors, "their_reference")}
           helperText={get(errors, "their_reference", []).join(' ')}
@@ -294,7 +296,7 @@ export const Transaction = () => {
         <TextField
           sx={{flexGrow: 1}}
           label={`${((get(formData, 'type') === 'OUTGOING') ? 'My' : 'Received')} Reference`}
-          value={get(formData, "my_reference", '')}
+          value={get(formData, "my_reference", '') || ''}
           required
           onChange={onChange({formData, setFormData, key: "my_reference"})}
           error={has(errors, "my_reference")}

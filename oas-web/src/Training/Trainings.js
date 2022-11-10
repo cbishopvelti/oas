@@ -16,7 +16,7 @@ import {
 import { get } from 'lodash';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { Link } from "react-router-dom";
+import { Link, useOutletContext } from "react-router-dom";
 import moment from 'moment';
 import { TrainingTags } from "./TrainingTags";
 import { TrainingWhereFilter } from "./TrainingWhereFilter";
@@ -29,6 +29,8 @@ const onChange = ({formData, setFormData, key}) => (event) => {
 }
 
 export const Trainings = () => {
+  const { setTitle } = useOutletContext();
+  setTitle("Trainings");
   const [filterData, setFilterData ] = useState({
     from: moment().subtract(1, 'year').format("YYYY-MM-DD"),
     to: moment().format("YYYY-MM-DD")

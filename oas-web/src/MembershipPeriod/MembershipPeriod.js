@@ -9,7 +9,7 @@ import {
 } from '@mui/material'
 import { get, has } from 'lodash'
 import * as moment from 'moment'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useOutletContext } from 'react-router-dom'
 import { useQuery, gql, useMutation, from } from '@apollo/client';
 import { parseErrors } from '../utils/util'
 
@@ -34,7 +34,8 @@ const onChange = ({formData, setFormData, key}) => (event) => {
 }
 
 export const MembershipPeriod = () => {
-
+  const { setTitle } = useOutletContext();
+  setTitle("Membership Period");
   const navigate = useNavigate();
   let { id } = useParams()
   if (id) {

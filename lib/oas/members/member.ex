@@ -16,6 +16,10 @@ defmodule Oas.Members.Member do
 
     has_one :member_details, Oas.Members.MemberDetails, on_replace: :nilify
 
+    many_to_many :membership_periods, Oas.Members.MembershipPeriod, join_through: Oas.Members.Membership
+
+    has_many :tokens, Oas.Tokens.Token
+
     timestamps()
   end
 

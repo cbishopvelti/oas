@@ -1,4 +1,4 @@
-import Ecto.Query, only: [from: 2, where: 3]
+import Ecto.Query, only: [from: 2]
 defmodule OasWeb.Schema.SchemaTransaction do
   use Absinthe.Schema.Notation
   
@@ -38,7 +38,14 @@ defmodule OasWeb.Schema.SchemaTransaction do
   object :transaction_queries do
     field :transactions, list_of(:transaction) do
       resolve fn _, %{context: context} ->
-        query = from(t in Oas.Transactions.Transaction, select: t, order_by: [desc: t.when, desc: t.id])
+        query = from(
+          t in Oas.Transactions.Transaction,
+          select: t,
+          where: t.not_transaction == false or is_nil(t.not_transaction),
+          order_by: [desc: t.when, desc: t.id]
+        )
+
+        IO.inspect(Oas.Repo.to_sql(:all, query))
         result = Oas.Repo.all(query)
         {:ok, result}
       end
@@ -47,8 +54,9 @@ defmodule OasWeb.Schema.SchemaTransaction do
       arg :id, :integer
       resolve fn _, %{id: id}, _ ->
         transaction = Oas.Repo.get!(Oas.Transactions.Transaction, id)
-        |> Oas.Repo.preload(:transaction_tags)
-        |> Oas.Repo.preload(:membership)
+          |> Oas.Repo.preload(:transaction_tags)
+          |> Oas.Repo.preload(:membership)
+          |> Oas.Repo.preload(:tokens)
 
         {:ok, transaction}
       end
@@ -72,7 +80,6 @@ defmodule OasWeb.Schema.SchemaTransaction do
       })
     end
   end
-  
   
   defp maybeDoMembership(
     args = %{
@@ -134,26 +141,27 @@ defmodule OasWeb.Schema.SchemaTransaction do
         when1 = Date.from_iso8601!(args.when)
         args = %{args | when: when1}
 
-        doTransactionTags = fn (changeset) -> 
-          case args do
-            %{transaction_tags: transaction_tags} -> 
-              transaction_tags = transaction_tags
-                |> Enum.map(fn
-                  %{id: id} -> Oas.Repo.get!(Oas.Transactions.TransactionTags, id)
-                  rest -> rest
-                end)
-              out = Ecto.Changeset.put_assoc(changeset, :transaction_tags, transaction_tags)
-              out
-            _ -> changeset
-          end
-        end
+        # doTransactionTags = fn (changeset) -> 
+        #   case args do
+        #     %{transaction_tags: transaction_tags} -> 
+        #       transaction_tags = transaction_tags
+        #         |> Enum.map(fn
+        #           %{id: id} -> Oas.Repo.get!(Oas.Transactions.TransactionTags, id)
+        #           rest -> rest
+        #         end)
+        #       out = Ecto.Changeset.put_assoc(changeset, :transaction_tags, transaction_tags)
+        #       out
+        #     _ -> changeset
+        #   end
+        # end
 
         toSave = case Map.get(args, :id) do
           nil -> %Oas.Transactions.Transaction{}
           id -> Oas.Repo.get!(Oas.Transactions.Transaction, id) |> Oas.Repo.preload(:transaction_tags)
         end
         |> Oas.Transactions.Transaction.changeset(args)
-        |> doTransactionTags.()
+        # |> doTransactionTags.()
+        |> Oas.Transactions.TransactionTags.doTransactionTags(args)
 
         result = toSave
           |> (&(case &1 do
@@ -196,6 +204,4 @@ defmodule OasWeb.Schema.SchemaTransaction do
       end
     end
   end
-
-
 end

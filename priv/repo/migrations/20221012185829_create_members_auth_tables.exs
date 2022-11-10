@@ -15,6 +15,7 @@ defmodule Oas.Repo.Migrations.CreateMembersAuthTables do
       timestamps()
     end
     create unique_index(:members, [:email])
+    create unique_index(:members, [:bank_account_name])
 
     create table(:members_details) do
       
