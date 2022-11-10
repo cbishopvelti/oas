@@ -92,8 +92,6 @@ defmodule OasWeb.Schema.SchemaTraining do
       arg :when, non_null(:string)
       arg :training_tags, non_null(list_of(:training_tag_arg))
       resolve fn _, args, _ ->
-        IO.puts("001")
-        IO.inspect(args)
         %{training_tags: training_tags, training_where: training_where} = args 
 
         training_tags = training_tags
