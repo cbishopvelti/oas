@@ -31,11 +31,12 @@ const isUsable = (token) => {
 export const Tokens = ({
   transaction,
   member_id,
+  refetch: parentRefetch = () => {}
 }) => {
   const transaction_id = transaction?.id
 
   if (transaction && member_id) {
-    throw "can not have both member_id and traction set";
+    throw "can not have both member_id and transaction set";
   }
 
   let memberQuery = '';
@@ -65,6 +66,7 @@ export const Tokens = ({
   const tokens = get(data, 'tokens', []);
   useEffect(() => {
     refetch()
+    parentRefetch();
   }, [member_id, transaction_id])
 
 
@@ -82,16 +84,20 @@ export const Tokens = ({
       }
     });
     refetch();
+    parentRefetch();
   }
 
-  if (!tokens || !tokens.length) {
-    return <></>
-  }
   return <div>
     <Box sx={{m: 2}}>
       <h2>Tokens</h2>
     </Box>
-    {transaction_id && <TransactionAddToken transaction_id={transaction_id} member_id={transaction.who_member_id} refetch={refetch} />}
+    {transaction_id && <TransactionAddToken
+      transaction_id={transaction_id}
+      member_id={transaction.who_member_id}
+      refetch={() => {
+        refetch();
+        parentRefetch()
+      }} />}
     <TableContainer>
         <Table>
           <TableHead>

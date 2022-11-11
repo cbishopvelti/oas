@@ -38,9 +38,6 @@ chrisjbishop155/oas:latest
 
 ## Todo
 
-
-Page text
-
 Trainings warning
 - if member has run out of non membership attendance.
 - if member is running out of tokens.

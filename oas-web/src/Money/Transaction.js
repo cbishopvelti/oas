@@ -16,7 +16,7 @@ import { get, find, omit, has } from 'lodash'
 import * as moment from 'moment'
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom'
 import { useQuery, gql, useMutation } from '@apollo/client';
-import { TransactionNewToken } from "./TransactionToken";
+import { TransactionNewToken, TransactionEditTokens } from "./TransactionToken";
 import { Tokens } from './Tokens';
 import { TransactionTags } from './TransactionTags';
 import { TransactionMembershipPeriod } from './TransactionMembershipPeriod';
@@ -348,10 +348,7 @@ export const Transaction = () => {
           />
       </FormControl>
 
-      <TransactionNewToken 
-        formData={formData}
-        setFormData={setFormData}
-        id={id} />
+      
 
       <TransactionMembershipPeriod
         formData={formData}
@@ -359,11 +356,20 @@ export const Transaction = () => {
         id={id}
       />
 
+      <TransactionNewToken 
+        formData={formData}
+        setFormData={setFormData}
+        id={id} />
+
       <FormControl fullWidth sx={{m: 2}}>
         <Button onClick={save(formData)}>Save</Button>
       </FormControl>
 
     </Box>
-    {get(data, "transaction") && <Tokens transaction={get(data, "transaction")} />}
+    <TransactionEditTokens
+      formData={formData}
+      refetch={refetch}
+      transaction={get(data, "transaction")} />
+    {/* {get(data, "transaction") && <Tokens transaction={get(data, "transaction")} />} */}
   </>
 }
