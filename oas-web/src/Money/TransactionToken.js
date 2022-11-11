@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { omit, get } from 'lodash'
 import { FormControl, FormControlLabel, Switch, TextField, Box, Button } from '@mui/material';
 import { gql, useMutation } from '@apollo/client';
+import { Tokens } from './Tokens';
 
 const onChange = ({formData, setFormData, key}) => (event) => {
   setFormData({
@@ -10,18 +11,56 @@ const onChange = ({formData, setFormData, key}) => (event) => {
   })
 }
 
+// EditTokens -> Tokens -> TransactionAddToken
+export const TransactionEditTokens = ({
+  formData,
+  transaction,
+  refetch
+}) => {
+  const [buyingTokens, setBuyingTokens] = useState(false)
+  const [canBuyTokens, setCanBuyTokens] = useState(false);
+  useEffect(() => {
+    setCanBuyTokens(
+      formData.who_member_id && formData.type === "INCOMING"
+    );
+  }, [formData.who_member_id, formData.type])
+  useEffect(() => {
+    if (!canBuyTokens) {
+      setBuyingTokens(false)
+    }
+  }, [canBuyTokens])
+  useEffect(() => {
+  }, [buyingTokens])
+
+  return <>
+    <FormControl fullWidth sx={{m: 2}}>
+      <FormControlLabel
+        disabled={(!canBuyTokens || 0 != get(transaction, 'tokens', []).length)}
+        control={
+          <Switch
+            checked={(buyingTokens || 0 != get(transaction, 'tokens', []).length)}
+            onChange={(event) => setBuyingTokens(event.target.checked)}/>
+        }
+        label="Tokens" />
+    </FormControl>
+    {(buyingTokens || 0 != get(transaction, 'tokens', []).length) && <Tokens transaction={transaction} refetch={refetch} />}
+  </>
+}
+
+// Tokens -> TransactionAddToken
 export const TransactionAddToken = ({
   transaction_id,
   member_id,
   refetch
 }) => {
   const [formData, setFormData] = useState({});
+  const defaultFormData = {
+    token_quantity: 1,
+    token_value: 5
+  }
 
   useEffect(() => {
-    setFormData({
-      token_quantity: 1,
-      token_value: 4.5
-    })
+    setFormData(defaultFormData)
   }, [transaction_id, member_id])
 
   const [mutate] = useMutation(gql`
@@ -32,8 +71,8 @@ export const TransactionAddToken = ({
     }
   `)
 
-  const addTokensClick = ({transaction_id, member_id, formData}) => () => {
-    mutate({
+  const addTokensClick = ({transaction_id, member_id, formData}) => async () => {
+    await mutate({
       variables: {
         transaction_id: transaction_id,
         member_id: member_id,
@@ -41,7 +80,7 @@ export const TransactionAddToken = ({
         value: formData.token_value
       }
     })
-    setFormData({})
+    setFormData(defaultFormData)
     refetch()
   }
 

@@ -18,9 +18,6 @@ function App() {
             <MenuItem component={NavLink} end to={`/`}>
               <ListItemText>Home</ListItemText>
             </MenuItem>
-            <MenuItem component={NavLink} to={`/membership-info`}>
-              <ListItemText>Member's Info</ListItemText>
-            </MenuItem>
             <MenuItem component={NavLink} to={'/register'}>
               <ListItemText>Register</ListItemText>
             </MenuItem>
