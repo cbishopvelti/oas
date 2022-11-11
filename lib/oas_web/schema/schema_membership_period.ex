@@ -1,4 +1,4 @@
-import Ecto.Query, only: [from: 2, where: 3]
+import Ecto.Query, only: [from: 2, where: 3, dynamic: 2]
 defmodule OasWeb.Schema.SchemaMembershipPeriod do
   use Absinthe.Schema.Notation
 
@@ -36,8 +36,9 @@ defmodule OasWeb.Schema.SchemaMembershipPeriod do
     end
     field :membership_periods, list_of(:membership_period) do
       arg :member_id, :integer
+      arg :transaction_id, :integer
       resolve fn _, args, _ -> 
-        membershipPeriods = from(
+        query = from(
           p in Oas.Members.MembershipPeriod,
           as: :membership_periods,
           select: p,
@@ -45,16 +46,20 @@ defmodule OasWeb.Schema.SchemaMembershipPeriod do
         )
         |> (&(case args do 
           %{member_id: member_id} ->
+            transaction_id = Map.get(args, :transaction_id, 0)
             where(&1, [p], 
               not(exists(from(
                 m in Oas.Members.Membership,
-                where: m.member_id == ^member_id and parent_as(:membership_periods).id == m.membership_period_id
+                where: m.member_id == ^member_id and parent_as(:membership_periods).id == m.membership_period_id and (
+                  is_nil(m.transaction_id) or m.transaction_id != ^transaction_id
+                )
               )))
             )
           _ ->
             &1
         end)).()
-        |> Oas.Repo.all
+        
+        membershipPeriods = Oas.Repo.all(query)
 
         {:ok, membershipPeriods}
       end

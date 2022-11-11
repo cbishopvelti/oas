@@ -44,6 +44,9 @@ Trainings warning
 - if in debt.
 - email
 
+Transactions, add tags
+Import transactions tags.
+
 Delete transaction
 - with confirmation
 - orphaned membership
@@ -63,8 +66,6 @@ Transaction filter
 - Attempt to import historic data (hard)
 
 Members can look up their token count.
-
-Copy all members emails
 
 Backup
 
