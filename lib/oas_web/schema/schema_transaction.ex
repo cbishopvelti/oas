@@ -41,6 +41,7 @@ defmodule OasWeb.Schema.SchemaTransaction do
         query = from(
           t in Oas.Transactions.Transaction,
           select: t,
+          preload: :transaction_tags,
           where: t.not_transaction == false or is_nil(t.not_transaction),
           order_by: [desc: t.when, desc: t.id]
         )
@@ -187,7 +188,7 @@ defmodule OasWeb.Schema.SchemaTransaction do
               where: c.transaction_tag_id == parent_as(:transaction_tags).id,
               select: 1
             )
-          )) and tt.id in ^removedTransactionTags
+          )) # and tt.id in ^removedTransactionTags
         ) |> Oas.Repo.delete_all
         # EO delete unused tags
       

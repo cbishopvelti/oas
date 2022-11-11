@@ -21,7 +21,10 @@ export const Transactions = () => {
       when,
       what,
       who,
-      amount
+      amount,
+      transaction_tags {
+        name
+      }
     }
   }`);
   useEffect(() => {
@@ -39,6 +42,7 @@ export const Transactions = () => {
             <TableCell>When</TableCell>
             <TableCell>What</TableCell>
             <TableCell>Who</TableCell>
+            <TableCell>Tags</TableCell>
             <TableCell>Amount</TableCell>
             <TableCell>Actions</TableCell>
           </TableRow>
@@ -51,6 +55,7 @@ export const Transactions = () => {
                 <TableCell>{transaction.when}</TableCell>
                 <TableCell>{transaction.what}</TableCell>
                 <TableCell>{transaction.who}</TableCell>
+                <TableCell>{transaction.transaction_tags.map(({name}) => name).join(', ')}</TableCell>
                 <TableCell>{transaction.amount}</TableCell>
                 <TableCell>
                   <IconButton component={Link} to={`/transaction/${transaction.id}`}>

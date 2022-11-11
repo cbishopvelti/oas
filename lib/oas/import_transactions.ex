@@ -38,13 +38,17 @@ defmodule Oas.ImportTransactions do
 
         case membershipPeriod do
           nil -> row
-          %{value: value} when amount == false -> 
-            if (is_map_key(row, :who_member_id)) do
-              Map.put(row, :state, :membership)
-            else
-              Map.put(row, :warnings, ["This looks like a membership, but related member (via bank_account_name) was not found" | Map.get(row, :warnings, [])])
+          %{value: value} -> 
+            cond do
+              Decimal.eq?(amount, value) ->
+                if (is_map_key(row, :who_member_id)) do
+                  Map.put(row, :state, :membership)
+                else
+                  Map.put(row, :warnings, ["This looks like a membership, but related member (via bank_account_name: \"" <> row.bank_account_name <> "\") was not found" | Map.get(row, :warnings, [])])
+                end
+              true -> row
             end
-          _ -> row  
+          _ -> row
         end
     end)
   end
@@ -130,7 +134,7 @@ defmodule Oas.ImportTransactions do
     } |> Oas.Repo.insert
   end
 
-  def doImport(rows) do    
+  def doImport(rows) do
     rows
     |> Enum.map(fn row = (%{
       account: account, # "20-65-18 13072630",
@@ -139,27 +143,26 @@ defmodule Oas.ImportTransactions do
       date: date,
       memo: memo,
       my_reference: my_reference,
-      # state: state,
-      # state_data: %{quantity: 1, value: 5},
-      # subcategory: "Bill Payment",
-      # who_member_id: 5
-      subcategory: subcategory
+      transaction_tags: transaction_tags
     }) ->
-      IO.puts("004")
-      IO.inspect(row)
       
+      who = case Map.get(row, :who_member_id, nil) do
+        nil -> bank_account_name
+        id -> Oas.Repo.get!(Oas.Members.Member, id) |> Map.get(:name)
+      end
+
       {:ok, result} = %Oas.Transactions.Transaction{}
       |> Oas.Transactions.Transaction.changeset(%{
         what: my_reference,
         when: date,
-        who: bank_account_name,
+        who: who,
         who_member_id: Map.get(row, :who_member_id, nil),
         type: if row.amount < 0 do "OUTGOING" else "INCOMING" end,
         amount: amount,
-        bank_details: account,
+        bank_details: bank_account_name <> "\n" <> account,
         my_reference: my_reference
       })
-      |> Oas.Transactions.TransactionTags.doTransactionTags(%{transaction_tags: [%{name: subcategory}, %{name: "import"}]})
+      |> Oas.Transactions.TransactionTags.doTransactionTags(%{transaction_tags: transaction_tags})
       |> Oas.Repo.insert
 
       if (Map.get(row, :state, nil) == :tokens) do

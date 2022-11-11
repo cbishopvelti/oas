@@ -57,7 +57,7 @@ defmodule OasWeb.Schema.SchemaMember do
     field :members, list_of(:member) do
       arg :show_all, :boolean, default_value: false
       resolve fn _, %{show_all: show_all}, _ ->
-        query = (from m in Oas.Members.Member, select: m)
+        query = (from m in Oas.Members.Member, select: m, order_by: [desc: :id])
         |> (&(case show_all do
           false -> where(&1, [m], m.is_active == true)
           true -> &1

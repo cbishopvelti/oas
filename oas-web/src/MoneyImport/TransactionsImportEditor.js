@@ -32,13 +32,19 @@ export const TransactionsImportEditor = ({transactions_import, refetch}) => {
       }
       return {
         ...acc,
-        [i]: out
+        [i]: {
+          toImport: out,
+          transaction_tags: [{
+            name: row.subcategory
+          }, {
+            name: "import"
+          }]
+        }
       }
     }, {})
 
     setFormData(initState);
   }, [])
-  
 
   const [reprocess] = useMutation(gql`
     mutation {
@@ -56,21 +62,27 @@ export const TransactionsImportEditor = ({transactions_import, refetch}) => {
   }, [])
 
   const [mutation] = useMutation(gql`
-    mutation ($indexes_to_import: [Int]!) {
-      do_import_transactions (indexes_to_import: $indexes_to_import) {
+    mutation ($to_import: [ToImportArg]!) {
+      do_import_transactions (to_import: $to_import) {
         success
       }
     }
   `)
   
   const save = (formData) => async () => {
+
     let formDataArray = toPairs(formData)
-    formDataArray = filter(formDataArray, ([id, toImport]) => toImport)
-    formDataArray = map(formDataArray, ([id, toImport]) => parseInt(id))
+    formDataArray = filter(formDataArray, ([_id, {
+      toImport
+    }]) => toImport);
+    formDataArray = map(formDataArray, ([id, {transaction_tags}]) => ({
+      index: parseInt(id),
+      transaction_tags
+    }));
 
     await mutation({
       variables: {
-        indexes_to_import: formDataArray
+        to_import: formDataArray
       }
     })
 
@@ -85,9 +97,10 @@ export const TransactionsImportEditor = ({transactions_import, refetch}) => {
           <TableRow>
             <TableCell>Date</TableCell>
             <TableCell>Who</TableCell>
-            <TableCell>Who Member</TableCell>
+            {/* <TableCell>Who Member</TableCell> */}
             <TableCell>State</TableCell>
             <TableCell>What</TableCell>
+            <TableCell>Tags</TableCell>
             <TableCell>Amount</TableCell>
             <TableCell>Import</TableCell>
           </TableRow>
