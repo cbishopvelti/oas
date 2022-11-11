@@ -22,6 +22,7 @@ defmodule Oas.Repo.Migrations.CreateSchema do
       add :name, :string
       timestamps()
     end
+    create unique_index(:transaction_tags, [:name])
 
     create table(:transaction_transaction_tags) do
       add :transaction_tag_id, references(:transaction_tags, on_delete: :delete_all)

@@ -23,8 +23,14 @@ defmodule OasWeb.Schema.SchemaTransactionsImport do
     field :amount, :string
     field :state, :string
     field :state_data, :string
+    field :subcategory, :string
     field :errors, list_of(:transactions_import_error)
     field :warnings, list_of(:string)
+  end
+
+  input_object :to_import_arg do
+    field :index, non_null(:integer)
+    field :transaction_tags, list_of(:transaction_tag_arg)
   end
 
   object :transactions_import_queries do
@@ -98,9 +104,6 @@ defmodule OasWeb.Schema.SchemaTransactionsImport do
         end)
         |> Oas.ImportTransactions.process
 
-        IO.puts("202 result")
-        IO.inspect(result)
-
         # Add state
         # Is duplicate,
         # Is membership
@@ -119,26 +122,31 @@ defmodule OasWeb.Schema.SchemaTransactionsImport do
       end
     end
     field :do_import_transactions, type: :success do
-      arg :indexes_to_import, non_null(list_of(:integer))
+      # arg :indexes_to_import, non_null(list_of(:integer))
+      arg :to_import, non_null(list_of(:to_import_arg))
+      
       resolve fn
         _,
-        %{indexes_to_import: indexes_to_import},
+        %{to_import: to_import},
         %{context: %{ user_table: user_table, current_member: current_member }}
       -> 
-        IO.puts("001")
-        IO.inspect(indexes_to_import)
+
+        indexes_to_import = Enum.map(to_import, fn (%{index: index}) -> index end)
 
         [{_, rows}] = :ets.lookup(user_table, current_member.id)
         rowsToImport = rows
         |> Enum.with_index
         |> Enum.filter(fn ({_, id}) ->
-          IO.puts("001.1")
-          IO.inspect(id)
           Enum.member?(indexes_to_import, id)
+        end)
+        |> Enum.map(fn ({row, id}) ->
+          transaction_tags = Enum.find(to_import, fn (%{index: index}) -> index == id end)
+            |> Map.get(:transaction_tags)
+          {Map.put(row, :transaction_tags, transaction_tags), id}
         end)
         |> Enum.map(fn ({row, id}) -> row end)
 
-        Oas.ImportTransactions.doImport(rows)
+        Oas.ImportTransactions.doImport(rowsToImport)
 
         :ets.delete(user_table, current_member.id)
 

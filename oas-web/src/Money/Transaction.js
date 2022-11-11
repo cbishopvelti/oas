@@ -161,7 +161,8 @@ export const Transaction = () => {
         ...formData,
         amount: parseFloat(get(formData, 'amount')),
         ...(get(formData, 'who_member_id') ? {who_member_id: parseInt(get(formData, 'who_member_id'))} : {}),
-        ...(formData.token_quantity ? {token_quantity: parseInt(formData.token_quantity)}: {})
+        ...(formData.token_quantity ? {token_quantity: parseInt(formData.token_quantity)}: {}),
+        transaction_tags: (formData.transaction_tags.map((item) => omit(item, '__typename') ))
       }
     });
 

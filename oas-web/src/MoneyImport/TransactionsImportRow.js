@@ -21,8 +21,9 @@ import {
 import { styled } from '@mui/material/styles';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
-import { filter, get, toPairs, map } from 'lodash'
+import { filter, get, toPairs, map, set } from 'lodash'
 import { NavLink } from 'react-router-dom'
+import { TransactionTags } from "../Money/TransactionTags";
 
 
 export const TransactionsImportRow = ({
@@ -52,11 +53,10 @@ export const TransactionsImportRow = ({
         <TableCell>
           {row.date}
         </TableCell>
-        <TableCell>
-          {row.bank_account_name}
-        </TableCell>
-        <TableCell>
-          {row.member?.name}
+        <TableCell title={(!row.member?.name) ? "Member not found" : null} sx={(theme) => ({
+          ...(!row.member?.name ? {backgroundColor: theme.palette.warning.main } : {} )
+        })}>
+          {row.member?.name || row.bank_account_name}
         </TableCell>
         <TableCell>
           {row.state}
@@ -65,16 +65,32 @@ export const TransactionsImportRow = ({
           {row.my_reference}
         </TableCell>
         <TableCell>
+          <TransactionTags
+            formData={get(formData, [i], [])}
+            setFormData={({transaction_tags}) => {
+              setFormData({
+                ...formData,
+                [i]: {
+                  ...get(formData, [i], {}),
+                  transaction_tags: transaction_tags
+                }
+              })
+            }}
+          />
+        </TableCell>
+        <TableCell>
           {row.amount}
         </TableCell>
         <TableCell>
-
             <Switch 
               disabled={!!row.errors}
-              checked={get(formData, i, false) || false}
+              checked={get(formData, [i, 'toImport'], false) || false}
               onChange={(event) => setFormData({
                 ...formData,
-                [i]: event.target.checked
+                [i]: {
+                  ...get(formData, [i], {}),
+                  toImport: event.target.checked
+                }
               })}/>
 
             {(row.errors || row.warnings) && <IconButton

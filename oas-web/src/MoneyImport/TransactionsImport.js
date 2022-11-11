@@ -39,6 +39,7 @@ export const TransactionsImport = () => {
         state,
         my_reference,
         amount,
+        subcategory,
         errors {
           transaction_id,
           name
@@ -95,6 +96,7 @@ export const TransactionsImport = () => {
     if (fileRef && fileRef.current) {
       fileRef.current.value = "";
     }
+    setFormData({})
     resetMutation();
     refetch()
   }
@@ -131,8 +133,8 @@ export const TransactionsImport = () => {
 
     {data?.transactions_import && <TransactionsImportEditor transactions_import={data.transactions_import} refetch={refetch} />}
 
-    <FormControl fullWidth sx={{m: 2}}>
+    {(data?.transactions_import || formData.file) && <FormControl fullWidth sx={{m: 2}}>
       <Button onClick={reset} variant="outlined" color="error">Reset</Button>
-    </FormControl>
+    </FormControl>}
   </Box>
 }

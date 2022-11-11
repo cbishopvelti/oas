@@ -45,8 +45,10 @@ defmodule OasWeb.Schema.SchemaMembershipPeriod do
           order_by: [desc: p.to, desc: p.id]
         )
         |> (&(case args do 
-          %{member_id: member_id} ->
+          %{member_id: member_id} when member_id != nil ->
+
             transaction_id = Map.get(args, :transaction_id, 0)
+
             where(&1, [p], 
               not(exists(from(
                 m in Oas.Members.Membership,
