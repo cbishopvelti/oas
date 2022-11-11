@@ -1,4 +1,4 @@
-import Ecto.Query, only: [from: 2]
+import Ecto.Query, only: [from: 2, dynamic: 2, where: 3, join: 5, group_by: 3]
 defmodule OasWeb.Schema.SchemaTransaction do
   use Absinthe.Schema.Notation
   
@@ -37,16 +37,30 @@ defmodule OasWeb.Schema.SchemaTransaction do
 
   object :transaction_queries do
     field :transactions, list_of(:transaction) do
-      resolve fn _, %{context: context} ->
+      arg :from, :string
+      arg :to, :string
+      arg :transaction_tags, list_of(:transaction_tag_arg)
+      resolve fn _, %{from: from, to: to, transaction_tags: transaction_tags}, %{context: context} ->
+        from = Date.from_iso8601!(from)
+        to = Date.from_iso8601!(to)
+        transaction_tag_ids = transaction_tags |> Enum.map(fn %{id: id} -> id end)
+
         query = from(
           t in Oas.Transactions.Transaction,
           select: t,
           preload: :transaction_tags,
-          where: t.not_transaction == false or is_nil(t.not_transaction),
+          where: t.when <= ^to and t.when >= ^from
+            and (t.not_transaction == false or is_nil(t.not_transaction)),
           order_by: [desc: t.when, desc: t.id]
         )
+        |> (&(case transaction_tag_ids do
+          [] -> &1
+          ids -> join(&1, :inner, [t], tt in assoc(t, :transaction_tags), as: :tt)
+            |> where([tt: tt], tt.id in ^ids)
+            |> group_by([t], t.id)
+        end)).()
 
-        IO.inspect(Oas.Repo.to_sql(:all, query))
+        # IO.inspect(Oas.Repo.to_sql(:all, query) |> elem(0))
         result = Oas.Repo.all(query)
         {:ok, result}
       end
