@@ -38,14 +38,14 @@ chrisjbishop155/oas:latest
 
 ## Todo
 
+
+Page text
+
 Trainings warning
 - if member has run out of non membership attendance.
 - if member is running out of tokens.
 - if in debt.
 - email
-
-Transactions, add tags
-Import transactions tags.
 
 Delete transaction
 - with confirmation
@@ -57,14 +57,6 @@ add is 'valid' member filter
   - to transactions
   - members list page (think about)
 
-Transaction filter
-
-~~ Historic data ~~
-- Add tokens without transactions
-- Add attendances to a "historic trainings" for debt
-- Maybe clear all debt / write off
-- Attempt to import historic data (hard)
-
 Members can look up their token count.
 
 Backup
@@ -73,16 +65,10 @@ DEPLOY
 
 Export for spreadsheets
 
-Booking
+Member Booking
 - gather requirements
 
-Membership
-- gather requirements
-
-Track bookings
+Tracking hall bookings?
 - gather requirements
 - look at import from bank statements
 
-Members can see their available tokens
-
-Filter transactions
