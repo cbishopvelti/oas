@@ -14,8 +14,8 @@ export const TransactionMembershipPeriod = ({
   const [canBuyMembership, setCanBuyMembership] = useState(false);
 
   const {data, refetch} = useQuery(gql`
-    query ($member_id: Int) {
-      membership_periods(member_id: $member_id) {
+    query ($member_id: Int, $transaction_id: Int) {
+      membership_periods(member_id: $member_id, transaction_id: $transaction_id) {
         name,
         id
       }
@@ -23,15 +23,19 @@ export const TransactionMembershipPeriod = ({
   `, {
     skip: !buyingMembership,
     variables: {
-      member_id: formData.who_member_id
+      member_id: formData.who_member_id,
+      transaction_id: id
     }
   })
 
   const membershipPeriods = get(data, 'membership_periods', []);
 
+  // useEffect(() => {
+  //   refetch();
+  // }, [data.who_member_id])
   useEffect(() => {
     refetch();
-  }, [id])
+  }, [id, formData.who_member_id])
 
   useEffect(() => {
     if (formData.membership_period_id) {

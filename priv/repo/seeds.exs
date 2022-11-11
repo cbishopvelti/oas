@@ -14,6 +14,8 @@ Oas.Repo.delete_all(Oas.Members.Membership)
 Oas.Repo.delete_all(Oas.Members.MembershipPeriod)
 Oas.Repo.delete_all(Oas.Transactions.Transaction)
 Oas.Repo.delete_all(Oas.Tokens.Token)
+Oas.Repo.delete_all(Oas.Members.MemberDetails)
+Oas.Repo.delete_all(Oas.Trainings.Attendance)
 Oas.Repo.delete_all(Oas.Members.Member)
 
 membershipPeriod = Oas.Repo.insert!(%Oas.Members.MembershipPeriod{
