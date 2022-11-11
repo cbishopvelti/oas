@@ -33,14 +33,18 @@ defmodule Oas.ImportTransactions do
       row -> 
         membershipPeriod = Oas.Members.MembershipPeriod.getThisOrNextMembershipPeriod(Map.get(row, :date))
 
-        if Map.get(row, :amount) == membershipPeriod.value |> Decimal.to_float do
-          if (is_map_key(row, :who_member_id)) do
-            Map.put(row, :state, :membership)
-          else
-            Map.put(row, :warnings, ["This looks like a membership, but related member (via bank_account_name) was not found" | Map.get(row, :warnings, [])])
-          end
-        else
-          row
+        amount =
+          Map.get(row, :amount) |> Decimal.from_float
+
+        case membershipPeriod do
+          nil -> row
+          %{value: value} when amount == false -> 
+            if (is_map_key(row, :who_member_id)) do
+              Map.put(row, :state, :membership)
+            else
+              Map.put(row, :warnings, ["This looks like a membership, but related member (via bank_account_name) was not found" | Map.get(row, :warnings, [])])
+            end
+          _ -> row  
         end
     end)
   end
