@@ -27,7 +27,7 @@ export const Members = () => {
       id,
       name,
       email,
-      tokens
+      token_count
     }
   }`, {
     variables: {
