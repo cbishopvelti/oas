@@ -19,6 +19,7 @@ defmodule Oas.Members.Member do
     many_to_many :membership_periods, Oas.Members.MembershipPeriod, join_through: Oas.Members.Membership
 
     has_many :tokens, Oas.Tokens.Token
+    has_many :transactions, Oas.Transactions.Transaction, foreign_key: :who_member_id
 
     timestamps()
   end

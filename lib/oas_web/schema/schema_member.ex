@@ -39,6 +39,13 @@ defmodule OasWeb.Schema.SchemaMember do
         {:ok, member.membership_periods}
       end
     end
+
+    field :transactions, list_of(:transaction) do
+      resolve fn %{id: id}, _, _ -> 
+        member = Oas.Repo.get(Oas.Members.Member, id) |> Oas.Repo.preload(:transactions)
+        {:ok, member.transactions}
+      end
+    end
   end
 
 
@@ -65,7 +72,12 @@ defmodule OasWeb.Schema.SchemaMember do
     field :members, list_of(:member) do
       arg :show_all, :boolean, default_value: false
       resolve fn _, %{show_all: show_all}, _ ->
-        query = (from m in Oas.Members.Member, select: m, order_by: [desc: :id])
+        query = (
+          from m in Oas.Members.Member,
+          select: m,
+          preload: [:tokens],
+          order_by: [desc: :id]
+        )
         |> (&(case show_all do
           false -> where(&1, [m], m.is_active == true)
           true -> &1
@@ -146,6 +158,14 @@ defmodule OasWeb.Schema.SchemaMember do
           {:error, error} -> {:error, error}
           {:ok, result} -> {:ok, result}
         end
+      end
+    end
+    field :delete_member, type: :success do
+      arg :member_id, non_null(:integer)
+      resolve fn _, %{member_id: member_id}, _ ->
+        Oas.Repo.get!(Oas.Members.Member, member_id) |> Oas.Repo.delete!
+
+        {:ok, %{success: true}}
       end
     end
 

@@ -39,9 +39,7 @@ chrisjbishop155/oas:latest
 ## Todo
 
 Delete transaction
-- delete membership period (if no members)
 - delete transaction (if no tokens or membership), with confirmation
-- delete member if no tokens, transactions or membership
 
 Link membership to Transaction
 Link token to Transaction

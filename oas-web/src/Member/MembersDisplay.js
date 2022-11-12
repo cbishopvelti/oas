@@ -62,7 +62,7 @@ export const MembersDisplay = ({members, ExtraActions}) => {
                     <EditIcon />
                   </IconButton>
 
-                  {ExtraActions && <ExtraActions member_id={member.id} />}
+                  {ExtraActions && <ExtraActions member_id={member.id} member={member} />}
                 </TableCell>
               </TableRow>
             ))
