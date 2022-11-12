@@ -162,7 +162,7 @@ export const Transaction = () => {
         amount: parseFloat(get(formData, 'amount')),
         ...(get(formData, 'who_member_id') ? {who_member_id: parseInt(get(formData, 'who_member_id'))} : {}),
         ...(formData.token_quantity ? {token_quantity: parseInt(formData.token_quantity)}: {}),
-        transaction_tags: (formData.transaction_tags.map((item) => omit(item, '__typename') ))
+        transaction_tags: (formData.transaction_tags?.map((item) => omit(item, '__typename') ))
       }
     });
 
@@ -310,7 +310,9 @@ export const Transaction = () => {
         <TextField 
           label="Amount"
           value={get(formData, "amount", '')}
-          type="number"
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9\.]*"
           required
           onChange={onChange({formData, setFormData, key: "amount"})}
           error={has(errors, "amount")}
@@ -347,7 +349,6 @@ export const Transaction = () => {
           helperText={get(errors, "notes", []).join(' ')}
           />
       </FormControl>
-
       
 
       <TransactionMembershipPeriod
@@ -366,10 +367,10 @@ export const Transaction = () => {
       </FormControl>
 
     </Box>
-    <TransactionEditTokens
+    {get(data, "transaction") && <TransactionEditTokens
       formData={formData}
       refetch={refetch}
-      transaction={get(data, "transaction")} />
+      transaction={get(data, "transaction")} />}
     {/* {get(data, "transaction") && <Tokens transaction={get(data, "transaction")} />} */}
   </>
 }

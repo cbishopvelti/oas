@@ -3,14 +3,20 @@ import Ecto.Query, only: [from: 2, where: 3]
 defmodule OasWeb.Schema.SchemaAttendance do
   use Absinthe.Schema.Notation
 
-  object :memberAttendance do
+  object :attendance do
+    field :id, :integer
+  end
+
+  object :member_attendance do
     field :id, :integer
     field :attendance_id, :integer
+    field :attendance, list_of(:attendance)
     field :name, :string
     field :email, :string
     field :tokens, :integer
     field :is_member, :boolean
     field :is_admin, :boolean
+    field :warnings, list_of(:string)
   end
 
   object :add_attendance do
@@ -23,21 +29,31 @@ defmodule OasWeb.Schema.SchemaAttendance do
 
   # QUERIES
   object :attendance_queries do
-    field :attendance, list_of(:memberAttendance) do 
+    field :attendance, list_of(:member_attendance) do 
       arg :training_id, non_null(:integer)
       resolve fn _, %{training_id: training_id}, _ ->
+        training = Oas.Repo.get!(Oas.Trainings.Training, training_id)
+
         results = from(m in Oas.Members.Member,
-        inner_join: a in assoc(m, :attendance),
-        select: {m, a},
+          as: :member,
+          inner_join: a in assoc(m, :attendance),
+          preload: [attendance: a],
+          preload: [membership_periods: ^from(mp in Oas.Members.MembershipPeriod, where: mp.from <= ^training.when and mp.to >= ^training.when)],
+          select: m,
           where: a.training_id == ^training_id
-        ) |> Oas.Repo.all
-        |> Enum.map(fn {member, attendance} -> 
-          Map.put(member, :attendance_id, attendance.id)
-        end)
+        )
+        |> Oas.Repo.all
         |> Enum.map(fn record ->
           %{id: id} = record
           tokens = Oas.Attendance.get_token_amount(%{member_id: id})
-          Map.put(record, :tokens, tokens)
+          record = Map.put(record, :tokens, tokens)
+          record = if (tokens < 0) do
+            Map.put(record, :warnings, ["No tokens left" | Map.get(record, :warnings, [])])
+          else
+            record
+          end
+          record = Oas.Attendance.check_membership(record, training)
+          record
         end)
 
         {:ok, results}

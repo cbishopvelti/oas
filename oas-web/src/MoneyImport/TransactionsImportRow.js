@@ -24,7 +24,7 @@ import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import { filter, get, toPairs, map, set } from 'lodash'
 import { NavLink } from 'react-router-dom'
 import { TransactionTags } from "../Money/TransactionTags";
-
+import { StyledTableRow } from '../utils/util'
 
 export const TransactionsImportRow = ({
   row,
@@ -34,19 +34,7 @@ export const TransactionsImportRow = ({
 }) => {
   const [open, setOpen] = useState(false);
 
-  const StyledTableRow = styled(TableRow)(({ theme }) => {
-    return {
-      '&.errors, &.warnings.errors': {
-        backgroundColor: theme.palette.error.main
-      },
-      '&.warnings': {
-        backgroundColor: theme.palette.warning.main
-      },
-      '&.warnings > *, &.errors > *': {
-        borderBottom: 'unset'
-      }
-    }
-  });
+  
 
   return <>
       <StyledTableRow className={`${row.errors && 'errors'} ${row.warnings && 'warnings'}`} key={i}>

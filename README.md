@@ -41,7 +41,6 @@ chrisjbishop155/oas:latest
 Trainings warning
 - if member has run out of non membership attendance.
 - if member is running out of tokens.
-- if in debt.
 - email
 
 Delete transaction
