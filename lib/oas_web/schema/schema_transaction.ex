@@ -48,7 +48,7 @@ defmodule OasWeb.Schema.SchemaTransaction do
         query = from(
           t in Oas.Transactions.Transaction,
           select: t,
-          preload: :transaction_tags,
+          preload: [:transaction_tags, :tokens, :membership],
           where: t.when <= ^to and t.when >= ^from
             and (t.not_transaction == false or is_nil(t.not_transaction)),
           order_by: [desc: t.when, desc: t.id]
@@ -218,5 +218,29 @@ defmodule OasWeb.Schema.SchemaTransaction do
         end
       end
     end
+    field :delete_transaction, type: :success do
+      arg :transaction_id, non_null(:integer)
+      resolve fn _, %{transaction_id: transaction_id}, _ -> 
+        Oas.Repo.get!(Oas.Transactions.Transaction, transaction_id) |>
+          Oas.Repo.delete!
+
+        # delete unused tags
+        from(
+          tt in Oas.Transactions.TransactionTags,
+          as: :transaction_tags,
+          where: not(exists(
+            from(
+              c in "transaction_transaction_tags",
+              where: c.transaction_tag_id == parent_as(:transaction_tags).id,
+              select: 1
+            )
+          )) # and tt.id in ^removedTransactionTags
+        ) |> Oas.Repo.delete_all
+        # EO delete unused tags
+
+        {:ok, %{success: true}}
+      end
+    end
+
   end
 end

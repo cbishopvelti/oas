@@ -1,4 +1,4 @@
-import { gql, useQuery } from '@apollo/client';
+import { gql, useMutation, useQuery } from '@apollo/client';
 import {
   Table,
   TableContainer,
@@ -9,7 +9,14 @@ import {
   IconButton,
   Box,
   TextField,
-  FormControl
+  FormControl,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Button,
+
 } from '@mui/material';
 import { get } from 'lodash';
 import { useEffect, useState } from 'react';
@@ -17,6 +24,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import { Link, useParams,useOutletContext } from "react-router-dom";
 import { TransactionTags } from './TransactionTags';
 import moment from 'moment'
+import DeleteIcon from '@mui/icons-material/Delete';
 
 const onChange = ({formData, setFormData, key}) => (event) => {
     
@@ -43,6 +51,12 @@ export const Transactions = () => {
       transaction_tags {
         name
       }
+      membership {
+        id
+      }
+      tokens {
+        id
+      }
     }
   }`, {
     variables: filterData
@@ -52,6 +66,34 @@ export const Transactions = () => {
     refetch()
   }, [])
   transactions = get(transactions, "transactions", [])
+
+
+  const [delete_mutation] = useMutation(gql`
+    mutation ($transaction_id: Int!) {
+      delete_transaction (transaction_id: $transaction_id) {
+        success
+      }
+    }
+  `)
+  const [deleteOpen, setDeleteOpen] = useState(0)
+  const deleteClick = ({transaction_id}) => () => {
+    setDeleteOpen(transaction_id);
+  }
+  const handleDeleteClose = (doDelete) => async () => {
+    const transaction_id = deleteOpen;
+    setDeleteOpen(0)
+    if (!doDelete) {
+      return;
+    }
+
+    console.log("003", transaction_id);
+    await delete_mutation({
+      variables: {
+        transaction_id
+      }
+    })
+    refetch();
+  }
 
   return <div>
     <Box sx={{display: 'flex', gap: 2, m: 2}}>
@@ -112,6 +154,11 @@ export const Transactions = () => {
                   <IconButton component={Link} to={`/transaction/${transaction.id}`}>
                     <EditIcon />
                   </IconButton>
+                  {(get(transaction, 'tokens', []).length == 0 && !get(transaction, 'membership', null)) &&
+                    <IconButton onClick={deleteClick({transaction_id: transaction.id})}>
+                      <DeleteIcon sx={{color: 'red'}} />
+                    </IconButton>
+                  }
                 </TableCell>
               </TableRow>
             ))
@@ -119,5 +166,26 @@ export const Transactions = () => {
         </TableBody>
       </Table>
     </TableContainer>
+    <Dialog
+        open={deleteOpen != 0}
+        onClose={handleDeleteClose(false)}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">
+          {`Delete Transaction`}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            Are you sure you want to delete transaction {deleteOpen}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button color="error" onClick={handleDeleteClose(false)}>No</Button>
+          <Button onClick={handleDeleteClose(true)}>
+            Yes
+          </Button>
+        </DialogActions>
+      </Dialog>
   </div>
 }
