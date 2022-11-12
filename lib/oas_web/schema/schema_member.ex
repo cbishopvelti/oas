@@ -18,7 +18,15 @@ defmodule OasWeb.Schema.SchemaMember do
     field :name, :string
     field :email, :string
     field :bank_account_name, :string
-    field :tokens, :integer
+    field :tokens, list_of(:token)
+    field :token_count, :integer do
+      resolve fn %{id: id}, _, _ ->
+        token_count = Oas.Attendance.get_token_amount(%{member_id: id})
+
+        {:ok, token_count}
+      end
+    end
+
     field :is_active, :boolean
     field :is_admin, :boolean
     field :is_reviewer, :boolean
@@ -68,8 +76,8 @@ defmodule OasWeb.Schema.SchemaMember do
         result = result
         |> Enum.map(fn record ->
           %{id: id} = record
-          tokens = Oas.Attendance.get_token_amount(%{member_id: id})
-          Map.put(record, :tokens, tokens)
+          token_count = Oas.Attendance.get_token_amount(%{member_id: id})
+          Map.put(record, :token_count, token_count)
         end)
 
 
@@ -82,9 +90,9 @@ defmodule OasWeb.Schema.SchemaMember do
 
         result = Oas.Repo.get!(Oas.Members.Member, member_id) |> Oas.Repo.preload(:member_details)
 
-        tokens = Oas.Attendance.get_token_amount(%{member_id: member_id})
+        token_count = Oas.Attendance.get_token_amount(%{member_id: member_id})
 
-        {:ok, Map.put(result, :tokens, tokens)}
+        {:ok, Map.put(result, :token_count, token_count)}
       end
     end
   end

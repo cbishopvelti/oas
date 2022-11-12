@@ -39,7 +39,7 @@ export const MembershipPeriodsDisplay = ({
                 <IconButton component={Link} to={`/membership-period/${membershipPeriod.id}`}>
                   <EditIcon />
                 </IconButton>
-                {ExtraActions && <ExtraActions membership_period_id={membershipPeriod.id} />}
+                {ExtraActions && <ExtraActions membership_period_id={membershipPeriod.id} membership_period_members={membershipPeriod.members} />}
               </TableCell>
             </TableRow>
           )}
