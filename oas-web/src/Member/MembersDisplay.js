@@ -50,7 +50,7 @@ export const MembersDisplay = ({members}) => {
                 <TableCell>{member.id}</TableCell>
                 <TableCell>{member.name}</TableCell>
                 <TableCell>{member.email}</TableCell>
-                <TableCell sx={{...(member.tokens < 0 ? {color: "red"} : {})}}>{member.tokens}</TableCell>
+                <TableCell sx={{...(member.token_count < 0 ? {color: "red"} : {})}}>{member.token_count}</TableCell>
                 <TableCell>
                   <IconButton component={Link} to={`/member/${member.id}/tokens`}>
                     <BookOnlineIcon />

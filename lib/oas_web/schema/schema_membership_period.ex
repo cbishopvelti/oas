@@ -8,22 +8,22 @@ defmodule OasWeb.Schema.SchemaMembershipPeriod do
     field :from, :string
     field :to, :string
     field :value, :string
-    field :members, list_of(:member) do
-      resolve fn %{id: id}, _, _ ->
-        membershipPeriod = Oas.Repo.get(Oas.Members.MembershipPeriod, id)
-          |> Oas.Repo.preload(:members)
+    field :members, list_of(:member) #do
+      # resolve fn %{id: id}, _, _ ->
+      #   membershipPeriod = Oas.Repo.get(Oas.Members.MembershipPeriod, id)
+      #     |> Oas.Repo.preload(:members)
           
-        members = membershipPeriod.members
-          |> Enum.map(fn member -> Map.delete(member, :tokens) end)
-          |> Enum.map(fn record ->
-            %{id: id} = record
-            tokens = Oas.Attendance.get_token_amount(%{member_id: id})
-            Map.put(record, :tokens, tokens)
-          end)
+      #   members = membershipPeriod.members
+      #     |> Enum.map(fn member -> Map.delete(member, :tokens) end)
+      #     |> Enum.map(fn record ->
+      #       %{id: id} = record
+      #       tokens = Oas.Attendance.get_token_amount(%{member_id: id})
+      #       Map.put(record, :tokens, tokens)
+      #     end)
 
-        {:ok, members}
-      end
-    end
+      #   {:ok, members}
+      # end
+    #end
   end
 
   object :membership_period_queries do
@@ -31,6 +31,8 @@ defmodule OasWeb.Schema.SchemaMembershipPeriod do
       arg :id, non_null(:integer)
       resolve fn _, %{id: id}, _ -> 
         membershipPeriod = Oas.Repo.get!(Oas.Members.MembershipPeriod, id)
+          |> Oas.Repo.preload(:members)
+
         {:ok, membershipPeriod}
       end
     end
@@ -41,6 +43,7 @@ defmodule OasWeb.Schema.SchemaMembershipPeriod do
         query = from(
           p in Oas.Members.MembershipPeriod,
           as: :membership_periods,
+          preload: [:members],
           select: p,
           order_by: [desc: p.to, desc: p.id]
         )
@@ -61,6 +64,7 @@ defmodule OasWeb.Schema.SchemaMembershipPeriod do
             &1
         end)).()
         
+
         membershipPeriods = Oas.Repo.all(query)
 
         {:ok, membershipPeriods}
@@ -110,6 +114,13 @@ defmodule OasWeb.Schema.SchemaMembershipPeriod do
         ) |> Oas.Repo.delete_all
 
         {:ok, %{success: true}}
+      end
+    end
+    field :delete_membership_period, type: :success do
+      arg :membership_period_id, non_null(:integer)
+      resolve fn _, %{membership_period_id: membership_period_id}, _ ->
+        Oas.Repo.get!(Oas.Members.MembershipPeriod, membership_period_id) |> Oas.Repo.delete!
+        {:ok, %{spccess: true}}
       end
     end
   end

@@ -25,7 +25,7 @@ export const MembershipPeriodMembers = () => {
           id,
           name,
           email,
-          tokens
+          token_count
         }
       }
     }

@@ -39,13 +39,18 @@ chrisjbishop155/oas:latest
 ## Todo
 
 Delete transaction
-- with confirmation
-- orphaned membership
-- orphaned tokens
+- delete membership period (if no members)
+- delete transaction (if no tokens or membership), with confirmation
+- delete member if no tokens, transactions or membership
+
+Link membership to Transaction
+Link token to Transaction
 
 Backup
 
 DEPLOY
+
+Change header title functionality
 
 Export for spreadsheets
 
