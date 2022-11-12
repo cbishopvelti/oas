@@ -30,8 +30,16 @@ defmodule Oas.ImportTransactions do
     rows
     |> Enum.map(fn
       row when is_map_key(row, :state) -> row
-      row -> 
-        membershipPeriod = Oas.Members.MembershipPeriod.getThisOrNextMembershipPeriod(Map.get(row, :date))
+      row ->
+
+        amount =
+          Map.get(row, :amount) |> Decimal.from_float
+
+        membershipPeriod = Oas.Members.MembershipPeriod.getThisOrNextMembershipPeriod(
+          Map.get(row, :date),
+          Map.get(row, :who_member_id),
+          amount
+        )
 
         amount =
           Map.get(row, :amount) |> Decimal.from_float
