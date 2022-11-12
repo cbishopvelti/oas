@@ -25,7 +25,7 @@ export const TrainingWhereFilter = ({
     id="trainingWhere"
     value={formData.training_where || training_where /*|| [{id: 1, name: "existing_test"}]*/}
     options={(training_where).map(({name, id}) => ({ label: name, id, name }))}
-    renderInput={(params) => <TextField {...params} required label="Where" />}
+    renderInput={(params) => <TextField {...params} label="Where" />}
     multiple
     selectOnFocus
     clearOnBlur

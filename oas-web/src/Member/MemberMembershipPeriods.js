@@ -18,7 +18,6 @@ export const DeleteMembership = ({member_id, refetch}) => {
   return ({membership_period_id}) => {
 
     return <IconButton onClick={async () => {
-      console.log("001", membership_period_id, member_id)
       await mutation({
         variables: {
           membership_period_id,

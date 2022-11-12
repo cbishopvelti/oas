@@ -22,9 +22,54 @@ defmodule Oas.Attendance do
     :ok
   end
 
+  def maybe_send_warnings_email(member) do
+    warnings = []
+    tokens = Oas.Attendance.get_token_amount(%{member_id: member.id})
+    warnings = if (tokens <= 0) do
+      warnings = ["You have run out of tokens (#{tokens}), please buy more" | warnings]
+    else
+      warnings
+    end
+
+    warnings = case member do
+      %{membership_periods: []} ->
+        result = from(a in Oas.Trainings.Attendance,
+          join: m in assoc(a, :member),
+          where: m.id == ^member.id,
+          select: count(m.id)
+        ) |> Oas.Repo.one
+
+        warnings = if (
+          result >= 3
+          # or true # DEBUG ONLY
+        ) do
+          ["You have attended " <> to_string(result) <> " sessions, please pay the membership fee before the next session" | Map.get(member, :warnings, [])]
+        else
+          warnings
+        end
+      _ -> warnings
+    end
+
+    case (warnings) do
+      [] -> nil
+      warnings -> 
+        Oas.Members.MemberNotifier.deliver(member.email, "OAS notifaction", """
+          Hi #{member.name}
+
+          #{Enum.join(warnings, "\n")}
+
+          Thanks
+
+          OAS
+        """)
+    end
+
+  end
+
   def add_attendance(%{member_id: member_id, training_id: training_id}) do
     training = Oas.Repo.get!(Oas.Trainings.Training, training_id)
     member = Oas.Repo.get!(Oas.Members.Member, member_id)
+    |> Oas.Repo.preload([membership_periods: from(mp in Oas.Members.MembershipPeriod, where: mp.from <= ^training.when and mp.to >= ^training.when)])
 
     attendance = %Oas.Trainings.Attendance{
       member_id: member_id,
@@ -37,6 +82,10 @@ defmodule Oas.Attendance do
       nil -> nil
       token -> use_token(token, attendance.id)
     end
+
+    Task.async(fn ->
+      maybe_send_warnings_email(member)
+    end)
 
     {:ok, %{id: attendance.id}}
   end
@@ -133,5 +182,25 @@ defmodule Oas.Attendance do
       |> Ecto.Changeset.cast(%{member_id: member_id, attendance_id: attendanceId, used_on: when1}, [:member_id, :attendance_id, :used_on])
       |> Oas.Repo.update
     token
+  end
+
+  def check_membership(member = %{id: id, membership_periods: []}, training) do
+    result = from(a in Oas.Trainings.Attendance,
+      join: m in assoc(a, :member),
+      where: m.id == ^id,
+      select: count(m.id)
+    ) |> Oas.Repo.one
+
+    if (
+      result > 3
+      # or true # DEBUG ONLY
+    ) do
+      Map.put(member, :warnings, [member.name <> " has attended " <> to_string(result) <> " sessions but is not a member" | Map.get(member, :warnings, [])])
+    else
+      member
+    end
+  end
+  def check_membership(member, training) do
+    member
   end
 end

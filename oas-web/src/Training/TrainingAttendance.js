@@ -10,8 +10,7 @@ import { Box, FormControl, Autocomplete, TextField, Button,   Table,
 import { useQuery, gql, useMutation } from '@apollo/client'
 import { differenceBy, get } from 'lodash';
 import { Link } from 'react-router-dom'
-import BookOnlineIcon from '@mui/icons-material/BookOnline';
-import DeleteIcon from '@mui/icons-material/Delete';
+import { TrainingAttendanceRow } from './TrainingAttendanceRow';
 
 
 export const TrainingAttendance = ({trainingId}) => {
@@ -27,13 +26,17 @@ export const TrainingAttendance = ({trainingId}) => {
       name,
       email,
       tokens,
-      attendance_id
+      attendance {
+        id
+      },
+      warnings
     }
   }`, {
     variables: {
       training_id: trainingId
     }
   });
+
   const attendance = get(data, 'attendance', []);
   const members = differenceBy(
     get(data, 'members', []),
@@ -72,8 +75,8 @@ export const TrainingAttendance = ({trainingId}) => {
       }
     }
   `)
-  const deleteAttendanceClick = (attendanceId) => (event) => {
-    deleteAttendance({
+  const deleteAttendanceClick = (attendanceId) => async (event) => {
+    await deleteAttendance({
       variables: {
         attendance_id: attendanceId
       }
@@ -120,22 +123,8 @@ export const TrainingAttendance = ({trainingId}) => {
           </TableHead>
           <TableBody>
             {
-              attendance.map((member) => (
-                <TableRow key={member.id}>
-                  <TableCell>{member.id}</TableCell>
-                  <TableCell>{member.attendance_id}</TableCell>
-                  <TableCell>{member.name}</TableCell>
-                  <TableCell>{member.email}</TableCell>
-                  <TableCell sx={{...(member.tokens < 0 ? {color: "red"} : {})}}>{member.tokens}</TableCell>
-                  <TableCell>
-                    <IconButton component={Link} to={`/member/${member.id}/tokens`}>
-                      <BookOnlineIcon />
-                    </IconButton>
-                    <IconButton onClick={deleteAttendanceClick(member.attendance_id)}>
-                      <DeleteIcon sx={{color: 'red'}} />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
+              attendance.map((member, i) => (
+                <TrainingAttendanceRow key={i} member={member} deleteAttendanceClick={deleteAttendanceClick} />
               ))
             }
           </TableBody>

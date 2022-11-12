@@ -1,4 +1,9 @@
 import { get, snakeCase } from 'lodash';
+import { useState } from "react"
+import {
+  TableRow,
+} from '@mui/material'
+import { styled } from '@mui/material/styles';
 
 export const parseErrors = (errors) => {
   if (!errors) {
@@ -33,3 +38,17 @@ export const parseErrors = (errors) => {
     return acc;
   }, {})
 }
+
+export const StyledTableRow = styled(TableRow)(({ theme }) => {
+  return {
+    '&.errors, &.warnings.errors': {
+      backgroundColor: theme.palette.error.main
+    },
+    '&.warnings': {
+      backgroundColor: theme.palette.warning.main
+    },
+    '&.warnings > *, &.errors > *': {
+      borderBottom: 'unset'
+    }
+  }
+});

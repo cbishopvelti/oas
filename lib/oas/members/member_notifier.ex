@@ -4,7 +4,7 @@ defmodule Oas.Members.MemberNotifier do
   alias Oas.Mailer
 
   # Delivers the email using the application mailer.
-  defp deliver(recipient, subject, body) do
+  def deliver(recipient, subject, body) do
     email =
       new()
       |> to(recipient)
