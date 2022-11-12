@@ -58,6 +58,9 @@ defmodule OasWeb.Schema do
   def myMiddleware(middleware, %Absinthe.Type.Field{identifier: :public_register}, %Absinthe.Type.Object{identifier: :mutation}) do
     middleware
   end
+  def myMiddleware(middleware, %Absinthe.Type.Field{identifier: :public_tokens}, %Absinthe.Type.Object{identifier: :query}) do
+    middleware
+  end
   # isAdmin and isReviewer can read data
   def myMiddleware(middleware, field, %Absinthe.Type.Object{identifier: identifier}) when identifier in [:query, :subscription] do
     [OasWeb.Schema.MiddlewareQuery | middleware]

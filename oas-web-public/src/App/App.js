@@ -21,6 +21,9 @@ function App() {
             <MenuItem component={NavLink} to={'/register'}>
               <ListItemText>Register</ListItemText>
             </MenuItem>
+            <MenuItem component={NavLink} to={'/tokens'}>
+              <ListItemText>My Tokens</ListItemText>
+            </MenuItem>
           </MenuList>
         </div>
         <Box className="content" p={2}>
