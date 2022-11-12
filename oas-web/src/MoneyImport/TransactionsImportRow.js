@@ -30,7 +30,9 @@ export const TransactionsImportRow = ({
   row,
   i,
   setFormData,
-  formData
+  formData,
+  transactionTags,
+  setTransactionTags
 }) => {
   const [open, setOpen] = useState(false);
 
@@ -54,6 +56,8 @@ export const TransactionsImportRow = ({
         </TableCell>
         <TableCell>
           <TransactionTags
+            transactionTags={transactionTags}
+            setTransactionTags={setTransactionTags}
             formData={get(formData, [i], [])}
             setFormData={({transaction_tags}) => {
               setFormData({

@@ -1,6 +1,6 @@
 import { gql, useMutation, useQuery } from "@apollo/client";
 import { Autocomplete, TextField } from "@mui/material";
-import { get, includes, set, filter as lodashFilter, differenceWith, differenceBy, pick, map } from 'lodash'
+import { get, includes, set, filter as lodashFilter, differenceWith, differenceBy, pick, map, uniqBy } from 'lodash'
 import { createFilterOptions } from '@mui/material/Autocomplete';
 import { useEffect } from "react";
 
@@ -8,6 +8,8 @@ const filter = createFilterOptions();
 
 
 export const TransactionTags = ({
+  transactionTags = [],
+  setTransactionTags = () => {},
   formData, 
   setFormData,
   filterMode
@@ -21,7 +23,7 @@ export const TransactionTags = ({
       }
     }
   `)
-  let transaction_tags = get(data, 'transaction_tags', [])
+  let transaction_tags = uniqBy([...get(data, 'transaction_tags', []), ...transactionTags ], 'name')
   useEffect(() => {
     refetch()
   }, [formData.saveCount])
@@ -57,7 +59,7 @@ export const TransactionTags = ({
       }
 
       // Only allow unique options
-      filtered = differenceBy(filtered, formData.transaction_tags, "id")
+      filtered = differenceBy(filtered, formData.transaction_tags, "name")
 
       return filtered;
     }}
@@ -66,6 +68,11 @@ export const TransactionTags = ({
         ...formData,
         transaction_tags: newValue.map(({id, name}) => ({id, name: name}))
       })
+      setTransactionTags(uniqBy([
+        ...newValue.filter(({id}) => !id)
+          .map(({id, name}) => ({id, name})),
+        ...transactionTags
+      ], 'name'))
     }}
   />
 }

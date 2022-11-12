@@ -38,16 +38,10 @@ chrisjbishop155/oas:latest
 
 ## Todo
 
-
-Import membership
-Import transaction_tags
-
 Delete transaction
 - with confirmation
 - orphaned membership
 - orphaned tokens
-
-
 
 Backup
 

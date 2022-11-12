@@ -24,6 +24,7 @@ import { TransactionsImportRow } from "./TransactionsImportRow";
 
 export const TransactionsImportEditor = ({transactions_import, refetch}) => {
   const [formData, setFormData] = useState()
+  const [transactionTags, setTransactionTags] = useState([])
   useState(() => {
     const initState = transactions_import.reduce((acc, row, i) => {
       let out = false;
@@ -107,7 +108,10 @@ export const TransactionsImportEditor = ({transactions_import, refetch}) => {
         </TableHead>
         <TableBody>
           {transactions_import.map((row, i) => {
-            return <TransactionsImportRow key={i} row={row} i={i} formData={formData} setFormData={setFormData} />
+            return <TransactionsImportRow key={i} row={row} i={i} formData={formData} setFormData={setFormData}
+              setTransactionTags={setTransactionTags}
+              transactionTags={transactionTags}
+            />
           })}
         </TableBody>
       </Table>
