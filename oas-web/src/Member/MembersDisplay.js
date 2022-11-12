@@ -14,7 +14,7 @@ import CardMembershipIcon from '@mui/icons-material/CardMembership';
 import CopyAllIcon from '@mui/icons-material/CopyAll';
 import { join } from 'lodash'
 
-export const MembersDisplay = ({members}) => {
+export const MembersDisplay = ({members, ExtraActions}) => {
 
   const copyAll = () => {
     navigator.clipboard.writeText(
@@ -62,6 +62,7 @@ export const MembersDisplay = ({members}) => {
                     <EditIcon />
                   </IconButton>
 
+                  {ExtraActions && <ExtraActions member_id={member.id} />}
                 </TableCell>
               </TableRow>
             ))
