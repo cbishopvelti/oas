@@ -38,22 +38,16 @@ chrisjbishop155/oas:latest
 
 ## Todo
 
-Trainings warning
-- if member has run out of non membership attendance.
-- if member is running out of tokens.
-- email
+
+Import membership
+Import transaction_tags
 
 Delete transaction
 - with confirmation
 - orphaned membership
 - orphaned tokens
 
-add is 'valid' member filter
-  - to training member drop down
-  - to transactions
-  - members list page (think about)
 
-Members can look up their token count.
 
 Backup
 
