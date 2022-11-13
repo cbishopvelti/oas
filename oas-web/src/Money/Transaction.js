@@ -70,7 +70,11 @@ export const Transaction = () => {
     skip: !id
   })
   useEffect(() => {
-    setTitle("Transaction");
+    if (!id) {
+      setTitle("New Transaction");
+    } else {
+      setTitle(`Editing Transaction: ${id}`)
+    }
     refetch()
     if (!id) {
       setFormData(defaultData)

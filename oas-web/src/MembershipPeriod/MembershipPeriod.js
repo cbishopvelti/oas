@@ -61,7 +61,13 @@ export const MembershipPeriod = () => {
     skip: !id
   })
   useEffect(() => {
-    setTitle("Membership Period");
+    if (!id) {
+      setTitle("New Membership Period")
+    } else {
+      setTitle(`Editing Membership Period: ${get(data, 'membership_period.name', id)}`)
+    }
+  }, [get(data, 'membership_period.name', id)])
+  useEffect(() => {
     refetch()
     if (!id) {
       setFormData(defaultData)
