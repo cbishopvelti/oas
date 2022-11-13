@@ -37,7 +37,7 @@ export const MembersDisplay = ({data, dataKey, ExtraActions}) => {
             </TableCell>
             <TableCell>
               Email
-              <IconButton title="Copy all" onClick={copyAll}>
+              <IconButton title="Copy emails" onClick={copyAll}>
                 <CopyAllIcon />
               </IconButton>  
             </TableCell>

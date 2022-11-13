@@ -23,9 +23,6 @@ export const DeleteMembership = ({membership_period_id, membership_period_name, 
   }
 
   return ({member_id, data}) => {
-
-    console.log("006", data);
-
     return <>
       {data.transaction && <IconButton title={`Go to ${membership_period_name}'s transaction`} component={Link} to={`/transaction/${data.transaction.id}`}>
         <PaidIcon />
