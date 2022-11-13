@@ -47,7 +47,15 @@ export const Training = () => {
   const [formData, setFormData] = useState(defaultData);
 
   useEffect(() => {
-    setTitle("Training");
+    if (!id) {
+      setTitle("New Training");
+    } else {
+      setTitle(`Editing Training: ${get(data, 'training.training_where.name', id)}`)
+    }
+  }, [get(data, 'training.training_where.name')])
+
+  useEffect(() => {
+    
     if (!id) {
       setFormData(defaultData)
     }

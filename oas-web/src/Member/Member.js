@@ -56,7 +56,14 @@ export const Member = () => {
   })
 
   useEffect(() => {
-    setTitle("Member");
+    if (!id){
+      setTitle("New Member");
+    } else {
+      setTitle(`Editing Member: ${get(data, 'member.name', id)}`)
+    }
+  }, [get(data, 'member.name', id)])
+  useEffect(() => {
+    
     refetch()
     if (!id) {
       setFormData({is_active: true})
