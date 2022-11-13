@@ -45,7 +45,7 @@ export const TransferToken = ({token, refetch}) => {
   }
 
   return <>
-    <IconButton onClick={() => setOpen(true)}>
+    <IconButton title={`Transfer token`} onClick={() => setOpen(true)}>
       <TransferWithinAStationIcon />
     </IconButton>
     <Dialog open={open} onClose={() => {console.log("hnadle close"); setOpen(false)}}>

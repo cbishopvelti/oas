@@ -8,7 +8,7 @@ export const MemberLink = React.forwardRef((params, ref) => {
 
   let isActive = false;
   isActive =
-    some(matches, ({id}) => includes(["members", "member-tokens", "member-id", "member-membership-periods"], id))
+    some(matches, ({id}) => includes(["members", "member-tokens", "member-id", "member-membership-periods", "member-transactions", "membership-period-members"], id))
 
   return <NavLink
     {...params}
@@ -37,7 +37,7 @@ export const TransactionLink = React.forwardRef((params, ref) => {
 
   let isActive = false;
   isActive =
-    some(matches, ({id}) => includes(["transaction-id", "transactions"], id))
+    some(matches, ({id}) => includes(["transaction-id", "transactions", "member-transactions"], id))
 
 
   return <NavLink
@@ -51,7 +51,7 @@ export const MembershipPeriodLink = React.forwardRef((params, ref) => {
 
   let isActive = false;
   isActive =
-    some(matches, ({id}) => includes(["membership-period-id", "membership-periods", "membership-period-members"], id))
+    some(matches, ({id}) => includes(["membership-period-id", "membership-periods", "membership-period-members", "member-membership-periods"], id))
 
 
   return <NavLink

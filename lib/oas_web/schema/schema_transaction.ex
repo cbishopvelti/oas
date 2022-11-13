@@ -16,6 +16,10 @@ defmodule OasWeb.Schema.SchemaTransaction do
     field :id, :integer
     field :transaction_id, :integer
     field :membership_period_id, :integer
+
+    field :transaction, :transaction
+    field :member, :member
+    field :membership_period, :membership_period
   end
 
   object :transaction do
@@ -40,7 +44,8 @@ defmodule OasWeb.Schema.SchemaTransaction do
       arg :from, :string
       arg :to, :string
       arg :transaction_tags, list_of(:transaction_tag_arg)
-      resolve fn _, %{from: from, to: to, transaction_tags: transaction_tags}, %{context: context} ->
+      arg :member_id, :integer
+      resolve fn _, args = %{from: from, to: to, transaction_tags: transaction_tags}, %{context: context} ->
         from = Date.from_iso8601!(from)
         to = Date.from_iso8601!(to)
         transaction_tag_ids = transaction_tags |> Enum.map(fn %{id: id} -> id end)
@@ -52,7 +57,10 @@ defmodule OasWeb.Schema.SchemaTransaction do
           where: t.when <= ^to and t.when >= ^from
             and (t.not_transaction == false or is_nil(t.not_transaction)),
           order_by: [desc: t.when, desc: t.id]
-        )
+        ) |> (&(case Map.get(args, :member_id) do
+          nil -> &1
+          member_id -> where(&1, [t], t.who_member_id == ^member_id)
+        end)).()
         |> (&(case transaction_tag_ids do
           [] -> &1
           ids -> join(&1, :inner, [t], tt in assoc(t, :transaction_tags), as: :tt)

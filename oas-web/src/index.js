@@ -55,6 +55,10 @@ const router = createBrowserRouter([
         id: "transaction-id",
         path: "transaction/:id",
         element: <Transaction />
+      }, {
+        id: "member-transactions",
+        path: "member/:member_id/transactions",
+        element: <Transactions />
       },
       {
         path: "transaction",

@@ -38,10 +38,6 @@ chrisjbishop155/oas:latest
 
 ## Todo
 
-Delete transaction
-- delete transaction (if no tokens or membership), with confirmation
-
-Link membership to Transaction
 Link token to Transaction
 
 Backup

@@ -15,12 +15,12 @@ export const DeleteMembershipPeriod = ({ refetch }) => {
       }
     }
   `);
-  return ({membership_period_id, membership_period_members}) => {
+  return ({membership_period_id, membership_period_members, data}) => {
     if (membership_period_members && membership_period_members.length !== 0) {
       return <></>
     }
 
-    return <IconButton title={`Delete this membership period`} onClick={async () => {
+    return <IconButton title={`Delete ${data.name}`} onClick={async () => {
       await mutation({
         variables: {
           membership_period_id,
@@ -61,7 +61,7 @@ export const MembershipPeriods = () => {
   let membershipPeriods = get(data, 'membership_periods', []);
 
   return (<MembershipPeriodsDisplay
-    membershipPeriods={membershipPeriods}
+    data={membershipPeriods}
     ExtraActions={DeleteMembershipPeriod({refetch})}
     />)
 }

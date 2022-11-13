@@ -40,9 +40,25 @@ export const Transactions = () => {
     to: moment().format("YYYY-MM-DD"),
     transaction_tags: []
   })
+  let { member_id } = useParams();
+  if (member_id) {
+    member_id = parseInt(member_id)
+  }
+  
+  const {data: memberData} = useQuery(gql`query ($member_id: Int!) {
+    member(member_id: $member_id) {
+      name
+    }
+  }`, {
+    variables: {
+      member_id
+    },
+    skip: !member_id
+  })
+
   const { setTitle } = useOutletContext();
-  let { data: transactions, loading, refetch } = useQuery(gql`query ($from: String, $to: String, $transaction_tags: [TransactionTagArg]) {
-    transactions (from: $from, to: $to, transaction_tags: $transaction_tags) {
+  let { data: transactions, loading, refetch } = useQuery(gql`query ($from: String, $to: String, $transaction_tags: [TransactionTagArg], $member_id: Int) {
+    transactions (from: $from, to: $to, transaction_tags: $transaction_tags, member_id: $member_id) {
       id,
       when,
       what,
@@ -59,12 +75,19 @@ export const Transactions = () => {
       }
     }
   }`, {
-    variables: filterData
+    variables: {
+      member_id,
+      ...filterData
+    }
   });
   useEffect(() => {
-    setTitle("Transactions");
+    if (member_id) {
+      setTitle(`Member: ${get(memberData, 'member.name', member_id)}'s Transactions`)
+    } else {
+      setTitle("Transactions");
+    }
     refetch()
-  }, [])
+  }, [get(memberData, 'member.name')])
   transactions = get(transactions, "transactions", [])
 
 
@@ -86,7 +109,6 @@ export const Transactions = () => {
       return;
     }
 
-    console.log("003", transaction_id);
     await delete_mutation({
       variables: {
         transaction_id
@@ -151,11 +173,11 @@ export const Transactions = () => {
                 <TableCell>{transaction.transaction_tags.map(({name}) => name).join(', ')}</TableCell>
                 <TableCell>{transaction.amount}</TableCell>
                 <TableCell>
-                  <IconButton component={Link} to={`/transaction/${transaction.id}`}>
+                  <IconButton title={`Edit ${transaction.what}`} component={Link} to={`/transaction/${transaction.id}`}>
                     <EditIcon />
                   </IconButton>
                   {(get(transaction, 'tokens', []).length == 0 && !get(transaction, 'membership', null)) &&
-                    <IconButton onClick={deleteClick({transaction_id: transaction.id})}>
+                    <IconButton title={`Delete ${transaction.what}`} onClick={deleteClick({transaction_id: transaction.id})}>
                       <DeleteIcon sx={{color: 'red'}} />
                     </IconButton>
                   }

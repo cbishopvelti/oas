@@ -40,6 +40,15 @@ defmodule OasWeb.Schema.SchemaMember do
       end
     end
 
+    field :memberships, list_of(:membership) do
+      resolve fn %{id: id}, _, _ -> 
+        member = Oas.Repo.get(Oas.Members.Member, id)
+        |> Oas.Repo.preload(memberships: [:transaction, :membership_period])
+
+        {:ok, member.memberships}
+      end
+    end
+
     field :transactions, list_of(:transaction) do
       resolve fn %{id: id}, _, _ -> 
         member = Oas.Repo.get(Oas.Members.Member, id) |> Oas.Repo.preload(:transactions)

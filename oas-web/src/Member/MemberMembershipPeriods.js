@@ -6,6 +6,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import { Link, useParams, useOutletContext } from 'react-router-dom';
 import { MembershipPeriodsDisplay } from "../MembershipPeriod/MembershipPeriodsDisplay";
 import DeleteIcon from '@mui/icons-material/Delete';
+import PaidIcon from '@mui/icons-material/Paid';
 
 export const DeleteMembership = ({member_id, refetch}) => {
   const [mutation] = useMutation(gql`
@@ -15,19 +16,24 @@ export const DeleteMembership = ({member_id, refetch}) => {
       }
     }
   `);
-  return ({membership_period_id}) => {
+  return ({membership_period_id, data}) => {
 
-    return <IconButton title={`Delete this members membership`} onClick={async () => {
-      await mutation({
-        variables: {
-          membership_period_id,
-          member_id
-        }
-      })
-      refetch()
-    }}>
-      <DeleteIcon sx={{color: 'red'}} />
-    </IconButton>
+    return <>
+      {data.transaction && <IconButton title="Go to the transaction" component={Link} to={`/transaction/${data.transaction.id}`}>
+        <PaidIcon />
+      </IconButton>}
+      <IconButton title={`Delete this members membership`} onClick={async () => {
+        await mutation({
+          variables: {
+            membership_period_id,
+            member_id
+          }
+        })
+        refetch()
+      }}>
+        <DeleteIcon sx={{color: 'red'}} />
+      </IconButton>
+    </>
   }
 }
 
@@ -40,12 +46,19 @@ export const MemberMembershipPeriods = () => {
   const { data, refetch } = useQuery(gql`
     query($member_id: Int!) {
       member(member_id: $member_id) {
-        membership_periods {
-          id,
-          name,
-          from,
-          to,
-          value
+        name
+        memberships {
+          id
+          transaction {
+            id
+          }
+          membership_period {
+            id,
+            name,
+            from,
+            to,
+            value
+          }
         }
       }
     }
@@ -54,16 +67,17 @@ export const MemberMembershipPeriods = () => {
       member_id
     }
   })
+  useEffect(() => {
+    refetch();
+  }, [])
 
   useEffect(() => {
-    setTitle("Member's Memberships");
-    refetch();
-  }, []);
-
-  let membershipPeriods = get(data, 'member.membership_periods', []);
+    setTitle(`Member: ${get(data, 'member.name', member_id)}'s Memberships`);
+  }, [get(data, 'member.name')]);
 
   return (<MembershipPeriodsDisplay
-    membershipPeriods={membershipPeriods}
+    data={get(data, 'member.memberships', [])}
+    dataKey={'membership_period'}
     ExtraActions={DeleteMembership({member_id, refetch})}
     />)
 }

@@ -10,11 +10,13 @@ import {
   IconButton,
   Box
 } from '@mui/material';
+import { Link } from 'react-router-dom'
 import moment from 'moment';
 import { useEffect } from "react";
 import { TransactionAddToken } from './TransactionToken';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { TransferToken } from "./TransferToken";
+import PaidIcon from '@mui/icons-material/Paid';
 
 
 
@@ -54,6 +56,9 @@ export const Tokens = ({
         used_on,
         member_id,
         value,
+        transaction {
+          id
+        }
         ${memberQuery}
       }
     }
@@ -88,9 +93,6 @@ export const Tokens = ({
   }
 
   return <div>
-    <Box sx={{m: 2}}>
-      <h2>Tokens</h2>
-    </Box>
     {transaction_id && <TransactionAddToken
       transaction_id={transaction_id}
       member_id={transaction.who_member_id}
@@ -127,10 +129,16 @@ export const Tokens = ({
                   <TableCell sx={sx}>{token.used_on}</TableCell>
                   <TableCell sx={sx}>{token.value}</TableCell>
                   <TableCell>
-                    {!token.used_on && <IconButton onClick={deleteToken(token.id)}>
+                    {isUsable(token) && <TransferToken token={token} refetch={refetch} />}
+                    {!transaction && get(token, 'transaction.id') &&
+                      <IconButton component={Link} title={`Go to this token's transaction`} to={`/transaction/${token.transaction.id}`}>
+                        <PaidIcon />
+                      </IconButton>
+                    }
+                    {!token.used_on && <IconButton title={`Delete this token`} onClick={deleteToken(token.id)}>
                       <DeleteIcon sx={{color: 'red'}} />
                     </IconButton>}
-                    {isUsable(token) && <TransferToken token={token} refetch={refetch} />}
+                    
                   </TableCell>
                 </TableRow>)
               })

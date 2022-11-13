@@ -8,22 +8,8 @@ defmodule OasWeb.Schema.SchemaMembershipPeriod do
     field :from, :string
     field :to, :string
     field :value, :string
-    field :members, list_of(:member) #do
-      # resolve fn %{id: id}, _, _ ->
-      #   membershipPeriod = Oas.Repo.get(Oas.Members.MembershipPeriod, id)
-      #     |> Oas.Repo.preload(:members)
-          
-      #   members = membershipPeriod.members
-      #     |> Enum.map(fn member -> Map.delete(member, :tokens) end)
-      #     |> Enum.map(fn record ->
-      #       %{id: id} = record
-      #       tokens = Oas.Attendance.get_token_amount(%{member_id: id})
-      #       Map.put(record, :tokens, tokens)
-      #     end)
-
-      #   {:ok, members}
-      # end
-    #end
+    field :members, list_of(:member)
+    field :memberships, list_of(:membership)
   end
 
   object :membership_period_queries do
@@ -32,21 +18,24 @@ defmodule OasWeb.Schema.SchemaMembershipPeriod do
       resolve fn _, %{id: id}, _ -> 
         membershipPeriod = Oas.Repo.get!(Oas.Members.MembershipPeriod, id)
           |> Oas.Repo.preload(:members)
+          # |> Oas.Repo.preload([memberships: [transaction: [:member]]])
+          |> Oas.Repo.preload([memberships: [:transaction, :member]])
 
         {:ok, membershipPeriod}
       end
     end
     field :membership_periods, list_of(:membership_period) do
-      arg :member_id, :integer
+      arg :member_id, :integer # not :member_id, with :transaction_id
       arg :transaction_id, :integer
       resolve fn _, args, _ -> 
         query = from(
           p in Oas.Members.MembershipPeriod,
           as: :membership_periods,
-          preload: [:members],
+          preload: [:members], # , memberships: [transaction: [:member]]
           select: p,
           order_by: [desc: p.to, desc: p.id]
         )
+        # For selecting membership periods for the transaction drop down. Removing membreshipPeriods this member already belongs to
         |> (&(case args do 
           %{member_id: member_id} when member_id != nil ->
 
