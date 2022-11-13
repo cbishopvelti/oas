@@ -34,10 +34,10 @@ export const TrainingAttendanceRow = ({
       <TableCell>{member.email}</TableCell>
       <TableCell sx={{...(member.tokens < 0 ? {color: "red"} : {})}}>{member.tokens}</TableCell>
       <TableCell>
-        <IconButton component={Link} to={`/member/${member.id}/tokens`}>
+        <IconButton title={`View ${member.name}'s tokens`} component={Link} to={`/member/${member.id}/tokens`}>
           <BookOnlineIcon />
         </IconButton>
-        <IconButton onClick={deleteAttendanceClick(first(member.attendance)?.id)}>
+        <IconButton title={`Delete ${member.name}'s attendance`} onClick={deleteAttendanceClick(first(member.attendance)?.id)}>
           <DeleteIcon sx={{color: 'red'}} />
         </IconButton>
         {(member.errors || member.warnings) && <IconButton

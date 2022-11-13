@@ -15,9 +15,7 @@ export const MemberTokens = (params) => {
     id = parseInt(id);
   }
 
-  useEffect(() => {
-    setTitle("Member's Tokens");
-  }, [])
+  
 
   const { data } = useQuery(gql`
     query ($member_id: Int!) {
@@ -32,12 +30,11 @@ export const MemberTokens = (params) => {
     }
   })
 
-  
+  useEffect(() => {
+    setTitle(`Member: ${get(data, 'member.name', id)}'s Tokens`);
+  }, [get(data, 'member.name')])
 
   return <div>
-    <p>
-      Tokens for <b>{get(data, 'member.name')}</b> (id: {id})
-    </p>
     <Tokens member_id={id} />
   </div>
 }

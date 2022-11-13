@@ -137,11 +137,11 @@ export const Trainings = () => {
               <TableCell>{training.training_where.name}</TableCell>
               <TableCell>{training.attendance}</TableCell>
               <TableCell>
-                <IconButton component={Link} to={`/training/${training.id}`}>
+                <IconButton title={`Edit ${training.training_where.name} and add attendance`} component={Link} to={`/training/${training.id}`}>
                   <FitnessCenterIcon />
                 </IconButton>
-                {!training.attendance && <IconButton onClick={deleteTraningClick(training.id)}>
-                  <DeleteIcon />
+                {!training.attendance && <IconButton title={`Delete ${training.training_where.name}`} onClick={deleteTraningClick(training.id)}>
+                  <DeleteIcon sx={{color: 'red'}} />
                 </IconButton>}
               </TableCell>
             </TableRow>

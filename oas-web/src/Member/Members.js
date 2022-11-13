@@ -17,6 +17,7 @@ import { Link, useParams, useOutletContext } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { MembersDisplay } from './MembersDisplay';
 import DeleteIcon from '@mui/icons-material/Delete';
+import PaidIcon from '@mui/icons-material/Paid';
 
 export const DeleteMember = ({ refetch }) => {
   const [mutation] = useMutation(gql`
@@ -27,20 +28,28 @@ export const DeleteMember = ({ refetch }) => {
     }
   `);
   return ({member}) => {
-    if (get(member, "tokens", []).length > 0 || get(member, "membership_periods", []) > 0 || get(member, "transactions", []) > 0) {
-      return <></>
+    let out = []
+
+    // if (get(member, "transactions", []).length > 0) {
+      out = [...out, <IconButton key={"1"} title={`Go to ${get(member, 'name')}'s transactions`} component={Link} to={`/member/${member.id}/transactions`}>
+        <PaidIcon />
+      </IconButton>]
+    // }
+
+    if (get(member, "tokens", []).length == 0 && get(member, "membership_periods", []).length == 0 && get(member, "transactions", []).length == 0) {
+      out = [...out, <IconButton key={"2"} title={`Delete ${get(member, 'name')}`} onClick={async () => {
+        await mutation({
+          variables: {
+            member_id: member.id,
+          }
+        })
+        refetch()
+      }}>
+        <DeleteIcon sx={{color: 'red'}} />
+      </IconButton>];
     }
 
-    return <IconButton title={`Delete this member`} onClick={async () => {
-      await mutation({
-        variables: {
-          member_id: member.id,
-        }
-      })
-      refetch()
-    }}>
-      <DeleteIcon sx={{color: 'red'}} />
-    </IconButton>
+    return out;
   }
 }
 
@@ -75,6 +84,8 @@ export const Members = () => {
     refetch()
   }, [filterData])
 
+  // console.log('000', members)
+
   return <div>
     <Box>
       <FormControl sx={{m:2}}>
@@ -87,6 +98,6 @@ export const Members = () => {
             label="Show all" />
       </FormControl>
     </Box>
-    <MembersDisplay members={members} ExtraActions={DeleteMember({refetch})} />
+    <MembersDisplay data={members} ExtraActions={DeleteMember({refetch})} />
   </div>
 }

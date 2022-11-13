@@ -14,6 +14,7 @@ defmodule OasWeb.Schema.SchemaToken do
         {:ok, member}
       end
     end
+    field :transaction, :transaction
   end
 
   object :public_member do
@@ -42,11 +43,23 @@ defmodule OasWeb.Schema.SchemaToken do
         _, %{member_id: _, transaction_id: _}, _ ->
           {:error, "member_id and transaction_id can not both be set"}
         _, %{transaction_id: transaction_id}, _ ->
-          query = from(t in Oas.Tokens.Token, select: t, where: t.transaction_id == ^transaction_id, order_by: [desc: t.expires_on, desc: t.id])
+          query = from(
+            t in Oas.Tokens.Token,
+            select: t,
+            where: t.transaction_id == ^transaction_id,
+            order_by: [desc: t.expires_on, desc: t.id],
+            preload: :transaction
+          )
           result = Oas.Repo.all(query)
           {:ok, result |> Enum.map(fn r -> Map.put(r, :value, Decimal.to_float(r.value)) end)}
         _, %{member_id: member_id}, _ ->
-          query = from(t in Oas.Tokens.Token, select: t, where: t.member_id == ^member_id, order_by: [desc: t.expires_on, desc: t.id])
+          query = from(
+            t in Oas.Tokens.Token,
+            select: t,
+            where: t.member_id == ^member_id,
+            order_by: [desc: t.expires_on, desc: t.id],
+            preload: :transaction
+          )
           result = Oas.Repo.all(query)
           {:ok, result |> Enum.map(fn r -> Map.put(r, :value, Decimal.to_float(r.value)) end)}
       end

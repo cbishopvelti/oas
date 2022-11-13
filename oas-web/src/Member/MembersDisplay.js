@@ -12,14 +12,16 @@ import BookOnlineIcon from '@mui/icons-material/BookOnline';
 import EditIcon from '@mui/icons-material/Edit';
 import CardMembershipIcon from '@mui/icons-material/CardMembership';
 import CopyAllIcon from '@mui/icons-material/CopyAll';
-import { join } from 'lodash'
+import { get, join } from 'lodash'
 
-export const MembersDisplay = ({members, ExtraActions}) => {
+export const MembersDisplay = ({data, dataKey, ExtraActions}) => {
 
   const copyAll = () => {
     navigator.clipboard.writeText(
       join(
-        members.map(({email}) => email),
+        data.map((dat) =>
+          (dataKey ? get(dat, dataKey) : dat).email
+        ),
         ', '
       )
     )
@@ -35,7 +37,7 @@ export const MembersDisplay = ({members, ExtraActions}) => {
             </TableCell>
             <TableCell>
               Email
-              <IconButton onClick={copyAll}>
+              <IconButton title="Copy all" onClick={copyAll}>
                 <CopyAllIcon />
               </IconButton>  
             </TableCell>
@@ -45,27 +47,28 @@ export const MembersDisplay = ({members, ExtraActions}) => {
         </TableHead>
         <TableBody>
           {
-            members.map((member) => (
-              <TableRow key={member.id}>
+            data.map((dat) => {
+              const member = (dataKey ? get(dat, dataKey) : dat);
+              return (<TableRow key={member.id}>
                 <TableCell>{member.id}</TableCell>
                 <TableCell>{member.name}</TableCell>
                 <TableCell>{member.email}</TableCell>
                 <TableCell sx={{...(member.token_count < 0 ? {color: "red"} : {})}}>{member.token_count}</TableCell>
                 <TableCell>
-                  <IconButton component={Link} to={`/member/${member.id}/tokens`}>
+                  <IconButton title={`Go to ${member.name}'s Tokens`} component={Link} to={`/member/${member.id}/tokens`}>
                     <BookOnlineIcon />
                   </IconButton>
-                  <IconButton component={Link} to={`/member/${member.id}/membership-periods`}>
+                  <IconButton component={Link} title={`Go to ${member.name}'s Membership periods`} to={`/member/${member.id}/membership-periods`}>
                     <CardMembershipIcon />
                   </IconButton>
-                  <IconButton component={Link} to={`/member/${member.id}`}>
+                  <IconButton component={Link} title={`Edit ${member.name}`} to={`/member/${member.id}`}>
                     <EditIcon />
                   </IconButton>
 
-                  {ExtraActions && <ExtraActions member_id={member.id} member={member} />}
+                  {ExtraActions && <ExtraActions data={dat} member_id={member.id} member={member} />}
                 </TableCell>
               </TableRow>
-            ))
+            )})
           }
         </TableBody>
       </Table>
