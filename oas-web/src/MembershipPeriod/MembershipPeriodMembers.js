@@ -75,6 +75,9 @@ export const MembershipPeriodMembers = () => {
       id
     }
   })
+  useEffect(() => {
+    refetch();
+  }, [])
 
   useEffect(() => {
     setTitle(`Membership Period: ${get(data, 'membership_period.name', id)}'s Members`);
