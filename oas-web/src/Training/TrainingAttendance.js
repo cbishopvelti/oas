@@ -95,6 +95,7 @@ export const TrainingAttendance = ({trainingId}) => {
           value={addAttendance.member_name || ''}
           options={members.map(({name, id}) => ({label: name, member_id: id }))}
           renderInput={(params) => <TextField {...params} label="Who" />}
+          freeSolo
           onChange={(event, newValue, a, b, c, d) => {
             setAddAttendance({
               member_id: newValue.member_id,

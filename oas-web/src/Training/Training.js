@@ -160,8 +160,8 @@ export const Training = () => {
           InputLabelProps={{
             shrink: true,
           }}
-          error={has(errors, "training_where")}
-          helperText={get(errors, "training_where", []).join(" ")}
+          error={has(errors, "when")}
+          helperText={get(errors, "when", []).join(" ")}
           />
       </FormControl>
       

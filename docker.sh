@@ -1,5 +1,6 @@
 #!/bin/sh
-tmux new-session -d -s server 'mix ecto.migrate && iex -S mix phx.server'
+
+tmux new-session -d -s server 'mix ecto.migrate --force && iex -S mix phx.server --force'
 
 cd ./oas-web
 tmux new-session -d -s admin 'npm install && npm run start'

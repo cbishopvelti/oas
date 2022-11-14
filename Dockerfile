@@ -9,6 +9,7 @@ RUN apt-get update
 RUN apt-get install -y vim htop
 RUN apt-get install -y nodejs
 RUN apt-get install -y tmux
+RUN apt-get install -y inotify-tools
 
 WORKDIR /app/oas-web
 # RUN npm install

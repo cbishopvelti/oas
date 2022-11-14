@@ -12,8 +12,6 @@ import Config
 config :oas, Oas.Repo,
   database: System.get_env("DB_FILE") || "/dbs/sqlite-prod.db"
 
-config :oas, OasWeb.Endpoint, cache_static_manifest: "priv/static/cache_manifest.json"
-
 # Do not print debug messages in production
 config :logger, level: :info
 
