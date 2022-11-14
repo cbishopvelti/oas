@@ -39,6 +39,14 @@ config :oas, Oas.Mailer, adapter: Swoosh.Adapters.SMTP,
   password: "wmtlwjekfjcrksrf",
   auth: :always
 
+config :oas, Oas.TokenMailer,
+  adapter: Swoosh.Adapters.SMTP,
+  relay: "smtp.gmail.com",
+  username: "chrisjbishop155",
+  port: 587,
+  password: "wmtlwjekfjcrksrf",
+  auth: :always
+
 # ## SSL Support
 #
 # To get SSL working, you will need to add the `https` key

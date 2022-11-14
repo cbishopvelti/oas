@@ -124,7 +124,8 @@ defmodule Oas.ImportTransactions do
 
   defp doMembership(%{
     who_member_id: who_member_id,
-    when1: when1
+    when1: when1,
+    amount: amount
   }, result) do
     # membershipPeriod = from(mp in Oas.Members.MembershipPeriod,
     #   where: (mp.from <= ^when1 and mp.to > ^Date.add(when1, 31)) or
@@ -133,7 +134,7 @@ defmodule Oas.ImportTransactions do
     # )
     # |> Oas.Repo.one
 
-    membershipPeriod = Oas.Members.MembershipPeriod.getThisOrNextMembershipPeriod(when1)
+    membershipPeriod = Oas.Members.MembershipPeriod.getThisOrNextMembershipPeriod(when1, who_member_id, amount)
 
     %Oas.Members.Membership{
       transaction_id: result.id,
@@ -186,6 +187,7 @@ defmodule Oas.ImportTransactions do
         doMembership(%{
           when1: date, 
           who_member_id: Map.get(row, :who_member_id, nil),
+          amount: amount
         }, result)
       end
 
