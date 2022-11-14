@@ -5,6 +5,7 @@ import { get } from 'lodash';
 import EditIcon from '@mui/icons-material/Edit';
 import { Link, useParams } from 'react-router-dom';
 import CardMembershipIcon from '@mui/icons-material/CardMembership';
+import PeopleIcon from '@mui/icons-material/People';
 
 export const MembershipPeriodsDisplay = ({
   // membershipPeriods,
@@ -38,7 +39,7 @@ export const MembershipPeriodsDisplay = ({
               <TableCell>{membershipPeriod.value}</TableCell>
               <TableCell>
                 <IconButton component={Link} title={`Go to ${membershipPeriod.name}'s members`} to={`/membership-period/${membershipPeriod.id}/members`}>
-                  <CardMembershipIcon />
+                  <PeopleIcon />
                 </IconButton>
                 <IconButton component={Link} title={`Edit ${membershipPeriod.name}`} to={`/membership-period/${membershipPeriod.id}`}>
                   <EditIcon />

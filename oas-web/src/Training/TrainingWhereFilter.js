@@ -28,6 +28,7 @@ export const TrainingWhereFilter = ({
     renderInput={(params) => <TextField {...params} label="Where" />}
     multiple
     selectOnFocus
+    freeSolo
     clearOnBlur
     handleHomeEndKeys
     getOptionLabel={(option) => {

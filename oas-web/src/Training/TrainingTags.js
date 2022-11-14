@@ -35,13 +35,15 @@ export const TrainingTags = ({
     }
   `)
 
+  const trainingTagsValue = get(formData, "training_tags", [])
+
   return <Autocomplete
     id="trainingTags"
-    value={get(formData, "training_tags", []) /*|| [{id: 1, name: "existing_test"}]*/}
+    value={trainingTagsValue /*|| [{id: 1, name: "existing_test"}]*/}
     options={(training_tags).map(({name, id}) => ({ label: name, id, name }))}
     renderInput={(params) => <TextField {...params} required label="Tags" />}
     multiple
-    freeSolo={!filterMode}
+    freeSolo
     selectOnFocus
     clearOnBlur
     handleHomeEndKeys
