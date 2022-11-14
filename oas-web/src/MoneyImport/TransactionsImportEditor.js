@@ -37,8 +37,6 @@ export const TransactionsImportEditor = ({transactions_import, refetch}) => {
           toImport: out,
           transaction_tags: [{
             name: row.subcategory
-          }, {
-            name: "import"
           }]
         }
       }
