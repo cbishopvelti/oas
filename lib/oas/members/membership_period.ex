@@ -18,7 +18,7 @@ defmodule Oas.Members.MembershipPeriod do
   end
 
   def getThisOrNextMembershipPeriod(when1, who_member_id, amount) do 
-    out = from(mp in Oas.Members.MembershipPeriod,
+    query = from(mp in Oas.Members.MembershipPeriod,
       as: :membership_periods,
       where: ((mp.from <= ^when1 and ^when1 <= mp.to and mp.value == ^amount )
         or (mp.from <= ^Date.add(when1, 31) and  ^when1 <= mp.to and mp.value == ^amount )),
@@ -34,9 +34,8 @@ defmodule Oas.Members.MembershipPeriod do
         ))))
       end
     )).()
-    |> Oas.Repo.one
-    
-    
+
+    out = query |> Oas.Repo.one
     out
   end
   
