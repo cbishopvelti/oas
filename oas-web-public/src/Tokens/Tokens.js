@@ -49,6 +49,13 @@ export const Tokens = () => {
 
   const { data, error } = useQuery(gql`
     query($email: String!) {
+      public_outstanding_attendance(email: $email) {
+        id
+        training_where {
+          name
+        },
+        when
+      }
       public_tokens(email: $email) {
         id,
         value,
@@ -73,10 +80,13 @@ export const Tokens = () => {
   const tokens = get(data, 'public_tokens', []);
   const errors = get(error, 'graphQLErrors')
 
-  const tokenCount = chain(get(data, 'public_tokens'))
+  const outstanding_attendance = get(data, 'public_outstanding_attendance', [])
+
+  let tokenCount = chain(get(data, 'public_tokens'))
     .filter(isUsable(member_email))
     .value()
     .length
+  tokenCount = tokenCount - get(data, 'public_outstanding_attendance', []).length
 
   
   const onClick = () => {
@@ -106,8 +116,35 @@ export const Tokens = () => {
         <Alert key={i} severity="error">{message}</Alert>
       ))}
     </Stack>
+    
+    {!errors && <p>You have <b>{tokenCount}</b> token{tokenCount == 1 ? '' : 's'}</p>}
+    
+    {outstanding_attendance.length > 0 && <>
+      <h3>Outstanding Attendance</h3>
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Id</TableCell>
+                <TableCell>Where</TableCell>
+                <TableCell>When</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {outstanding_attendance.map((attendance) => {
+                return <TableRow key={attendance.id}>
+                  <TableCell>{attendance.id}</TableCell>
+                  <TableCell>{attendance.training_where?.name}</TableCell>
+                  <TableCell>{attendance.when}</TableCell>
+                </TableRow>
+              })}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </>}
+    
     {has(data, 'public_tokens') && <>
-      <p>You have <b>{tokenCount}</b> token{tokenCount == 1 ? '' : 's'}</p>
+      <h3>Tokens</h3>
       <TableContainer>
         <Table>
           <TableHead>
@@ -146,5 +183,5 @@ export const Tokens = () => {
     </>}
     </Box>
 
-  </ Box>
+  </Box>
 }

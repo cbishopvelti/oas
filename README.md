@@ -4,7 +4,7 @@
 
 ```
 docker build . -t chrisjbishop155/oas
-docker push chirsjbishop155/oas
+docker push chrisjbishop155/oas
 ```
 
 docker run
@@ -38,20 +38,23 @@ chrisjbishop155/oas:latest
 
 ## Todo
 
-Link token to Transaction
+
+Tokens config
 
 Backup
 
+Icon
+
+Add count to header
+- tokens, token debt
+- members
+- transactions
+- trainings
+
 DEPLOY
 
-Change header title functionality
+Change header title functionality (maybe react-portal)
 
 Export for spreadsheets
 
-Member Booking
-- gather requirements
-
-Tracking hall bookings?
-- gather requirements
-- look at import from bank statements
-
+Graphs

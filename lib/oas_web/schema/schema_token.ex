@@ -35,6 +35,12 @@ defmodule OasWeb.Schema.SchemaToken do
     field :amount, :integer
   end
 
+  object :public_attendance do
+    field :id, :integer
+    field :training_where, :training_where
+    field :when, :string
+  end
+
   object :token_queries do
     field :tokens, list_of(:token) do
       arg :member_id, :integer
@@ -93,6 +99,22 @@ defmodule OasWeb.Schema.SchemaToken do
 
             {:ok, tokens}
         end
+      end
+    end
+
+    field :public_outstanding_attendance, type: list_of(:public_attendance) do
+      arg :email, non_null(:string)
+      resolve fn _, %{email: email}, _ -> 
+        trainings = from(
+          tr in Oas.Trainings.Training,
+          preload: :training_where,
+          inner_join: at in assoc(tr, :attendance),
+          inner_join: m in assoc(at, :member),
+          left_join: to in assoc(at, :token),
+          where: is_nil(to.id) and m.email == ^email
+        ) |> Oas.Repo.all
+
+        {:ok, trainings}
       end
     end
   end
