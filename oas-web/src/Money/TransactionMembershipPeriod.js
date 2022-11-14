@@ -25,7 +25,7 @@ export const TransactionMembershipPeriod = ({
     variables: {
       member_id: formData.who_member_id,
       transaction_id: id
-    }
+    } 
   })
 
   const membershipPeriods = get(data, 'membership_periods', []);
@@ -47,7 +47,7 @@ export const TransactionMembershipPeriod = ({
     setCanBuyMembership(
       formData.who_member_id && formData.type === "INCOMING"
     );
-  }, [formData.who_member_id, formData.type])
+  }, [formData.who_member_id, formData.type, membershipPeriods])
   useEffect(() => {
     if (!canBuyMembership) {
       setBuyingMembership(false)
@@ -78,7 +78,7 @@ export const TransactionMembershipPeriod = ({
         }
         label="Membership" />
     </FormControl>
-    {buyingMembership && membershipPeriods.length > 0 && <FormControl fullWidth sx={{m: 2}}>
+    {buyingMembership && data && <FormControl fullWidth sx={{m: 2}}>
       <InputLabel id="membership-period">Membership Period</InputLabel>
       <Select
         labelId="membership-period"
