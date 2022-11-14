@@ -34,10 +34,16 @@ export const TransactionTags = ({
     options={(transaction_tags).map(({name, id}) => ({ label: name, id, name }))}
     renderInput={(params) => <TextField {...params} label="Tags" />}
     multiple
-    freeSolo={!filterMode}
     selectOnFocus
     clearOnBlur
     handleHomeEndKeys
+    isOptionEqualToValue={({id: optionId, name: optionName}, {id, name}) => {
+      if (id) {
+        return id == optionId
+      }
+      
+      return optionName == name
+    }}
     getOptionLabel={(option) => {
       // Value selected with enter, right from the input
       if (typeof option === 'string') {
