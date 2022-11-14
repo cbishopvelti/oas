@@ -19,7 +19,11 @@ config :oas, OasWeb.Endpoint,
   # Binding to loopback ipv4 address prevents access from other machines.
   # Change to `ip: {0, 0, 0, 0}` to allow access from other machines.
   http: [ip: {0, 0, 0, 0}, port: 4000],
-  url: [host: "server.oxfordshireacrosociety.co.uk", port: 443, scheme: "https"],
+  url: [
+    host: "server.oxfordshireacrosociety.co.uk",
+    port: 443,
+    scheme: "https"
+  ],
   domain: System.get_env("DOMAIN") || ".oxfordshireacrosociety.co.uk",
   check_origin: false,
   code_reloader: true,

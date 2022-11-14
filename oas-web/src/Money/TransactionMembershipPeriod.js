@@ -78,17 +78,19 @@ export const TransactionMembershipPeriod = ({
         }
         label="Membership" />
     </FormControl>
-    {buyingMembership && <FormControl fullWidth sx={{m: 2}}>
+    {buyingMembership && membershipPeriods.length > 0 && <FormControl fullWidth sx={{m: 2}}>
       <InputLabel id="membership-period">Membership Period</InputLabel>
       <Select
         labelId="membership-period"
         id="membership-period"
-        value={get(formData, 'membership_period_id', '')}
+        value={`${get(formData, 'membership_period_id', '')}`}
         label="Membership Period"
         required
         onChange={onChange}
       >
-        {membershipPeriods.map(({id, name}) => <MenuItem key={id} value={id}>{name}</MenuItem>)}
+        {membershipPeriods.map(({id, name}) => {
+          return <MenuItem key={`${id}`} value={id}>{name}</MenuItem>
+        })}
       </Select>
     </FormControl>}
   </>
