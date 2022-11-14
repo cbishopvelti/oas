@@ -18,7 +18,7 @@ defmodule Oas.Transactions.Transaction do
     field :notes, :string
 
     has_many :tokens, Oas.Tokens.Token, foreign_key: :transaction_id
-    has_one :membership, Oas.Members.Membership, on_replace: :nilify
+    has_one :membership, Oas.Members.Membership, on_replace: :delete
 
     timestamps()
   end
