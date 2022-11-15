@@ -30,7 +30,7 @@ export const TrainingWhere = ({
     freeSolo
     required
     value={get(formData, 'training_where.name')  || ''}
-    options={trainingWhere.map(({name, id}) => ({label: name, name, id }))}
+    options={(trainingWhere || []).map(({name, id}) => ({label: name, name, id }))}
     renderInput={(params) => <TextField
       {...params}
       label="Where"

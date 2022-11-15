@@ -45,7 +45,7 @@ Backup
 
 Icon
 
-Add count to header
+Add counts to header
 - tokens, token debt
 - members
 - transactions

@@ -88,7 +88,7 @@ export const Transactions = () => {
     }
     refetch()
   }, [get(memberData, 'member.name')])
-  transactions = get(transactions, "transactions", [])
+  transactions = get(transactions, "transactions", []) || []
 
 
   const [delete_mutation] = useMutation(gql`
