@@ -130,7 +130,7 @@ export const Trainings = () => {
       </TableHead>
       <TableBody>
         {
-          trainings.map((training) => (
+          (trainings || []).map((training) => (
             <TableRow key={training.id}>
               <TableCell>{training.id}</TableCell>
               <TableCell>{training.when}</TableCell>

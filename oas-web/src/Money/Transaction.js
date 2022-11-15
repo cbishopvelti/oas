@@ -223,7 +223,7 @@ export const Transaction = () => {
             freeSolo
             required
             value={formData.who || find(members, ({id}) => id === formData.who_member_id)?.name || ''}
-            options={members.map(({name, id}) => ({label: name, who_member_id: id }))}
+            options={(members || []).map(({name, id}) => ({label: name, who_member_id: id }))}
             renderInput={(params) => <TextField
               {...params}
               label="Who"

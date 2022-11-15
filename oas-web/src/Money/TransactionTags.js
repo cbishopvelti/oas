@@ -23,7 +23,8 @@ export const TransactionTags = ({
       }
     }
   `)
-  let transaction_tags = uniqBy([...get(data, 'transaction_tags', []), ...transactionTags ], 'name')
+
+  let transaction_tags = uniqBy([...(get(data, 'transaction_tags', []) || []), ...transactionTags ], 'name')
   useEffect(() => {
     refetch()
   }, [formData.saveCount])

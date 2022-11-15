@@ -29,8 +29,8 @@ export const MembershipPeriodsDisplay = ({
         </TableHead>
 
         <TableBody>
-          {data.map((dat) => {
-            const membershipPeriod = dataKey ? get(dat, dataKey) : dat
+          {(data || []).map((dat) => {
+            const membershipPeriod = dataKey ? (get(dat, dataKey)) : dat
             return <TableRow key={membershipPeriod.id}>
               <TableCell>{membershipPeriod.id}</TableCell>
               <TableCell>{membershipPeriod.name}</TableCell>
