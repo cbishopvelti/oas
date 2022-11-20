@@ -23,7 +23,7 @@ ENV ELIXIR_ERL_OPTIONS="-kernel shell_history enabled"
 
 
 
-VOLUME [ "/dbs" ]
+VOLUME [ "/dbs", "/dbs-backup" ]
 
 # CMD ["iex"]
 # CMD ["sleep", "86400"]
