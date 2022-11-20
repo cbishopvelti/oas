@@ -32,6 +32,7 @@ export const TrainingAttendanceRow = ({
       <TableCell>{first(member.attendance)?.id}</TableCell>
       <TableCell>{member.name}</TableCell>
       <TableCell>{member.email}</TableCell>
+      <TableCell>{member.member_status}</TableCell>
       <TableCell sx={{...(member.tokens < 0 ? {color: "red"} : {})}}>{member.tokens}</TableCell>
       <TableCell>
         <IconButton title={`View ${member.name}'s tokens`} component={Link} to={`/member/${member.id}/tokens`}>

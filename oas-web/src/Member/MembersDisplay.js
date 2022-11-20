@@ -19,7 +19,12 @@ import { useState } from 'react';
 
 
 
-export const MembersDisplay = ({data, dataKey, ExtraActions}) => {
+export const MembersDisplay = ({
+  data,
+  dataKey,
+  ExtraActions,
+  showStatus
+}) => {
   const [orderBy, setOrderBy ] = useState();
 
   const sortByHandler = (column) => (b) => {
@@ -86,9 +91,9 @@ export const MembersDisplay = ({data, dataKey, ExtraActions}) => {
                 onClick={sortByHandler('email')}
               />
             </TableCell>
-            <TableCell>
+            {showStatus && <TableCell>
               Status
-            </TableCell>
+            </TableCell>}
             <TableCell>Tokens</TableCell>
             <TableCell>Created at</TableCell>
             <TableCell>Actions</TableCell>
@@ -102,7 +107,7 @@ export const MembersDisplay = ({data, dataKey, ExtraActions}) => {
                 <TableCell>{member.id}</TableCell>
                 <TableCell>{member.name}</TableCell>
                 <TableCell>{member.email}</TableCell>
-                <TableCell>{member.member_status}</TableCell>
+                {showStatus && <TableCell>{member.member_status}</TableCell>}
                 <TableCell sx={{...(member.token_count < 0 ? {color: "red"} : {})}}>{member.token_count}</TableCell>
                 <TableCell>{moment(member.inserted_at).format("DD/MM/YYYY")}</TableCell>
                 <TableCell>

@@ -26,6 +26,7 @@ export const TrainingAttendance = ({trainingId}) => {
       name,
       email,
       tokens,
+      member_status,
       attendance {
         id
       },
@@ -118,6 +119,7 @@ export const TrainingAttendance = ({trainingId}) => {
               <TableCell>Attendance Id</TableCell>
               <TableCell>Name</TableCell>
               <TableCell>Email</TableCell>
+              <TableCell>Status</TableCell>
               <TableCell>Tokens</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
