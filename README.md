@@ -33,6 +33,7 @@ docker run -it -d `
 -e DB_FILE="/dbs/sqlite-prod.db" `
 -p 4000:4000 -p 3999:3999 -p 3998:3998 `
 -v D:/oas-dbs:/dbs `
+-v C:/oas-dbs-backup:dbs-backup `
 chrisjbishop155/oas:latest
 ```
 
@@ -46,11 +47,11 @@ chrisjbishop155/oas:latest
 
 ~~Check x-members~~
 
-Attendance
+~~used token, go to training~~
 
-Members only training warning.
+~~Attendance~~
 
-Change menu
+~~Change menu~~
 
 Backup
 

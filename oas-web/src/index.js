@@ -25,6 +25,7 @@ import { TransactionsImport } from './MoneyImport/TransactionsImport';
 import { createUploadLink } from "apollo-upload-client";
 import { createLink } from "apollo-absinthe-upload-link";
 import { MembershipPeriodMembers } from './MembershipPeriod/MembershipPeriodMembers';
+import { MemberTrainingAttendance } from './Member/MemberTrainingAttendance';
 
 
 
@@ -44,6 +45,7 @@ const router = createBrowserRouter([
         element: <Members />
       },
       {
+        id: "member",
         path: "member",
         element: <Member />
       }, {
@@ -61,6 +63,12 @@ const router = createBrowserRouter([
         element: <Transactions />
       },
       {
+        id: "member-attendance",
+        path: "member/:member_id/attendance",
+        element: <MemberTrainingAttendance />
+      },
+      {
+        id: "transaction",
         path: "transaction",
         element: <Transaction />
       },
@@ -89,6 +97,7 @@ const router = createBrowserRouter([
         element: <Training />
       },
       {
+        id: "training",
         path: "training",
         element: <Training />
       },
