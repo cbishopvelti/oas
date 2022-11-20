@@ -10,7 +10,9 @@ import {
   FormControlLabel,
   Switch,
   FormControl,
-  Box
+  Box,
+  Autocomplete,
+  TextField
 } from '@mui/material';
 import { get } from 'lodash';
 import { Link, useParams, useOutletContext } from 'react-router-dom';
@@ -57,12 +59,14 @@ export const Members = () => {
   const { setTitle } = useOutletContext();
   const [filterData, setFilterData] = useState({})
 
-  let { data: members, loading, refetch } = useQuery(gql`query ($show_all: Boolean) {
-    members (show_all: $show_all) {
+  let { data: members, loading, refetch } = useQuery(gql`query ($show_all: Boolean, $member_id: Int) {
+    members (show_all: $show_all, member_id: $member_id) {
       id,
       name,
       email,
       token_count,
+      inserted_at,
+      member_status,
       tokens {
         id
       },
@@ -75,7 +79,8 @@ export const Members = () => {
     }
   }`, {
     variables: {
-      show_all: filterData.show_all
+      show_all: filterData.show_all,
+      member_id: filterData.member?.member_id
     }
   });
   members = get(members, "members", []) || []
@@ -84,10 +89,8 @@ export const Members = () => {
     refetch()
   }, [filterData])
 
-  // console.log('000', members)
-
   return <div>
-    <Box>
+    <Box sx={{display: "flex", flexWrap: 'wrap', alignItems: 'center'}}>
       <FormControl sx={{m:2}}>
         <FormControlLabel
             control={
@@ -96,6 +99,30 @@ export const Members = () => {
                 onChange={(event) => setFilterData({...filterData, show_all: event.target.checked})}/>
             }
             label="Show all" />
+      </FormControl>
+      <FormControl sx={{m:2, minWidth: 256}}>
+        <Autocomplete
+          id="member"
+          value={filterData.member?.member_name || ''}
+          options={members.map(({name, id}) => ({label: name, member_id: id }))}
+          renderInput={(params) => <TextField {...params} label="Who" />}
+          freeSolo
+          onChange={(event, newValue, a, b, c, d) => {
+            if (!newValue) {
+              return setFilterData({
+                ...filterData,
+                member: null
+              })
+            }
+            setFilterData({
+              ...filterData,
+              member: {
+                member_id: newValue.member_id,
+                member_name: newValue.label
+              }
+            })
+          }}
+          />
       </FormControl>
     </Box>
     <MembersDisplay data={members} ExtraActions={DeleteMember({refetch})} />

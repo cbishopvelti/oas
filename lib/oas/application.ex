@@ -18,6 +18,7 @@ defmodule Oas.Application do
       OasWeb.Endpoint,
       # Start a worker by calling: Oas.Worker.start_link(arg)
       # {Oas.Worker, arg}
+      Oas.BackupJob
     ]
     
     :ets.new(:user_table, [:named_table, :public, :set, read_concurrency: true])

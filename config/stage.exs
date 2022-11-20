@@ -12,6 +12,9 @@ import Config
 config :oas, Oas.Repo,
   database: System.get_env("DB_FILE") || "/dbs/sqlite-stage.db"
 
+config :oas, Oas.Repo.Replica1,
+  database: System.get_env("DB_FILE_REPLICA_1") || "/dbs-replica-1/sqlite-stage-replica-1.db"
+
 
 # Do not print debug messages in production
 config :logger, level: :info

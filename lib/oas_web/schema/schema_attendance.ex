@@ -52,7 +52,7 @@ defmodule OasWeb.Schema.SchemaAttendance do
           else
             record
           end
-          record = Oas.Attendance.check_membership(record, training)
+          {record, _} = Oas.Attendance.check_membership(record)
           record
         end)
 

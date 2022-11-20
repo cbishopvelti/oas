@@ -38,12 +38,21 @@ chrisjbishop155/oas:latest
 
 ## Todo
 
+~~Display member membership type.~~
 
-Tokens config
+~~Display member created date.~~
+
+~~Membership sorting by name.~~
+
+~~Check x-members~~
+
+Attendance
+
+Members only training warning.
+
+Change menu
 
 Backup
-
-Icon
 
 Add counts to header
 - tokens, token debt
@@ -52,6 +61,8 @@ Add counts to header
 - trainings
 
 DEPLOY
+
+Tokens config
 
 Change header title functionality (maybe react-portal)
 

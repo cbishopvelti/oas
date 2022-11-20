@@ -10,7 +10,11 @@ import Config
 #   pool_size: 10
 
 config :oas, Oas.Repo,
-  database: System.get_env("DB_FILE") || "./dbs/sqlite-dev.db"
+  database: System.get_env("DB_FILE") || "./dbs/sqlite-dev.db",
+  backup_database: "./dbs/sqlite-backup"
+
+config :oas, Oas.Repo.Replica1,
+  database: System.get_env("DB_FILE_REPLICA_1") || "./dbs/sqlite-dev-replica-1.db"
 
 # For development, we disable any cache and enable
 # debugging and code reloading.
