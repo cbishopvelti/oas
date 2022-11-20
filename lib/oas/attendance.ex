@@ -191,12 +191,6 @@ defmodule Oas.Attendance do
       select: count(m.id)
     ) |> Oas.Repo.one
 
-    if (id == 1) do
-      IO.puts("101")
-      IO.inspect(id)
-      IO.inspect(result)
-    end
-
     if (
       result > 3
     ) do
@@ -205,12 +199,6 @@ defmodule Oas.Attendance do
         :not_member
       }
     else
-      IO.inspect(
-        member
-        |> Oas.Repo.preload(:memberships)
-        |> Map.get(:memberships)
-        |> Enum.count
-      )
       if (
         (member
         |> Oas.Repo.preload(:memberships)

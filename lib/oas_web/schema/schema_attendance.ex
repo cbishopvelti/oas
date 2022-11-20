@@ -5,6 +5,7 @@ defmodule OasWeb.Schema.SchemaAttendance do
 
   object :attendance do
     field :id, :integer
+    field :when, :string
   end
 
   object :member_attendance do
@@ -16,6 +17,24 @@ defmodule OasWeb.Schema.SchemaAttendance do
     field :tokens, :integer
     field :is_member, :boolean
     field :is_admin, :boolean
+    field :member_status, :string do
+      resolve fn %{id: id, attendance: attendance}, _, _ ->
+        when1 = case attendance do
+          [attend] ->
+            attend |> Oas.Repo.preload(:training) |> Map.get(:training) |> Map.get(:when)
+          _ -> Date.utc_today()
+        end
+
+        member = from(m in Oas.Members.Member,
+          as: :member,
+          preload: [membership_periods: ^from(mp in Oas.Members.MembershipPeriod, where: mp.from <= ^when1 and mp.to >= ^when1)],
+          select: m,
+          where: m.id == ^id
+        ) |> Oas.Repo.one!
+        {_, membership_type} = Oas.Attendance.check_membership(member)
+        {:ok, membership_type}
+      end
+    end
     field :warnings, list_of(:string)
   end
 

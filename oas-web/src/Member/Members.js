@@ -125,6 +125,6 @@ export const Members = () => {
           />
       </FormControl>
     </Box>
-    <MembersDisplay data={members} ExtraActions={DeleteMember({refetch})} />
+    <MembersDisplay showStatus={true} data={members} ExtraActions={DeleteMember({refetch})} />
   </div>
 }
