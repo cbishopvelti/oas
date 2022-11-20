@@ -30,6 +30,7 @@ defmodule OasWeb.Schema.SchemaMember do
     field :is_active, :boolean
     field :is_admin, :boolean
     field :is_reviewer, :boolean
+    field :inserted_at, :string
 
     field :member_details, :member_details
     
@@ -53,6 +54,21 @@ defmodule OasWeb.Schema.SchemaMember do
       resolve fn %{id: id}, _, _ -> 
         member = Oas.Repo.get(Oas.Members.Member, id) |> Oas.Repo.preload(:transactions)
         {:ok, member.transactions}
+      end
+    end
+
+    field :member_status, :string do
+      resolve fn %{id: id}, _, _ ->
+        when1 = Date.utc_today()
+
+        member = from(m in Oas.Members.Member,
+          as: :member,
+          preload: [membership_periods: ^from(mp in Oas.Members.MembershipPeriod, where: mp.from <= ^when1 and mp.to >= ^when1)],
+          select: m,
+          where: m.id == ^id
+        ) |> Oas.Repo.one!
+        {_, membership_type} = Oas.Attendance.check_membership(member)
+        {:ok, membership_type}
       end
     end
   end
@@ -80,7 +96,8 @@ defmodule OasWeb.Schema.SchemaMember do
   object :member_queries do
     field :members, list_of(:member) do
       arg :show_all, :boolean, default_value: false
-      resolve fn _, %{show_all: show_all}, _ ->
+      arg :member_id, :integer
+      resolve fn _, args = %{show_all: show_all}, _ ->
         query = (
           from m in Oas.Members.Member,
           select: m,
@@ -90,6 +107,11 @@ defmodule OasWeb.Schema.SchemaMember do
         |> (&(case show_all do
           false -> where(&1, [m], m.is_active == true)
           true -> &1
+        end)).()
+        |> (&(case Map.get(args, :member_id) do
+          nil -> &1
+          member_id ->
+            where(&1, [m], m.id == ^member_id)
         end)).()
 
         result = Oas.Repo.all(query)

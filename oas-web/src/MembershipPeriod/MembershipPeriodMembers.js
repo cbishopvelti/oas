@@ -65,7 +65,9 @@ export const MembershipPeriodMembers = () => {
             id,
             name,
             email,
-            token_count
+            token_count,
+            inserted_at,
+            member_status
           }
         }
       }

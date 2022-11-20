@@ -184,23 +184,49 @@ defmodule Oas.Attendance do
     token
   end
 
-  def check_membership(member = %{id: id, membership_periods: []}, training) do
+  def check_membership(member = %{id: id, membership_periods: []}) do
     result = from(a in Oas.Trainings.Attendance,
       join: m in assoc(a, :member),
       where: m.id == ^id,
       select: count(m.id)
     ) |> Oas.Repo.one
 
+    if (id == 1) do
+      IO.puts("101")
+      IO.inspect(id)
+      IO.inspect(result)
+    end
+
     if (
       result > 3
-      # or true # DEBUG ONLY
     ) do
-      Map.put(member, :warnings, [member.name <> " has attended " <> to_string(result) <> " sessions but is not a member" | Map.get(member, :warnings, [])])
+      {
+        Map.put(member, :warnings, [member.name <> " has attended " <> to_string(result) <> " sessions but is not a member" | Map.get(member, :warnings, [])]),
+        :not_member
+      }
     else
-      member
+      IO.inspect(
+        member
+        |> Oas.Repo.preload(:memberships)
+        |> Map.get(:memberships)
+        |> Enum.count
+      )
+      if (
+        (member
+        |> Oas.Repo.preload(:memberships)
+        |> Map.get(:memberships)
+        |> Enum.count) > 0
+      ) do
+        {
+          Map.put(member, :warnings, [member.name <> " is an x-member" | Map.get(member, :warnings, []) ]),
+          :x_member
+        }
+      else
+        {member, :temporary_member}
+      end
     end
   end
-  def check_membership(member, training) do
-    member
+  def check_membership(member) do
+    {member, :member}
   end
 end
