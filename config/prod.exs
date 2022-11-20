@@ -11,6 +11,7 @@ import Config
 # before starting your production server.
 config :oas, Oas.Repo,
   database: System.get_env("DB_FILE") || "/dbs/sqlite-prod.db"
+  backup_database: "/dbs-backup/sqlite-backup"
 
 config :oas, Oas.Repo.Replica1,
   database: System.get_env("DB_FILE_REPLICA_1") || "/dbs-replica-1/sqlite-prod-replica-1.db"

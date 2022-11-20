@@ -58,8 +58,12 @@ defmodule OasWeb.Schema.SchemaMember do
     end
 
     field :member_status, :string do
-      resolve fn %{id: id}, _, _ ->
-        when1 = Date.utc_today()
+      resolve fn args = %{id: id}, _, _ ->
+        when1 = case args do
+          %{member_status_when: when1} ->
+            when1
+          _ -> Date.utc_today()
+        end
 
         member = from(m in Oas.Members.Member,
           as: :member,

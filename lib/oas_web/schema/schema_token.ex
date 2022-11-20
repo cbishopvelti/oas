@@ -15,6 +15,7 @@ defmodule OasWeb.Schema.SchemaToken do
       end
     end
     field :transaction, :transaction
+    field :attendance, :member_attendance_attendance
   end
 
   object :public_member do
@@ -54,7 +55,7 @@ defmodule OasWeb.Schema.SchemaToken do
             select: t,
             where: t.transaction_id == ^transaction_id,
             order_by: [desc: t.expires_on, desc: t.id],
-            preload: :transaction
+            preload: [:transaction, attendance: [:training]]
           )
           result = Oas.Repo.all(query)
           {:ok, result |> Enum.map(fn r -> Map.put(r, :value, Decimal.to_float(r.value)) end)}
@@ -64,7 +65,7 @@ defmodule OasWeb.Schema.SchemaToken do
             select: t,
             where: t.member_id == ^member_id,
             order_by: [desc: t.expires_on, desc: t.id],
-            preload: :transaction
+            preload: [:transaction, attendance: [:training]]
           )
           result = Oas.Repo.all(query)
           {:ok, result |> Enum.map(fn r -> Map.put(r, :value, Decimal.to_float(r.value)) end)}
@@ -111,7 +112,8 @@ defmodule OasWeb.Schema.SchemaToken do
           inner_join: at in assoc(tr, :attendance),
           inner_join: m in assoc(at, :member),
           left_join: to in assoc(at, :token),
-          where: is_nil(to.id) and m.email == ^email
+          where: is_nil(to.id) and m.email == ^email,
+          order_by: [desc: tr.when]
         ) |> Oas.Repo.all
 
         {:ok, trainings}

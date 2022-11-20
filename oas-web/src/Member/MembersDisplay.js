@@ -16,7 +16,7 @@ import CopyAllIcon from '@mui/icons-material/CopyAll';
 import { get, join, reverse, sortBy } from 'lodash'
 import moment from 'moment'
 import { useState } from 'react';
-
+import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 
 
 export const MembersDisplay = ({
@@ -113,6 +113,9 @@ export const MembersDisplay = ({
                 <TableCell>
                   <IconButton title={`Go to ${member.name}'s Tokens`} component={Link} to={`/member/${member.id}/tokens`}>
                     <BookOnlineIcon />
+                  </IconButton>
+                  <IconButton title={`Go to ${member.name}'s Attendance`} component={Link} to={`/member/${member.id}/attendance`}>
+                    <FitnessCenterIcon />
                   </IconButton>
                   <IconButton component={Link} title={`Go to ${member.name}'s Membership periods`} to={`/member/${member.id}/membership-periods`}>
                     <CardMembershipIcon />

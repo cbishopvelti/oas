@@ -17,6 +17,7 @@ import { TransactionAddToken } from './TransactionToken';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { TransferToken } from "./TransferToken";
 import PaidIcon from '@mui/icons-material/Paid';
+import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 
 
 
@@ -56,6 +57,11 @@ export const Tokens = ({
         used_on,
         member_id,
         value,
+        attendance {
+          training {
+            id
+          }
+        }
         transaction {
           id
         }
@@ -119,8 +125,7 @@ export const Tokens = ({
                   ...(!isUsable(token) ? {
                     color: "gray",
                     textDecoration: "line-through"
-                  }: {}),
-                  // color: "pink"
+                  }: {})
                 }
                 return (<TableRow key={token.id}>
                   <TableCell sx={sx}>{token.id}</TableCell>
@@ -129,12 +134,17 @@ export const Tokens = ({
                   <TableCell sx={sx}>{token.used_on}</TableCell>
                   <TableCell sx={sx}>{token.value}</TableCell>
                   <TableCell>
-                    {isUsable(token) && <TransferToken token={token} refetch={refetch} />}
+                    {
+                      token.attendance?.training?.id && <IconButton title={`Go to this used token's training`} component={Link} to={`/training/${token.attendance?.training?.id}`}>
+                        <FitnessCenterIcon />
+                      </IconButton>
+                    }
                     {!transaction && get(token, 'transaction.id') &&
                       <IconButton component={Link} title={`Go to this token's transaction`} to={`/transaction/${token.transaction.id}`}>
                         <PaidIcon />
                       </IconButton>
                     }
+                    {isUsable(token) && <TransferToken token={token} refetch={refetch} />}
                     {!token.used_on && <IconButton title={`Delete this token`} onClick={deleteToken(token.id)}>
                       <DeleteIcon sx={{color: 'red'}} />
                     </IconButton>}

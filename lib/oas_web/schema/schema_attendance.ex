@@ -44,6 +44,20 @@ defmodule OasWeb.Schema.SchemaAttendance do
     field :member_id, :integer
   end
 
+  object :member_attendance_attendance do
+    field :id, :integer
+    field :member, :member do
+      resolve fn
+        %{training: %{when: when1}, member: member}, _, _ ->
+          {:ok, Map.put(member, :member_status_when, when1)}
+        %{member: member}, _, _ ->
+          {:ok, member}
+      end
+    end
+    field :token, :token
+    field :training, :training
+  end
+
   # import_types OasWeb.Schema.SchemaTypes
 
   # QUERIES
@@ -74,6 +88,21 @@ defmodule OasWeb.Schema.SchemaAttendance do
           {record, _} = Oas.Attendance.check_membership(record)
           record
         end)
+
+        {:ok, results}
+      end
+    end
+    field :member_attendance, list_of(:member_attendance_attendance) do
+      arg :member_id, non_null(:integer)
+      resolve fn _, %{member_id: member_id}, _ ->
+        results = from(at in Oas.Trainings.Attendance,
+          inner_join: m in assoc(at, :member),
+          left_join: to in assoc(at, :token),
+          inner_join: tr in assoc(at, :training),
+          preload: [member: m, token: {to, [:transaction]}, training: {tr, [:training_where]}],
+          where: m.id == ^member_id,
+          order_by: [desc: tr.when]
+        ) |> Oas.Repo.all
 
         {:ok, results}
       end

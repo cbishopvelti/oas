@@ -1,10 +1,10 @@
 import { useEffect } from 'react';
 import { Members } from '../Member/Members';
 import { gql, useQuery } from '@apollo/client';
-import { MenuList, MenuItem, ListItemText, Divider, ListItem } from '@mui/material';
-import { get } from 'lodash';
+import { ListItemText, MenuList, MenuItem, Divider, ListItem } from '@mui/material';
+import { get, set } from 'lodash';
 import {
-  NavLink
+  NavLink, useMatches
 } from "react-router-dom";
 import {
   MemberLink,
@@ -14,11 +14,23 @@ import {
 } from './Links';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
+import { MenuMember } from './MenuMember';
+import { MenuTransaction } from './MenuTransaction';
+import { MenuTraining } from './MenuTraining';
+import { MenuMembershipPeriod } from './MenuMembershipPeriod';
 
 
 export const AppMenu = ({ setOpen }) => {
   const theme = useTheme();
   const matches = useMediaQuery(theme.breakpoints.down('md'));
+  const routeMatchs = useMatches();
+
+  useEffect(() => {
+    console.log("001 should happen")
+    if (matches) {
+      setOpen(false)
+    }
+  }, [routeMatchs])
 
   const onClick = () => {
     if (matches) {
@@ -36,15 +48,22 @@ export const AppMenu = ({ setOpen }) => {
   useEffect(() => {
     refetch();
   }, [])
+  /*
+  {
+    [menu_id]: 
+  }
+  */
 
   return <MenuList>
-    <MenuItem onClick={onClick} component={NavLink} end to={`/member`}>
+    {/* <MenuItem onClick={onClick} component={NavLink} end to={`/member`}>
       <ListItemText>New Member</ListItemText>
     </MenuItem>
     <MenuItem onClick={onClick} component={MemberLink} to={`/members`}>
       <ListItemText>Members</ListItemText>
-    </MenuItem>
-    <MenuItem onClick={onClick}
+    </MenuItem> */}
+
+    <MenuTransaction setMenuOpen={setOpen} />
+    {/* <MenuItem onClick={onClick}
       component={NavLink}
       to={`/transaction`}
       end
@@ -59,22 +78,28 @@ export const AppMenu = ({ setOpen }) => {
       </MenuItem>
     <MenuItem onClick={onClick} component={TransactionLink} to={`/transactions`}>
       <ListItemText>Transactions</ListItemText>
-    </MenuItem>
-    <MenuItem onClick={onClick} component={NavLink} end to={`/training`}>
+    </MenuItem> */}
+    {/* <MenuItem onClick={onClick} component={NavLink} end to={`/training`}>
       <ListItemText>New Training</ListItemText>
     </MenuItem>
     <MenuItem onClick={onClick} component={TrainingsLink} to={`/trainings`}>
       <ListItemText>Trainings</ListItemText>
-    </MenuItem>
+    </MenuItem> */}
+    <MenuTraining />
+
+    <MenuMember setMenuOpen={setOpen} />
+
+    <MenuMembershipPeriod />
+
     <MenuItem onClick={onClick} component={NavLink} end to="/">
       <ListItemText>Analysis</ListItemText>
     </MenuItem>
-    <MenuItem onClick={onClick} component={NavLink} end to="/membership-period">
+    {/* <MenuItem onClick={onClick} component={NavLink} end to="/membership-period">
       New Membership Period
     </MenuItem>
     <MenuItem onClick={onClick} component={MembershipPeriodLink} to="/membership-periods">
       Membership Periods
-    </MenuItem>
+    </MenuItem> */}
 
     <Divider />
     {!!get(data, "user") && [<ListItem key="1">
