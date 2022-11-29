@@ -59,6 +59,10 @@ C:\Users\chris\nginx-1.23.2\html-staging
 
 ~~Sort by tokens, filter for status~~
 
+~~After register, show bank details~~
+
+Update current members data
+
 Add counts to header
 - tokens, token debt
 - members
