@@ -10,7 +10,7 @@ import Config
 # which you should run after static files are built and
 # before starting your production server.
 config :oas, Oas.Repo,
-  database: System.get_env("DB_FILE") || "/dbs/sqlite-prod.db"
+  database: System.get_env("DB_FILE") || "/dbs/sqlite-prod.db",
   backup_database: "/dbs-backup/sqlite-backup"
 
 config :oas, Oas.Repo.Replica1,

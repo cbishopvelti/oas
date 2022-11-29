@@ -8,12 +8,17 @@ defmodule Oas.ImportTransactions do
       
       csvDate = Map.get(row, :date)
 
+      bank_details = Map.get(row, :bank_account_name) <> "\n" <> Map.get(row, :account)
+
       query = from(t in Oas.Transactions.Transaction,
         where: t.when == ^csvDate
-          and t.bank_details == ^Map.get(row, :account)
+          and t.bank_details == ^bank_details
           and t.amount == ^Map.get(row, :amount),
         limit: 1
       )
+
+      queryString = Oas.Repo.to_sql(:all, query)
+      IO.inspect(queryString)
 
       dupliate = Oas.Repo.one(query)
 

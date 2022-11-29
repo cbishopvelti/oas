@@ -94,7 +94,14 @@ export const MembersDisplay = ({
             {showStatus && <TableCell>
               Status
             </TableCell>}
-            <TableCell>Tokens</TableCell>
+            <TableCell>
+              Tokens
+              <TableSortLabel
+                active={orderBy?.column === 'token_count'}
+                direction={orderBy?.direction}
+                onClick={sortByHandler('token_count')}
+              />
+            </TableCell>
             <TableCell>Created at</TableCell>
             <TableCell>Actions</TableCell>
           </TableRow>
