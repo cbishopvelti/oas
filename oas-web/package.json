@@ -15,7 +15,6 @@
     "@testing-library/user-event": "^13.5.0",
     "apollo-absinthe-upload-link": "^1.7.0",
     "apollo-upload-client": "^17.0.0",
-    "csv": "^6.2.4",
     "graphql": "^16.6.0",
     "lodash": "^4.17.21",
     "moment": "^2.29.4",
