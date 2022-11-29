@@ -39,21 +39,16 @@ chrisjbishop155/oas:latest
 
 ## Todo
 
-~~Display member membership type.~~
 
-~~Display member created date.~~
+~~Export~~
+~~~- members,~~
+~~- transactions~~
 
-~~Membership sorting by name.~~
+~~Make token readout red~~
 
-~~Check x-members~~
+~~Show bank details on the tokens page~~
 
-~~used token, go to training~~
-
-~~Attendance~~
-
-~~Change menu~~
-
-Backup
+~~Sort by tokens, filter for status~~
 
 Add counts to header
 - tokens, token debt

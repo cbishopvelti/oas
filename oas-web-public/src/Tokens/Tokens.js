@@ -7,8 +7,13 @@ import { Button, Box, FormControl, TextField,
   TableRow,
   TableBody,
   Stack,
-  Alert
+  Alert,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Typography
 } from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { get, setWith, clone, has, chain } from 'lodash';
 import { useQuery, useLazyQuery, gql} from '@apollo/client';
 import moment from 'moment';
@@ -93,6 +98,13 @@ export const Tokens = () => {
     setSearchParams(formData)
   }
 
+  let style = {}
+  if (tokenCount < 0) {
+    style = {
+      color: 'red'
+    };
+  }
+
   return <Box>
     <Box sx={{display: 'flex', alignItems: 'center'}}>
       <FormControl sx={{flexGrow: 5}}>
@@ -117,7 +129,34 @@ export const Tokens = () => {
       ))}
     </Stack>
     
-    {!errors && <p>You have <b>{tokenCount}</b> token{tokenCount == 1 ? '' : 's'}</p>}
+    {!errors && <p style={style}>You have <b>{tokenCount}</b> token{tokenCount == 1 ? '' : 's'}</p>}
+
+    {!errors && <Accordion sx={{position: 'relative'}}>
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon />}
+          aria-controls="panel1a-content"
+          id="panel1a-header"
+        >
+          <Typography>Buy more tokens</Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <Typography>
+            <p>Please make a transfer to:</p>
+            <pre>
+              Anne Hedegaard<br/>
+              20-65-18<br/>
+              13072630
+            </pre>
+              <p>5 GBP for 1 token,<br/>
+              45 GBP for 10 tokens or<br/>
+              90 GBP for 20 tokens.<br/>
+              Tokens are valid for one year from purchase and are non-refundable. Tokens can be transferred between members.<br/>
+              </p>
+
+          </Typography>
+        </AccordionDetails>
+      </Accordion>
+    }
     
     {outstanding_attendance.length > 0 && <>
       <h3>Outstanding Attendance</h3>

@@ -25,6 +25,8 @@ import { Link, useParams,useOutletContext } from "react-router-dom";
 import { TransactionTags } from './TransactionTags';
 import moment from 'moment'
 import DeleteIcon from '@mui/icons-material/Delete';
+import { unparse } from 'papaparse';
+import DownloadIcon from '@mui/icons-material/Download';
 
 const onChange = ({formData, setFormData, key}) => (event) => {
     
@@ -118,7 +120,7 @@ export const Transactions = () => {
   }
 
   return <div>
-    <Box sx={{display: 'flex', gap: 2, m: 2}}>
+    <Box sx={{display: 'flex', gap: 2, m: 2, alignItems: 'center'}}>
       <FormControl sx={{ minWidth: 256}}>
         <TextField
           required
@@ -147,6 +149,24 @@ export const Transactions = () => {
       </FormControl>
       <FormControl sx={{minWidth: 256}}>
         <TransactionTags formData={filterData} setFormData={setFilterData} filterMode={true} />
+      </FormControl>
+      <FormControl>
+        <IconButton onClick={() => {
+          const csvTransactions = transactions.map(({transaction_tags, ...rest}) => {
+            return {
+              ...rest,
+              tags: transaction_tags.map(({name}) => name).join(', ')
+            }
+          });
+
+          const csv = unparse({data: csvTransactions, fields: ['id', "when", 'what', 'who', 'tags', 'when', 'amount'], header: true})
+          let j = document.createElement("a")
+          j.download = "transactions.csv"
+          j.href = URL.createObjectURL(new Blob([csv]), {type: "text/csv"})
+          j.click()
+        }}>
+          <DownloadIcon />
+        </IconButton>
       </FormControl>
     </Box>
     <TableContainer>
