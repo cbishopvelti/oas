@@ -12,11 +12,15 @@
 
 Oas.Repo.delete_all(Oas.Members.Membership)
 Oas.Repo.delete_all(Oas.Members.MembershipPeriod)
-Oas.Repo.delete_all(Oas.Transactions.Transaction)
 Oas.Repo.delete_all(Oas.Tokens.Token)
+Oas.Repo.delete_all(Oas.Transactions.Transaction)
 Oas.Repo.delete_all(Oas.Members.MemberDetails)
 Oas.Repo.delete_all(Oas.Trainings.Attendance)
 Oas.Repo.delete_all(Oas.Members.Member)
+
+Oas.Repo.delete_all(Oas.Trainings.TrainingTags)
+Oas.Repo.delete_all(Oas.Trainings.Training)
+Oas.Repo.delete_all(Oas.Trainings.TrainingWhere)
 
 membershipPeriod = Oas.Repo.insert!(%Oas.Members.MembershipPeriod{
   name: "2022-2023",
@@ -24,10 +28,24 @@ membershipPeriod = Oas.Repo.insert!(%Oas.Members.MembershipPeriod{
   to: ~D[2023-10-31],
   value: 6
 })
-
 token = %Oas.Tokens.Token{
   expires_on: Date.add(Date.utc_today(), 365),
   value: 4.5
+}
+
+trainingWhere = Oas.Repo.insert!(
+  %Oas.Trainings.TrainingWhere{
+    name: "carried over"
+  }
+)
+training = Oas.Repo.insert!(
+  %Oas.Trainings.Training{
+    when: ~D[2022-11-30],
+    training_where: trainingWhere
+  }
+)
+attendance = %Oas.Trainings.Attendance{
+  training: training
 }
 
 Oas.Repo.insert!(%Oas.Members.Member{
@@ -37,7 +55,8 @@ Oas.Repo.insert!(%Oas.Members.Member{
   is_admin: true,
   is_active: true,
   membership_periods: [membershipPeriod],
-  tokens: List.duplicate(token, 1)
+  tokens: List.duplicate(token, 0),
+  attendance: List.duplicate(attendance, 4)
 })
 
 Oas.Repo.insert!(%Oas.Members.Member{
@@ -47,7 +66,7 @@ Oas.Repo.insert!(%Oas.Members.Member{
   is_admin: true,
   is_active: true,
   membership_periods: [membershipPeriod],
-  tokens: List.duplicate(token, 8)
+  tokens: List.duplicate(token, 1)
 })
 Oas.Repo.insert!(%Oas.Members.Member{
   email: "viktoria.trautner@gmail.com",
@@ -56,13 +75,13 @@ Oas.Repo.insert!(%Oas.Members.Member{
   is_admin: true,
   is_active: true,
   membership_periods: [membershipPeriod],
-  tokens: List.duplicate(token, 8)
+  tokens: List.duplicate(token, 6)
 })
 Oas.Repo.insert!(%Oas.Members.Member{
   email: "benmartin@doctors.org.uk",
   name: "Benjamin Martin",
   hashed_password: "$2b$12$sWUsBmHJejQQXFKVvIyJ/OKp6IIkKcS6f/Q849IXXFZKBDgYpZ1H6",
-  is_admin: true,
+  is_admin: false,
   is_active: true,
   membership_periods: [membershipPeriod],
   tokens: List.duplicate(token, 13)
@@ -83,7 +102,8 @@ Oas.Repo.insert!(%Oas.Members.Member{
   is_active: true,
   is_reviewer: true,
   membership_periods: [membershipPeriod],
-  tokens: List.duplicate(token, 2)
+  tokens: List.duplicate(token, 0),
+  attendance: List.duplicate(attendance, 3)
 })
 Oas.Repo.insert!(%Oas.Members.Member{
   email: "chloebruyas@yahoo.fr",
@@ -91,7 +111,8 @@ Oas.Repo.insert!(%Oas.Members.Member{
   hashed_password: "abcdefghijklmnopqrstuvwxyz",
   is_active: true,
   membership_periods: [membershipPeriod],
-  tokens: List.duplicate(token, 0)
+  tokens: List.duplicate(token, 0),
+  attendance: List.duplicate(attendance, 1)
 })
 Oas.Repo.insert!(%Oas.Members.Member{
   email: "dariajensen@gmail.com",
@@ -99,7 +120,7 @@ Oas.Repo.insert!(%Oas.Members.Member{
   hashed_password: "abcdefghijklmnopqrstuvwxyz",
   is_active: true,
   membership_periods: [membershipPeriod],
-  tokens: List.duplicate(token, 0)
+  tokens: List.duplicate(token, 5)
 })
 Oas.Repo.insert!(%Oas.Members.Member{
   email: "elizabethangelajohnson@gmail.com",
@@ -115,7 +136,7 @@ Oas.Repo.insert!(%Oas.Members.Member{
   hashed_password: "abcdefghijklmnopqrstuvwxyz",
   is_active: true,
   membership_periods: [membershipPeriod],
-  tokens: List.duplicate(token, 4)
+  tokens: List.duplicate(token, 3)
 })
 Oas.Repo.insert!(%Oas.Members.Member{
   email: "francescaleiper@hotmail.com",
@@ -123,7 +144,7 @@ Oas.Repo.insert!(%Oas.Members.Member{
   hashed_password: "abcdefghijklmnopqrstuvwxyz",
   is_active: true,
   membership_periods: [membershipPeriod],
-  tokens: List.duplicate(token, 6)
+  tokens: List.duplicate(token, 2)
 })
 Oas.Repo.insert!(%Oas.Members.Member{
   email: "irene.torreggiani4@gmail.com",
@@ -131,7 +152,7 @@ Oas.Repo.insert!(%Oas.Members.Member{
   hashed_password: "abcdefghijklmnopqrstuvwxyz",
   is_active: true,
   membership_periods: [membershipPeriod],
-  tokens: List.duplicate(token, 0)
+  tokens: List.duplicate(token, 17)
 })
 Oas.Repo.insert!(%Oas.Members.Member{
   email: "isabelcmms@gmail.com",
@@ -139,7 +160,8 @@ Oas.Repo.insert!(%Oas.Members.Member{
   hashed_password: "abcdefghijklmnopqrstuvwxyz",
   is_active: true,
   membership_periods: [membershipPeriod],
-  tokens: List.duplicate(token, 0)
+  tokens: List.duplicate(token, 0),
+  attendance: List.duplicate(attendance, 3)
 })
 Oas.Repo.insert!(%Oas.Members.Member{
   email: "jakub.hajko@gmail.com",
@@ -147,7 +169,7 @@ Oas.Repo.insert!(%Oas.Members.Member{
   hashed_password: "abcdefghijklmnopqrstuvwxyz",
   is_active: true,
   membership_periods: [membershipPeriod],
-  tokens: List.duplicate(token, 5)
+  tokens: List.duplicate(token, 19)
 })
 Oas.Repo.insert!(%Oas.Members.Member{
   email: "lidkaoz@gmail.com",
@@ -162,8 +184,10 @@ Oas.Repo.insert!(%Oas.Members.Member{
   name: "Luke Mcconkey",
   hashed_password: "abcdefghijklmnopqrstuvwxyz",
   is_active: true,
+  is_reviewer: true,
   membership_periods: [membershipPeriod],
-  tokens: List.duplicate(token, 0)
+  tokens: List.duplicate(token, 0),
+  attendance: List.duplicate(attendance, 3)
 })
 Oas.Repo.insert!(%Oas.Members.Member{
   email: "mnwebb@outlook.com",
@@ -187,7 +211,8 @@ Oas.Repo.insert!(%Oas.Members.Member{
   hashed_password: "abcdefghijklmnopqrstuvwxyz",
   is_active: true,
   membership_periods: [membershipPeriod],
-  tokens: List.duplicate(token, 4)
+  tokens: List.duplicate(token, 0),
+  attendance: List.duplicate(attendance, 1)
 })
 Oas.Repo.insert!(%Oas.Members.Member{
   email: "ricardo.de.carvalho@outlook.com",
@@ -195,7 +220,7 @@ Oas.Repo.insert!(%Oas.Members.Member{
   hashed_password: "abcdefghijklmnopqrstuvwxyz",
   is_active: true,
   membership_periods: [membershipPeriod],
-  tokens: List.duplicate(token, 7)
+  tokens: List.duplicate(token, 6)
 })
 Oas.Repo.insert!(%Oas.Members.Member{
   email: "sjefbaas@me.com",
@@ -204,7 +229,7 @@ Oas.Repo.insert!(%Oas.Members.Member{
   is_active: true,
   is_admin: true,
   membership_periods: [membershipPeriod],
-  tokens: List.duplicate(token, 10)
+  tokens: List.duplicate(token, 8)
 })
 Oas.Repo.insert!(%Oas.Members.Member{
   email: "Williamtorforbes@gmail.com",
@@ -212,7 +237,8 @@ Oas.Repo.insert!(%Oas.Members.Member{
   hashed_password: "abcdefghijklmnopqrstuvwxyz",
   is_active: true,
   membership_periods: [membershipPeriod],
-  tokens: List.duplicate(token, 0)
+  tokens: List.duplicate(token, 0),
+  attendance: List.duplicate(attendance, 4)
 })
 Oas.Repo.insert!(%Oas.Members.Member{
   email: "will_henderson@hotmail.co.uk",
@@ -230,6 +256,23 @@ Oas.Repo.insert!(%Oas.Members.Member{
   membership_periods: [membershipPeriod],
   tokens: List.duplicate(token, 0)
 })
+Oas.Repo.insert!(%Oas.Members.Member{
+  email: "craig.peters.sa@gmail.com",
+  name: "Craig Peters",
+  hashed_password: "abcdefghijklmnopqrstuvwxyz",
+  is_active: true,
+  membership_periods: [membershipPeriod],
+  tokens: List.duplicate(token, 15)
+})
+Oas.Repo.insert!(%Oas.Members.Member{
+  email: "laurene.vetterli@gmail.com",
+  name: "Laurène Vetterli",
+  hashed_password: "abcdefghijklmnopqrstuvwxyz",
+  is_active: true,
+  membership_periods: [membershipPeriod],
+  tokens: List.duplicate(token, 3)
+})
+
 
 Oas.Repo.insert(%Oas.Transactions.Transaction{
   what: "From old spreadsheets",

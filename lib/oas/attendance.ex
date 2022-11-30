@@ -91,12 +91,31 @@ defmodule Oas.Attendance do
   end
 
   def delete_attendance(%{attendance_id: attendance_id}) do
-    attendance = Oas.Repo.get!(Oas.Trainings.Attendance, attendance_id) |> Oas.Repo.preload(:token)
+    attendance = Oas.Repo.get!(Oas.Trainings.Attendance, attendance_id)
+      |> Oas.Repo.preload(:token)
+      |> Oas.Repo.preload(:member)
 
     if (attendance.token != nil) do
-      attendance.token |>
-        Ecto.Changeset.cast(%{used_on: nil, attendance_id: nil}, [:used_on, :attendance_id])
-        |> Oas.Repo.update!
+      debtAttendance = from(a in Oas.Trainings.Attendance,
+        left_join: to in assoc(a, :token), on: to.member_id == ^attendance.member.id,
+        inner_join: tr in assoc(a, :training),
+        preload: [training: tr],
+        where: a.member_id == ^attendance.member.id and is_nil(to.id),
+        select: a,
+        order_by: [asc: tr.when, asc: tr.id],
+        limit: 1
+      ) |> Oas.Repo.one
+
+      attendance_id = case debtAttendance do
+        nil -> 
+          attendance.token |>
+            Ecto.Changeset.cast(%{used_on: nil, attendance_id: nil}, [:used_on, :attendance_id])
+            |> Oas.Repo.update!
+        %{id: id, training: %{when: when1}} -> 
+          attendance.token |>
+            Ecto.Changeset.cast(%{used_on: Date.utc_today(), attendance_id: id}, [:used_on, :attendance_id])
+            |> Oas.Repo.update!
+      end
     end
     
     Oas.Repo.delete!(attendance)

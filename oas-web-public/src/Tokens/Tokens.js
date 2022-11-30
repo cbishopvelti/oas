@@ -129,7 +129,7 @@ export const Tokens = () => {
       ))}
     </Stack>
     
-    {!errors && <p style={style}>You have <b>{tokenCount}</b> token{tokenCount == 1 ? '' : 's'}</p>}
+    {!errors && <p style={style}>You have <b>{tokenCount}</b> token{tokenCount == 1 ? '' : 's'}.{tokenCount <= 0 && <> (This doesn't include any token debt incured before 30/12/2022)</>}</p>}
 
     {!errors && <Accordion sx={{position: 'relative'}}>
         <AccordionSummary
