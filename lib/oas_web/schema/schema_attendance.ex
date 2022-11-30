@@ -56,37 +56,39 @@ defmodule OasWeb.Schema.SchemaAttendance do
     end
     field :token, :token
     field :training, :training
+    field :warnings, list_of(:string)
   end
 
   # import_types OasWeb.Schema.SchemaTypes
 
   # QUERIES
   object :attendance_queries do
-    field :attendance, list_of(:member_attendance) do 
+    field :attendance, list_of(:member_attendance_attendance) do 
       arg :training_id, non_null(:integer)
       resolve fn _, %{training_id: training_id}, _ ->
         training = Oas.Repo.get!(Oas.Trainings.Training, training_id)
 
-        results = from(m in Oas.Members.Member,
-          as: :member,
-          inner_join: a in assoc(m, :attendance),
-          preload: [attendance: a],
-          preload: [membership_periods: ^from(mp in Oas.Members.MembershipPeriod, where: mp.from <= ^training.when and mp.to >= ^training.when)],
-          select: m,
+        results = from(a in Oas.Trainings.Attendance,
+          inner_join: m in assoc(a, :member),
+          preload: [member: [membership_periods: ^from(mp in Oas.Members.MembershipPeriod, where: mp.from <= ^training.when and mp.to >= ^training.when)]],
+          select: a,
           where: a.training_id == ^training_id
         )
         |> Oas.Repo.all
         |> Enum.map(fn record ->
-          %{id: id} = record
-          tokens = Oas.Attendance.get_token_amount(%{member_id: id})
+          %{member: member} = record
+          tokens = Oas.Attendance.get_token_amount(%{member_id: member.id})
           record = Map.put(record, :tokens, tokens)
           record = if (tokens < 0) do
             Map.put(record, :warnings, ["No tokens left" | Map.get(record, :warnings, [])])
           else
             record
           end
-          {record, _} = Oas.Attendance.check_membership(record)
-          record
+
+          case Oas.Attendance.check_membership(member) do
+            {%{warnings: warnings}, _} -> Map.put(record, :warnings, warnings)
+            _ -> record
+          end
         end)
 
         {:ok, results}

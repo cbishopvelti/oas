@@ -8,29 +8,37 @@ import { Box, FormControl, Autocomplete, TextField, Button,   Table,
   IconButton
 } from "@mui/material"
 import { useQuery, gql, useMutation } from '@apollo/client'
-import { differenceBy, get } from 'lodash';
+import { differenceBy, get, chain } from 'lodash';
 import { Link } from 'react-router-dom'
 import { TrainingAttendanceRow } from './TrainingAttendanceRow';
 
 
 export const TrainingAttendance = ({trainingId}) => {
+
   const [addAttendance, setAddAttendance] = useState({})
 
-  let { data, refetch } = useQuery(gql`query ($training_id: Int!) {
+  // name,
+  //     email,
+  //     tokens,
+  //     member_status,
+  //     attendance {
+  //       id
+  //     },
+  //     warnings
+  let { data, refetch } = useQuery(gql`query attendance($training_id: Int!) {
     members {
       id,
       name
     },
     attendance (training_id: $training_id) {
       id,
-      name,
-      email,
-      tokens,
-      member_status,
-      attendance {
-        id
-      },
-      warnings
+      warnings, 
+      member {
+        id,
+        name, 
+        token_count,
+        member_status
+      }
     }
   }`, {
     variables: {
@@ -39,9 +47,15 @@ export const TrainingAttendance = ({trainingId}) => {
   });
 
   const attendance = get(data, 'attendance', []);
+
+  const attendanceMembers = chain(get(data, 'attendance', []))
+    .map(({member}) => member)
+    .uniqBy('id')
+    .value()
+
   const members = differenceBy(
     get(data, 'members', []),
-    get(data, 'attendance', []),
+    attendanceMembers,
     'id'
   );
 
@@ -98,6 +112,9 @@ export const TrainingAttendance = ({trainingId}) => {
           renderInput={(params) => <TextField {...params} label="Who" />}
           freeSolo
           onChange={(event, newValue, a, b, c, d) => {
+            if (!newValue) {
+              return
+            }
             setAddAttendance({
               member_id: newValue.member_id,
               member_name: newValue.label
@@ -126,8 +143,8 @@ export const TrainingAttendance = ({trainingId}) => {
           </TableHead>
           <TableBody>
             {
-              attendance.map((member, i) => (
-                <TrainingAttendanceRow key={i} member={member} deleteAttendanceClick={deleteAttendanceClick} />
+              (attendance || []).map((attendance, i) => (
+                <TrainingAttendanceRow key={i} attendance={attendance} deleteAttendanceClick={deleteAttendanceClick} />
               ))
             }
           </TableBody>

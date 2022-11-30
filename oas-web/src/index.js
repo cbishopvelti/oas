@@ -140,8 +140,8 @@ const uploadLink = createLink({
 const client = new ApolloClient({
   // uri: 'http://localhost:3999/',
   // uri: `${process.env["REACT_APP_ADMIN_URL"]}/api/graphql`,
-  link: uploadLink,
   cache: new InMemoryCache(),
+  link: uploadLink,
 });
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
