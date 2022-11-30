@@ -55,8 +55,7 @@ Oas.Repo.insert!(%Oas.Members.Member{
   is_admin: true,
   is_active: true,
   membership_periods: [membershipPeriod],
-  tokens: List.duplicate(token, 0),
-  attendance: List.duplicate(attendance, 4)
+  tokens: List.duplicate(token, 6)
 })
 
 Oas.Repo.insert!(%Oas.Members.Member{
@@ -66,7 +65,7 @@ Oas.Repo.insert!(%Oas.Members.Member{
   is_admin: true,
   is_active: true,
   membership_periods: [membershipPeriod],
-  tokens: List.duplicate(token, 1)
+  tokens: List.duplicate(token, 6)
 })
 Oas.Repo.insert!(%Oas.Members.Member{
   email: "viktoria.trautner@gmail.com",
@@ -128,7 +127,7 @@ Oas.Repo.insert!(%Oas.Members.Member{
   hashed_password: "abcdefghijklmnopqrstuvwxyz",
   is_active: true,
   membership_periods: [membershipPeriod],
-  tokens: List.duplicate(token, 0)
+  tokens: List.duplicate(token, 3)
 })
 Oas.Repo.insert!(%Oas.Members.Member{
   email: "farbless@gmail.com",
@@ -275,11 +274,12 @@ Oas.Repo.insert!(%Oas.Members.Member{
 
 
 Oas.Repo.insert(%Oas.Transactions.Transaction{
-  what: "From old spreadsheets",
+  what: "Carried over",
   who: "old spreadsheets",
-  my_reference: "old spreadsheets",
+  my_reference: "carried over",
   type: "INCOMING",
-  when: Date.utc_today(),
-  amount: 1_453.96,
+  # when: Date.utc_today(),
+  when: ~D[2022-11-30],
+  amount: 1_800.38,
   not_transaction: true
 })
