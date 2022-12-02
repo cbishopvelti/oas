@@ -14,7 +14,7 @@ import {
   Autocomplete,
   TextField
 } from '@mui/material';
-import { get } from 'lodash';
+import { get, reduce } from 'lodash';
 import { Link, useParams, useOutletContext } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { MembersDisplay } from './MembersDisplay';
@@ -88,9 +88,31 @@ export const Members = () => {
   });
   members = get(members, "members", []) || []
   useEffect(() => {
-    setTitle("Members");
+    const memberCount = members?.length || 0;
+    const counts = reduce(members, ({tokenCount, debtCount}, {token_count}) => {
+      if (token_count > 0) {
+        return {
+          tokenCount: tokenCount + token_count,
+          debtCount
+        }
+      } else if (token_count < 0) {
+        return {
+          tokenCount,
+          debtCount: debtCount + token_count
+        }
+      }
+      return {
+        tokenCount,
+        debtCount
+      }
+    }, {
+      tokenCount: 0,
+      debtCount: 0
+    })
+
+    setTitle(`Members: ${memberCount}, Tokens: ${counts.tokenCount}, ${counts.debtCount}`);
     refetch()
-  }, [filterData])
+  }, [filterData, members])
 
   if (filterData.status?.length > 0) {
     members = members.filter((member) => {

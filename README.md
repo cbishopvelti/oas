@@ -48,18 +48,19 @@ C:\Users\chris\nginx-1.23.2\html-staging
 
 ## Todo
 
+~~Sorting again~~
 
-Table ordering
-
-Website menu
+~~Website menu~~
 
 Check website text
 
-Add counts to header
-- tokens, token debt
-- members
-- transactions
-- trainings
+~~ Add counts to header ~~
+~~ - tokens, token debt~~
+~~ - trainings ~~
+~~ - members ~~
+~~ - transactions ~~
+
+Testing
 
 Tokens config
 
