@@ -13,7 +13,7 @@ import { Link } from 'react-router-dom'
 import { TrainingAttendanceRow } from './TrainingAttendanceRow';
 
 
-export const TrainingAttendance = ({trainingId}) => {
+export const TrainingAttendance = ({trainingId, setAttendance}) => {
 
   const [addAttendance, setAddAttendance] = useState({})
 
@@ -47,6 +47,10 @@ export const TrainingAttendance = ({trainingId}) => {
   });
 
   const attendance = get(data, 'attendance', []);
+
+  useEffect(() => {
+    setAttendance(attendance.length)
+  }, [attendance])
 
   const attendanceMembers = chain(get(data, 'attendance', []))
     .map(({member}) => member)
