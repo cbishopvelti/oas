@@ -2,7 +2,7 @@ import { gql, useQuery, useMutation } from "@apollo/client"
 import { MembersDisplay } from "../Member/MembersDisplay"
 import { IconButton
  } from "@mui/material";
-import { get } from 'lodash';
+import { get, reduce } from 'lodash';
 import { useParams, useOutletContext, Link } from "react-router-dom";
 import { useEffect } from "react";
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -81,9 +81,33 @@ export const MembershipPeriodMembers = () => {
     refetch();
   }, [])
 
+  const members = get(data, "membership_period.memberships", []).map(({member}) => member);
+
   useEffect(() => {
-    setTitle(`Membership Period: ${get(data, 'membership_period.name', id)}'s Members`);
-  }, [get(data, 'membership_period.name')])
+    const memberCount = members?.length || 0;
+    const counts = reduce(members, ({tokenCount, debtCount}, {token_count}) => {
+      if (token_count > 0) {
+        return {
+          tokenCount: tokenCount + token_count,
+          debtCount
+        }
+      } else if (token_count < 0) {
+        return {
+          tokenCount,
+          debtCount: debtCount + token_count
+        }
+      }
+      return {
+        tokenCount,
+        debtCount
+      }
+    }, {
+      tokenCount: 0,
+      debtCount: 0
+    })
+
+    setTitle(`Membership Period: ${get(data, 'membership_period.name', id)}'s Members: ${memberCount}, tokens: ${counts.tokenCount}, ${counts.debtCount}`);
+  }, [get(data, 'membership_period.name'), members])
 
   const memberships = get(data, 'membership_period.memberships', [])
 

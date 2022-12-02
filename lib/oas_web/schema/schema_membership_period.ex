@@ -16,10 +16,13 @@ defmodule OasWeb.Schema.SchemaMembershipPeriod do
     field :membership_period, :membership_period do
       arg :id, non_null(:integer)
       resolve fn _, %{id: id}, _ -> 
+
+        membershipQuery = from(m in Oas.Members.Membership, order_by: [desc: m.id])
+
         membershipPeriod = Oas.Repo.get!(Oas.Members.MembershipPeriod, id)
-          |> Oas.Repo.preload(:members)
+          # |> Oas.Repo.preload(members: ^memberQuery)
           # |> Oas.Repo.preload([memberships: [transaction: [:member]]])
-          |> Oas.Repo.preload([memberships: [:transaction, :member]])
+          |> Oas.Repo.preload([memberships: {membershipQuery, [:transaction, :member]}])
 
         {:ok, membershipPeriod}
       end

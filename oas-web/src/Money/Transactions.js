@@ -18,7 +18,7 @@ import {
   Button,
 
 } from '@mui/material';
-import { get } from 'lodash';
+import { get, reduce } from 'lodash';
 import { useEffect, useState } from 'react';
 import EditIcon from '@mui/icons-material/Edit';
 import { Link, useParams,useOutletContext } from "react-router-dom";
@@ -83,13 +83,29 @@ export const Transactions = () => {
     }
   });
   useEffect(() => {
+    let transactionCount = transactions.length
+    const counts = reduce(transactions, ({incoming, outgoing}, {amount}) => {
+      if (amount > 0) {
+        return {
+          incoming: incoming + parseFloat(amount),
+          outgoing
+        }
+      } else if (amount < 0) {
+        return {
+          incoming,
+          outgoing: outgoing + parseFloat(amount)
+        }
+      }
+      return { incoming, outgoing};
+    }, {incoming: 0, outgoing: 0});
+
     if (member_id) {
-      setTitle(`Member: ${get(memberData, 'member.name', member_id)}'s Transactions`)
+      setTitle(`Member: ${get(memberData, 'member.name', member_id)}'s Transactions: ${transactionCount} (${counts.incoming}, ${counts.outgoing}, ${counts.incoming + counts.outgoing})`)
     } else {
-      setTitle("Transactions");
+      setTitle(`Transactions: ${transactionCount} (${counts.incoming}, ${counts.outgoing}, ${counts.incoming + counts.outgoing})`);
     }
     refetch()
-  }, [get(memberData, 'member.name')])
+  }, [get(memberData, 'member.name'), transactions])
   transactions = get(transactions, "transactions", []) || []
 
 

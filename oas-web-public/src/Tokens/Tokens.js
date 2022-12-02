@@ -45,7 +45,7 @@ const isUsable = (member_email) => (token) => {
 export const Tokens = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   
-  const member_email = searchParams.get('email');
+  const member_email = searchParams.get('email') || '';
 
   const [formData, setFormData] = useState({
     email: member_email
@@ -129,7 +129,7 @@ export const Tokens = () => {
       ))}
     </Stack>
     
-    {!errors && <p style={style}>You have <b>{tokenCount}</b> token{tokenCount == 1 ? '' : 's'}.{tokenCount <= 0 && <> (This doesn't include any token debt incured before 30/12/2022)</>}</p>}
+    {!errors && <p style={style}>You have <b>{tokenCount}</b> token{tokenCount == 1 ? '' : 's'}.</p>}
 
     {!errors && <Accordion sx={{position: 'relative'}}>
         <AccordionSummary
@@ -141,18 +141,17 @@ export const Tokens = () => {
         </AccordionSummary>
         <AccordionDetails>
           <Typography>
-            <p>Please make a transfer to:</p>
-            <pre>
+            Please make a transfer to:<br/>
+            <br/>
               Anne Hedegaard<br/>
               20-65-18<br/>
-              13072630
-            </pre>
-              <p>5 GBP for 1 token,<br/>
-              45 GBP for 10 tokens or<br/>
-              90 GBP for 20 tokens.<br/>
-              Tokens are valid for one year from purchase and are non-refundable. Tokens can be transferred between members.<br/>
-              </p>
-
+              13072630<br/>
+            <br/>
+            5 GBP for 1 token,<br/>
+            45 GBP for 10 tokens or<br/>
+            90 GBP for 20 tokens.<br/>
+            Tokens are valid for one year from purchase and are non-refundable. Tokens can be transferred between members.<br/>
+            
           </Typography>
         </AccordionDetails>
       </Accordion>
