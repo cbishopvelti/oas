@@ -26,7 +26,6 @@ export const AppMenu = ({ setOpen }) => {
   const routeMatchs = useMatches();
 
   useEffect(() => {
-    console.log("001 should happen")
     if (matches) {
       setOpen(false)
     }

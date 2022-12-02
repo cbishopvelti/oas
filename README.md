@@ -49,19 +49,11 @@ C:\Users\chris\nginx-1.23.2\html-staging
 ## Todo
 
 
-~~Export~~
-~~~- members,~~
-~~- transactions~~
+Table ordering
 
-~~Make token readout red~~
+Website menu
 
-~~Show bank details on the tokens page~~
-
-~~Sort by tokens, filter for status~~
-
-~~After register, show bank details~~
-
-Update current members data
+Check website text
 
 Add counts to header
 - tokens, token debt
@@ -69,12 +61,6 @@ Add counts to header
 - transactions
 - trainings
 
-DEPLOY
-
 Tokens config
-
-Change header title functionality (maybe react-portal)
-
-Export for spreadsheets
 
 Graphs
