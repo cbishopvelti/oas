@@ -53,7 +53,7 @@ defmodule Oas.Attendance do
     case (warnings) do
       [] -> nil
       warnings -> 
-        Oas.Tokens.TokenNotifier.deliver(member.email, "OAS notifaction", """
+        Oas.Tokens.TokenNotifier.deliver(member.email, "OAS notification", """
           Hi #{member.name}
 
           #{Enum.join(warnings, "\n")}

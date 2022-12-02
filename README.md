@@ -56,7 +56,7 @@ Check website text
 
 ~~ Add counts to header ~~
 ~~ - tokens, token debt~~
-~~ - trainings ~~
+~~- trainings~~
 ~~ - members ~~
 ~~ - transactions ~~
 
