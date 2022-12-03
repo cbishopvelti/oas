@@ -113,7 +113,7 @@ defmodule Oas.Attendance do
             |> Oas.Repo.update!
         %{id: id, training: %{when: when1}} -> 
           attendance.token |>
-            Ecto.Changeset.cast(%{used_on: Date.utc_today(), attendance_id: id}, [:used_on, :attendance_id])
+            Ecto.Changeset.cast(%{used_on: when1, attendance_id: id}, [:used_on, :attendance_id])
             |> Oas.Repo.update!
       end
     end
@@ -155,17 +155,19 @@ defmodule Oas.Attendance do
     debtAttendances = from(a in Oas.Trainings.Attendance,
       left_join: to in assoc(a, :token), on: to.member_id == ^member_id,
       inner_join: tr in assoc(a, :training),
+      preload: [training: tr],
       where: a.member_id == ^member_id and is_nil(to.id),
-      select: a.id,
+      select: a,
       order_by: [asc: tr.when, asc: tr.id],
       limit: ^quantity
     ) |> Oas.Repo.all
 
+    config = from(cc in Oas.Config.Config, select: cc) |> Oas.Repo.one
 
     token = %Oas.Tokens.Token{
       member_id: member_id,
       transaction_id: transaction_id,
-      expires_on: Date.add(when1, 365), # add a year
+      expires_on: Date.add(when1, config.token_expiry_days), # add a year
       attendance_id: nil,
       value: value
     }
@@ -175,7 +177,7 @@ defmodule Oas.Attendance do
     toInsert = List.duplicate(token, quantity)
       |> Enum.zip_with(debtAttendancesStream, fn
         a, nil -> a
-        a, id -> %{a | attendance_id: id, used_on: Date.utc_today()} end
+        a, %{id: id, training: %{when: when1}} -> %{a | attendance_id: id, used_on: when1} end
       )
       |> Enum.map(&Oas.Repo.insert/1)
 
