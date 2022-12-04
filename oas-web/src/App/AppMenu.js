@@ -18,6 +18,7 @@ import { MenuMember } from './MenuMember';
 import { MenuTransaction } from './MenuTransaction';
 import { MenuTraining } from './MenuTraining';
 import { MenuMembershipPeriod } from './MenuMembershipPeriod';
+import { MenuAnalysis } from './MenuAnalysis';
 
 
 export const AppMenu = ({ setOpen }) => {
@@ -91,9 +92,10 @@ export const AppMenu = ({ setOpen }) => {
 
     <MenuMember setMenuOpen={setOpen} />
 
-    <MenuItem onClick={onClick} component={NavLink} end to="/">
+    {/* <MenuItem onClick={onClick} component={NavLink} end to="/">
       <ListItemText>Analysis</ListItemText>
-    </MenuItem>
+    </MenuItem> */}
+    <MenuAnalysis setMenuOpen={setOpen} />
 
     <MenuItem onClick={onClick} component={NavLink} end to="/config">
       <ListItemText>Config</ListItemText>
