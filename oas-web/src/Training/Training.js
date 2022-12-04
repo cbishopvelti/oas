@@ -17,6 +17,7 @@ export const Training = () => {
   if (id) {
     id = parseInt(id)
   }
+  const [attendance, setAttendance] = useState(0);
 
   const {data} = useQuery(gql`
     query($id: Int!) {
@@ -50,9 +51,9 @@ export const Training = () => {
     if (!id) {
       setTitle("New Training");
     } else {
-      setTitle(`Editing Training: ${get(data, 'training.training_where.name', id)}`)
+      setTitle(`Editing Training: ${get(data, 'training.training_where.name', id)}: ${attendance}`)
     }
-  }, [get(data, 'training.training_where.name')])
+  }, [get(data, 'training.training_where.name'), attendance])
 
   useEffect(() => {
     
@@ -170,6 +171,6 @@ export const Training = () => {
         <Button onClick={save(formData)}>Save</Button>
       </FormControl>
     </Box>
-    {id && <TrainingAttendance trainingId={id} />}
+    {id && <TrainingAttendance setAttendance={setAttendance} trainingId={id} />}
   </div>
 }

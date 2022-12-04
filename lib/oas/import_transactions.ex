@@ -8,12 +8,17 @@ defmodule Oas.ImportTransactions do
       
       csvDate = Map.get(row, :date)
 
+      bank_details = Map.get(row, :bank_account_name) <> "\n" <> Map.get(row, :account)
+
       query = from(t in Oas.Transactions.Transaction,
         where: t.when == ^csvDate
-          and t.bank_details == ^Map.get(row, :account)
+          and t.bank_details == ^bank_details
           and t.amount == ^Map.get(row, :amount),
         limit: 1
       )
+
+      queryString = Oas.Repo.to_sql(:all, query)
+      IO.inspect(queryString)
 
       dupliate = Oas.Repo.one(query)
 
@@ -68,14 +73,14 @@ defmodule Oas.ImportTransactions do
       row ->
         case Enum.find(
           Oas.Tokens.Token.getPossibleTokenAmount(),
-          fn {no, value} ->
-            (value * no) == Map.get(row, :amount)
+          fn %{quantity: no, value: value} ->
+            ((value |> Decimal.to_float) * no) == Map.get(row, :amount)
           end
         ) do
           nil -> row
-          {no, value} ->
+          configToken = %{quantity: no, value: value} ->
             if (is_map_key(row, :who_member_id)) do
-              Map.put(row, :state, :tokens) |> Map.put(:state_data, %{quantity: no, value: value})
+              Map.put(row, :state, :tokens) |> Map.put(:state_data, configToken)
             else
               Map.put(row, :warnings, ["This looks like tokens, but related member (via bank_account_name) was not found" | Map.get(row, :warnings, [])])
             end

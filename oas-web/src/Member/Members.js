@@ -14,12 +14,15 @@ import {
   Autocomplete,
   TextField
 } from '@mui/material';
-import { get } from 'lodash';
+import { get, reduce } from 'lodash';
 import { Link, useParams, useOutletContext } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { MembersDisplay } from './MembersDisplay';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PaidIcon from '@mui/icons-material/Paid';
+import { includes } from 'lodash';
+import DownloadIcon from '@mui/icons-material/Download';
+import { unparse } from 'papaparse'
 
 export const DeleteMember = ({ refetch }) => {
   const [mutation] = useMutation(gql`
@@ -85,9 +88,37 @@ export const Members = () => {
   });
   members = get(members, "members", []) || []
   useEffect(() => {
-    setTitle("Members");
+    const memberCount = members?.length || 0;
+    const counts = reduce(members, ({tokenCount, debtCount}, {token_count}) => {
+      if (token_count > 0) {
+        return {
+          tokenCount: tokenCount + token_count,
+          debtCount
+        }
+      } else if (token_count < 0) {
+        return {
+          tokenCount,
+          debtCount: debtCount + token_count
+        }
+      }
+      return {
+        tokenCount,
+        debtCount
+      }
+    }, {
+      tokenCount: 0,
+      debtCount: 0
+    })
+
+    setTitle(`Members: ${memberCount}, Tokens: ${counts.tokenCount}, ${counts.debtCount}`);
     refetch()
-  }, [filterData])
+  }, [filterData, members])
+
+  if (filterData.status?.length > 0) {
+    members = members.filter((member) => {
+      return includes(filterData.status, member.member_status)
+    })
+  }
 
   return <div>
     <Box sx={{display: "flex", flexWrap: 'wrap', alignItems: 'center'}}>
@@ -123,6 +154,32 @@ export const Members = () => {
             })
           }}
           />
+      </FormControl>
+      <FormControl sx={{m: 2, minWidth: 256}}>
+        <Autocomplete
+          id="status"
+          value={filterData.status || []}
+          options={["member", "not_member", "temporary_member", "x_member"]}
+          renderInput={(params) => <TextField {...params} label="Status" />}
+          multiple
+          onChange={async (event, newValue, a, b, c, d) => {
+            setFilterData({
+              ...filterData,
+              status: newValue
+            })
+          }}
+        />
+      </FormControl>
+      <FormControl>
+        <IconButton onClick={() => {
+          const csv = unparse({data: members, fields: ['id', "name", 'email', 'member_status', 'token_count', 'inserted_at'], header: true})
+          let j = document.createElement("a")
+          j.download = "members.csv"
+          j.href = URL.createObjectURL(new Blob([csv]), {type: "text/csv"})
+          j.click()
+        }}>
+          <DownloadIcon />
+        </IconButton>
       </FormControl>
     </Box>
     <MembersDisplay showStatus={true} data={members} ExtraActions={DeleteMember({refetch})} />

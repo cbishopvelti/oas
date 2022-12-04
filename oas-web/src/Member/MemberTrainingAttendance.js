@@ -2,7 +2,7 @@ import { gql, useQuery, useMutation } from "@apollo/client";
 import { TableBody, TableCell, TableContainer, TableHead, TableRow, Table, IconButton } from "@mui/material";
 import { useEffect } from "react"
 import { useParams, useOutletContext, Link } from "react-router-dom";
-import { get } from 'lodash';
+import { filter, get } from 'lodash';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import PaidIcon from '@mui/icons-material/Paid';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -47,11 +47,20 @@ export const MemberTrainingAttendance = () => {
     }
   });
 
+  useEffect(() => {
+    refetch();
+  }, [])
+
   const member = get(data, 'member', {});
   const member_attendance = get(data, 'member_attendance', []);
+
   useEffect(() => {
-    setTitle(`Member: ${get(member, 'name', member_id)}'s Attendance`);
-  }, [get(member, 'name')])
+    const outstanding = filter(member_attendance, ({token}) => {
+      return !token
+    }).length
+
+    setTitle(`Member: ${get(member, 'name', member_id)}'s Attendance: ${member_attendance.length}, outstanding: ${outstanding}`);
+  }, [data])
 
 
   const [deleteAttendance ] = useMutation(gql`
@@ -71,6 +80,7 @@ export const MemberTrainingAttendance = () => {
   }
 
   console.log("001 data", data);
+
   // TODO, member_status
 
   // actions, go to training, go to token's transaction, delete attendance 
@@ -100,7 +110,7 @@ export const MemberTrainingAttendance = () => {
         {member_attendance.map((attendance) => {
 
           const sx = {
-            ...(!attendance.token?.id || true ? {
+            ...(attendance.token?.id ? {
               color: "gray",
               textDecoration: "line-through"
             }: {})

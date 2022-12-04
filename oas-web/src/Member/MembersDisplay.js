@@ -65,36 +65,40 @@ export const MembersDisplay = ({
         <TableHead>
           <TableRow>
             <TableCell>
-              Id
               <TableSortLabel
                 active={orderBy?.column === 'id' || !orderBy}
                 direction={orderBy?.direction}
                 onClick={sortByHandler('id')}
-              />
+              >Id</TableSortLabel>
             </TableCell>
             <TableCell>
-              Name
               <TableSortLabel
                 active={orderBy?.column === 'name'}
                 direction={orderBy?.direction}
                 onClick={sortByHandler('name')}
-              />
+              >Name</TableSortLabel>
             </TableCell>
             <TableCell>
-              Email
-              <IconButton title="Copy emails" onClick={copyAll}>
-                <CopyAllIcon />
-              </IconButton>  
               <TableSortLabel
                 active={orderBy?.column === 'email'}
                 direction={orderBy?.direction}
                 onClick={sortByHandler('email')}
-              />
+              >Email</TableSortLabel>
+              <IconButton title="Copy emails" onClick={copyAll}>
+                <CopyAllIcon />
+              </IconButton>  
+              
             </TableCell>
             {showStatus && <TableCell>
               Status
             </TableCell>}
-            <TableCell>Tokens</TableCell>
+            <TableCell>
+              <TableSortLabel
+                active={orderBy?.column === 'token_count'}
+                direction={orderBy?.direction}
+                onClick={sortByHandler('token_count')}
+              >Tokens</TableSortLabel>
+            </TableCell>
             <TableCell>Created at</TableCell>
             <TableCell>Actions</TableCell>
           </TableRow>

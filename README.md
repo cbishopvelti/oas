@@ -51,34 +51,30 @@ C:\Users\chris\nginx-1.23.2\html-staging
 
 ## Todo
 
-~~Display member membership type.~~
+~~Sorting again~~
 
-~~Display member created date.~~
+~~Website menu~~
 
-~~Membership sorting by name.~~
+Check website text
 
-~~Check x-members~~
+~~ Add counts to header ~~
+~~ - tokens, token debt~~
+~~- trainings~~
+~~ - members ~~
+~~ - transactions ~~
 
-~~used token, go to training~~
+~~Tokens config~~
 
-~~Attendance~~
-
-~~Change menu~~
-
-Backup
-
-Add counts to header
-- tokens, token debt
-- members
-- transactions
-- trainings
-
-DEPLOY
-
-Tokens config
-
-Change header title functionality (maybe react-portal)
-
-Export for spreadsheets
+~~used_on date~~
 
 Graphs
+- Bar chart attendance
+Line of tokens
+Line of token debt
+- Line of transaction difference.
+Diff line
+Diff line - outstanding tokens
+Lines by tag
+
+Only send email after last transaction
+- add import date to seeing tokens

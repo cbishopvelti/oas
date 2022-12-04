@@ -1,3 +1,5 @@
+import Ecto.Query, only: [from: 2]
+
 defmodule Oas.Tokens.Token do
   use Ecto.Schema
   import Ecto.Changeset
@@ -14,6 +16,10 @@ defmodule Oas.Tokens.Token do
   end
 
   def getPossibleTokenAmount do
-    [{1, 5}, {10, 4.5}, {20, 4.5}]
+    
+    from(tk in Oas.Config.Tokens, select: tk)
+      |> Oas.Repo.all
+
+    # [{1, 5}, {10, 4.5}, {20, 4.5}]
   end
 end
