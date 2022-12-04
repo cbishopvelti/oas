@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { omit, get } from 'lodash'
 import { FormControl, FormControlLabel, Switch, TextField, Box, Button } from '@mui/material';
-import { gql, useMutation } from '@apollo/client';
+import { gql, useMutation, useQuery } from '@apollo/client';
 import { Tokens } from './Tokens';
 
 const onChange = ({formData, setFormData, key}) => (event) => {
@@ -53,14 +53,49 @@ export const TransactionAddToken = ({
   member_id,
   refetch
 }) => {
-  const [formData, setFormData] = useState({});
   const defaultFormData = {
     token_quantity: 1,
-    token_value: 5
+    token_value: 0
   }
+  const [formData, setFormData] = useState(defaultFormData);
+
+  const { data, refetch: refetchConfig } = useQuery(gql`
+    query($token_quantity: Int!) {
+      config_token(token_quantity: $token_quantity) {
+        value
+      }
+    }
+  `, {
+    variables: {
+      token_quantity: parseInt(formData.token_quantity)
+    },
+    skip: parseInt(formData.token_quantity) === NaN
+  });
+  useEffect(() => {
+    if (!get(data, 'config_token.value')) {
+      return;
+    }
+    setFormData({
+      ...formData,
+      token_value: get(data, 'config_token.value')
+    })
+  }, [data])
+  useEffect(() => {
+    if (parseInt(formData.token_quantity) === NaN) {
+      return
+    }
+    refetchConfig({
+      variables: {
+        token_quantity: formData.token_quantity
+      }
+    })
+  }, [formData.token_quantity])
 
   useEffect(() => {
-    setFormData(defaultFormData)
+    setFormData({
+      ...formData,
+      token_quantity: 1
+    })
   }, [transaction_id, member_id])
 
   const [mutate] = useMutation(gql`
