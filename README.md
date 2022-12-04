@@ -60,8 +60,6 @@ Check website text
 ~~ - members ~~
 ~~ - transactions ~~
 
-Testing
-
-Tokens config
+~~Tokens config~~
 
 Graphs
