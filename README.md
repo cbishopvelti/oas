@@ -73,5 +73,5 @@ Diff line
 Diff line - outstanding tokens
 Lines by tag
 
-Only send email after import
+Only send email after last transaction
 - add import date to seeing tokens
