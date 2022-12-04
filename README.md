@@ -6,8 +6,11 @@
 docker build . -t chrisjbishop155/oas
 docker push chrisjbishop155/oas
 ```
+```
+docker pull chrisjbishop155/oas
+```
 
-docker run
+
 docker run -it -d `
 --name=oas `
 -e DANGEROUSLY_DISABLE_HOST_CHECK=true `
@@ -19,7 +22,7 @@ docker run -it -d `
 -e MIX_ENV=prod `
 -p 4000:4000 -p 3999:3999 -p 3998:3998 `
 -v D:/oas-dbs:/dbs `
--v C:/oas-dbs-backup:dbs-backup `
+-v C:/oas-dbs-backup:/dbs-backup `
 chrisjbishop155/oas:latest
 
 docker run -it -d `
@@ -33,7 +36,7 @@ docker run -it -d `
 -e MIX_ENV=stage `
 -p 5000:4000 -p 4999:3999 -p 4998:3998 `
 -v D:/oas-dbs:/dbs `
--v C:/oas-dbs-backup:/dbs-backup `
+-v C:/oas-dbs-staging-backup:/dbs-backup `
 chrisjbishop155/oas:latest
 
 Certs
