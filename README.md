@@ -75,3 +75,9 @@ Lines by tag
 
 Only send email after last transaction
 - add import date to seeing tokens
+
+Do Import
+- Temporaly save import state
+- Save token state
+- Show error on invalid csv
+
