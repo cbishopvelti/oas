@@ -21,27 +21,27 @@ import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 
 
 export const TrainingAttendanceRow = ({
-  member,
+  attendance,
   deleteAttendanceClick
 }) => {
   const [open, setOpen] = useState(false);
 
   return <>
-    <StyledTableRow className={`${member.errors && 'errors'} ${member.warnings && 'warnings'}`} key={member.id}>
-      <TableCell>{member.id}</TableCell>
-      <TableCell>{first(member.attendance)?.id}</TableCell>
-      <TableCell>{member.name}</TableCell>
-      <TableCell>{member.email}</TableCell>
-      <TableCell>{member.member_status}</TableCell>
-      <TableCell sx={{...(member.tokens < 0 ? {color: "red"} : {})}}>{member.tokens}</TableCell>
+    <StyledTableRow className={`${attendance.errors && 'errors'} ${attendance.warnings && 'warnings'}`} key={attendance.id}>
+      <TableCell>{attendance.member.id}</TableCell>
+      <TableCell>{attendance.id}</TableCell>
+      <TableCell>{attendance.member.name}</TableCell>
+      <TableCell>{attendance.member.email}</TableCell>
+      <TableCell>{attendance.member.member_status}</TableCell>
+      <TableCell sx={{...(attendance.member.token_count < 0 ? {color: "red"} : {})}}>{attendance.member.token_count}</TableCell>
       <TableCell>
-        <IconButton title={`View ${member.name}'s tokens`} component={Link} to={`/member/${member.id}/tokens`}>
+        <IconButton title={`View ${attendance.member.name}'s tokens`} component={Link} to={`/member/${attendance.member.id}/tokens`}>
           <BookOnlineIcon />
         </IconButton>
-        <IconButton title={`Delete ${member.name}'s attendance`} onClick={deleteAttendanceClick(first(member.attendance)?.id)}>
+        <IconButton title={`Delete ${attendance.member.name}'s attendance`} onClick={deleteAttendanceClick(attendance.id)}>
           <DeleteIcon sx={{color: 'red'}} />
         </IconButton>
-        {(member.errors || member.warnings) && <IconButton
+        {(attendance.errors || attendance.warnings) && <IconButton
               aria-label="expand row"
               size="small"
               onClick={() => setOpen(!open)}
@@ -50,11 +50,11 @@ export const TrainingAttendanceRow = ({
         </IconButton>}
       </TableCell>
     </StyledTableRow>
-    {member.warnings && <StyledTableRow className={`${member.errors && 'errors'} ${member.warnings && 'warnings'}`}>
+    {attendance.warnings && <StyledTableRow className={`${attendance.errors && 'errors'} ${attendance.warnings && 'warnings'}`}>
       <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={7}>
         <Collapse in={open} timeout="auto" unmountOnExit>
           <Stack sx={{ width: '100%' }}>
-            {member.warnings?.map((item, i) => (
+            {attendance.warnings?.map((item, i) => (
               <Alert key={i} sx={{m:1}} severity="warning">
                 {item}
               </Alert>

@@ -26,6 +26,7 @@ import { createUploadLink } from "apollo-upload-client";
 import { createLink } from "apollo-absinthe-upload-link";
 import { MembershipPeriodMembers } from './MembershipPeriod/MembershipPeriodMembers';
 import { MemberTrainingAttendance } from './Member/MemberTrainingAttendance';
+import { ConfigTokens } from './Config/ConfigTokens';
 
 
 
@@ -125,6 +126,11 @@ const router = createBrowserRouter([
         id: "membership-periods",
         path: "membership-periods",
         element: <MembershipPeriods />
+      },
+      {
+        id: "config",
+        path: "config",
+        element: <ConfigTokens />
       }
     ],
   },
@@ -140,8 +146,8 @@ const uploadLink = createLink({
 const client = new ApolloClient({
   // uri: 'http://localhost:3999/',
   // uri: `${process.env["REACT_APP_ADMIN_URL"]}/api/graphql`,
-  link: uploadLink,
   cache: new InMemoryCache(),
+  link: uploadLink,
 });
 
 const root = ReactDOM.createRoot(document.getElementById('root'));

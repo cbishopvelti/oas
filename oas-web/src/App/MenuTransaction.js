@@ -25,9 +25,9 @@ export const MenuTransaction = () => {
   const [open, setOpen] = useState(active);
 
   useEffect(() => {
-    if (!forceActive) {
+    if (!forceActive && !active) {
       setOpen(false);
-    } else {
+    } else if (forceActive) {
       setOpen(true);
     }
   }, matches);

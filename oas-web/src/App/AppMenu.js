@@ -26,7 +26,6 @@ export const AppMenu = ({ setOpen }) => {
   const routeMatchs = useMatches();
 
   useEffect(() => {
-    console.log("001 should happen")
     if (matches) {
       setOpen(false)
     }
@@ -87,13 +86,19 @@ export const AppMenu = ({ setOpen }) => {
     </MenuItem> */}
     <MenuTraining />
 
-    <MenuMember setMenuOpen={setOpen} />
 
     <MenuMembershipPeriod />
+
+    <MenuMember setMenuOpen={setOpen} />
 
     <MenuItem onClick={onClick} component={NavLink} end to="/">
       <ListItemText>Analysis</ListItemText>
     </MenuItem>
+
+    <MenuItem onClick={onClick} component={NavLink} end to="/config">
+      <ListItemText>Config</ListItemText>
+    </MenuItem>
+
     {/* <MenuItem onClick={onClick} component={NavLink} end to="/membership-period">
       New Membership Period
     </MenuItem>

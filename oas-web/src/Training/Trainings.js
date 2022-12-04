@@ -54,9 +54,10 @@ export const Trainings = () => {
     }
   })
   useEffect(() => {
-    setTitle("Trainings");
+    let count = get(data, ['trainings'], []).length
+    setTitle(`Trainings: ${count}`);
     refetch()
-  }, [filterData])
+  }, [filterData, data])
   const trainings = get(data, 'trainings', [])
 
   const [deleteMutation] = useMutation(gql`

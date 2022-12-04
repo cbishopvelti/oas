@@ -18,13 +18,15 @@ import {
   Button,
 
 } from '@mui/material';
-import { get } from 'lodash';
+import { get, reduce } from 'lodash';
 import { useEffect, useState } from 'react';
 import EditIcon from '@mui/icons-material/Edit';
 import { Link, useParams,useOutletContext } from "react-router-dom";
 import { TransactionTags } from './TransactionTags';
 import moment from 'moment'
 import DeleteIcon from '@mui/icons-material/Delete';
+import { unparse } from 'papaparse';
+import DownloadIcon from '@mui/icons-material/Download';
 
 const onChange = ({formData, setFormData, key}) => (event) => {
     
@@ -81,13 +83,29 @@ export const Transactions = () => {
     }
   });
   useEffect(() => {
+    let transactionCount = transactions.length
+    const counts = reduce(transactions, ({incoming, outgoing}, {amount}) => {
+      if (amount > 0) {
+        return {
+          incoming: incoming + parseFloat(amount),
+          outgoing
+        }
+      } else if (amount < 0) {
+        return {
+          incoming,
+          outgoing: outgoing + parseFloat(amount)
+        }
+      }
+      return { incoming, outgoing};
+    }, {incoming: 0, outgoing: 0});
+
     if (member_id) {
-      setTitle(`Member: ${get(memberData, 'member.name', member_id)}'s Transactions`)
+      setTitle(`Member: ${get(memberData, 'member.name', member_id)}'s Transactions: ${transactionCount} (${counts.incoming}, ${counts.outgoing}, ${counts.incoming + counts.outgoing})`)
     } else {
-      setTitle("Transactions");
+      setTitle(`Transactions: ${transactionCount} (${counts.incoming}, ${counts.outgoing}, ${counts.incoming + counts.outgoing})`);
     }
     refetch()
-  }, [get(memberData, 'member.name')])
+  }, [get(memberData, 'member.name'), transactions])
   transactions = get(transactions, "transactions", []) || []
 
 
@@ -118,7 +136,7 @@ export const Transactions = () => {
   }
 
   return <div>
-    <Box sx={{display: 'flex', gap: 2, m: 2}}>
+    <Box sx={{display: 'flex', gap: 2, m: 2, alignItems: 'center'}}>
       <FormControl sx={{ minWidth: 256}}>
         <TextField
           required
@@ -147,6 +165,24 @@ export const Transactions = () => {
       </FormControl>
       <FormControl sx={{minWidth: 256}}>
         <TransactionTags formData={filterData} setFormData={setFilterData} filterMode={true} />
+      </FormControl>
+      <FormControl>
+        <IconButton onClick={() => {
+          const csvTransactions = transactions.map(({transaction_tags, ...rest}) => {
+            return {
+              ...rest,
+              tags: transaction_tags.map(({name}) => name).join(', ')
+            }
+          });
+
+          const csv = unparse({data: csvTransactions, fields: ['id', "when", 'what', 'who', 'tags', 'when', 'amount'], header: true})
+          let j = document.createElement("a")
+          j.download = "transactions.csv"
+          j.href = URL.createObjectURL(new Blob([csv]), {type: "text/csv"})
+          j.click()
+        }}>
+          <DownloadIcon />
+        </IconButton>
       </FormControl>
     </Box>
     <TableContainer>
