@@ -183,8 +183,8 @@ defmodule Oas.ImportTransactions do
         doTokens(%{
           when1: date,
           who_member_id: Map.get(row, :who_member_id, nil),
-          quantity: get_in(row, [:state_data, :quantity]),
-          value: get_in(row, [:state_data, :value])
+          quantity: get_in(row, [:state_data]) |> Map.get(:quantity),
+          value: get_in(row, [:state_data]) |> Map.get(:value)
         }, result)
       end
 

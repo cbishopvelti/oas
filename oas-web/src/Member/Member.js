@@ -118,6 +118,10 @@ export const Member = () => {
   const errors = parseErrors(error?.graphQLErrors)
 
   const save = (formData) => async () => {
+    formData = {
+      ...formData,
+      ...(!formData.bank_account_name ? {bank_account_name: null} : {})
+    }
     const { data } = await mutate({
       variables: omit(formData, 'member_details.__typename')
     })
