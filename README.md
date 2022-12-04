@@ -70,11 +70,13 @@ Check website text
 Graphs
 - Bar chart attendance
 Line of tokens
-Line of token debt
-- Line of transaction difference.
-Diff line
-Diff line - outstanding tokens
-Lines by tag
+- Line of ballance and liability
+- Line income, outgoing, coloured by tags
 
-Only send email after last transaction
-- add import date to seeing tokens
+~~Only send email after last transaction~~
+
+Fix changing import who from invalid to valid, doesn't change the import toggle.
+
+Fix Member filter changing names
+
+Fix Mui warnings on import tags
