@@ -62,4 +62,16 @@ Check website text
 
 ~~Tokens config~~
 
+~~used_on date~~
+
 Graphs
+- Bar chart attendance
+Line of tokens
+Line of token debt
+- Line of transaction difference.
+Diff line
+Diff line - outstanding tokens
+Lines by tag
+
+Only send email after import
+- add import date to seeing tokens

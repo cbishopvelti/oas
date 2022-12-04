@@ -15,8 +15,7 @@ defmodule OasWeb.Schema do
   import_types OasWeb.Schema.SchemaToken
   import_types OasWeb.Schema.SchemaAnalysis
   import_types OasWeb.Schema.SchemaUser
-  
-  # import_types OasWeb.Schema.SchemaPublic
+  import_types OasWeb.Schema.SchemaConfig
 
   query do
     import_fields :attendance_queries
@@ -34,6 +33,8 @@ defmodule OasWeb.Schema do
     import_fields :analysis_queries
     
     import_fields :user_queries
+
+    import_fields :config_queries
   end
 
 
@@ -50,7 +51,7 @@ defmodule OasWeb.Schema do
 
     import_fields :attendance_mutations
 
-    # import_fields :public_mutations
+    import_fields :config_mutations
   end
   
 

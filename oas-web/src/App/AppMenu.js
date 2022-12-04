@@ -94,6 +94,11 @@ export const AppMenu = ({ setOpen }) => {
     <MenuItem onClick={onClick} component={NavLink} end to="/">
       <ListItemText>Analysis</ListItemText>
     </MenuItem>
+
+    <MenuItem onClick={onClick} component={NavLink} end to="/config">
+      <ListItemText>Config</ListItemText>
+    </MenuItem>
+
     {/* <MenuItem onClick={onClick} component={NavLink} end to="/membership-period">
       New Membership Period
     </MenuItem>
