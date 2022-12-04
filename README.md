@@ -80,3 +80,5 @@ Do Import
 - Fix Mui warnings on import tags
 - Fix Member filter changing names
 
+Order of adding attendance
+
