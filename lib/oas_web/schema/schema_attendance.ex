@@ -103,7 +103,7 @@ defmodule OasWeb.Schema.SchemaAttendance do
           inner_join: tr in assoc(at, :training),
           preload: [member: m, token: {to, [:transaction]}, training: {tr, [:training_where]}],
           where: m.id == ^member_id,
-          order_by: [desc: tr.when]
+          order_by: [desc: tr.when, desc: tr.id]
         ) |> Oas.Repo.all
 
         {:ok, results}

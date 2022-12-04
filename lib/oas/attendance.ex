@@ -23,6 +23,31 @@ defmodule Oas.Attendance do
   end
 
   def maybe_send_warnings_email(member) do
+    lastTransaction = from(t in Oas.Transactions.Transaction, 
+      order_by: [desc: t.when, desc: t.id],
+      limit: 1
+    ) |> Oas.Repo.one
+
+    attendance = from(a in Oas.Trainings.Attendance,
+      inner_join: m in assoc(a, :member),
+      inner_join: tr in assoc(a, :training),
+      preload: [:token, training: tr],
+      where: m.id == ^member.id,
+      order_by: [desc: tr.when, desc: a.id],
+      limit: 2
+    ) |> Oas.Repo.all
+
+    case attendance do
+      [firstAttendance, %{token: nil, training: %{when: when1}}] when when1 > lastTransaction.when  ->
+        nil
+      _ ->
+        maybe_send_warnings_email_2(member)
+    end
+
+  end
+
+  def maybe_send_warnings_email_2(member) do
+    
     warnings = []
     tokens = Oas.Attendance.get_token_amount(%{member_id: member.id})
     warnings = if (tokens <= 0) do
@@ -31,22 +56,9 @@ defmodule Oas.Attendance do
       warnings
     end
 
-    warnings = case member do
-      %{membership_periods: []} ->
-        result = from(a in Oas.Trainings.Attendance,
-          join: m in assoc(a, :member),
-          where: m.id == ^member.id,
-          select: count(m.id)
-        ) |> Oas.Repo.one
-
-        warnings = if (
-          result >= 3
-          # or true # DEBUG ONLY
-        ) do
-          ["You have attended " <> to_string(result) <> " sessions, please pay the membership fee before the next session" | Map.get(member, :warnings, [])]
-        else
-          warnings
-        end
+    warnings = case check_membership(member) do
+      {_, :not_member} -> ["You are not a valid member, please pay for membership" | warnings]
+      {_, :x_member} -> ["You are not a valid member, please pay for membership" | warnings]
       _ -> warnings
     end
 
