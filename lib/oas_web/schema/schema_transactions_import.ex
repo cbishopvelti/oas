@@ -80,6 +80,17 @@ defmodule OasWeb.Schema.SchemaTransactionsImport do
             !String.contains?(message, ":validate_row_length")
           _ -> true
         end)
+        |> Enum.filter(fn {:ok, row} ->
+          case row do
+            %{"Account" => ""} -> false
+            %{"Account" => nil} -> false
+            %{"Amount" => nil} -> false
+            %{"Amount" => ""} -> false
+            %{"Date" => ""} -> false
+            %{"Date" => nil} -> false
+            _ -> true
+          end
+        end)
         |> Enum.map(fn
           {:ok, %{"Memo" => memo, "Account" => account, "Amount" => amount, "Date" => date, "Subcategory" => subcategory}} ->
             %{
