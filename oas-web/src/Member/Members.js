@@ -16,13 +16,14 @@ import {
 } from '@mui/material';
 import { get, reduce } from 'lodash';
 import { Link, useParams, useOutletContext } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { MembersDisplay } from './MembersDisplay';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PaidIcon from '@mui/icons-material/Paid';
 import { includes } from 'lodash';
 import DownloadIcon from '@mui/icons-material/Download';
 import { unparse } from 'papaparse'
+import { useState } from '../utils/useState';
 
 export const DeleteMember = ({ refetch }) => {
   const [mutation] = useMutation(gql`
@@ -60,7 +61,7 @@ export const DeleteMember = ({ refetch }) => {
 
 export const Members = () => {
   const { setTitle } = useOutletContext();
-  const [filterData, setFilterData] = useState({})
+  const [filterData, setFilterData] = useState({}, {id: 'Members'})
 
   let { data: members, loading, refetch } = useQuery(gql`query ($show_all: Boolean, $member_id: Int) {
     members (show_all: $show_all, member_id: $member_id) {

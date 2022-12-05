@@ -72,6 +72,23 @@ defmodule OasWeb.Schema.SchemaToken do
       end
     end
 
+    field :public_bacs, type: list_of(:string) do
+      arg :email, non_null(:string)
+      resolve fn _, %{email: email}, _ ->
+
+        member = from(
+          m in Oas.Members.Member,
+          where: m.email == ^email
+        ) |> Oas.Repo.one
+        case member do
+          nil ->
+            {:error, "Member not found"}
+          _ -> 
+            {:ok, ["Anne Hedegaard", "20-65-18", "13072630"]}
+        end
+      end
+    end
+
     field :public_tokens, type: list_of(:public_token) do
       arg :email, non_null(:string)
       resolve fn _, %{email: email}, _ ->
