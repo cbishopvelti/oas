@@ -75,10 +75,7 @@ Line of tokens
 
 Do Import
 - Temporaly save import state
-- Save token state
-- Show error on invalid csv
-- Fix Mui warnings on import tags
-- Fix Member filter changing names
+- Save tag state
 
 Order of adding attendance
 

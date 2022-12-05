@@ -138,6 +138,9 @@ export const Members = () => {
           options={members.map(({name, id}) => ({label: name, member_id: id }))}
           renderInput={(params) => <TextField {...params} label="Who" />}
           freeSolo
+          selectOnFocus
+          clearOnBlur
+          handleHomeEndKeys
           onChange={(event, newValue, a, b, c, d) => {
             if (!newValue) {
               return setFilterData({
