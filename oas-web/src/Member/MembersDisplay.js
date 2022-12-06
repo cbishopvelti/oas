@@ -15,7 +15,8 @@ import CardMembershipIcon from '@mui/icons-material/CardMembership';
 import CopyAllIcon from '@mui/icons-material/CopyAll';
 import { get, join, reverse, sortBy } from 'lodash'
 import moment from 'moment'
-import { useState } from 'react';
+// import { useState } from 'react';
+import { useState } from '../utils/useState';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 
 
@@ -25,7 +26,8 @@ export const MembersDisplay = ({
   ExtraActions,
   showStatus
 }) => {
-  const [orderBy, setOrderBy ] = useState();
+  // const [orderBy, setOrderBy ] = useState();
+  const [orderBy, setOrderBy] = useState(undefined, {id: 'MembersDisplay'});
 
   const sortByHandler = (column) => (b) => {
     if (orderBy?.column == column) {

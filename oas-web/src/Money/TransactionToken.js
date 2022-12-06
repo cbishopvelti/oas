@@ -85,9 +85,7 @@ export const TransactionAddToken = ({
       return
     }
     refetchConfig({
-      variables: {
-        token_quantity: formData.token_quantity
-      }
+      token_quantity: formData.token_quantity
     })
   }, [formData.token_quantity])
 

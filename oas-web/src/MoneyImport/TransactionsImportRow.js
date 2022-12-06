@@ -25,6 +25,7 @@ import { filter, get, toPairs, map, set } from 'lodash'
 import { NavLink } from 'react-router-dom'
 import { TransactionTags } from "../Money/TransactionTags";
 import { StyledTableRow } from '../utils/util'
+import { gql, useMutation } from "@apollo/client";
 
 export const TransactionsImportRow = ({
   row,
@@ -32,10 +33,25 @@ export const TransactionsImportRow = ({
   setFormData,
   formData,
   transactionTags,
-  setTransactionTags
+  refetch
 }) => {
   const [open, setOpen] = useState(false);
 
+  const [toImportMutation] = useMutation(gql`
+    mutation ($index: Int!, $to_import: Boolean!) {
+      set_to_import(index: $index, to_import: $to_import) {
+        success
+      }
+    }
+  `)
+
+  const [tagsMutation] = useMutation(gql`
+    mutation ($index: Int!, $tags: [String]!) {
+      set_tags(index: $index, tags: $tags) {
+        success
+      }
+    }
+  `)
   
 
   return <>
@@ -56,17 +72,16 @@ export const TransactionsImportRow = ({
         </TableCell>
         <TableCell>
           <TransactionTags
-            transactionTags={transactionTags}
-            setTransactionTags={setTransactionTags}
-            formData={get(formData, [i], [])}
-            setFormData={({transaction_tags}) => {
-              setFormData({
-                ...formData,
-                [i]: {
-                  ...get(formData, [i], {}),
-                  transaction_tags: transaction_tags
-                }
-              })
+            transactionTags={transactionTags.map((tag) => ({name: tag}))}
+            formData={{
+              transaction_tags: get(row, "tags", []).map((tag) => ({name: tag}))
+            }}
+            setFormData={async ({transaction_tags}) => {
+              await tagsMutation({variables: {
+                index: i,
+                tags: transaction_tags.map(({name}) => name)
+              }});
+              refetch();
             }}
           />
         </TableCell>
@@ -76,14 +91,23 @@ export const TransactionsImportRow = ({
         <TableCell>
             <Switch 
               disabled={!!row.errors}
-              checked={get(formData, [i, 'toImport'], false) || false}
-              onChange={(event) => setFormData({
-                ...formData,
-                [i]: {
-                  ...get(formData, [i], {}),
-                  toImport: event.target.checked
-                }
-              })}/>
+              checked={row.to_import || false}
+              onChange={async (event) => {
+                await toImportMutation({
+                  variables: {
+                    index: i,
+                    to_import: event.target.checked
+                  }
+                });
+                refetch();
+                //  setFormData({
+                //   ...formData,
+                //   [i]: {
+                //     ...get(formData, [i], {}),
+                //     toImport: event.target.checked
+                //   }
+                // })
+              }}/>
 
             {(row.errors || row.warnings) && <IconButton
               aria-label="expand row"

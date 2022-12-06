@@ -22,28 +22,32 @@ import { useMutation, gql } from "@apollo/client"
 import { TransactionsImportRow } from "./TransactionsImportRow";
 
 
-export const TransactionsImportEditor = ({transactions_import, refetch}) => {
-  const [formData, setFormData] = useState()
-  const [transactionTags, setTransactionTags] = useState([])
-  useState(() => {
-    const initState = transactions_import.reduce((acc, row, i) => {
-      let out = false;
-      if (!row.errors && !row.warnings) {
-        out = true;
-      }
-      return {
-        ...acc,
-        [i]: {
-          toImport: out,
-          transaction_tags: [{
-            name: row.subcategory
-          }]
-        }
-      }
-    }, {})
+export const TransactionsImportEditor = ({
+  transactions_import,
+  refetch,
+  transactionTags
+}) => {
+  // const [formData, setFormData] = useState()
+  // const [transactionTags, setTransactionTags] = useState([])
+  // useState(() => {
+  //   const initState = transactions_import.reduce((acc, row, i) => {
+  //     let out = false;
+  //     if (!row.errors && !row.warnings) {
+  //       out = true;
+  //     }
+  //     return {
+  //       ...acc,
+  //       [i]: {
+  //         toImport: out,
+  //         transaction_tags: [{
+  //           name: row.subcategory
+  //         }]
+  //       }
+  //     }
+  //   }, {})
 
-    setFormData(initState);
-  }, [])
+  //   setFormData(initState);
+  // }, [])
 
   const [reprocess] = useMutation(gql`
     mutation {
@@ -61,31 +65,18 @@ export const TransactionsImportEditor = ({transactions_import, refetch}) => {
   }, [])
 
   const [mutation] = useMutation(gql`
-    mutation ($to_import: [ToImportArg]!) {
-      do_import_transactions (to_import: $to_import) {
+    mutation  {
+      do_import_transactions {
         success
       }
     }
   `)
   
-  const save = (formData) => async () => {
+  const save = () => async () => {
 
-    let formDataArray = toPairs(formData)
-    formDataArray = filter(formDataArray, ([_id, {
-      toImport
-    }]) => toImport);
-    formDataArray = map(formDataArray, ([id, {transaction_tags}]) => ({
-      index: parseInt(id),
-      transaction_tags
-    }));
+    await mutation();
 
-    await mutation({
-      variables: {
-        to_import: formDataArray
-      }
-    })
-
-    refetch()
+    refetch();
   }
 
   
@@ -106,16 +97,18 @@ export const TransactionsImportEditor = ({transactions_import, refetch}) => {
         </TableHead>
         <TableBody>
           {transactions_import.map((row, i) => {
-            return <TransactionsImportRow key={i} row={row} i={i} formData={formData} setFormData={setFormData}
-              setTransactionTags={setTransactionTags}
+            // formData={formData}
+            // setFormData={setFormData}
+            return <TransactionsImportRow key={i} row={row} i={i}
               transactionTags={transactionTags}
+              refetch={refetch}
             />
           })}
         </TableBody>
       </Table>
     </TableContainer>
     <FormControl fullWidth sx={{m:2}}>
-      <Button onClick={save(formData)}>Do Import</Button>
+      <Button onClick={save()}>Do Import</Button>
     </FormControl>
   </>
 
