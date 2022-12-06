@@ -34,6 +34,7 @@ defmodule Oas.Members.MemberDetails do
     IO.inspect(params)
     memberDetails
     |> cast(params, [:phone, :address, :dob, :agreed_to_tac, :nok_name, :nok_email, :nok_phone, :nok_address])
+    |> validate_required([:agreed_to_tac, :phone, :address, :dob, :nok_name, :nok_email, :nok_phone, :nok_address])
     |> validate_acceptance(:agreed_to_tac, message: "Please agree to above")
     |> validate_email
   end

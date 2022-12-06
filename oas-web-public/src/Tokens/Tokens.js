@@ -14,7 +14,7 @@ import { Button, Box, FormControl, TextField,
   Typography
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { get, setWith, clone, has, chain } from 'lodash';
+import { get, setWith, clone, has, chain, uniqBy } from 'lodash';
 import { useQuery, useLazyQuery, gql} from '@apollo/client';
 import moment from 'moment';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
@@ -61,6 +61,7 @@ export const Tokens = () => {
         },
         when
       }
+      public_bacs(email: $email)
       public_tokens(email: $email) {
         id,
         value,
@@ -83,7 +84,7 @@ export const Tokens = () => {
     skip: !member_email
   })
   const tokens = get(data, 'public_tokens', []);
-  const errors = get(error, 'graphQLErrors')
+  const errors = uniqBy(get(error, 'graphQLErrors', []), "message")
 
   const outstanding_attendance = get(data, 'public_outstanding_attendance', [])
 
@@ -124,14 +125,14 @@ export const Tokens = () => {
     </Box>
     <Box>
     <Stack sx={{ width: '100%', mt: 2 }}>
-      {errors?.map(({message}, i) => (
+      {errors.length && errors.map(({message}, i) => (
         <Alert key={i} severity="error">{message}</Alert>
       ))}
     </Stack>
     
-    {!errors && <p style={style}>You have <b>{tokenCount}</b> token{tokenCount == 1 ? '' : 's'}.</p>}
+    {!errors.length && has(data, 'public_tokens') && <p style={style}>You have <b>{tokenCount}</b> token{tokenCount == 1 ? '' : 's'}.</p>}
 
-    {!errors && <Accordion sx={{position: 'relative'}}>
+    {!errors.length && has(data, 'public_bacs') && <Accordion sx={{position: 'relative'}}>
         <AccordionSummary
           expandIcon={<ExpandMoreIcon />}
           aria-controls="panel1a-content"
@@ -143,9 +144,7 @@ export const Tokens = () => {
           <Typography>
             Please make a transfer to:<br/>
             <br/>
-              Anne Hedegaard<br/>
-              20-65-18<br/>
-              13072630<br/>
+              {get(data, 'public_bacs').map((item) => <>{item}<br/></>)}
             <br/>
             5 GBP for 1 token,<br/>
             45 GBP for 10 tokens or<br/>

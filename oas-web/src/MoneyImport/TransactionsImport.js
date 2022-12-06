@@ -17,7 +17,7 @@ import {
 } from '@mui/material'
 import { useMutation, gql, useQuery} from '@apollo/client'
 import { TransactionsImportEditor } from './TransactionsImportEditor';
-import { get } from 'lodash';
+import { get, chain } from 'lodash';
 import { useOutletContext } from 'react-router-dom'
 
 
@@ -39,7 +39,8 @@ export const TransactionsImport = () => {
         state,
         my_reference,
         amount,
-        subcategory,
+        tags,
+        to_import,
         errors {
           transaction_id,
           name
@@ -48,6 +49,13 @@ export const TransactionsImport = () => {
       }
     }
   `)
+
+  const transactionTags = chain(data)
+    .get('transactions_import', [])
+    .map(({tags}) => tags)
+    .flatten()
+    .uniq()
+    .value();
 
   useEffect(() => {
     setTitle("Import Transactions");
@@ -131,7 +139,11 @@ export const TransactionsImport = () => {
       </FormControl>
     </>}
 
-    {data?.transactions_import && <TransactionsImportEditor transactions_import={data.transactions_import} refetch={refetch} />}
+    {data?.transactions_import && <TransactionsImportEditor
+      transactions_import={data.transactions_import}
+      refetch={refetch}
+      transactionTags={transactionTags}
+      />}
 
     {(data?.transactions_import || formData.file) && <FormControl fullWidth sx={{m: 2}}>
       <Button onClick={reset} variant="outlined" color="error">Reset</Button>
