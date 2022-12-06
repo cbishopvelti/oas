@@ -125,7 +125,7 @@ export const Tokens = () => {
     </Box>
     <Box>
     <Stack sx={{ width: '100%', mt: 2 }}>
-      {!errors.length && errors.map(({message}, i) => (
+      {errors.length && errors.map(({message}, i) => (
         <Alert key={i} severity="error">{message}</Alert>
       ))}
     </Stack>

@@ -13,7 +13,7 @@ import {
 } from "@mui/material"
 import { get, setWith, clone, find, snakeCase, has } from 'lodash'
 import { useMutation, gql} from '@apollo/client'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, generatePath, createSearchParams } from 'react-router-dom'
 
 const onChange = ({formData, setFormData, isCheckbox, key}) => (event) => {
   let value = event.target.value
@@ -80,7 +80,13 @@ export const MembershipForm = () => {
       variables: formData
     })
 
-    navigate('/register/success');
+    const path = generatePath("/register/success?:queryString", {
+      queryString: createSearchParams({
+        email: formData.email
+      }).toString()
+    });
+
+    navigate(path);
   }
 
   return <Stack spacing={2}>
