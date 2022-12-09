@@ -1,15 +1,28 @@
 import { useState as useReactState } from "react";
-
+import moment from 'moment'
 
 export const useState = (initState, {id}) => {
 
   const localState = JSON.parse(localStorage.getItem(id));
-  const [reactState, setReactState] = useReactState(localState || initState);
+  
+  
+  let theInitState;
+
+  if (localState && moment(localState.set_at).isAfter(moment().startOf('day'))) {
+    theInitState = localState;
+  } else {
+    theInitState = initState
+  }
+  const state = useReactState(theInitState)
 
   const localSetState = (newState) => {
-    localStorage.setItem(id, JSON.stringify(newState, null, 2));
-    setReactState(newState);
+    const toSaveState = {
+      ...newState,
+      set_at: moment()
+    }
+    localStorage.setItem(id, JSON.stringify(toSaveState, null, 2));
+    state[1](newState);
   }
 
-  return [reactState, localSetState]
+  return [state[0], localSetState]
 }
