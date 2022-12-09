@@ -11,6 +11,15 @@ defmodule OasWeb.Schema.SchemaAnalysis do
     field :transactions_ballance, :float
   end
 
+  object :analysis_balance_series do
+    field :x, :string
+    field :y, :float
+  end
+
+  object :analysis_balance do
+    field :balance, list_of(:analysis_balance_series)
+  end
+
   object :analysis_queries do
     field :analysis, :analysis do
       arg :from, non_null(:string)
@@ -62,5 +71,19 @@ defmodule OasWeb.Schema.SchemaAnalysis do
         }}
       end
     end
+    field :analysis_balance, type: :analysis_balance do
+      arg :from, non_null(:string)
+      arg :to, non_null(:string)
+      resolve fn _, %{from: from, to: to}, _ ->
+        from = Date.from_iso8601!(from)
+        to = Date.from_iso8601!(to)
+
+        {:ok, %{
+          balance: Oas.Analysis.series_balance(from, to)
+        }}
+      end
+    end
   end
+
+  
 end

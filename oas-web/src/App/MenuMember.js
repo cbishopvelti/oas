@@ -46,7 +46,6 @@ export const MenuMember = () => {
     return false;
   }
 
-
   return <>
     <MenuItem component={CustomLink(memberIds)} end to={`/members`}>
       <ListItemText>Users</ListItemText>
