@@ -51,22 +51,6 @@ C:\Users\chris\nginx-1.23.2\html-staging
 
 ## Todo
 
-~~Sorting again~~
-
-~~Website menu~~
-
-Check website text
-
-~~ Add counts to header ~~
-~~ - tokens, token debt~~
-~~- trainings~~
-~~ - members ~~
-~~ - transactions ~~
-
-~~Tokens config~~
-
-~~used_on date~~
-
 Graphs
 - Bar chart attendance
 Line of tokens
@@ -77,5 +61,5 @@ Do Import
 - Temporaly save import state
 - Save tag state
 
-Order of adding attendance
+~~Order of adding attendance~~
 
