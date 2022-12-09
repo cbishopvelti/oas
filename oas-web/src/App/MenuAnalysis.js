@@ -16,8 +16,9 @@ export const MenuAnalysis = () => {
 
   const ids = ["analysis"];
   const analysisAttendanceIds = ['analysis-attendance']
-  const allIds = [...ids, ...analysisAttendanceIds];
-  const forceIds = [...analysisAttendanceIds];
+  const analysisBalanceIds = ['analysis-balance']
+  const allIds = [...ids, ...analysisAttendanceIds, ...analysisBalanceIds];
+  const forceIds = [...analysisAttendanceIds, ...analysisBalanceIds];
 
   const active = some(matches, ({id}) => includes(allIds, id))
   const forceActive = some(matches, ({id}) => includes(forceIds, id))
@@ -57,6 +58,9 @@ export const MenuAnalysis = () => {
     <Collapse in={open} timeout="auto">
       <MenuItem sx={{ml: 2}} component={CustomLink(analysisAttendanceIds)} end to={`/analysis/attendance`}>
         <ListItemText>Attendance</ListItemText>
+      </MenuItem>
+      <MenuItem sx={{ml: 2}} component={CustomLink(analysisBalanceIds)} end to={`/analysis/balance`}>
+        <ListItemText>Balance</ListItemText>
       </MenuItem>
     </Collapse>
   </>

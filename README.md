@@ -77,5 +77,25 @@ Do Import
 - Temporaly save import state
 - Save tag state
 
-Order of adding attendance
+Order of added attendance
 
+Rounding transactions total
+
+Recieved refenence auto fill?
+
+Save success
+
+Add user email error message, is it displayed?
+
+
+###
+
+If you could send me that when you get a minute.
+Have you bought tokens for the jam's you've attended?
+It's 5 GBP for 1 token, or 45 for 10. So far you've attended 3 jams.
+You've been to 3 jams now, so if you could pay membership (which is to the 31/10/23) of 6 GBP before next jam.
+That would be amazing.
+Bacs to:
+Anne Hedegaard
+20-65-18
+13072630
