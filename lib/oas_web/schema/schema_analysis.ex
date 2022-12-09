@@ -18,6 +18,7 @@ defmodule OasWeb.Schema.SchemaAnalysis do
 
   object :analysis_balance do
     field :balance, list_of(:analysis_balance_series)
+    field :outstanding_tokens, list_of(:analysis_balance_series)
   end
 
   object :analysis_queries do
@@ -79,7 +80,8 @@ defmodule OasWeb.Schema.SchemaAnalysis do
         to = Date.from_iso8601!(to)
 
         {:ok, %{
-          balance: Oas.Analysis.series_balance(from, to)
+          balance: Oas.Analysis.series_balance(from, to),
+          outstanding_tokens: Oas.Analysis.outstanding_tokens(from, to)
         }}
       end
     end

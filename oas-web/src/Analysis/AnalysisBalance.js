@@ -26,6 +26,10 @@ export const AnalysisBalance = () => {
         balance {
           x,
           y
+        },
+        outstanding_tokens {
+          x,
+          y
         }
       }
     }
@@ -43,6 +47,9 @@ export const AnalysisBalance = () => {
   const series = [{
     name: 'Balance',
     data: get(data, 'analysis_balance.balance', [])
+  }, {
+    name: "Outstanding Tokens",
+    data: get(data, 'analysis_balance.outstanding_tokens', [])
   }]
 
   const options = {
