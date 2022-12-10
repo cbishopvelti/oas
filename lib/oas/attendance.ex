@@ -14,9 +14,16 @@ defmodule Oas.Attendance do
     result
   end
 
-  def use_token(token, attendance_id) do
+  defp get_used_on(training_when) do
+    case Date.compare(Date.utc_today(), training_when) do
+      :lt -> training_when
+      _ -> Date.utc_today
+    end
+  end
+
+  def use_token(token, attendance_id, training_when) do
     Ecto.Changeset.change(token,
-      used_on: Date.utc_today,
+      used_on: get_used_on(training_when),
       attendance_id: attendance_id)
       |> Oas.Repo.update!
     :ok
@@ -92,7 +99,7 @@ defmodule Oas.Attendance do
 
     case get_unsued_token_result do
       nil -> nil
-      token -> use_token(token, attendance.id)
+      token -> use_token(token, attendance.id, training.when)
     end
 
     Task.async(fn ->
@@ -125,7 +132,7 @@ defmodule Oas.Attendance do
             |> Oas.Repo.update!
         %{id: id, training: %{when: when1}} -> 
           attendance.token |>
-            Ecto.Changeset.cast(%{used_on: when1, attendance_id: id}, [:used_on, :attendance_id])
+            Ecto.Changeset.cast(%{used_on: get_used_on(attendance.training.when), attendance_id: id}, [:used_on, :attendance_id])
             |> Oas.Repo.update!
       end
     end
@@ -189,7 +196,7 @@ defmodule Oas.Attendance do
     toInsert = List.duplicate(token, quantity)
       |> Enum.zip_with(debtAttendancesStream, fn
         a, nil -> a
-        a, %{id: id, training: %{when: when1}} -> %{a | attendance_id: id, used_on: when1} end
+        a, %{id: id, training: %{when: when1}} -> %{a | attendance_id: id, used_on: get_used_on(when1)} end
       )
       |> Enum.map(&Oas.Repo.insert/1)
 
@@ -212,7 +219,7 @@ defmodule Oas.Attendance do
     end
 
     {:ok, token} = token
-      |> Ecto.Changeset.cast(%{member_id: member_id, attendance_id: attendanceId, used_on: when1}, [:member_id, :attendance_id, :used_on])
+      |> Ecto.Changeset.cast(%{member_id: member_id, attendance_id: attendanceId, used_on: get_used_on(when1)}, [:member_id, :attendance_id, :used_on])
       |> Oas.Repo.update
     token
   end

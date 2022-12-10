@@ -51,13 +51,10 @@ C:\Users\chris\nginx-1.23.2\html-staging
 
 ## Todo
 
-Graphs
-- Bar chart attendance
-Line of tokens
-- Line of ballance and liability
-- Line income, outgoing, coloured by tags
-
-
-~~Rounding transactions total~~
-
 Save success
+
+make analysis use the same filter state
+
+Make prices text pulled from database
+
+
