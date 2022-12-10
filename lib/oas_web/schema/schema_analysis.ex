@@ -80,11 +80,15 @@ defmodule OasWeb.Schema.SchemaAnalysis do
         from = Date.from_iso8601!(from)
         to = Date.from_iso8601!(to)
 
-        {:ok, %{
-          balance: Oas.Analysis.series_balance(from, to),
-          outstanding_tokens: Oas.Analysis.outstanding_tokens(from, to),
-          outstanding_attendance: Oas.Analysis.outstanding_attendance(from, to)
-        }}
+        case abs(Date.diff(from, to)) do
+          x when x > 1825 -> {:error, "Date difference is too large"}
+          _ -> 
+            {:ok, %{
+              balance: Oas.Analysis.series_balance(from, to),
+              outstanding_tokens: Oas.Analysis.outstanding_tokens(from, to),
+              outstanding_attendance: Oas.Analysis.outstanding_attendance(from, to)
+            }}
+        end
       end
     end
   end
