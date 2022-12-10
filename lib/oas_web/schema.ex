@@ -62,7 +62,13 @@ defmodule OasWeb.Schema do
   def myMiddleware(middleware, %Absinthe.Type.Field{identifier: :public_tokens}, %Absinthe.Type.Object{identifier: :query}) do
     middleware
   end
+  def myMiddleware(middleware, %Absinthe.Type.Field{identifier: :public_bacs}, %Absinthe.Type.Object{identifier: :query}) do
+    middleware
+  end
   def myMiddleware(middleware, %Absinthe.Type.Field{identifier: :public_outstanding_attendance}, %Absinthe.Type.Object{identifier: :query}) do
+    middleware
+  end
+  def myMiddleware(middleware, %Absinthe.Type.Field{identifier: :public_config_tokens}, %Absinthe.Type.Object{identifier: :query}) do
     middleware
   end
   # isAdmin and isReviewer can read data

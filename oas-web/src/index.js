@@ -27,6 +27,8 @@ import { createLink } from "apollo-absinthe-upload-link";
 import { MembershipPeriodMembers } from './MembershipPeriod/MembershipPeriodMembers';
 import { MemberTrainingAttendance } from './Member/MemberTrainingAttendance';
 import { ConfigTokens } from './Config/ConfigTokens';
+import { AnalysisAttendance } from './Analysis/AnalysisAttendance';
+import { AnalysisBalance } from './Analysis/AnalysisBalance';
 
 
 
@@ -37,8 +39,19 @@ const router = createBrowserRouter([
     // loader: rootLoader,
     children: [
       {
+        id: 'analysis',
         path: "/",
         element: <Analysis />
+      },
+      {
+        id: 'analysis-attendance',
+        path: "/analysis/attendance",
+        element: <AnalysisAttendance />
+      },
+      {
+        id: 'analysis-balance',
+        path: "/analysis/balance",
+        element: <AnalysisBalance />
       },
       {
         id: "members",

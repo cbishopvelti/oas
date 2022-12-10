@@ -1,5 +1,5 @@
 import { useQuery, gql, useMutation } from "@apollo/client"
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import {
   Table,
   TableContainer,
@@ -18,22 +18,15 @@ import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { Link, useOutletContext } from "react-router-dom";
 import moment from 'moment';
-import { TrainingTags } from "./TrainingTags";
-import { TrainingWhereFilter } from "./TrainingWhereFilter";
-
-const onChange = ({formData, setFormData, key}) => (event) => {   
-  setFormData({
-    ...formData,
-    [key]: !event.target.value ? undefined : event.target.value
-  })
-}
+import { TrainingsFilter } from "./TrainingsFilter";
+import { useState } from '../utils/useState';
 
 export const Trainings = () => {
   const { setTitle } = useOutletContext();
   const [filterData, setFilterData ] = useState({
     from: moment().subtract(1, 'year').format("YYYY-MM-DD"),
     to: moment().format("YYYY-MM-DD")
-  });
+  }, {id: "Trainings"});
 
   const {data, refetch} = useQuery(gql`
     query ($to: String!, $from: String!, $training_tag_ids: [Int]!, $training_where: [TrainingWhereArg]) {
@@ -42,7 +35,7 @@ export const Trainings = () => {
         training_where {
           id,
           name
-        }, 
+        },
         when,
         attendance
       }
@@ -54,10 +47,12 @@ export const Trainings = () => {
     }
   })
   useEffect(() => {
+    refetch()
+  }, [filterData])
+  useEffect(() => {
     let count = get(data, ['trainings'], []).length
     setTitle(`Trainings: ${count}`);
-    refetch()
-  }, [filterData, data])
+  }, [data])
   const trainings = get(data, 'trainings', [])
 
   const [deleteMutation] = useMutation(gql`
@@ -77,47 +72,9 @@ export const Trainings = () => {
   }
 
   return <>
-    <Box sx={{display: 'flex', flexWrap: 'wrap' }}>
-      <FormControl sx={{m: 2, minWidth: 256}}>
-        <TextField
-          required
-          id="from"
-          label="From"
-          type="date"
-          value={get(filterData, "from")}
-          onChange={onChange({formData: filterData, setFormData: setFilterData, key: "from"})}
-          InputLabelProps={{
-            shrink: true,
-          }}
-        />
-      </FormControl>
-      <FormControl sx={{m: 2, minWidth: 256}}>
-        <TextField
-          required
-          id="from"
-          label="From"
-          type="date"
-          value={get(filterData, "to")}
-          onChange={onChange({formData: filterData, setFormData: setFilterData, key: "to"})}
-          InputLabelProps={{
-            shrink: true,
-          }}
-        />
-      </FormControl>
-      {/* <FormControl sx={{m: 2, minWidth: 256}}>
-        <TrainingTags 
-          formData={filterData}
-          setFormData={setFilterData}
-          filterMode={true}
-        />
-      </FormControl> */}
-      <FormControl sx={{m: 2, minWidth: 256}}>
-        <TrainingWhereFilter
-          setFormData={setFilterData}
-          formData={filterData}
-        />
-      </FormControl>
-    </Box>
+    <TrainingsFilter 
+      filterData={filterData}
+      setFilterData={setFilterData} />
     <TableContainer>
     <Table>
       <TableHead>

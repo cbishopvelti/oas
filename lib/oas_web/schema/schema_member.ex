@@ -218,10 +218,11 @@ defmodule OasWeb.Schema.SchemaMember do
         |> Oas.Members.Member.registration_changeset(attrs)
         |> Ecto.Changeset.cast_assoc(:member_details)
         |> Oas.Repo.insert
-
+        
         case result do
           {:ok, result} -> {:ok, %{success: true}}
-          errored -> OasWeb.Schema.SchemaUtils.handle_error(errored)
+          errored ->
+            OasWeb.Schema.SchemaUtils.handle_error(errored)
         end
       end
     end

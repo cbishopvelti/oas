@@ -110,7 +110,7 @@ export const TransactionAddToken = ({
         transaction_id: transaction_id,
         member_id: member_id,
         amount: parseInt(formData.token_quantity),
-        value: formData.token_value
+        value: parseFloat(formData.token_value)
       }
     })
     setFormData(defaultFormData)

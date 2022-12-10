@@ -18,8 +18,9 @@ import {
   Button,
 
 } from '@mui/material';
-import { get, reduce } from 'lodash';
+import { get, reduce, round } from 'lodash';
 import { useEffect, useState } from 'react';
+import { useState as persistentUseState } from '../utils/useState';
 import EditIcon from '@mui/icons-material/Edit';
 import { Link, useParams,useOutletContext } from "react-router-dom";
 import { TransactionTags } from './TransactionTags';
@@ -28,8 +29,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { unparse } from 'papaparse';
 import DownloadIcon from '@mui/icons-material/Download';
 
-const onChange = ({formData, setFormData, key}) => (event) => {
-    
+const onChange = ({formData, setFormData, key, required}) => (event) => {
   setFormData({
     ...formData,
     [key]: !event.target.value ? undefined : event.target.value
@@ -37,11 +37,11 @@ const onChange = ({formData, setFormData, key}) => (event) => {
 }
 
 export const Transactions = () => {
-  const [filterData, setFilterData] = useState({
+  const [filterData, setFilterData] = persistentUseState({
     from: moment().subtract(1, 'year').format("YYYY-MM-DD"),
     to: moment().format("YYYY-MM-DD"),
     transaction_tags: []
-  })
+  }, {id: 'Transactions'})
   let { member_id } = useParams();
   if (member_id) {
     member_id = parseInt(member_id)
@@ -80,7 +80,8 @@ export const Transactions = () => {
     variables: {
       member_id,
       ...filterData
-    }
+    },
+    skip: !filterData.to || !filterData.from
   });
   useEffect(() => {
     let transactionCount = transactions.length
@@ -100,14 +101,16 @@ export const Transactions = () => {
     }, {incoming: 0, outgoing: 0});
 
     if (member_id) {
-      setTitle(`Member: ${get(memberData, 'member.name', member_id)}'s Transactions: ${transactionCount} (${counts.incoming}, ${counts.outgoing}, ${counts.incoming + counts.outgoing})`)
+      setTitle(`Member: ${get(memberData, 'member.name', member_id)}'s Transactions: ${transactionCount} (${round(counts.incoming, 2)}, ${round(counts.outgoing, 2)}, ${round(counts.incoming + counts.outgoing, 2)})`)
     } else {
-      setTitle(`Transactions: ${transactionCount} (${counts.incoming}, ${counts.outgoing}, ${counts.incoming + counts.outgoing})`);
+      setTitle(`Transactions: ${transactionCount} (${round(counts.incoming, 2)}, ${round(counts.outgoing, 2)}, ${round(counts.incoming + counts.outgoing, 2)})`);
     }
-    refetch()
   }, [get(memberData, 'member.name'), transactions])
   transactions = get(transactions, "transactions", []) || []
 
+  useEffect(() => {
+    refetch()
+  }, [member_id]);
 
   const [delete_mutation] = useMutation(gql`
     mutation ($transaction_id: Int!) {
@@ -132,6 +135,7 @@ export const Transactions = () => {
         transaction_id
       }
     })
+    console.log("010")
     refetch();
   }
 
@@ -143,8 +147,8 @@ export const Transactions = () => {
           id="from"
           label="From"
           type="date"
-          value={get(filterData, "from")}
-          onChange={onChange({formData: filterData, setFormData: setFilterData, key: "from"})}
+          value={get(filterData, "from", '')}
+          onChange={onChange({formData: filterData, setFormData: setFilterData, key: "from", required: true})}
           InputLabelProps={{
             shrink: true,
           }}
@@ -156,8 +160,8 @@ export const Transactions = () => {
           id="to"
           label="To"
           type="date"
-          value={get(filterData, "to")}
-          onChange={onChange({formData: filterData, setFormData: setFilterData, key: "to"})}
+          value={get(filterData, "to", '')}
+          onChange={onChange({formData: filterData, setFormData: setFilterData, key: "to", required: true})}
           InputLabelProps={{
             shrink: true,
           }}

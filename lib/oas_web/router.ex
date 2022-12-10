@@ -106,7 +106,6 @@ defmodule OasWeb.Router do
       Absinthe.Plug.GraphiQL,
       schema: OasWeb.Schema,
       # interface: :simple,
-      default_url: "http://localhost:4000/graphql"
+      default_url: "http://localhost:4000/api/graphql"
   end
-
 end

@@ -1,4 +1,5 @@
-import {useEffect, useState} from 'react';
+import { useEffect } from 'react';
+import { useState } from '../utils/useState';
 import { Box, Button, FormControl, TextField, Container} from '@mui/material'
 import moment from 'moment';
 import { get } from 'lodash'
@@ -19,7 +20,7 @@ export const Analysis = () => {
   const [filterData, setFilterData ] = useState({
     from: moment().subtract(1, 'year').format("YYYY-MM-DD"),
     to: moment().format("YYYY-MM-DD")
-  });
+  }, { id: 'Analysis'});
 
   const {data, refetch} = useQuery(gql`
     query ($from: String!, $to: String!) {

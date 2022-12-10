@@ -27,6 +27,7 @@ defmodule Oas.ImportTransactions do
         %{id: id} ->
           row
           |> Map.put(:errors, [%{name: :duplicate, transaction_id: id} | Map.get(row, :errors, [])])
+          |> Map.put(:to_import, false)
       end
     end)
   end
@@ -36,7 +37,6 @@ defmodule Oas.ImportTransactions do
     |> Enum.map(fn
       row when is_map_key(row, :state) -> row
       row ->
-
         amount =
           Map.get(row, :amount) |> Decimal.from_float
 
@@ -56,6 +56,12 @@ defmodule Oas.ImportTransactions do
               Decimal.eq?(amount, value) ->
                 if (is_map_key(row, :who_member_id)) do
                   Map.put(row, :state, :membership)
+                  |> Map.put(:tags, ["Membership" | Map.get(row, :tags, [])])
+                  |> (&(case row do
+                    %{warnings: _} -> row
+                    %{errors: _} -> row
+                    _ -> Map.put(&1, :to_import, true)
+                  end)).()
                 else
                   Map.put(row, :warnings, ["This looks like a membership, but related member (via bank_account_name: \"" <> row.bank_account_name <> "\") was not found" | Map.get(row, :warnings, [])])
                 end
@@ -80,7 +86,14 @@ defmodule Oas.ImportTransactions do
           nil -> row
           configToken = %{quantity: no, value: value} ->
             if (is_map_key(row, :who_member_id)) do
-              Map.put(row, :state, :tokens) |> Map.put(:state_data, configToken)
+              Map.put(row, :state, :tokens)
+                |> Map.put(:state_data, configToken)
+                |> Map.put(:tags, ["Tokens" | Map.get(row, :tags, [])])
+                |> (&(case row do
+                  %{warnings: _} -> row
+                  %{errors: _} -> row
+                  _ -> Map.put(&1, :to_import, true)
+                end)).()
             else
               Map.put(row, :warnings, ["This looks like tokens, but related member (via bank_account_name) was not found" | Map.get(row, :warnings, [])])
             end
@@ -102,12 +115,24 @@ defmodule Oas.ImportTransactions do
     end)
   end
 
+  def processOther(rows) do
+    rows
+    |> Enum.map(fn
+      (row = %{state: _}) -> row
+      (row = %{errors: _}) -> row
+      (row = %{warnings: _}) -> row
+      (row) when is_map_key(row, :to_import) == false -> Map.put(row, :to_import, :true)
+      row -> row
+    end)
+  end
+
   def process(rows) do
     rows
       |> processDuplicates
       |> processWhoMemberId
       |> processMembership
       |> processTokens
+      |> processOther
   end
 
   # -----------------------------------

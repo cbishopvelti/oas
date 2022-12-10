@@ -14,7 +14,6 @@ export const TransactionTags = ({
   setFormData,
   filterMode
 }) => {
-
   const {data, refetch } = useQuery(gql`
     query {
       transaction_tags {
@@ -31,7 +30,7 @@ export const TransactionTags = ({
 
   return <Autocomplete
     id="transactionTags"
-    value={get(formData, "transaction_tags") || (!transaction_tags.length && transaction_tags) || []}
+    value={get(formData, "transaction_tags") || (filterMode && !transaction_tags.length && transaction_tags) || []}
     options={(transaction_tags).map(({name, id}) => ({ label: name, id, name }))}
     renderInput={(params) => <TextField {...params} label="Tags" />}
     multiple
