@@ -59,3 +59,5 @@ make analysis use the same filter state
 Make prices text pulled from database
 
 Show last transaction
+
+Auto remove unused where

@@ -103,7 +103,7 @@ export const Analysis = () => {
         </Box>
 
         <Box sx={{width: '100%'}}>
-          <h3>Ballance (GBP):</h3>
+          <h3>Balance (GBP):</h3>
           <div>{get(data, 'analysis.transactions_ballance', 'Loading')}</div>
         </Box>
       </Container>
