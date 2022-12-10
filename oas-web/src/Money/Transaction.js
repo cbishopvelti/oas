@@ -160,14 +160,17 @@ export const Transaction = () => {
   const save = (formData) => async () => {
     formData = omit(formData, "training_tags.__typename");
 
+    const variables = {
+      ...formData,
+      amount: parseFloat(get(formData, 'amount')),
+      ...(get(formData, 'who_member_id') ? {who_member_id: parseInt(get(formData, 'who_member_id'))} : {}),
+      ...(formData.token_quantity ? {token_quantity: parseInt(formData.token_quantity)}: {}),
+      transaction_tags: (formData.transaction_tags?.map((item) => omit(item, '__typename') )),
+      ...(formData.tokens ? {tokens: formData.tokens.map((item) => omit(item, '__typename'))} : {})
+    };
+
     const { data } = await mutate({
-      variables: {
-        ...formData,
-        amount: parseFloat(get(formData, 'amount')),
-        ...(get(formData, 'who_member_id') ? {who_member_id: parseInt(get(formData, 'who_member_id'))} : {}),
-        ...(formData.token_quantity ? {token_quantity: parseInt(formData.token_quantity)}: {}),
-        transaction_tags: (formData.transaction_tags?.map((item) => omit(item, '__typename') ))
-      }
+      variables
     });
 
     setFormData({
