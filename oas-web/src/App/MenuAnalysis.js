@@ -9,16 +9,16 @@ import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import { includes, some } from 'lodash';
 import { useMatches } from 'react-router-dom';
 
+export const MenuAnalysis = () => {
 
-export const MenuMember = () => {
-  
   const matches = useMatches();
 
 
-  const memberIds = ["members", "member-tokens", "member-id", "member-membership-periods", "member-transactions", "membership-period-members", "member-attendance"];
-  const newMemberIds = ['member']
-  const allIds = [...memberIds, ...newMemberIds];
-  const forceIds = [...newMemberIds];
+  const ids = ["analysis"];
+  const analysisAttendanceIds = ['analysis-attendance']
+  const analysisBalanceIds = ['analysis-balance']
+  const allIds = [...ids, ...analysisAttendanceIds, ...analysisBalanceIds];
+  const forceIds = [...analysisAttendanceIds, ...analysisBalanceIds];
 
   const active = some(matches, ({id}) => includes(allIds, id))
   const forceActive = some(matches, ({id}) => includes(forceIds, id))
@@ -47,8 +47,8 @@ export const MenuMember = () => {
   }
 
   return <>
-    <MenuItem component={CustomLink(memberIds)} end to={`/members`}>
-      <ListItemText>Users</ListItemText>
+    <MenuItem component={CustomLink(ids)} end to={`/`}>
+      <ListItemText>Analysis</ListItemText>
       <IconButton onClick={handleOpen}>
         {
           open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />
@@ -56,8 +56,11 @@ export const MenuMember = () => {
       </IconButton>
     </MenuItem>
     <Collapse in={open} timeout="auto">
-      <MenuItem sx={{ml: 2}} component={CustomLink(newMemberIds)} end to={`/member`}>
-        <ListItemText>New User</ListItemText>
+      <MenuItem sx={{ml: 2}} component={CustomLink(analysisAttendanceIds)} end to={`/analysis/attendance`}>
+        <ListItemText>Attendance</ListItemText>
+      </MenuItem>
+      <MenuItem sx={{ml: 2}} component={CustomLink(analysisBalanceIds)} end to={`/analysis/balance`}>
+        <ListItemText>Balance</ListItemText>
       </MenuItem>
     </Collapse>
   </>

@@ -1,13 +1,36 @@
 import { Link } from "react-router-dom"
+import { useQuery, gql } from "@apollo/client"
+import { get } from 'lodash';
 
 
 export const Home = () => {
+  const {data} = useQuery(gql`
+    query {
+      public_config_tokens {
+        token_expiry_days,
+        tokens {
+          quantity,
+          value
+        }
+      }
+    }
+  `)
+
   return <div>
     <h1>Oxfordshire Acro Society</h1>
-    <p>The home of Oxfordshire Acro Society</p>
-    <p>There are jams in the winter at New marston scout hall, OX3 0EJ, 1500 - 1800 on Sundays, all welcome.</p>
-    <p>Training sessions at Oxsrad, OX3 0NQ, 1900 - 2100 on Thursday, for members only.</p>
-    <p>We run a token system, it's 1 token per jam/training. 1 token costs 5 GBP, 10 tokens cost 45 GBP and 20 tokens cost 90 GBP. Tokens are non refundable, expire after one year and can be transferred to other members.</p>
-    <p>You can come to 3 sessions as a temporary member before you must become a full member, full membership to the 31st of October is 6 GBP. Please register <Link to="/register">here</Link>.</p>
+    <p>This is the virtual home of the Oxfordshire Acro Society.</p>
+    <p>There are jams in the Winter season at New Marston Scout Hall, OX3 0EJ, 1500 - 1800 on Sundays, all welcome.</p>
+    <p>If you are joining for the first time, please go to “register” in the menu and sign up. You can come to 3 sessions as a temporary member before you must become a full member, full membership for this season runs until the 31st of October and is 6 GBP. Please register <Link to="/register">here</Link></p>
+    <p>There are training sessions at Oxsrad Sports Centre, OX3 0NQ, 1900 - 2100 on Thursdays, for members only.</p>
+    <p>We run a token system. Participating in indoor jams and trainings cost 1 token per session. {get(data, 'public_config_tokens.tokens', []).map(({value, quantity}, index) => {
+        let start = '';
+        if (index !== 0 ) {
+          start = ', '
+        }
+        if (index == get(data, 'public_config_tokens', []).length - 1) {
+          start = ' and ';
+        }
+        return `${index == 0 ? '' : ', '}${quantity} token${quantity != 1 ? 's': ''} costs ${value * quantity} GBP`
+      })}. Tokens are non refundable and expire after one year, but they can be transferred to other members.</p>
   </div>
 }

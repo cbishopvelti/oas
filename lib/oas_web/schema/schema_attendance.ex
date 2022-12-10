@@ -72,7 +72,8 @@ defmodule OasWeb.Schema.SchemaAttendance do
           inner_join: m in assoc(a, :member),
           preload: [member: [membership_periods: ^from(mp in Oas.Members.MembershipPeriod, where: mp.from <= ^training.when and mp.to >= ^training.when)]],
           select: a,
-          where: a.training_id == ^training_id
+          where: a.training_id == ^training_id,
+          order_by: [desc: a.id]
         )
         |> Oas.Repo.all
         |> Enum.map(fn record ->

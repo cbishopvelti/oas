@@ -52,34 +52,10 @@ C:\Users\chris\nginx-1.23.2\html-staging
 
 ## Todo
 
-~~Sorting again~~
+Save success
 
-~~Website menu~~
+make analysis use the same filter state
 
-Check website text
+Make prices text pulled from database
 
-~~ Add counts to header ~~
-~~ - tokens, token debt~~
-~~- trainings~~
-~~ - members ~~
-~~ - transactions ~~
-
-~~Tokens config~~
-
-~~used_on date~~
-
-Graphs
-- Bar chart attendance
-Line of tokens
-- Line of ballance and liability
-- Line income, outgoing, coloured by tags
-
-Do Import
-- Temporaly save import state
-- Save token state
-- Show error on invalid csv
-- Fix Mui warnings on import tags
-- Fix Member filter changing names
-
-Order of adding attendance
-
+Show last transaction

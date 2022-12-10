@@ -24,6 +24,8 @@ defmodule OasWeb.Schema.SchemaTransactionsImport do
     field :state, :string
     field :state_data, :string
     field :subcategory, :string
+    field :tags, list_of(:string)
+    field :to_import, :boolean
     field :errors, list_of(:transactions_import_error)
     field :warnings, list_of(:string)
   end
@@ -48,12 +50,61 @@ defmodule OasWeb.Schema.SchemaTransactionsImport do
   end
 
   object :transactions_import_mutations do
+    field :set_to_import, type: :success do
+      arg :index, non_null(:integer)
+      arg :to_import, non_null(:boolean)
+      resolve fn _, %{index: index, to_import: to_import}, %{context: %{ user_table: user_table, current_member: current_member }} ->
+
+        [{_, rows}] = :ets.lookup(
+          user_table,
+          current_member.id
+        )
+
+        row = Enum.at(rows, index);
+        List.replace_at(
+          rows,
+          index,
+          %{row | to_import: to_import}
+        )
+        |> (&(:ets.insert(
+          user_table,
+          {current_member.id, &1}
+        ))).()
+
+        {:ok, %{success: true}}
+      end
+    end
+    field :set_tags, type: :success do
+      arg :index, non_null(:integer)
+      arg :tags, non_null(list_of(:string))
+      resolve fn _, %{index: index, tags: tags}, %{context: %{ user_table: user_table, current_member: current_member }} ->
+
+        [{_, rows}] = :ets.lookup(
+          user_table,
+          current_member.id
+        )
+
+        row = Enum.at(rows, index);
+        List.replace_at(
+          rows,
+          index,
+          %{row | tags: tags}
+        )
+        |> (&(:ets.insert(
+          user_table,
+          {current_member.id, &1}
+        ))).()
+
+        {:ok, %{success: true}}
+      end
+    end
     field :import_transactions_reprocess, type: :success do
       resolve fn _, _, %{context: %{ user_table: user_table, current_member: current_member }} ->
         [{_, rows}] = :ets.lookup(
           user_table,
           current_member.id
         )
+
         result = rows 
         |> Enum.map(fn (row) -> 
           Map.delete(row, :errors) |> Map.delete(:warnings)
@@ -80,6 +131,17 @@ defmodule OasWeb.Schema.SchemaTransactionsImport do
             !String.contains?(message, ":validate_row_length")
           _ -> true
         end)
+        |> Enum.filter(fn {:ok, row} ->
+          case row do
+            %{"Account" => ""} -> false
+            %{"Account" => nil} -> false
+            %{"Amount" => nil} -> false
+            %{"Amount" => ""} -> false
+            %{"Date" => ""} -> false
+            %{"Date" => nil} -> false
+            _ -> true
+          end
+        end)
         |> Enum.map(fn
           {:ok, %{"Memo" => memo, "Account" => account, "Amount" => amount, "Date" => date, "Subcategory" => subcategory}} ->
             %{
@@ -87,7 +149,7 @@ defmodule OasWeb.Schema.SchemaTransactionsImport do
               account: account,
               amount: Float.parse(amount) |> elem(0),
               date: Timex.parse!(date, "{0D}/{0M}/{YYYY}") |> Timex.to_date,
-              subcategory: subcategory
+              tags: [subcategory]
             }
           {:error, message} ->
             raise message
@@ -104,15 +166,6 @@ defmodule OasWeb.Schema.SchemaTransactionsImport do
         end)
         |> Oas.ImportTransactions.process
 
-        # Add state
-        # Is duplicate,
-        # Is membership
-        # Is membership, but no match
-        # Is tokens,
-        # Is tokens, but no match
-        # Normal transaction
-        # Normal transaction, with no match
-
         :ets.insert(
           user_table,
           {current_member.id, result}
@@ -123,25 +176,27 @@ defmodule OasWeb.Schema.SchemaTransactionsImport do
     end
     field :do_import_transactions, type: :success do
       # arg :indexes_to_import, non_null(list_of(:integer))
-      arg :to_import, non_null(list_of(:to_import_arg))
+      # arg :to_import, non_null(list_of(:to_import_arg))
       
       resolve fn
         _,
-        %{to_import: to_import},
+        _, # %{to_import: to_import},
         %{context: %{ user_table: user_table, current_member: current_member }}
       -> 
-
-        indexes_to_import = Enum.map(to_import, fn (%{index: index}) -> index end)
 
         [{_, rows}] = :ets.lookup(user_table, current_member.id)
         rowsToImport = rows
         |> Enum.with_index
-        |> Enum.filter(fn ({_, id}) ->
-          Enum.member?(indexes_to_import, id)
+        |> Enum.filter(fn
+          ({%{to_import: to_import}, _}) -> to_import
+          _ -> false
         end)
         |> Enum.map(fn ({row, id}) ->
-          transaction_tags = Enum.find(to_import, fn (%{index: index}) -> index == id end)
-            |> Map.get(:transaction_tags)
+          # transaction_tags = Enum.find(to_import, fn (%{index: index}) -> index == id end)
+          #   |> Map.get(:transaction_tags)
+
+          transaction_tags = row.tags |> Enum.map(fn name -> %{name: name} end)
+
           {Map.put(row, :transaction_tags, transaction_tags), id}
         end)
         |> Enum.map(fn ({row, id}) -> row end)
