@@ -42,6 +42,17 @@ defmodule OasWeb.Schema.SchemaToken do
     field :when, :string
   end
 
+  object :public_config_tokens_tokens do
+    field :quantity, :integer
+    field :value, :float
+  end
+
+  object :public_config_tokens do
+    field :last_transaction_when, :string
+    field :token_expiry_days, :integer
+    field :tokens, list_of(:public_config_tokens_tokens)
+  end
+
   object :token_queries do
     field :tokens, list_of(:token) do
       arg :member_id, :integer
@@ -89,6 +100,30 @@ defmodule OasWeb.Schema.SchemaToken do
       end
     end
 
+    field :public_config_tokens, type: :public_config_tokens do
+      resolve fn _, _, _ -> 
+        token_expiry_days = from(con in Oas.Config.Config,
+          select: con.token_expiry_days
+        ) |> Oas.Repo.one
+
+        tokens = from(tok in Oas.Config.Tokens, 
+          order_by: [asc: tok.quantity]
+        ) |> Oas.Repo.all
+
+        last_transaction = from(tra in Oas.Transactions.Transaction,
+          select: max(tra.when)
+        ) |> Oas.Repo.one
+
+        {:ok, %{
+          last_transaction_when: last_transaction,
+          token_expiry_days: token_expiry_days,
+          tokens: tokens |> Enum.map(fn item = %{value: value} ->
+            %{item | value: value |> Decimal.to_float }
+          end)
+        }}
+      end
+    end
+
     field :public_tokens, type: list_of(:public_token) do
       arg :email, non_null(:string)
       resolve fn _, %{email: email}, _ ->
@@ -100,7 +135,7 @@ defmodule OasWeb.Schema.SchemaToken do
         case member do
           nil ->
             {:error, "Member not found"}
-          _ -> 
+          _ ->
             tokens = from(to in Oas.Tokens.Token,
               left_join: m in assoc(to, :member),
               left_join: tr in assoc(to, :transaction),

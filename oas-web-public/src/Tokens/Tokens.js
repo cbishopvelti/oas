@@ -75,6 +75,14 @@ export const Tokens = () => {
           email,
           name
         }
+      },
+      public_config_tokens {
+        last_transaction_when,
+        token_expiry_days,
+        tokens {
+          quantity,
+          value
+        }
       }
     }
   `, {
@@ -125,12 +133,15 @@ export const Tokens = () => {
     </Box>
     <Box>
     <Stack sx={{ width: '100%', mt: 2 }}>
-      {errors.length && errors.map(({message}, i) => (
+      {errors.length !== 0 && errors.map(({message}, i) => (
         <Alert key={i} severity="error">{message}</Alert>
       ))}
     </Stack>
     
-    {!errors.length && has(data, 'public_tokens') && <p style={style}>You have <b>{tokenCount}</b> token{tokenCount == 1 ? '' : 's'}.</p>}
+    {errors.length == 0 && has(data, 'public_tokens') &&
+      <h3 style={style}>You have <b>{tokenCount}</b> token{tokenCount == 1 ? '' : 's'}.</h3>}
+    {errors.length == 0 && has(data, 'public_tokens') &&
+      <p>(The last transaction was on the {get(data, 'public_config_tokens.last_transaction_when', 'loading')}, this token count doesn't include tokens bought since then)</p>}
 
     {!errors.length && has(data, 'public_bacs') && <Accordion sx={{position: 'relative'}}>
         <AccordionSummary
@@ -144,12 +155,14 @@ export const Tokens = () => {
           <Typography>
             Please make a transfer to:<br/>
             <br/>
-              {get(data, 'public_bacs').map((item) => <>{item}<br/></>)}
+              {get(data, 'public_bacs', []).map((item) => <>{item}<br/></>)}
             <br/>
-            5 GBP for 1 token,<br/>
-            45 GBP for 10 tokens or<br/>
-            90 GBP for 20 tokens.<br/>
-            Tokens are valid for one year from purchase and are non-refundable. Tokens can be transferred between members.<br/>
+            {get(data, 'public_config_tokens.tokens', []).map(({value, quantity}, index) => {
+              return <>
+                {value * quantity} GBP for {quantity} token{quantity != 1 && 's'}{get(data, 'public_config_tokens.tokens', []).length - 1 == index ? '.' : ','}<br/>
+              </>
+            })}
+            Tokens are valid for {get(data, 'public_config_tokens.token_expiry_days', 'loading')} days from purchase and are non-refundable. Tokens can be transferred between members.<br/>
             
           </Typography>
         </AccordionDetails>
