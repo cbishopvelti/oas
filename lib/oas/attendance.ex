@@ -57,8 +57,13 @@ defmodule Oas.Attendance do
     
     warnings = []
     tokens = Oas.Attendance.get_token_amount(%{member_id: member.id})
+
+    last_transaction = from(tra in Oas.Transactions.Transaction,
+      select: max(tra.when)
+    ) |> Oas.Repo.one
+
     warnings = if (tokens <= 0) do
-      warnings = ["You have run out of tokens (#{tokens}), please buy more" | warnings]
+      warnings = ["You have run out of tokens (#{tokens}), please buy more.\n(If you bought tokens since #{last_transaction}, please ignore)" | warnings]
     else
       warnings
     end
@@ -72,14 +77,15 @@ defmodule Oas.Attendance do
     case (warnings) do
       [] -> nil
       warnings -> 
-        Oas.Tokens.TokenNotifier.deliver(member.email, "OAS notification", """
-          Hi #{member.name}
+        Oas.Tokens.TokenNotifier.deliver(member.email, "OAS notification",
+        """
+        Hi #{member.name}
 
-          #{Enum.join(warnings, "\n")}
+        #{Enum.join(warnings, "\n")}
 
-          Thanks
+        Thanks
 
-          OAS
+        OAS
         """)
     end
 
