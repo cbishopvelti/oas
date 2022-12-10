@@ -187,6 +187,15 @@ defmodule OasWeb.Schema.SchemaTraining do
                 )
               )) and w.id == ^training.training_where.id
             )  |> Oas.Repo.delete_all
+          %{action: :insert, data: %{id: id}} -> from(w in Oas.Trainings.TrainingWhere,
+              as: :training_where,
+              where: not(exists(
+                from(
+                  t in Oas.Trainings.Training, 
+                  where: t.training_where_id == parent_as(:training_where).id
+                )
+              )) and w.id == ^training.training_where.id
+            )  |> Oas.Repo.delete_all
         end
         
 

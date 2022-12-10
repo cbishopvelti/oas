@@ -30,7 +30,7 @@ export const Home = () => {
         if (index == get(data, 'public_config_tokens', []).length - 1) {
           start = ' and ';
         }
-        return `${index == 0 ? '' : ', '}${quantity} token${quantity != 1 ? 's': ''} costs ${value * quantity} GBP`
-      })}. Tokens are non refundable and expire after one year, but they can be transferred to other members.</p>
+        return `${index == 0 ? '' : ', '}${quantity} token${quantity != 1 ? 's': ''} cost${quantity == 1 ? 's' : ''} ${value * quantity} GBP`
+      })}. Tokens are non refundable and expire after {get(data, 'public_config_tokens.token_expiry_days' , 'loading')} days, but they can be transferred to other members.</p>
   </div>
 }
