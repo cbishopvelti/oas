@@ -1,7 +1,7 @@
 # docker build . -t chrisjbishop155/oas:latest
 # docker push chrisjbishop155/oas:latest
 
-from elixir:1.14
+from elixir:1.14.1
 
 # Node
 RUN curl -sL https://deb.nodesource.com/setup_18.x | bash -
