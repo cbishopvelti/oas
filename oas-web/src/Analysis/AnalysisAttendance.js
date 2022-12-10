@@ -14,7 +14,7 @@ export const AnalysisAttendance = () => {
   const [filterData, setFilterData] = useState({
     from: moment().subtract(1, 'year').format("YYYY-MM-DD"),
     to: moment().format("YYYY-MM-DD")
-  }, {id: 'AnalysisAttendance'});
+  }, {id: 'Analysis'});
 
   const {data, refetch } = useQuery(gql`
     query ($from: String!, $to: String!, $training_where: [TrainingWhereArg]) {
