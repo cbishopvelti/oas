@@ -153,7 +153,7 @@ export const Tokens = () => {
         </AccordionSummary>
         <AccordionDetails>
           <Typography>
-            Please make a transfer to:<br/>
+            Please make a bacs transfer to:<br/>
             <br/>
               {get(data, 'public_bacs', []).map((item) => <>{item}<br/></>)}
             <br/>

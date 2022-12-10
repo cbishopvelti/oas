@@ -59,8 +59,6 @@ export const Transactions = () => {
   })
 
   const { setTitle } = useOutletContext();
-  console.log("008", filterData)
-  console.log("008.1", !filterData.to || !filterData.from);
   let { data: transactions, loading, refetch } = useQuery(gql`query ($from: String, $to: String, $transaction_tags: [TransactionTagArg], $member_id: Int) {
     transactions (from: $from, to: $to, transaction_tags: $transaction_tags, member_id: $member_id) {
       id,
