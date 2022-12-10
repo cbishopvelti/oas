@@ -81,7 +81,7 @@ defmodule OasWeb.Schema.SchemaAnalysis do
         to = Date.from_iso8601!(to)
 
         case abs(Date.diff(from, to)) do
-          x when x > 1825 -> {:error, "Date difference is too large"}
+          x when x > 1825 -> {:error, "Date difference is too large, max difference is 5 years"}
           _ -> 
             {:ok, %{
               balance: Oas.Analysis.series_balance(from, to),
