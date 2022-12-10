@@ -30,6 +30,10 @@ export const AnalysisBalance = () => {
         outstanding_tokens {
           x,
           y
+        },
+        outstanding_attendance {
+          x,
+          y
         }
       }
     }
@@ -41,16 +45,29 @@ export const AnalysisBalance = () => {
   });
 
   useEffect(() => {
-    
+    refetch();
+  }, [filterData])
+
+  useEffect(() => {
   }, [data]);
 
-  const series = [{
-    name: 'Balance',
-    data: get(data, 'analysis_balance.balance', [])
-  }, {
-    name: "Outstanding Tokens",
-    data: get(data, 'analysis_balance.outstanding_tokens', [])
-  }]
+  const series = [
+    {
+      name: 'Balance',
+      data: get(data, 'analysis_balance.balance', []),
+      color: '#7FFF00'
+    },
+    {
+      name: "Outstanding Tokens",
+      data: get(data, 'analysis_balance.outstanding_tokens', []),
+      color: '#800080'
+    },
+    {
+      name: "Outstanding Attendance",
+      data: get(data, 'analysis_balance.outstanding_attendance', []),
+      color: '#FF0000'
+    }
+  ]
 
   const options = {
     chart: {
@@ -61,6 +78,7 @@ export const AnalysisBalance = () => {
     },
     stroke: {
       curve: 'stepline',
+      width: 2
     }
   }
 

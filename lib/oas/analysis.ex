@@ -54,6 +54,9 @@ defmodule Oas.Analysis do
 
     tokens = from(t in Oas.Tokens.Token,
       left_join: tr in assoc(t, :transaction),
+      # left_join: att in assoc(t, :attendance),
+      # left_join: tra in assoc(att, :training),
+      # preload: [transaction: tr, attendance: {att, [training: tra]}],
       preload: [transaction: tr],
       where: ((not(is_nil(tr.id)) and tr.when <= ^to )
         or (is_nil(tr.id) and t.inserted_at < ^toDT))
@@ -64,6 +67,7 @@ defmodule Oas.Analysis do
 
     frequency = tokens
     # |> Enum.take(1) # DEBUG ONLY
+    # |> Enum.filter(fn (token) -> token.id == 2 end) # DEBUG ONLY
     |> Enum.reduce(%{}, fn (token, acc) ->
       startDate = case token do
         %{transaction: %{when: when1}} ->
@@ -78,19 +82,13 @@ defmodule Oas.Analysis do
           from
       end)).()
 
-      # IO.puts("101.1 startDate")
-      # IO.inspect(startDate)
-
       endDate = 
       (token.used_on || token.expires_on)
-      |> (&(case Date.compare((token.used_on || token.expires_on), to) do
+      |> (&(case Date.compare(&1, to) do
         :lt -> &1
         :eq -> &1
         _ -> to
       end)).()
-
-      # IO.puts("101.2 endDate")
-      # IO.inspect(endDate)
       
       Date.range(startDate, endDate)
         |> Enum.reduce(acc, fn (day, acc) -> 
@@ -102,20 +100,59 @@ defmodule Oas.Analysis do
     out = Date.range(from, to)
     |> Enum.map(fn day ->
       %{
-        y: Map.get(frequency, day, 0) |> Decimal.to_float,
+        y: Map.get(frequency, day, Decimal.new(0)) |> Decimal.to_float,
         x: day
       }
     end)
 
-
-    # def tokens = from(t in Oas.Tokens.Token,
-    #   where: (!is_nil(t.transaction) and t.transaction.when <= ^from )
-    #   or (is_nil(t.transaction) and t.inserted_at <= ^from)
-    # )
-
-    IO.puts("002")
-    IO.inspect(out)
+    # IO.puts("002")
+    # IO.inspect(out)
 
     out
+  end
+  def outstanding_attendance(from, to) do
+    # Attendances which dont have a token
+    attendance = from(att in Oas.Trainings.Attendance,
+      left_join: tok in assoc(att, :token),
+      inner_join: tra in assoc(att, :training),
+      preload: [token: tok, training: tra],
+      where: tra.when <= ^to and
+        (is_nil(tok.used_on) or tok.used_on >= ^from)
+    ) |> Oas.Repo.all
+
+    minValue = from(cto in Oas.Config.Tokens,
+      select: min(cto.value)
+    ) |> Oas.Repo.one
+
+    frequency = attendance
+    |> Enum.reduce(%{}, fn (attendance, acc) ->
+      startDate = attendance.training.when
+      
+      endDate = case (attendance.token && attendance.token.used_on) do
+        nil -> to
+        x -> x
+      end
+
+      value = case attendance.token do
+        %{value: value} -> value
+        value -> minValue
+      end
+
+      Date.range(startDate, endDate)
+        |> Enum.reduce(acc, fn (day, acc) ->
+          Map.put(acc, day, Decimal.sub(Map.get(acc, day, Decimal.new(0)), value ))
+        end)
+    end)
+
+    # IO.puts("003")
+    # IO.inspect(attendance)
+
+    out = Date.range(from, to)
+    |> Enum.map(fn day -> 
+      %{
+        y: Map.get(frequency, day, Decimal.new(0)) |> Decimal.to_float,
+        x: day
+      }
+    end)
   end
 end
