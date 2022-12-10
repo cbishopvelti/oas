@@ -8,6 +8,7 @@ const filter = createFilterOptions();
 
 
 export const TrainingWhereFilter = ({
+  parentData,
   formData, 
   setFormData
 }) => {
@@ -20,6 +21,10 @@ export const TrainingWhereFilter = ({
     }
   `)
   let training_where = get(data, 'training_where', [])
+
+  useEffect(() => {
+    refetch()
+  }, [parentData])
 
   return <Autocomplete
     id="trainingWhere"

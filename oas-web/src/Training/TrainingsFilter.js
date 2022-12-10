@@ -23,6 +23,7 @@ const onChange = ({formData, setFormData, key}) => (event) => {
 }
 
 export const TrainingsFilter = ({
+  parentData,
   filterData,
   setFilterData
 }) => {
@@ -63,6 +64,7 @@ export const TrainingsFilter = ({
       </FormControl> */}
       <FormControl sx={{m: 2, minWidth: 256}}>
         <TrainingWhereFilter
+          parentData={parentData}
           setFormData={setFilterData}
           formData={filterData}
         />
