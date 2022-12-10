@@ -73,6 +73,7 @@ export const Trainings = () => {
 
   return <>
     <TrainingsFilter 
+      parentData={data}
       filterData={filterData}
       setFilterData={setFilterData} />
     <TableContainer>

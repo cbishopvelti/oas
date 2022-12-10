@@ -207,8 +207,19 @@ defmodule OasWeb.Schema.SchemaTraining do
     field :delete_training, type: :success do
       arg :id, non_null(:integer)
       resolve fn _, %{id: id}, _ -> 
-        Oas.Repo.get!(Oas.Trainings.Training, id)
+        {:ok, result} = Oas.Repo.get!(Oas.Trainings.Training, id)
           |> Oas.Repo.delete
+
+        from(w in Oas.Trainings.TrainingWhere,
+        as: :training_where,
+        where: not(exists(
+          from(
+            t in Oas.Trainings.Training, 
+            where: t.training_where_id == parent_as(:training_where).id
+          )
+        )) and w.id == ^result.training_where_id
+        )  |> Oas.Repo.delete_all
+        
         {:ok, %{success: true}}
       end
     end
