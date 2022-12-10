@@ -44,8 +44,8 @@ export const TrainingsFilter = ({
       <FormControl sx={{m: 2, minWidth: 256}}>
         <TextField
           required
-          id="from"
-          label="From"
+          id="to"
+          label="To"
           type="date"
           value={get(filterData, "to", '')}
           onChange={onChange({formData: filterData, setFormData: setFilterData, key: "to"})}

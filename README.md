@@ -10,7 +10,7 @@ docker push chrisjbishop155/oas
 docker pull chrisjbishop155/oas
 ```
 
-
+docker stop oas; docker rm oas; `
 docker run -it -d `
 --name=oas `
 -e DANGEROUSLY_DISABLE_HOST_CHECK=true `
@@ -25,6 +25,7 @@ docker run -it -d `
 -v C:/oas-dbs-backup:/dbs-backup `
 chrisjbishop155/oas:latest
 
+docker stop oas-staging; docker rm oas-staging; `
 docker run -it -d `
 --name=oas-staging `
 -e DANGEROUSLY_DISABLE_HOST_CHECK=true `
@@ -60,3 +61,4 @@ Make prices text pulled from database
 Show last transaction
 
 Add warning for manual duplicate transaction.
+
