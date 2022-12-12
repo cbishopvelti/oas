@@ -54,11 +54,10 @@ C:\Users\chris\nginx-1.23.2\html-staging
 
 Save success
 
-make analysis use the same filter state
+~~ make analysis use the same filter state ~~
 
-Make prices text pulled from database
+~~ Make prices text pulled from database ~~
 
-Show last transaction
+~~ Add warning for manual duplicate transaction. ~~
 
-Add warning for manual duplicate transaction.
-
+~~Login button~~

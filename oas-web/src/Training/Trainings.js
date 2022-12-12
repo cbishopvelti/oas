@@ -50,7 +50,7 @@ export const Trainings = () => {
     refetch()
   }, [filterData])
   useEffect(() => {
-    let count = get(data, ['trainings'], []).length
+    let count = (get(data, ['trainings'], []) || []).length
     setTitle(`Trainings: ${count}`);
   }, [data])
   const trainings = get(data, 'trainings', [])

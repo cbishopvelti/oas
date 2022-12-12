@@ -90,6 +90,24 @@ defmodule OasWeb.Schema.SchemaTransaction do
         {:ok, result || []}
       end
     end
+    field :check_duplicate, type: :integer do
+      arg :who, non_null(:string)
+      arg :amount, non_null(:float)
+      arg :when, non_null(:string)
+      resolve fn _, %{when: when1, amount: amount, who: who}, _ ->
+        result = from(t in Oas.Transactions.Transaction,
+          where: t.when == ^when1
+            and t.who == ^who
+            and t.amount == ^amount,
+          limit: 1
+        ) |> Oas.Repo.one
+
+        case result do
+          nil -> {:ok, nil}
+          %{id: id} -> {:ok, id}
+        end
+      end
+    end
   end
 
   defp maybeDoTokens(args, result, when1) do

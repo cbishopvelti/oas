@@ -5,6 +5,7 @@ import moment from 'moment';
 import { get } from 'lodash'
 import Chart from "react-apexcharts";
 import { useEffect } from "react";
+import { useOutletContext } from "react-router-dom";
 
 
 const onChange = ({formData, setFormData, key, required}) => (event) => {
@@ -15,6 +16,8 @@ const onChange = ({formData, setFormData, key, required}) => (event) => {
 }
 
 export const AnalysisBalance = () => {
+  const { setTitle } = useOutletContext();
+
   const [filterData, setFilterData] = useState({
     from: moment().subtract(1, 'year').format("YYYY-MM-DD"),
     to: moment().format("YYYY-MM-DD")
@@ -49,6 +52,7 @@ export const AnalysisBalance = () => {
   }, [filterData])
 
   useEffect(() => {
+    setTitle(`Analysis Balance`);
   }, [data]);
 
   const series = [

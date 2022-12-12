@@ -4,21 +4,28 @@ defmodule Oas.ImportTransactions do
 
   def processDuplicates(rows) do
     rows
-    |> Enum.map(fn (row) -> 
+    |> Enum.map(fn (row = %{
+      bank_account_name: bank_account_name
+    }) -> 
       
       csvDate = Map.get(row, :date)
 
-      bank_details = Map.get(row, :bank_account_name) <> "\n" <> Map.get(row, :account)
+      # bank_details = Map.get(row, :bank_account_name) <> "\n" <> Map.get(row, :account)
+
+      who = case Map.get(row, :who_member_id, nil) do
+        nil -> bank_account_name
+        id -> Oas.Repo.get!(Oas.Members.Member, id) |> Map.get(:name)
+      end
 
       query = from(t in Oas.Transactions.Transaction,
         where: t.when == ^csvDate
-          and t.bank_details == ^bank_details
+          and t.who == ^who
           and t.amount == ^Map.get(row, :amount),
         limit: 1
       )
 
-      queryString = Oas.Repo.to_sql(:all, query)
-      IO.inspect(queryString)
+      # queryString = Oas.Repo.to_sql(:all, query)
+      # IO.inspect(queryString)
 
       dupliate = Oas.Repo.one(query)
 
@@ -108,8 +115,9 @@ defmodule Oas.ImportTransactions do
         where: m.bank_account_name == ^bank_account_name
       )
       |> Oas.Repo.one
+
       case id do
-        nil -> row
+        nil -> Map.delete(row, :who_member_id)
         %{id: id} -> Map.put(row, :who_member_id, id)
       end
     end)
@@ -128,8 +136,8 @@ defmodule Oas.ImportTransactions do
 
   def process(rows) do
     rows
-      |> processDuplicates
       |> processWhoMemberId
+      |> processDuplicates
       |> processMembership
       |> processTokens
       |> processOther

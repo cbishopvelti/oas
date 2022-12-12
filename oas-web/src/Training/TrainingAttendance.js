@@ -35,7 +35,8 @@ export const TrainingAttendance = ({trainingId, setAttendance}) => {
       warnings, 
       member {
         id,
-        name, 
+        name,
+        email,
         token_count,
         member_status
       }

@@ -125,7 +125,7 @@ export const TransactionsImportRow = ({
               <Stack sx={{ width: '100%' }}>
                 {row.errors?.map((item, i) => (
                   <Alert key={i} sx={{m:1}} severity="error">
-                    {item.name}{item.transaction_id && <>&nbsp;<NavLink to={`/transaction/${item.transaction_id}`}>transaction/{item.transaction_id}</NavLink> </>}
+                    {item.name}{item.transaction_id && <> of <NavLink to={`/transaction/${item.transaction_id}`}>/transaction/{item.transaction_id}</NavLink></>}
                   </Alert>
                 ))}
 
