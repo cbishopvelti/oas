@@ -14,7 +14,7 @@ import {
 import { createFilterOptions } from '@mui/material/Autocomplete';
 import { get, find, omit, has } from 'lodash'
 import * as moment from 'moment'
-import { useParams, useNavigate, useOutletContext } from 'react-router-dom'
+import { useParams, useNavigate, useOutletContext, Link } from 'react-router-dom'
 import { useQuery, gql, useMutation } from '@apollo/client';
 import { TransactionNewToken, TransactionEditTokens } from "./TransactionToken";
 import { Tokens } from './Tokens';
@@ -111,13 +111,48 @@ export const Transaction = () => {
 
   const onChange = ({formData, setFormData, key}) => (event) => {
     
+    let extraData = {}
+    if(key == 'amount' && !formData.type) {
+      if (parseFloat(event.target.value) >= 0) {
+        extraData = {
+          ...extraData,
+          type: 'INCOMING'
+        }
+      } else if (parseFloat(event.target.value) < 0) {
+        extraData = {
+          ...extraData,
+          type: 'INCOMING'
+        }
+      }
+    }
+
     setFormData({
       ...formData,
+      ...extraData,
       [key]: !event.target.value ? undefined : event.target.value
     })
   }
 
   const filter = createFilterOptions();
+
+  const { data: dupData, refetch: dupRefetch } = useQuery(gql`
+    query($when: String!, $amount: Float!, $who: String!) {
+      check_duplicate(when: $when, amount: $amount, who: $who)
+    }
+  `, {
+    variables: {
+      ...formData,
+      amount: parseFloat(get(formData, 'amount'))
+    },
+    skip: !formData.amount || !formData.who || !formData.when || id
+  })
+  useEffect(() => {
+    if (!formData.amount || !formData.who || !formData.when || id) {
+      return;
+    }
+    dupRefetch()
+  }, [formData])
+
 
   const [mutate, {error}] = useMutation(gql`mutation (
     $id: Int,
@@ -368,6 +403,10 @@ export const Transaction = () => {
         formData={formData}
         setFormData={setFormData}
         id={id} />
+
+      {get(dupData, 'check_duplicate', null) != null && <Stack sx={{width: '100%'}}>
+        <Alert sx={{m: 2}} severity="warning">This is a duplicate of <Link to={`/transaction/${get(dupData, 'check_duplicate')}`}>/transaction/{get(dupData, 'check_duplicate')}</Link></Alert>
+      </Stack>}
 
       <FormControl fullWidth sx={{m: 2}}>
         <Button onClick={save(formData)}>Save</Button>

@@ -20,7 +20,7 @@ export const TrainingWhereFilter = ({
       }
     }
   `)
-  let training_where = get(data, 'training_where', [])
+  let training_where = get(data, 'training_where', []) || []
 
   useEffect(() => {
     refetch()
