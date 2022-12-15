@@ -30,6 +30,7 @@ defmodule OasWeb.Schema.SchemaToken do
     field :value, :string
     field :tr_member, :public_member
     field :member, :public_member
+    field :training_date, :string
   end
 
   object :add_tokens do
@@ -140,15 +141,21 @@ defmodule OasWeb.Schema.SchemaToken do
               left_join: m in assoc(to, :member),
               left_join: tr in assoc(to, :transaction),
               left_join: mftr in assoc(tr, :member),
+              left_join: att in assoc(to, :attendance),
+              left_join: train in assoc(att, :training),
               where: m.email == ^email or mftr.email == ^email,
-              select: {to, m, mftr},
-              order_by: [desc: to.expires_on, desc: to.id]
+              select: {to, m, mftr, train},
+              order_by: [desc_nulls_first: train.when, desc: to.expires_on, desc: to.id]
             ) |> Oas.Repo.all
-            |> Enum.map(fn ({to, m, m_tr}) ->
+            |> Enum.map(fn ({to, m, m_tr, train}) ->
               Map.put(to, :member, m)
               |> Map.put(:tr_member, m_tr)
+              |> (&(case train do
+                %{when: when1} -> Map.put(&1, :training_date, Map.get(train, :when, when1))
+                _ -> &1
+              end)).()
+                
             end)
-
 
             {:ok, tokens}
         end
