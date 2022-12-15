@@ -61,3 +61,5 @@ Save success
 ~~ Add warning for manual duplicate transaction. ~~
 
 ~~Login button~~
+
+~~ Public used on -> Training date ~~

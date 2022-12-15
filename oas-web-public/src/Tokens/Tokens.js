@@ -74,7 +74,8 @@ export const Tokens = () => {
         tr_member {
           email,
           name
-        }
+        },
+        training_date
       },
       public_config_tokens {
         last_transaction_when,
@@ -155,12 +156,12 @@ export const Tokens = () => {
           <Typography>
             Please make a bacs transfer to:<br/>
             <br/>
-              {get(data, 'public_bacs', []).map((item) => <>{item}<br/></>)}
+              {get(data, 'public_bacs', []).map((item, i) => <span key={i}>{item}<br/></ span>)}
             <br/>
             {get(data, 'public_config_tokens.tokens', []).map(({value, quantity}, index) => {
-              return <>
+              return <span key={index}>
                 {value * quantity} GBP for {quantity} token{quantity != 1 && 's'}{get(data, 'public_config_tokens.tokens', []).length - 1 == index ? '.' : ','}<br/>
-              </>
+              </span>
             })}
             Tokens are valid for {get(data, 'public_config_tokens.token_expiry_days', 'loading')} days from purchase and are non-refundable. Tokens can be transferred between members.<br/>
             
@@ -203,7 +204,7 @@ export const Tokens = () => {
               <TableCell>Owner</TableCell>
               <TableCell>Creater</TableCell>
               <TableCell>Expires on</TableCell>
-              <TableCell>Used on</TableCell>
+              <TableCell>Training on</TableCell>
               <TableCell>Value</TableCell>
             </TableRow>
           </TableHead>
@@ -222,7 +223,7 @@ export const Tokens = () => {
                   <TableCell sx={sx}>{token.member.name}</TableCell>
                   <TableCell sx={sx}>{token.tr_member?.name}</TableCell>
                   <TableCell sx={sx}>{token.expires_on}</TableCell>
-                  <TableCell sx={sx}>{token.used_on}</TableCell>
+                  <TableCell sx={sx}>{token.training_date}</TableCell>
                   <TableCell sx={sx}>{token.value}</TableCell>
                 </TableRow>)
               })
