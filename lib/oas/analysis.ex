@@ -39,24 +39,8 @@ defmodule Oas.Analysis do
     toDT = Timex.to_naive_datetime(Date.add(to, 1))
       |> DateTime.from_naive!("Etc/UTC")
 
-    # IO.puts("001")
-    # IO.inspect(fromDT)
-
-    # startOutstandingTokensQuery = from(t in Oas.Tokens.Token,
-    #   left_join: tr in assoc(t, :transaction),
-    #   where: t.expires_on > ^from and (t.used_on > ^from or is_nil(t.used_on))
-    #     and ((not(is_nil(tr.id)) and tr.when <= ^from )
-    #     or (is_nil(tr.id) and t.inserted_at < ^fromDT)),
-    #   select: sum(t.value)
-    # )
-    # startOutstandingTokens = startOutstandingTokensQuery |> Oas.Repo.one
-    # IO.inspect(Oas.Repo.to_sql(:all, startOutstandingTokensQuery))
-
     tokens = from(t in Oas.Tokens.Token,
       left_join: tr in assoc(t, :transaction),
-      # left_join: att in assoc(t, :attendance),
-      # left_join: tra in assoc(att, :training),
-      # preload: [transaction: tr, attendance: {att, [training: tra]}],
       preload: [transaction: tr],
       where: ((not(is_nil(tr.id)) and tr.when <= ^to )
         or (is_nil(tr.id) and t.inserted_at < ^toDT))
@@ -85,15 +69,19 @@ defmodule Oas.Analysis do
       endDate = 
       (token.used_on || token.expires_on)
       |> (&(case Date.compare(&1, to) do
-        :lt -> &1
-        :eq -> &1
+        :lt -> Date.add(&1, -1)
+        :eq -> Date.add(&1, -1)
         _ -> to
       end)).()
       
-      Date.range(startDate, endDate)
-        |> Enum.reduce(acc, fn (day, acc) -> 
-          Map.put(acc, day, Decimal.add(Map.get(acc, day, Decimal.new(0)), token.value))
-        end)
+      case Date.compare(startDate, endDate) do
+        :gt -> acc
+        _ ->
+          Date.range(startDate, endDate)
+            |> Enum.reduce(acc, fn (day, acc) -> 
+              Map.put(acc, day, Decimal.add(Map.get(acc, day, Decimal.new(0)), token.value))
+            end)
+      end
     end)
 
 
@@ -105,9 +93,6 @@ defmodule Oas.Analysis do
       }
     end)
 
-    # IO.puts("002")
-    # IO.inspect(out)
-
     out
   end
   def outstanding_attendance(from, to) do
@@ -116,8 +101,10 @@ defmodule Oas.Analysis do
       left_join: tok in assoc(att, :token),
       inner_join: tra in assoc(att, :training),
       preload: [token: tok, training: tra],
+      # inner_join: mem in assoc(tok, :member), # DEBUG ONLY
       where: tra.when <= ^to and
         (is_nil(tok.used_on) or tok.used_on >= ^from)
+        # and mem.id == ^1 # DEBUG ONLY
     ) |> Oas.Repo.all
 
     minValue = from(cto in Oas.Config.Tokens,
@@ -130,7 +117,7 @@ defmodule Oas.Analysis do
       
       endDate = case (attendance.token && attendance.token.used_on) do
         nil -> to
-        x -> x
+        x -> Date.add(x, -1)
       end
 
       value = case attendance.token do
@@ -138,14 +125,15 @@ defmodule Oas.Analysis do
         value -> minValue
       end
 
-      Date.range(startDate, endDate)
-        |> Enum.reduce(acc, fn (day, acc) ->
-          Map.put(acc, day, Decimal.sub(Map.get(acc, day, Decimal.new(0)), value ))
-        end)
+      case Date.compare(startDate, endDate) do
+        :gt -> acc
+        _ -> 
+          Date.range(startDate, endDate)
+            |> Enum.reduce(acc, fn (day, acc) ->
+              Map.put(acc, day, Decimal.sub(Map.get(acc, day, Decimal.new(0)), value ))
+            end)
+      end
     end)
-
-    # IO.puts("003")
-    # IO.inspect(attendance)
 
     out = Date.range(from, to)
     |> Enum.map(fn day -> 
