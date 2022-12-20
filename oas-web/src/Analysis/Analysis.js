@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useState } from '../utils/useState';
 import { Box, Button, FormControl, TextField, Container} from '@mui/material'
 import moment from 'moment';
-import { get } from 'lodash'
+import { get, round } from 'lodash'
 import { useQuery, gql } from '@apollo/client';
 import { useOutletContext } from 'react-router-dom'
 
@@ -76,15 +76,15 @@ export const Analysis = () => {
         <Box>
           <Box sx={{width: '100%'}}>
             <h3>Income (GBP):</h3>
-            <div>{get(data, 'analysis.transactions_income', 'Loading')}</div>
+            <div>{get(data, 'analysis.transactions_income') && round(get(data, 'analysis.transactions_income'), 2)}</div>
           </Box>
           <Box sx={{width: '100%'}}>
             <h3>Outgoing (GBP):</h3>
-            <div>{get(data, 'analysis.transactions_outgoing', 'Loading')}</div>
+            <div>{get(data, 'analysis.transactions_outgoing') && round(get(data, 'analysis.transactions_outgoing'), 2)}</div>
           </Box>
           <Box sx={{width: '100%'}}>
             <h3>Difference (GBP):</h3>
-            <div>{get(data, 'analysis.transactions_difference', 'Loading')}</div>
+            <div>{get(data, 'analysis.transactions_difference') && round(get(data, 'analysis.transactions_difference'), 2)}</div>
           </Box>
         </Box>
       </Container>
@@ -94,17 +94,17 @@ export const Analysis = () => {
 
         <Box sx={{width: '100%'}}>
           <h3>Total unused tokens:</h3>
-          <div>{get(data, 'analysis.unused_tokens', 'Loading')}</div>
+          <div>{get(data, 'analysis.unused_tokens') && round(get(data, 'analysis.unused_tokens'), 2)}</div>
         </Box>
 
         <Box sx={{width: '100%'}}>
           <h3>Total unused tokens amount (GBP):</h3>
-          <div>{get(data, 'analysis.unused_tokens_amount', 'Loading')}</div>
+          <div>{get(data, 'analysis.unused_tokens_amount') && round(get(data, 'analysis.unused_tokens_amount'), 2)}</div>
         </Box>
 
         <Box sx={{width: '100%'}}>
           <h3>Balance (GBP):</h3>
-          <div>{get(data, 'analysis.transactions_ballance', 'Loading')}</div>
+          <div>{get(data, 'analysis.transactions_ballance') && round(get(data, 'analysis.transactions_ballance'), 2)}</div>
         </Box>
       </Container>
     </Box>
