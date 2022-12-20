@@ -163,7 +163,7 @@ export const Members = () => {
         <Autocomplete
           id="status"
           value={filterData.status || []}
-          options={["member", "not_member", "temporary_member", "x_member"]}
+          options={["MEMBER", "NOT_MEMBER", "TEMPORARY_MEMBER", "X_MEMBER"]}
           renderInput={(params) => <TextField {...params} label="Status" />}
           multiple
           onChange={async (event, newValue, a, b, c, d) => {
