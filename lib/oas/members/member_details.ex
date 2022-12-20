@@ -30,8 +30,6 @@ defmodule Oas.Members.MemberDetails do
   end
 
   def changeset(memberDetails, params) do
-    IO.puts("301 memberDetails changeset")
-    IO.inspect(params)
     memberDetails
     |> cast(params, [:phone, :address, :dob, :agreed_to_tac, :nok_name, :nok_email, :nok_phone, :nok_address])
     |> validate_required([:agreed_to_tac, :phone, :address, :dob, :nok_name, :nok_email, :nok_phone, :nok_address])
