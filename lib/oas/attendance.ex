@@ -29,6 +29,9 @@ defmodule Oas.Attendance do
     :ok
   end
 
+  def maybe_send_warnings_email(%{email: nil}) do
+    # Do nothing
+  end
   def maybe_send_warnings_email(member) do
     lastTransaction = from(t in Oas.Transactions.Transaction, 
       order_by: [desc: t.when, desc: t.id],

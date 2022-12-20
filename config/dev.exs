@@ -9,9 +9,19 @@ import Config
 #   show_sensitive_data_on_connection_error: true,
 #   pool_size: 10
 
+# config :oas, Oas.Repo,
+#   database: System.get_env("DB_FILE") || "./dbs/sqlite-dev.db",
+#   backup_database: "./dbs/sqlite-backup"
 config :oas, Oas.Repo,
-  database: System.get_env("DB_FILE") || "./dbs/sqlite-dev.db",
-  backup_database: "./dbs/sqlite-backup"
+  # database: System.get_env("DB_FILE") || "./dbs/sqlite-dev.db",
+  # backup_database: "./dbs/sqlite-backup",
+  backup_database: "./dbs/pg-backup",
+  database: "oas-dev",
+  username: "postgres",
+  password: "Appleg567",
+  hostname: "localhost"
+
+config :oas, Oas.Mailer, adapter: Swoosh.Adapters.Local
 
 config :oas, Oas.Repo.Replica1,
   database: System.get_env("DB_FILE_REPLICA_1") || "./dbs/sqlite-dev-replica-1.db"

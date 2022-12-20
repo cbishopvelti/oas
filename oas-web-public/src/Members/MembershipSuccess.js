@@ -27,7 +27,7 @@ export const MembershipSuccess = () => {
     {has(data, 'public_bacs') && <>
       <p>To buy tokens please transfer money to:</p>
       <pre>
-      {get(data, 'public_bacs').map((item) => <>{item}<br/></>)}
+      {get(data, 'public_bacs').map((item, i) => <span style={{fontSize: "16px"}} key={i}>{item}<br/></span>)}
       </pre>
     </>}
     <p>5 GBP for 1 token,<br/>

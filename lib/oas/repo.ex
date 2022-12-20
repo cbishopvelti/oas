@@ -1,8 +1,8 @@
 defmodule Oas.Repo do
   use Ecto.Repo,
     otp_app: :oas,
-    # adapter: Ecto.Adapters.Postgres
-    adapter: Ecto.Adapters.SQLite3
+    adapter: Ecto.Adapters.Postgres
+    # adapter: Ecto.Adapters.SQLite3
 
   # @replicas [
   #   Oas.Repo.Replica1
@@ -21,22 +21,41 @@ defmodule Oas.Repo do
   # end
 
   def backup() do
-    %{pid: pid } = Ecto.Adapter.lookup_meta(Oas.Repo.get_dynamic_repo())
-
-    {:ok, conn} = Exqlite.Sqlite3.open(
-      Application.get_env(:oas, Oas.Repo)[:database]
-    )
-
     when1 = DateTime.utc_now() |> DateTime.to_iso8601()
 
-    {:ok, file} = File.open(Application.get_env(:oas, Oas.Repo)[:backup_database] <> "-" <> when1 <> ".db", [:write])
+    IO.puts("001")
+    IO.inspect(Oas.Repo.config())
 
-    {:ok, data} = Exqlite.Sqlite3.serialize(conn)
+    # Oas.Repo.__adapter__().structure_dump(
+    #   Application.get_env(:oas, Oas.Repo)[:backup_database] <> "-" <> when1 <> ".sql",
+    #   Oas.Repo.config()
+    # )
 
-    data
-    |> (&(IO.binwrite(file, &1))).()
-    
-    File.close(file)
-    Exqlite.Sqlite3.close(conn)
+    result = Oas.Repo.__adapter__().dump_cmd(
+      ["--file", Application.get_env(:oas, Oas.Repo)[:backup_database] <> "-" <> when1 <> ".sql"],
+      [],
+      Oas.Repo.config()
+    )
+    IO.puts("dump")
+    IO.inspect(result)
   end
+  # def backup() do
+  #   %{pid: pid } = Ecto.Adapter.lookup_meta(Oas.Repo.get_dynamic_repo())
+
+  #   {:ok, conn} = Exqlite.Sqlite3.open(
+  #     Application.get_env(:oas, Oas.Repo)[:database]
+  #   )
+
+  #   when1 = DateTime.utc_now() |> DateTime.to_iso8601()
+
+  #   {:ok, file} = File.open(Application.get_env(:oas, Oas.Repo)[:backup_database] <> "-" <> when1 <> ".db", [:write])
+
+  #   {:ok, data} = Exqlite.Sqlite3.serialize(conn)
+
+  #   data
+  #   |> (&(IO.binwrite(file, &1))).()
+    
+  #   File.close(file)
+  #   Exqlite.Sqlite3.close(conn)
+  # end
 end

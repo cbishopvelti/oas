@@ -74,7 +74,7 @@ export const MembershipForm = () => {
   `)
   let errors = get(error, 'graphQLErrors', [])
   errors = parseErrors(errors);
-  console.log("errors", errors);
+
   const register = (formData) => async () => {
     await mutation({
       variables: formData

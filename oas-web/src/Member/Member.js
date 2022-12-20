@@ -96,7 +96,7 @@ export const Member = () => {
   }
 
   const [mutate, {error, data: mutationData}] = useMutation(gql`mutation (
-    $id: Int, $name: String!, $email: String!,
+    $id: Int, $name: String!, $email: String,
     $is_active: Boolean,
     $is_admin: Boolean,
     $is_reviewer: Boolean,
@@ -145,7 +145,6 @@ export const Member = () => {
       </Stack>
       <FormControl fullWidth sx={{m: 2}}>
         <TextField
-          required
           id="email"
           label="Email"
           value={get(formData, "email", '')}

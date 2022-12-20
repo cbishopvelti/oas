@@ -54,7 +54,15 @@ defmodule Oas.Members.Member do
     member
     |> cast(attrs, [:email, :name, :is_active, :is_admin, :is_reviewer, :bank_account_name])
     |> validate_required([:name])
-    |> validate_email()
+    |> validate_null_email()
+  end
+
+  def validate_null_email(changeset) do
+    changeset
+    |> validate_format(:email, ~r/^[^\s]+@[^\s]+$/, message: "must have the @ sign and no spaces")
+    |> validate_length(:email, max: 160)
+    |> unsafe_validate_unique(:email, Oas.Repo)
+    |> unique_constraint(:email)
   end
 
   def validate_email(changeset) do

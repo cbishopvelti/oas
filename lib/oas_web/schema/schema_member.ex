@@ -158,13 +158,17 @@ defmodule OasWeb.Schema.SchemaMember do
     field :member, type: :memberWithPassword do
       arg :id, :integer
       arg :name, non_null(:string)
-      arg :email, non_null(:string)
+      arg :email, :string, default_value: false
       arg :bank_account_name, :string
       arg :is_active, :boolean
       arg :is_reviewer, :boolean
       arg :is_admin, :boolean
       arg :member_details, :member_details_arg
       resolve fn _parent, args, context ->
+        args = case Map.get(args, :email) do
+          false -> %{args | email: nil}
+          _ -> args
+        end
 
         toSave = case Map.get(args, :id) do
           nil ->
@@ -184,10 +188,9 @@ defmodule OasWeb.Schema.SchemaMember do
               x -> args
             end
             member |> Oas.Members.Member.changeset(attrs)
-        end        
+        end
 
         result = toSave
-        
         |> (&(case Map.get(args, :member_details) do
           nil -> &1
           _ -> Ecto.Changeset.cast_assoc(&1, :member_details)

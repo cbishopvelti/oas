@@ -1,0 +1,10 @@
+load database
+     from sqlite:///Users/chris/playground/oas/dbs/sqlite-dev.db
+     into pgsql://postgres:postgres@localhost:5432/oas-dev
+    
+with include drop, create tables, create indexes, reset sequences
+
+set work_mem to '16MB', maintenance_work_mem to '512 MB'
+
+CAST type text_datetime    to timestamp using sqlite-timestamp-to-timestamp;
+

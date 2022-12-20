@@ -49,6 +49,17 @@ C:\Users\chris\nginx-1.23.2\html
 C:\Users\chris\nginx-1.23.2\html-staging
 ```
 
+## Migrate to postgres
+
+create postgres instance
+
+```
+cd priv/repo
+pgloader pgloader-dev.load
+```
+run priv/repo/manual_migrate.sql
+
+
 
 ## Todo
 
