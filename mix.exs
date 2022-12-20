@@ -35,12 +35,12 @@ defmodule Oas.MixProject do
   defp deps do
     [
       {:bcrypt_elixir, "~> 3.0"},
-      {:phoenix, "~> 1.6.6"},
+      {:phoenix, "~> 1.6.15"},
       {:phoenix_ecto, "~> 4.4"},
-      {:ecto_sql, "~> 3.6"},
+      {:ecto_sql, "~> 3.9"},
       {:postgrex, ">= 0.0.0"},
-      {:ecto_sqlite3, "~> 0.8.2"},
-      {:exqlite, "~> 0.11.6"},
+      {:ecto_sqlite3, "~> 0.9.0"},
+      {:exqlite, "~> 0.12.0"},
       {:phoenix_html, "~> 3.0"},
       {:phoenix_live_reload, "~> 1.2"},
       {:phoenix_live_view, "~> 0.17.5"},
