@@ -20,24 +20,8 @@ defmodule OasWeb.Schema.SchemaToken do
 
   object :public_member do
     field :name, :string
-    field :member_status, :string do
+    field :member_status, :member_status do
       resolve &OasWeb.Schema.SchemaMember.member_status_resolver/3
-      # resolve fn args = %{id: id}, _, _ ->
-      #   when1 = case args do
-      #     %{member_status_when: when1} ->
-      #       when1
-      #     _ -> Date.utc_today()
-      #   end
-
-      #   member = from(m in Oas.Members.Member,
-      #     as: :member,
-      #     preload: [membership_periods: ^from(mp in Oas.Members.MembershipPeriod, where: mp.from <= ^when1 and mp.to >= ^when1)],
-      #     select: m,
-      #     where: m.id == ^id
-      #   ) |> Oas.Repo.one!
-      #   {_, membership_type} = Oas.Attendance.check_membership(member)
-      #   {:ok, membership_type}
-      # end
     end
   end
 
@@ -162,7 +146,6 @@ defmodule OasWeb.Schema.SchemaToken do
     field :public_tokens, type: list_of(:public_token) do
       arg :email, non_null(:string)
       resolve fn _, %{email: email}, _ ->
-
         member = from(
           m in Oas.Members.Member,
           where: m.email == ^email

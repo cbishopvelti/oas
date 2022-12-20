@@ -13,6 +13,13 @@ defmodule OasWeb.Schema.SchemaMember do
     field :agreed_to_tac, :boolean
   end
 
+  enum :member_status do
+    value :member
+    value :x_member
+    value :temporary_member
+    value :not_member
+  end
+
   def member_status_resolver(args = %{id: id}, _, _) do
     when1 = case args do
       %{member_status_when: when1} ->
@@ -74,7 +81,7 @@ defmodule OasWeb.Schema.SchemaMember do
       end
     end
 
-    field :member_status, :string do
+    field :member_status, :member_status do
       resolve &member_status_resolver/3
     end
   end
