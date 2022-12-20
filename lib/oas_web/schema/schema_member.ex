@@ -13,6 +13,23 @@ defmodule OasWeb.Schema.SchemaMember do
     field :agreed_to_tac, :boolean
   end
 
+  def member_status_resolver(args = %{id: id}, _, _) do
+    when1 = case args do
+      %{member_status_when: when1} ->
+        when1
+      _ -> Date.utc_today()
+    end
+
+    member = from(m in Oas.Members.Member,
+      as: :member,
+      preload: [membership_periods: ^from(mp in Oas.Members.MembershipPeriod, where: mp.from <= ^when1 and mp.to >= ^when1)],
+      select: m,
+      where: m.id == ^id
+    ) |> Oas.Repo.one!
+    {_, membership_type} = Oas.Attendance.check_membership(member)
+    {:ok, membership_type}
+  end
+
   object :member do
     field :id, :integer
     field :name, :string
@@ -58,22 +75,7 @@ defmodule OasWeb.Schema.SchemaMember do
     end
 
     field :member_status, :string do
-      resolve fn args = %{id: id}, _, _ ->
-        when1 = case args do
-          %{member_status_when: when1} ->
-            when1
-          _ -> Date.utc_today()
-        end
-
-        member = from(m in Oas.Members.Member,
-          as: :member,
-          preload: [membership_periods: ^from(mp in Oas.Members.MembershipPeriod, where: mp.from <= ^when1 and mp.to >= ^when1)],
-          select: m,
-          where: m.id == ^id
-        ) |> Oas.Repo.one!
-        {_, membership_type} = Oas.Attendance.check_membership(member)
-        {:ok, membership_type}
-      end
+      resolve &member_status_resolver/3
     end
   end
 

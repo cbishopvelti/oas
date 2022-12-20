@@ -62,6 +62,9 @@ defmodule OasWeb.Schema do
   def myMiddleware(middleware, %Absinthe.Type.Field{identifier: :public_tokens}, %Absinthe.Type.Object{identifier: :query}) do
     middleware
   end
+  def myMiddleware(middleware, %Absinthe.Type.Field{identifier: :public_member}, %Absinthe.Type.Object{identifier: :query}) do
+    middleware
+  end
   def myMiddleware(middleware, %Absinthe.Type.Field{identifier: :public_bacs}, %Absinthe.Type.Object{identifier: :query}) do
     middleware
   end

@@ -63,3 +63,15 @@ Save success
 ~~Login button~~
 
 ~~ Public used on -> Training date ~~
+
+public tokens remaining api return membership status.
+
+curl 'https://www.oxfordshireacrosociety.co.uk/api/graphql' \
+  -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36' \
+  -H 'accept: */*' \
+  -H 'content-type: application/json' \
+  --data-raw $'{"variables":{"email":"ben@britishacrobatics.org"},"query":"query ($email: String\u0021) {\\n  public_outstanding_attendance(email: $email) {\\n    id\\n    training_where {\\n      name\\n      __typename\\n    }\\n    when\\n    __typename\\n  }\\n  public_bacs(email: $email)\\n  public_tokens(email: $email) {\\n    id\\n    value\\n    expires_on\\n    used_on\\n    member {\\n      email\\n      name\\n      __typename\\n    }\\n    tr_member {\\n      email\\n      name\\n      __typename\\n    }\\n    training_date\\n    __typename\\n  }\\n  public_config_tokens {\\n    last_transaction_when\\n    token_expiry_days\\n    tokens {\\n      quantity\\n      value\\n      __typename\\n    }\\n    __typename\\n  }\\n}"}' \
+  --compressed
+
+Make emails optional.
+- Registration form merge
