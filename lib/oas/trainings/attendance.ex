@@ -9,6 +9,8 @@ defmodule Oas.Trainings.Attendance do
 
     belongs_to :inserted_by, Oas.Members.Member, foreign_key: :inserted_by_member_id
 
+    field :undo_until, :utc_datetime
+
     timestamps()
   end
 end

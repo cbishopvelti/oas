@@ -36,6 +36,7 @@ function App() {
   const { data, refetch } = useQuery(gql`
   query {
     user {
+      id,
       name,
       email,
       logout_link

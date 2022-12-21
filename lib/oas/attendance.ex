@@ -99,8 +99,20 @@ defmodule Oas.Attendance do
     attendance = %Oas.Trainings.Attendance{
       member_id: member_id,
       training_id: training_id,
-      inserted_by_member_id: inserted_by_member_id
-    } |> Oas.Repo.insert!
+      inserted_by_member_id: inserted_by_member_id,
+    }
+    |> (&( case member_id == inserted_by_member_id do
+      true ->
+        case Date.compare(Date.utc_today, training.when) do
+          :eq ->
+            IO.inspect(DateTime.add(DateTime.utc_now(), 60))
+            Map.put(&1, :undo_until, DateTime.add(DateTime.utc_now(), 60) |> DateTime.truncate(:second))
+          :lt -> Map.put(&1, :undo_until, Timex.to_datetime(training.when))
+          :gt -> &1
+        end
+      false -> &1
+    end)).()
+    |> Oas.Repo.insert!
 
     get_unsued_token_result = get_unused_token(member_id)
 

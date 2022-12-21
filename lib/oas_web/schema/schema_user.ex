@@ -3,6 +3,7 @@ defmodule OasWeb.Schema.SchemaUser do
   use Absinthe.Schema.Notation
 
   object :user do
+    field :id, :integer
     field :name, :string
     field :email, :string
     field :logout_link, :string
@@ -14,7 +15,8 @@ defmodule OasWeb.Schema.SchemaUser do
     field :when, :string
     field :attendance_id, :integer
     field :inserted_by_member_id, :integer
-    field :booked_at, :string
+    field :inserted_at, :string
+    field :undo_until, :string
   end
 
   object :user_queries do
@@ -23,6 +25,7 @@ defmodule OasWeb.Schema.SchemaUser do
         %{context: context} = conn
 
         {:ok, %{
+          id: Map.get(context, :current_member, %{}) |> Map.get(:id),
           name: Map.get(context, :current_member, %{}) |> Map.get(:name),
           email: Map.get(context, :current_member, %{}) |> Map.get(:email),
           logout_link: Map.get(context, :logout_link, %{})
@@ -38,10 +41,10 @@ defmodule OasWeb.Schema.SchemaUser do
           left_join: memb in assoc(atte, :member),
           preload: [:training_where, attendance: {atte, [member: memb]}],
           where: trai.when >= ^Date.utc_today() and 
-          (memb.id == ^id or is_nil(memb.id))
+          (memb.id == ^id or is_nil(memb.id)),
+          order_by: [desc: trai.when, desc: trai.id]
         ) |> Oas.Repo.all
         |> Enum.map(fn booking ->
-          IO.inspect(booking)
           %{
             id: Map.get(booking, :id),
             where: Map.get(booking, :training_where) |> Map.get(:name),
@@ -52,13 +55,26 @@ defmodule OasWeb.Schema.SchemaUser do
                 nil -> nil
                 x -> Map.get(x, :id)
               end,
-            booked_at: Map.get(booking, :inserted_at, nil),
-            inserted_by_member_id: Map.get(booking, :inserted_by, %{}) |> Map.get(:id)
+            inserted_by_member_id: Map.get(booking, :attendance, [])
+              |> List.first
+              |> case do
+                nil -> nil
+                x -> Map.get(x, :inserted_by_member_id)
+              end,
+            inserted_at: Map.get(booking, :attendance, [])
+              |> List.first
+              |> case do
+                nil -> nil
+                x -> Map.get(x, :inserted_at)
+              end,
+            undo_until: Map.get(booking, :attendance, [])
+              |> List.first
+              |> case do
+                nil -> nil
+                x -> Map.get(x, :undo_until)
+              end
           }
         end)
-
-        IO.puts("001")
-        IO.inspect(result)
 
         {:ok, result}
       end
