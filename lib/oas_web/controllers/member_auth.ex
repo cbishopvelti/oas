@@ -8,7 +8,7 @@ defmodule OasWeb.MemberAuth do
   # Make the remember me cookie valid for 60 days.
   # If you want bump or reduce this value, also change
   # the token expiry itself in MemberToken.
-  @max_age 60 * 60 * 24 * 60
+  @max_age 60 * 60 * 24 * 180
   @remember_me_cookie "_oas_web_member_remember_me"
   @remember_me_options [sign: true, max_age: @max_age, same_site: "Lax"]
   # @remember_me_options [sign: true, max_age: @max_age, same_site: "None"]

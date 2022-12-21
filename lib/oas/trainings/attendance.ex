@@ -7,6 +7,8 @@ defmodule Oas.Trainings.Attendance do
     belongs_to :member, Oas.Members.Member
     has_one :token, Oas.Tokens.Token
 
+    belongs_to :inserted_by, Oas.Members.Member, foreign_key: :inserted_by_member_id
+
     timestamps()
   end
 end

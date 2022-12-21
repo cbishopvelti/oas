@@ -118,8 +118,8 @@ defmodule OasWeb.Schema.SchemaAttendance do
     field :add_attendance, type: :add_attendance do
       arg :member_id, non_null(:integer)
       arg :training_id, non_null(:integer)
-      resolve fn _, args, _ ->
-        Oas.Attendance.add_attendance(args)
+      resolve fn _, args, %{context: %{current_member: %{id: inserted_by_member_id}}} ->
+        Oas.Attendance.add_attendance(args, %{inserted_by_member_id: inserted_by_member_id})
       end
     end
 

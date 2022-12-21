@@ -91,14 +91,15 @@ defmodule Oas.Attendance do
 
   end
 
-  def add_attendance(%{member_id: member_id, training_id: training_id}) do
+  def add_attendance(%{member_id: member_id, training_id: training_id}, %{inserted_by_member_id: inserted_by_member_id}) do
     training = Oas.Repo.get!(Oas.Trainings.Training, training_id)
     member = Oas.Repo.get!(Oas.Members.Member, member_id)
     |> Oas.Repo.preload([membership_periods: from(mp in Oas.Members.MembershipPeriod, where: mp.from <= ^training.when and mp.to >= ^training.when)])
 
     attendance = %Oas.Trainings.Attendance{
       member_id: member_id,
-      training_id: training_id
+      training_id: training_id,
+      inserted_by_member_id: inserted_by_member_id
     } |> Oas.Repo.insert!
 
     get_unsued_token_result = get_unused_token(member_id)

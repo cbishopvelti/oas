@@ -51,11 +51,13 @@ defmodule OasWeb.Schema do
 
     import_fields :attendance_mutations
 
+    import_fields :user_mutations
+
     import_fields :config_mutations
   end
   
 
-  # Public resolver
+  # Public resolvers
   def myMiddleware(middleware, %Absinthe.Type.Field{identifier: :public_register}, %Absinthe.Type.Object{identifier: :mutation}) do
     middleware
   end
@@ -74,6 +76,17 @@ defmodule OasWeb.Schema do
   def myMiddleware(middleware, %Absinthe.Type.Field{identifier: :public_config_tokens}, %Absinthe.Type.Object{identifier: :query}) do
     middleware
   end
+  # User resolvers
+  def myMiddleware(middleware, %Absinthe.Type.Field{identifier: :user}, %Absinthe.Type.Object{identifier: :query}) do
+    [OasWeb.Schema.MiddlewareUser | middleware]
+  end
+  def myMiddleware(middleware, %Absinthe.Type.Field{identifier: :user_bookings}, %Absinthe.Type.Object{identifier: :query}) do
+    [OasWeb.Schema.MiddlewareUser | middleware]
+  end
+  def myMiddleware(middleware, %Absinthe.Type.Field{identifier: :user_add_attendance}, %Absinthe.Type.Object{identifier: :mutation}) do
+    [OasWeb.Schema.MiddlewareUser | middleware]
+  end
+  
   # isAdmin and isReviewer can read data
   def myMiddleware(middleware, field, %Absinthe.Type.Object{identifier: identifier}) when identifier in [:query, :subscription] do
     [OasWeb.Schema.MiddlewareQuery | middleware]
