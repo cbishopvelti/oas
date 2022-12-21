@@ -114,12 +114,17 @@ export const AppMenu = ({ setOpen }) => {
         {get(data, "user.name")}
       </ListItemText>
     </ListItem>,
-    <MenuItem onClick={onClick} key="2">
+    <MenuItem onClick={onClick} key="2"
+      sx={{
+        padding: 0
+      }}
+    >
       <a
         style={{
           color: 'inherit', textDecoration: 'none', 
           display: 'inline-block',
-          width: '100%'
+          width: '100%',
+          padding: '6px 16px'
         }}
         href={`${process.env.REACT_APP_SERVER_URL}${get(data, "user.logout_link")}`}
         data-method="delete"
@@ -134,7 +139,8 @@ export const AppMenu = ({ setOpen }) => {
         color: theme.palette.error.contrastText,
         "&:hover": {
           backgroundColor: theme.palette.error.dark,
-        }
+        },
+        padding: 0
       }}
     >
       <a
@@ -142,7 +148,8 @@ export const AppMenu = ({ setOpen }) => {
           color: 'inherit',
           textDecoration: 'none',
           display: 'inline-block',
-          width: '100%'
+          width: '100%',
+          padding: '6px 16px'
         }}
         href={`${process.env.REACT_APP_SERVER_URL}/members/log_in`}>
         Login

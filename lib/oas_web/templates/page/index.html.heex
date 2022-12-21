@@ -1,8 +1,17 @@
 <div>
 <h2>Welcome</h2>
-<%= if @current_member do %>
-You are logged in, click <a href={@app_url}><%= @app_url %></a> to use the app
-<% else %>
-Please login to use the app
+<p>
+  This is OAS's authentication server. <%= if !@current_member do %>Please login<% end %>
+</p>
+<%= if @current_member != nil and (@current_member.is_admin or @current_member.is_reviewer) do %>
+  <p>
+  You are logged in, please goto <a href={@app_url}><%= @app_url %></a> to use the app.
+  </p>
 <% end %>
+<%= if @current_member != nil and @current_member.is_active do %>
+  <p>
+    You are logged in, please goto <a href={@public_url}><%= @public_url %></a>.
+  </p>
+<% end %>
+
 </div>

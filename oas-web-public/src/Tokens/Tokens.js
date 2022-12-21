@@ -17,7 +17,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { get, setWith, clone, has, chain, uniqBy } from 'lodash';
 import { useQuery, useLazyQuery, gql} from '@apollo/client';
 import moment from 'moment';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams, useOutletContext } from 'react-router-dom'
 
 
 const onChange = ({formData, setFormData, key}) => (event) => {
@@ -44,8 +44,11 @@ const isUsable = (member_email) => (token) => {
 
 export const Tokens = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const [outletContext] = useOutletContext();
   
-  const member_email = searchParams.get('email') || '';
+  const member_email = get(outletContext, 'user.email') || searchParams.get('email') || '';
+
+  console.log("001", outletContext)
 
   const [formData, setFormData] = useState({
     email: member_email
@@ -68,11 +71,9 @@ export const Tokens = () => {
         expires_on,
         used_on,
         member {
-          email,
           name
         },
         tr_member {
-          email,
           name
         },
         training_date
@@ -116,7 +117,7 @@ export const Tokens = () => {
   }
 
   return <Box>
-    <Box sx={{display: 'flex', alignItems: 'center'}}>
+    {!get(outletContext, 'user.email') && <Box sx={{display: 'flex', alignItems: 'center'}}>
       <FormControl sx={{flexGrow: 5}}>
         <TextField
           required
@@ -131,13 +132,13 @@ export const Tokens = () => {
       <FormControl>
         <Button onClick={onClick}>Find</Button>
       </FormControl>
-    </Box>
+    </Box>}
     <Box>
-    <Stack sx={{ width: '100%', mt: 2 }}>
-      {errors.length !== 0 && errors.map(({message}, i) => (
+    {errors.length !== 0 && <Stack sx={{ width: '100%', mt: 2 }}>
+      {errors.map(({message}, i) => (
         <Alert key={i} severity="error">{message}</Alert>
       ))}
-    </Stack>
+    </Stack>}
     
     {errors.length == 0 && has(data, 'public_tokens') &&
       <h3 style={style}>You have <b>{tokenCount}</b> token{tokenCount == 1 ? '' : 's'}.</h3>}
