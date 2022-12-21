@@ -68,11 +68,9 @@ export const Tokens = () => {
         expires_on,
         used_on,
         member {
-          email,
           name
         },
         tr_member {
-          email,
           name
         },
         training_date
