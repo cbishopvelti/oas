@@ -1,12 +1,13 @@
 defmodule Oas.Repo.Migrations.NullEmail do
   use Ecto.Migration
 
-  def up do
+  def change do
     alter table(:members) do
       modify :email, :string, null: true
     end
+  end
 
-    
+  # def up do
     # result = repo().query! "PRAGMA foreign_keys" # This should return 0, it returns 1 :(
     # IO.inspect(result)
 
@@ -35,8 +36,8 @@ defmodule Oas.Repo.Migrations.NullEmail do
 
 
     # drop table(:members_tmp6)
-  end
-  def down do
+  # end
+  # def down do
     
-  end
+  # end
 end

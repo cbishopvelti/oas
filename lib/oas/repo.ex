@@ -23,9 +23,6 @@ defmodule Oas.Repo do
   def backup() do
     when1 = DateTime.utc_now() |> DateTime.to_iso8601()
 
-    IO.puts("001")
-    IO.inspect(Oas.Repo.config())
-
     # Oas.Repo.__adapter__().structure_dump(
     #   Application.get_env(:oas, Oas.Repo)[:backup_database] <> "-" <> when1 <> ".sql",
     #   Oas.Repo.config()
@@ -36,8 +33,6 @@ defmodule Oas.Repo do
       [],
       Oas.Repo.config()
     )
-    IO.puts("dump")
-    IO.inspect(result)
   end
   # def backup() do
   #   %{pid: pid } = Ecto.Adapter.lookup_meta(Oas.Repo.get_dynamic_repo())
