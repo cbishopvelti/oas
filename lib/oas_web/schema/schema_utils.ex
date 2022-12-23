@@ -1,13 +1,24 @@
 defmodule OasWeb.Schema.SchemaUtils do
 
+  defp translate_error({msg, opts}) do
+    Enum.reduce(opts, msg, fn {key, value}, msg ->
+      token = "%{#{key}}"
+
+      case String.contains?(msg, token) do
+        true  -> String.replace(msg, token, to_string(value), global: false)
+        false -> msg
+      end
+    end)
+  end
+
   def handle_error(result) do
 
     case result do
       {:error, %{errors: errors}} ->
 
         outError = errors
-        |> Enum.map(fn {key, {value, _}} ->
-          message = Atom.to_string(key) <> ": " <> value
+        |> Enum.map(fn {key, {value, options}} ->
+          message = Atom.to_string(key) <> ": " <> translate_error({value, options})
           %{message: message, db_field: Atom.to_string(key)}
         end)
 

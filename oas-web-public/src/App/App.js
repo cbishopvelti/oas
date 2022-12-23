@@ -28,7 +28,6 @@ const DrawerHeader = styled('div')(({ theme }) => ({
 
 function App() {
   const [open, setOpen] = useState(false);
-  const [outletContext, setOutletContext] = useState({});
   const theme = useTheme();
   const matches = useMediaQuery(theme.breakpoints.down('md'));
   const routeMatchs = useMatches();
@@ -42,6 +41,9 @@ function App() {
       logout_link
     }
   }`)
+  const [outletContext, setOutletContext] = useState({
+    refetchUser: refetch
+  });
   useEffect(() => {
     refetch();
   }, [])

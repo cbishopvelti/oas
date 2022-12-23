@@ -16,7 +16,6 @@ defmodule OasWeb.Schema.SchemaUser do
     field :attendance_id, :integer
     field :inserted_by_member_id, :integer
     field :inserted_at, :string
-    field :undo_until, :string
   end
 
   object :user_queries do
@@ -42,7 +41,7 @@ defmodule OasWeb.Schema.SchemaUser do
           preload: [:training_where, attendance: {atte, [member: memb]}],
           where: trai.when >= ^Date.utc_today() and 
           (memb.id == ^id or is_nil(memb.id)),
-          order_by: [desc: trai.when, desc: trai.id]
+          order_by: [asc: trai.when, desc: trai.id]
         ) |> Oas.Repo.all
         |> Enum.map(fn booking ->
           %{
@@ -66,12 +65,6 @@ defmodule OasWeb.Schema.SchemaUser do
               |> case do
                 nil -> nil
                 x -> Map.get(x, :inserted_at)
-              end,
-            undo_until: Map.get(booking, :attendance, [])
-              |> List.first
-              |> case do
-                nil -> nil
-                x -> Map.get(x, :undo_until)
               end
           }
         end)
@@ -89,6 +82,24 @@ defmodule OasWeb.Schema.SchemaUser do
           %{training_id: training_id, member_id: member_id},
           %{inserted_by_member_id: member_id}
         )
+      end
+    end
+
+    field :user_undo_attendance, :success do
+      arg :attendance_id, non_null(:integer)
+      resolve fn _, %{attendance_id: attendance_id}, %{context: %{current_member: %{id: member_id}}} ->
+        result = from(atte in Oas.Trainings.Attendance, 
+          join: trai in assoc(atte, :training),
+          where: atte.id == ^attendance_id and
+            atte.inserted_by_member_id == ^member_id and atte.member_id == ^member_id
+            and ((trai.when > ^Date.utc_today) or
+            (trai.when == ^Date.utc_today and atte.inserted_at < ^DateTime.add(DateTime.utc_now(), 60)))
+        ) |> Oas.Repo.one
+
+        case result do
+          nil -> {:error, "Unable to undo"}
+          %{id: id} -> Oas.Attendance.delete_attendance(%{attendance_id: id})
+        end
       end
     end
   end

@@ -218,10 +218,13 @@ defmodule OasWeb.Schema.SchemaMember do
       arg :name, non_null(:string)
       arg :email, non_null(:string)
       arg :member_details, non_null(:member_details_arg)
+      arg :password, non_null(:string)
       resolve fn _, args, _ ->
-        length=12
-        password = :crypto.strong_rand_bytes(length) |> Base.encode64 |> binary_part(0, length)
-        attrs = Map.merge(%{password: password, is_active: true}, args)
+        # length=12
+        # password = :crypto.strong_rand_bytes(length) |> Base.encode64 |> binary_part(0, length)
+        # attrs = Map.merge(%{password: password, is_active: true}, args)
+
+        attrs = Map.merge(%{is_active: true}, args)
 
         result = %Oas.Members.Member{}
         |> Oas.Members.Member.registration_changeset(attrs)
@@ -229,11 +232,33 @@ defmodule OasWeb.Schema.SchemaMember do
         |> Oas.Repo.insert
         
         case result do
-          {:ok, result} -> {:ok, %{success: true}}
+          {:ok, result} ->
+            # Oas.Members.deliver_member_confirmation_instructions(
+            #   result,
+            #   &OasWeb.Router.Helpers.member_confirmation_url(conn, :edit, &1)
+            # )
+
+            # OasWeb.MemberAuth.log_in_member_gql(conn, result)
+
+            {:ok, %{success: true, public_register_member: result}}
           errored ->
             OasWeb.Schema.SchemaUtils.handle_error(errored)
         end
       end
+
+      middleware(fn resolution, ho ->
+        case resolution.value do
+          %{public_register_member: public_register_member} -> 
+            Map.update!(
+              resolution,
+              :context,
+              &Map.merge(&1, %{public_register_member: public_register_member})
+            )
+          _ ->
+            resolution
+        end
+      end)
+
     end
   end
 

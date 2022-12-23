@@ -36,7 +36,7 @@ config :oas, OasWeb.Endpoint,
     esbuild: {Esbuild, :install_and_run, [:default, ~w(--sourcemap=inline --watch)]}
   ]
 
-# config :oas, Oas.Mailer, adapter: Swoosh.Adapters.Local
+config :oas, Oas.Mailer, adapter: Swoosh.Adapters.Local
 # config :swoosh, :api_client, false
 
 

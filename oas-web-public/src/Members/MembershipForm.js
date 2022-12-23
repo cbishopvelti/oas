@@ -13,7 +13,7 @@ import {
 } from "@mui/material"
 import { get, setWith, clone, find, snakeCase, has } from 'lodash'
 import { useMutation, gql} from '@apollo/client'
-import { useNavigate, generatePath, createSearchParams } from 'react-router-dom'
+import { useNavigate, generatePath, createSearchParams, useOutletContext } from 'react-router-dom'
 
 const onChange = ({formData, setFormData, isCheckbox, key}) => (event) => {
   let value = event.target.value
@@ -62,19 +62,19 @@ const parseErrors = (errors) => {
 export const MembershipForm = () => {
   const defaultFormData = {member_details: {}};
   const [formData, setFormData] = useState(defaultFormData);
+  const [outletContext] = useOutletContext();
   const navigate = useNavigate();
 
 
   const [mutation, { error }] = useMutation(gql`
-    mutation ($name: String!, $email: String!, $member_details: MemberDetailsArg!) {
-      public_register (name: $name, email: $email, member_details: $member_details) {
+    mutation ($name: String!, $email: String!, $password: String!, $member_details: MemberDetailsArg!) {
+      public_register (name: $name, email: $email, member_details: $member_details, password: $password) {
         success
       }
     }
   `)
   let errors = get(error, 'graphQLErrors', [])
   errors = parseErrors(errors);
-  console.log("errors", errors);
   const register = (formData) => async () => {
     await mutation({
       variables: formData
@@ -85,6 +85,8 @@ export const MembershipForm = () => {
         email: formData.email
       }).toString()
     });
+
+    outletContext.refetchUser();
 
     navigate(path);
   }
@@ -120,6 +122,19 @@ export const MembershipForm = () => {
         onChange={onChange({formData, setFormData, key: "email"})}
         error={has(errors, "email")}
         helperText={get(errors, "email", []).join(" ")}
+      />
+    </FormControl>
+    
+    <FormControl fullWidth>
+      <TextField
+        required
+        id="password"
+        label="Password"
+        value={get(formData, "password", '')}
+        onChange={onChange({formData, setFormData, key: "password"})}
+        error={has(errors, "password")}
+        helperText={get(errors, "password", []).join(" ")}
+        type='password'
       />
     </FormControl>
 
