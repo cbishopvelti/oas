@@ -57,6 +57,8 @@ defmodule OasWeb.Schema.SchemaAttendance do
     field :token, :token
     field :training, :training
     field :warnings, list_of(:string)
+    field :inserted_at, :string
+    field :inserted_by_member_id, :integer
   end
 
   # import_types OasWeb.Schema.SchemaTypes
@@ -70,7 +72,10 @@ defmodule OasWeb.Schema.SchemaAttendance do
 
         results = from(a in Oas.Trainings.Attendance,
           inner_join: m in assoc(a, :member),
-          preload: [member: [membership_periods: ^from(mp in Oas.Members.MembershipPeriod, where: mp.from <= ^training.when and mp.to >= ^training.when)]],
+          preload: [
+            :training,
+            member: [membership_periods: ^from(mp in Oas.Members.MembershipPeriod, where: mp.from <= ^training.when and mp.to >= ^training.when)]
+          ],
           select: a,
           where: a.training_id == ^training_id,
           order_by: [desc: a.id]

@@ -100,7 +100,24 @@ defmodule OasWeb.Router do
     pipe_through :graphql
 
     forward "/graphql", Absinthe.Plug,
-      schema: OasWeb.Schema
+      schema: OasWeb.Schema,
+      before_send: {__MODULE__, :absinthe_before_send}
+
+    def absinthe_before_send(conn, %Absinthe.Blueprint{} = blueprint) do
+      if member = blueprint.execution.context[:public_register_member] do
+        Oas.Members.deliver_member_confirmation_instructions(
+          member,
+          &OasWeb.Router.Helpers.member_confirmation_url(conn, :edit, &1)
+        )
+
+        OasWeb.MemberAuth.log_in_member_gql(conn, member)
+      else
+        conn
+      end
+    end
+    def absinthe_before_send(conn, _) do
+      conn
+    end
     
     forward "/graphiql",
       Absinthe.Plug.GraphiQL,

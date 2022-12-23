@@ -18,13 +18,38 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { first } from 'lodash'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import { TrainingAttendanceRowUndo } from './TrainingAttendanceRowUndo';
+import moment from 'moment';
 
+const canUndo = (attendance) => {
+  if (attendance.inserted_by_member_id !== attendance.member.id) {
+    return false;
+  }
+
+  if (
+    moment().isBefore(attendance.training.when)
+  ) {
+    return moment(attendance.training.when)
+  }
+    
+  if (
+    moment(attendance.inserted_at).isSame(attendance.training.when, 'day') && 
+    moment().isBefore(moment(attendance.inserted_at).add(60, 'seconds'))
+  ) {
+    return moment(attendance.inserted_at).add(60, 'seconds')
+  } 
+  return false;
+}
 
 export const TrainingAttendanceRow = ({
   attendance,
-  deleteAttendanceClick
+  deleteAttendanceClick,
+  refetch
 }) => {
   const [open, setOpen] = useState(false);
+  const [state, setState] = useState({update: 0})
+
+  const expires = canUndo(attendance);
 
   return <>
     <StyledTableRow className={`${attendance.errors && 'errors'} ${attendance.warnings && 'warnings'}`} key={attendance.id}>
@@ -48,6 +73,7 @@ export const TrainingAttendanceRow = ({
             >
           {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
         </IconButton>}
+        {expires && <TrainingAttendanceRowUndo state={state} setState={setState} expires={expires} attendance={attendance} refetch={refetch} />}
       </TableCell>
     </StyledTableRow>
     {attendance.warnings && <StyledTableRow className={`${attendance.errors && 'errors'} ${attendance.warnings && 'warnings'}`}>

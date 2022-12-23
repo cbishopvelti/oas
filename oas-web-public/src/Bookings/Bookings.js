@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   Box, TableContainer, Table, TableHead,
   TableBody, TableCell, TableRow, Button
@@ -19,16 +20,26 @@ const canUndo = ({
   }
 
   if (
-    moment().isBefore(booking.undo_until)
+    moment().isBefore(booking.when)
   ) {
-    // return moment(booking.when).diff(moment(), 'seconds')
-    return moment(booking.undo_until)
+    return moment(booking.when)
   }
+
+  if (
+    moment(booking.inserted_at).isSame(booking.when, 'day') && 
+    moment().isBefore(moment(booking.inserted_at).add(60, 'seconds'))
+  ) {
+    return moment(booking.inserted_at).add(60, 'seconds')
+  }
+
   
   return false;
 }
 
 export const Bookings = () => {
+  const [state, setState] = useState({
+    update: 0
+  })
   const [{user}] = useOutletContext();
 
   // List of upcoming trainings
@@ -40,8 +51,7 @@ export const Bookings = () => {
         when,
         attendance_id,
         inserted_by_member_id,
-        inserted_at,
-        undo_until
+        inserted_at
       }
     }
   `);
@@ -64,10 +74,26 @@ export const Bookings = () => {
     refetch();
   }
 
+  const [undoMutation] = useMutation(gql`
+    mutation($attendance_id: Int!) {
+      user_undo_attendance(attendance_id: $attendance_id) {
+        success
+      }
+    }
+  `)
+  const undo = (attendance_id) => async(event) => {
+    await undoMutation({
+      variables: {
+        attendance_id
+      }
+    })
+    refetch();
+  }
+
   return <Box>
     <h2>My Bookings</h2>
-    {!has(data, "user_bookings") && <p>No upcoming jams/trainings</p>}
-    {has(data, "user_bookings") && <TableContainer><Table>
+    {!has(data, "user_bookings") || get(data, "user_bookings", []).length == 0 && <p>No upcoming events</p>}
+    {has(data, "user_bookings") && get(data, "user_bookings", []).length != 0 && <TableContainer><Table>
       <TableHead>
         <TableRow>
           <TableCell>Where</TableCell>
@@ -85,6 +111,9 @@ export const Bookings = () => {
               {user && canUndo({user})(training) && <UndoButton
                 refetch={refetch}
                 expires={canUndo({user})(training)}
+                state={state}
+                setState={setState}
+                onClick={undo(training.attendance_id)}
               >Undo</UndoButton>}
               {training.attendance_id && user && !canUndo({user})(training) && <Button disabled={true} sx={{width: '100%'}} color="success">Attending</Button>}
             </TableCell>

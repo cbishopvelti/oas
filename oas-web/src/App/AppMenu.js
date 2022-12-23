@@ -38,7 +38,7 @@ export const AppMenu = ({ setOpen }) => {
     }
   }
 
-  const { data, refetch } = useQuery(gql`
+  const { data, loading, refetch } = useQuery(gql`
   query {
     user {
       name,

@@ -39,6 +39,11 @@ export const TrainingAttendance = ({trainingId, setAttendance}) => {
         email,
         token_count,
         member_status
+      },
+      inserted_at,
+      inserted_by_member_id,
+      training {
+        when
       }
     }
   }`, {
@@ -149,7 +154,7 @@ export const TrainingAttendance = ({trainingId, setAttendance}) => {
           <TableBody>
             {
               (attendance || []).map((attendance, i) => (
-                <TrainingAttendanceRow key={i} attendance={attendance} deleteAttendanceClick={deleteAttendanceClick} />
+                <TrainingAttendanceRow key={i} attendance={attendance} deleteAttendanceClick={deleteAttendanceClick} refetch={refetch} />
               ))
             }
           </TableBody>

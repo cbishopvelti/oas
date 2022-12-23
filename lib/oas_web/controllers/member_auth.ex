@@ -36,6 +36,16 @@ defmodule OasWeb.MemberAuth do
     |> maybe_write_remember_me_cookie(token, params)
     |> redirect(to: member_return_to || signed_in_path(conn))
   end
+  def log_in_member_gql(conn, member, params \\ %{}) do
+    token = Members.generate_member_session_token(member)
+    member_return_to = get_session(conn, :member_return_to)
+
+    conn
+    |> renew_session()
+    |> put_session(:member_token, token)
+    |> put_session(:live_socket_id, "members_sessions:#{Base.url_encode64(token)}")
+    |> maybe_write_remember_me_cookie(token, params)
+  end
 
   defp maybe_write_remember_me_cookie(conn, token, %{"remember_me" => "true"}) do
     put_resp_cookie(conn, @remember_me_cookie, token, @remember_me_options)

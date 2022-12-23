@@ -1,14 +1,14 @@
 <div>
 <h2>Welcome</h2>
 <p>
-  This is OAS's authentication server. <%= if !@current_member do %>Please login<% end %>
+  This is OAS's authentication server. <%= if !@current_member do %>Please login or <a href={@public_url <> "/register"}>register</a><% end %>
 </p>
-<%= if @current_member != nil and (@current_member.is_admin or @current_member.is_reviewer) do %>
+<%= if (@current_member != nil) and (@current_member.is_admin == true or @current_member.is_reviewer == true) do %>
   <p>
   You are logged in, please goto <a href={@app_url}><%= @app_url %></a> to use the app.
   </p>
 <% end %>
-<%= if @current_member != nil and @current_member.is_active do %>
+<%= if (@current_member != nil) and @current_member.is_active do %>
   <p>
     You are logged in, please goto <a href={@public_url}><%= @public_url %></a>.
   </p>

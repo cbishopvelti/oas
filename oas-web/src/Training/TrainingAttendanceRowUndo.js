@@ -1,15 +1,14 @@
-import { Button } from "@mui/material"
-import { useEffect, useState } from "react";
+import { useState, useEffect } from 'react';
 import moment from 'moment';
-import { padStart } from 'lodash'
+import { Box } from '@mui/material'
+import { padStart } from 'lodash';
 
-
-export const UndoButton = ({
-  expires,
+export const TrainingAttendanceRowUndo = ({
+  attendance,
   refetch,
+  expires,
   state,
-  setState,
-  onClick
+  setState
 }) => {
   const [countdown, setCountdown] = useState({});
 
@@ -39,7 +38,7 @@ export const UndoButton = ({
     }
   }, []);
 
-  return <Button sx={{width: '100%'}} color="warning" onClick={onClick}>
-    {countdown.hours}:{countdown.minutes}:{countdown.seconds} Undo
-  </Button>
+  return <Box sx={{display: 'inline-block'}}>
+    {countdown.hours}:{countdown.minutes}:{countdown.seconds}
+  </Box>
 }
