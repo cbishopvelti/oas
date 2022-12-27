@@ -38,7 +38,7 @@ docker run -it -d `
 -p 5000:4000 -p 4999:3999 -p 4998:3998 `
 -v D:/oas-dbs:/dbs `
 -v C:/oas-dbs-staging-backup:/dbs-backup `
-chrisjbishop155/oas:latest
+chrisjbishop155/oas:booking
 
 Certs
 ```
