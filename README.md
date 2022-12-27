@@ -30,6 +30,7 @@ docker run -it -d `
 --name=oas-staging `
 -e DANGEROUSLY_DISABLE_HOST_CHECK=true `
 -e REACT_APP_ADMIN_URL="https://admin.staging.oxfordshireacrosociety.co.uk" `
+-e REACT_APP_PUBLIC_URL="https://www.staging.oxfordshireacrosociety.co.uk" `
 -e REACT_APP_SERVER_URL="https://server.staging.oxfordshireacrosociety.co.uk" `
 -e REACT_APP_PUBLIC_URL="https://www.staging.oxfordshireacrosociety.co.uk" `
 -e DOMAIN=".staging.oxfordshireacrosociety.co.uk" `
@@ -38,7 +39,7 @@ docker run -it -d `
 -p 5000:4000 -p 4999:3999 -p 4998:3998 `
 -v D:/oas-dbs:/dbs `
 -v C:/oas-dbs-staging-backup:/dbs-backup `
-chrisjbishop155/oas:latest
+chrisjbishop155/oas:booking
 
 Certs
 ```
@@ -73,5 +74,30 @@ curl 'https://www.oxfordshireacrosociety.co.uk/api/graphql' \
   --data-raw $'{"variables":{"email":"ben@britishacrobatics.org"},"query":"query ($email: String\u0021) {\\n  public_outstanding_attendance(email: $email) {\\n    id\\n    training_where {\\n      name\\n      __typename\\n    }\\n    when\\n    __typename\\n  }\\n  public_bacs(email: $email)\\n  public_tokens(email: $email) {\\n    id\\n    value\\n    expires_on\\n    used_on\\n    member {\\n      email\\n      name\\n      __typename\\n    }\\n    tr_member {\\n      email\\n      name\\n      __typename\\n    }\\n    training_date\\n    __typename\\n  }\\n  public_config_tokens {\\n    last_transaction_when\\n    token_expiry_days\\n    tokens {\\n      quantity\\n      value\\n      __typename\\n    }\\n    __typename\\n  }\\n}"}' \
   --compressed
 
+curl 'https://server.oxfordshireacrosociety.co.uk/api/graphql' \
+  -H 'accept: application/json' \
+  -H 'content-type: application/json' \
+  --data-raw '{"query":"query {\n  publicMember (email:\"chrisjbishop155@hotmail.com\") {\n    memberStatus\n  }\n}","variables":null}' \
+  --compressed
+
+curl 'chrome-extension://fmkadmapgofadopljbjfkapdkoienihi/build/react_devtools_backend.js' \
+  -H 'Referer;' \
+  -H 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36' \
+  --compressed ;
+
+curl 'https://server.oxfordshireacrosociety.co.uk/api/graphql' \
+  -H 'accept: application/json' \
+  -H 'content-type: application/json' \
+  --data-raw $'{"query":"query ($email:String\u0021) {\\n  publicMember (email:$email) {\\n    memberStatus\\n  }\\n}","variables":{"email":"chrisjbishop155@hotmail.com"}}' \
+  --compressed
+
 Make emails optional.
 - Registration form merge
+
+## Add tokens
+
+%Oas.Tokens.Token{
+  member_id: 29,
+  expires_on: Date.add(Date.utc_today(), 365),
+  value: 4.5
+} |> Oas.Repo.insert()
