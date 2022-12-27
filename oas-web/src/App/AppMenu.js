@@ -133,7 +133,7 @@ export const AppMenu = ({ setOpen }) => {
         Logout
       </a>
     </MenuItem>]}
-    {!get(data, "user") && <MenuItem onClick={onClick}
+    {!get(data, "user") && !loading && <MenuItem onClick={onClick}
       sx={{
         backgroundColor: theme.palette.error.main,
         color: theme.palette.error.contrastText,
