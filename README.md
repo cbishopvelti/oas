@@ -45,28 +45,24 @@ Certs
 certbot certonly --webroot
 server.oxfordshireacrosociety.co.uk admin.oxfordshireacrosociety.co.uk www.oxfordshireacrosociety.co.uk
 server.staging.oxfordshireacrosociety.co.uk admin.staging.oxfordshireacrosociety.co.uk www.staging.oxfordshireacrosociety.co.uk
-C:\Users\chris\nginx-1.23.2\html
+C:\Users\chris\nginx-1.23.2\htlm
 C:\Users\chris\nginx-1.23.2\html-staging
 ```
+
+
 
 
 ## Todo
 
 Save success
 
-~~ make analysis use the same filter state ~~
-
-~~ Make prices text pulled from database ~~
-
-~~ Add warning for manual duplicate transaction. ~~
-
-~~Login button~~
-
-~~ Public used on -> Training date ~~
-
-public tokens remaining api return membership status.
-
 Make emails optional.
 - Registration form merge
+This is hard due to https://stackoverflow.com/questions/74862749/in-ecto-migration-is-there-a-way-to-rename-a-table-without-updating-the-constrai?noredirect=1#comment132116590_74862749
 
-Registration success page, until date
+
+
+
+
+
+
