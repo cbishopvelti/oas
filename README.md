@@ -60,7 +60,7 @@ Make emails optional.
 - Registration form merge
 This is hard due to https://stackoverflow.com/questions/74862749/in-ecto-migration-is-there-a-way-to-rename-a-table-without-updating-the-constrai?noredirect=1#comment132116590_74862749
 
-
+Put booking behind configuration
 
 
 
