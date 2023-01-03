@@ -94,8 +94,14 @@ defmodule Oas.Attendance do
   def add_attendance(%{member_id: member_id, training_id: training_id}) do
     training = Oas.Repo.get!(Oas.Trainings.Training, training_id)
     member = Oas.Repo.get!(Oas.Members.Member, member_id)
-    |> Oas.Repo.preload([membership_periods: from(mp in Oas.Members.MembershipPeriod, where: mp.from <= ^training.when and mp.to >= ^training.when)])
+    |> Oas.Repo.preload([
+      membership_periods: from(
+        mp in Oas.Members.MembershipPeriod,
+        where: mp.from <= ^training.when and mp.to >= ^training.when
+      )
+    ])
 
+    # FIX DEBT
     attendance = %Oas.Trainings.Attendance{
       member_id: member_id,
       training_id: training_id
@@ -149,6 +155,7 @@ defmodule Oas.Attendance do
   end
 
   def get_token_amount(%{member_id: member_id}) do
+
     debtAttendances = from(a in Oas.Trainings.Attendance,
       left_join: t in assoc(a, :token), on: t.member_id == ^member_id,
       where: a.member_id == ^member_id and is_nil(t.id),
@@ -167,6 +174,7 @@ defmodule Oas.Attendance do
     case {debtAttendances, creditTokens} do
       {x, 0} -> -x
       {0, x} -> x
+      # {x, y} -> -x
     end
   end
 
@@ -177,6 +185,8 @@ defmodule Oas.Attendance do
     when1: when1,
     value: value
   }) do
+    # FIX DEBT
+    config = from(cc in Oas.Config.Config, select: cc) |> Oas.Repo.one
     debtAttendances = from(a in Oas.Trainings.Attendance,
       left_join: to in assoc(a, :token), on: to.member_id == ^member_id,
       inner_join: tr in assoc(a, :training),
@@ -186,8 +196,6 @@ defmodule Oas.Attendance do
       order_by: [asc: tr.when, asc: tr.id],
       limit: ^quantity
     ) |> Oas.Repo.all
-
-    config = from(cc in Oas.Config.Config, select: cc) |> Oas.Repo.one
 
     token = %Oas.Tokens.Token{
       member_id: member_id,
@@ -211,7 +219,8 @@ defmodule Oas.Attendance do
 
 
   def transfer_token(%{member_id: member_id, token: token}) do
-
+    
+    # FIX DEBT
     {attendanceId, when1} = from(a in Oas.Trainings.Attendance,
       left_join: to in assoc(a, :token), on: to.member_id == ^member_id,
       inner_join: tr in assoc(a, :training),
@@ -237,11 +246,20 @@ defmodule Oas.Attendance do
       select: count(m.id)
     ) |> Oas.Repo.one
 
+    config = from(c in Oas.Config.Config, select: c)
+      |> Oas.Repo.one
+
     if (
-      result > 3
+      result > config.temporary_trainings
     ) do
       {
-        Map.put(member, :warnings, [member.name <> " has attended " <> to_string(result) <> " sessions but is not a member" | Map.get(member, :warnings, [])]),
+        Map.put(member, :warnings, [member.name <> " has attended " <> to_string(result)
+          <> " session"
+          <> case result do
+            1 -> ""
+            _ -> "s"
+          end
+          <> " but is not a member" | Map.get(member, :warnings, [])]),
         :not_member
       }
     else

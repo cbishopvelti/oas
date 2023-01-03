@@ -35,7 +35,9 @@ export const ConfigTokens = () => {
         quantity
       },
       config_config {
-        token_expiry_days
+        token_expiry_days,
+        temporary_trainings,
+        free_trainings
       }
     }
   `);
@@ -55,8 +57,8 @@ export const ConfigTokens = () => {
   `)
 
   const [saveGlobalMutation, {error: error2}] = useMutation(gql`
-    mutation($token_expiry_days: Int) {
-      save_config_config(token_expiry_days: $token_expiry_days) {
+    mutation($token_expiry_days: Int, $temporary_trainings: Int, $free_trainings: Int) {
+      save_config_config(token_expiry_days: $token_expiry_days, temporary_trainings: $temporary_trainings, free_trainings: $free_trainings) {
         id
       }
     }
@@ -98,7 +100,8 @@ export const ConfigTokens = () => {
     await saveGlobalMutation({
       variables: {
         ...globalFormData,
-        token_expiry_days: parseInt(globalFormData.token_expiry_days)
+        token_expiry_days: parseInt(globalFormData.token_expiry_days),
+        temporary_trainings: parseInt(globalFormData.temporary_trainings)
       }
     })
   }
@@ -115,6 +118,17 @@ export const ConfigTokens = () => {
           <Alert key={i} sx={{m:2}} severity="error">{message}</Alert>
         ))}
       </Stack>
+      <FormControl fullWidth sx={{mb: 2}}>
+        <TextField
+            label="Trainings someone is allowed to attend before they need membership"
+            value={get(globalFormData, "temporary_trainings", '')}
+            type="number"
+            pattern='[0-9]*'
+            onChange={onChange({formData: globalFormData, setFormData: setGlobalFormData, key: "temporary_trainings"})}
+            error={has(errors, "temporary_trainings")}
+            helperText={get(errors, 'temporary_trainings', []). join(" ")}
+            />
+      </FormControl>
       <FormControl fullWidth>
         <TextField
             label="Token Expiry Days"
