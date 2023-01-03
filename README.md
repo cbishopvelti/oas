@@ -55,44 +55,14 @@ C:\Users\chris\nginx-1.23.2\html-staging
 
 Save success
 
-~~ make analysis use the same filter state ~~
-
-~~ Make prices text pulled from database ~~
-
-~~ Add warning for manual duplicate transaction. ~~
-
-~~Login button~~
-
-~~ Public used on -> Training date ~~
-
 public tokens remaining api return membership status.
-
-curl 'https://www.oxfordshireacrosociety.co.uk/api/graphql' \
-  -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36' \
-  -H 'accept: */*' \
-  -H 'content-type: application/json' \
-  --data-raw $'{"variables":{"email":"ben@britishacrobatics.org"},"query":"query ($email: String\u0021) {\\n  public_outstanding_attendance(email: $email) {\\n    id\\n    training_where {\\n      name\\n      __typename\\n    }\\n    when\\n    __typename\\n  }\\n  public_bacs(email: $email)\\n  public_tokens(email: $email) {\\n    id\\n    value\\n    expires_on\\n    used_on\\n    member {\\n      email\\n      name\\n      __typename\\n    }\\n    tr_member {\\n      email\\n      name\\n      __typename\\n    }\\n    training_date\\n    __typename\\n  }\\n  public_config_tokens {\\n    last_transaction_when\\n    token_expiry_days\\n    tokens {\\n      quantity\\n      value\\n      __typename\\n    }\\n    __typename\\n  }\\n}"}' \
-  --compressed
-
-curl 'https://server.oxfordshireacrosociety.co.uk/api/graphql' \
-  -H 'accept: application/json' \
-  -H 'content-type: application/json' \
-  --data-raw '{"query":"query {\n  publicMember (email:\"chrisjbishop155@hotmail.com\") {\n    memberStatus\n  }\n}","variables":null}' \
-  --compressed
-
-curl 'chrome-extension://fmkadmapgofadopljbjfkapdkoienihi/build/react_devtools_backend.js' \
-  -H 'Referer;' \
-  -H 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36' \
-  --compressed ;
-
-curl 'https://server.oxfordshireacrosociety.co.uk/api/graphql' \
-  -H 'accept: application/json' \
-  -H 'content-type: application/json' \
-  --data-raw $'{"query":"query ($email:String\u0021) {\\n  publicMember (email:$email) {\\n    memberStatus\\n  }\\n}","variables":{"email":"chrisjbishop155@hotmail.com"}}' \
-  --compressed
 
 Make emails optional.
 - Registration form merge
+- HARD due to https://stackoverflow.com/questions/74862749/in-ecto-migration-is-there-a-way-to-rename-a-table-without-updating-the-constrai?noredirect=1#comment132116590_74862749
+
+Configurable tempory member sessions.
+- Free sessions
 
 ## Add tokens
 
@@ -101,3 +71,5 @@ Make emails optional.
   expires_on: Date.add(Date.utc_today(), 365),
   value: 4.5
 } |> Oas.Repo.insert()
+
+
