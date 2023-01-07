@@ -21,7 +21,10 @@ import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import { TrainingAttendanceRowUndo } from './TrainingAttendanceRowUndo';
 import moment from 'moment';
 
-const canUndo = (attendance) => {
+const canUndo = (attendance, {enable_booking}) => {
+  if (!enable_booking) {
+    return false;
+  }
   if (attendance.inserted_by_member_id !== attendance.member.id) {
     return false;
   }
@@ -44,12 +47,13 @@ const canUndo = (attendance) => {
 export const TrainingAttendanceRow = ({
   attendance,
   deleteAttendanceClick,
-  refetch
+  refetch,
+  config
 }) => {
   const [open, setOpen] = useState(false);
   const [state, setState] = useState({update: 0})
 
-  const expires = canUndo(attendance);
+  const expires = canUndo(attendance, config);
 
   return <>
     <StyledTableRow className={`${attendance.errors && 'errors'} ${attendance.warnings && 'warnings'}`} key={attendance.id}>

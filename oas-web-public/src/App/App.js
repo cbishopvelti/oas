@@ -32,15 +32,21 @@ function App() {
   const matches = useMediaQuery(theme.breakpoints.down('md'));
   const routeMatchs = useMatches();
 
-  const { data, refetch } = useQuery(gql`
+  const { data, refetch, loading } = useQuery(gql`
   query {
     user {
       id,
       name,
       email,
       logout_link
+    },
+    public_config_config {
+      enable_booking
     }
   }`)
+
+  const enableBooking = get(data, 'public_config_config.enable_booking', false);
+
   const [outletContext, setOutletContext] = useState({
     refetchUser: refetch
   });
@@ -50,7 +56,8 @@ function App() {
   useEffect(() => {
     setOutletContext({
       ...outletContext,
-      user: get(data, 'user')
+      user: get(data, 'user'),
+      enableBooking: enableBooking
     })
   }, [data])
 
@@ -104,59 +111,61 @@ function App() {
               <MenuItem component={NavLink} end to={`/`}>
                 <ListItemText>Home</ListItemText>
               </MenuItem>
-              {!get(data, 'user') && <MenuItem component={NavLink} to={'/register'}>
+              {(!enableBooking || !get(data, 'user')) && <MenuItem component={NavLink} to={'/register'}>
                 <ListItemText>Register</ListItemText>
               </MenuItem>}
               <MenuItem component={NavLink} to={'/tokens'}>
                 <ListItemText>My Tokens</ListItemText>
               </MenuItem>
-              {get(data, 'user') && <MenuItem component={NavLink} to={'/bookings'}>
+              {enableBooking && get(data, 'user') && <MenuItem component={NavLink} to={'/bookings'}>
                 <ListItemText>My Bookings</ListItemText>
               </MenuItem>}
 
-              <Divider />
+              {enableBooking && <>
+                <Divider />
 
-              {!!get(data, "user") && [<ListItem key="1">
-                <ListItemText>
-                  {get(data, "user.name")}
-                </ListItemText>
-              </ListItem>,
-              <MenuItem onClick={onClick} key="2"
-                sx={{
-                  padding: 0
-                }}
-              >
-                <a
-                  style={{
-                    color: 'inherit', textDecoration: 'none', 
-                    display: 'inline-block',
-                    width: '100%',
-                    padding: '6px 16px'
+                {!!get(data, "user") && [<ListItem key="1">
+                  <ListItemText>
+                    {get(data, "user.name")}
+                  </ListItemText>
+                </ListItem>,
+                <MenuItem onClick={onClick} key="2"
+                  sx={{
+                    padding: 0
                   }}
-                  href={`${process.env.REACT_APP_SERVER_URL}${get(data, "user.logout_link")}`}
-                  data-method="delete"
-                  rel="nofollow"
-                  >
-                  Logout
-                </a>
-              </MenuItem>]}
-              {!get(data, "user") && <MenuItem onClick={onClick}
-                sx={{
-                  padding: 0
-                }}
-              >
-                <a
-                  style={{
-                    color: 'inherit',
-                    textDecoration: 'none',
-                    display: 'inline-block',
-                    width: '100%',
-                    padding: '6px 16px'
+                >
+                  <a
+                    style={{
+                      color: 'inherit', textDecoration: 'none', 
+                      display: 'inline-block',
+                      width: '100%',
+                      padding: '6px 16px'
+                    }}
+                    href={`${process.env.REACT_APP_SERVER_URL}${get(data, "user.logout_link")}`}
+                    data-method="delete"
+                    rel="nofollow"
+                    >
+                    Logout
+                  </a>
+                </MenuItem>]}
+                {!get(data, "user") && <MenuItem onClick={onClick}
+                  sx={{
+                    padding: 0
                   }}
-                  href={`${process.env.REACT_APP_SERVER_URL}/members/log_in`}>
-                  Login
-                </a>
-              </MenuItem>}
+                >
+                  <a
+                    style={{
+                      color: 'inherit',
+                      textDecoration: 'none',
+                      display: 'inline-block',
+                      width: '100%',
+                      padding: '6px 16px'
+                    }}
+                    href={`${process.env.REACT_APP_SERVER_URL}/members/log_in`}>
+                    Login
+                  </a>
+                </MenuItem>}
+              </>}
             </MenuList>
           </div>
         </Drawer>

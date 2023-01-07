@@ -65,9 +65,8 @@ export const MembershipForm = () => {
   const [outletContext] = useOutletContext();
   const navigate = useNavigate();
 
-
   const [mutation, { error }] = useMutation(gql`
-    mutation ($name: String!, $email: String!, $password: String!, $member_details: MemberDetailsArg!) {
+    mutation ($name: String!, $email: String!, $password: String, $member_details: MemberDetailsArg!) {
       public_register (name: $name, email: $email, member_details: $member_details, password: $password) {
         success
       }
@@ -125,7 +124,7 @@ export const MembershipForm = () => {
       />
     </FormControl>
     
-    <FormControl fullWidth>
+    {outletContext.enableBooking && <FormControl fullWidth>
       <TextField
         required
         id="password"
@@ -136,7 +135,7 @@ export const MembershipForm = () => {
         helperText={get(errors, "password", []).join(" ")}
         type='password'
       />
-    </FormControl>
+    </FormControl>}
 
     <FormControl>
       <TextField

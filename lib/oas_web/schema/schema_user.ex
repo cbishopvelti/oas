@@ -78,28 +78,41 @@ defmodule OasWeb.Schema.SchemaUser do
     field :user_add_attendance, :success do
       arg :training_id, non_null(:integer)
       resolve fn _, %{training_id: training_id}, %{context: %{current_member: %{id: member_id}}} ->
-        Oas.Attendance.add_attendance(
-          %{training_id: training_id, member_id: member_id},
-          %{inserted_by_member_id: member_id}
-        )
+        config = from(c in Oas.Config.Config, select: c) |> Oas.Repo.one
+
+        case config.enable_booking do
+          true -> 
+            Oas.Attendance.add_attendance(
+              %{training_id: training_id, member_id: member_id},
+              %{inserted_by_member_id: member_id}
+            )
+          _ -> {:error, "Booking feature is not enabled"}
+        end
       end
     end
 
     field :user_undo_attendance, :success do
       arg :attendance_id, non_null(:integer)
       resolve fn _, %{attendance_id: attendance_id}, %{context: %{current_member: %{id: member_id}}} ->
-        result = from(atte in Oas.Trainings.Attendance, 
-          join: trai in assoc(atte, :training),
-          where: atte.id == ^attendance_id and
-            atte.inserted_by_member_id == ^member_id and atte.member_id == ^member_id
-            and ((trai.when > ^Date.utc_today) or
-            (trai.when == ^Date.utc_today and atte.inserted_at < ^DateTime.add(DateTime.utc_now(), 60)))
-        ) |> Oas.Repo.one
+        config = from(c in Oas.Config.Config, select: c) |> Oas.Repo.one
 
-        case result do
-          nil -> {:error, "Unable to undo"}
-          %{id: id} -> Oas.Attendance.delete_attendance(%{attendance_id: id})
+        case config.enable_booking do
+          true -> 
+            result = from(atte in Oas.Trainings.Attendance, 
+              join: trai in assoc(atte, :training),
+              where: atte.id == ^attendance_id and
+                atte.inserted_by_member_id == ^member_id and atte.member_id == ^member_id
+                and ((trai.when > ^Date.utc_today) or
+                (trai.when == ^Date.utc_today and atte.inserted_at < ^DateTime.add(DateTime.utc_now(), 60)))
+            ) |> Oas.Repo.one
+    
+            case result do
+              nil -> {:error, "Unable to undo"}
+              %{id: id} -> Oas.Attendance.delete_attendance(%{attendance_id: id})
+            end
+          _ -> {:error, "Booking feature is not enabled"}
         end
+
       end
     end
   end

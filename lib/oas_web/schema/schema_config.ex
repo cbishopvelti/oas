@@ -13,6 +13,11 @@ defmodule OasWeb.Schema.SchemaConfig do
     field :token_expiry_days, :integer
     field :temporary_trainings, :integer
     field :bacs, :string
+    field :enable_booking, :boolean
+  end
+
+  object :public_config_config do
+    field :enable_booking, :boolean
   end
 
   object :config_queries do
@@ -36,6 +41,18 @@ defmodule OasWeb.Schema.SchemaConfig do
       resolve fn _, _, _ ->
         result = from(cc in Oas.Config.Config, select: cc)
           |> Oas.Repo.one
+
+        {:ok, result}
+      end
+    end
+    field :public_config_config, :public_config_config do
+      resolve fn _, _, _ ->
+        IO.puts("001 SHOULD HAPPEN")
+
+        result = from(cc in Oas.Config.Config, select: cc)
+          |> Oas.Repo.one
+
+        IO.inspect(result)
 
         {:ok, result}
       end
@@ -66,11 +83,14 @@ defmodule OasWeb.Schema.SchemaConfig do
       arg :token_expiry_days, :integer
       arg :temporary_trainings, :integer
       arg :bacs, :string
-      arg :free_trainings, :integer
+      arg :enable_booking, :boolean
       resolve fn _, args, _ -> 
+
+        IO.inspect(args)
+
         from(cc in Oas.Config.Config, select: cc) 
         |> Oas.Repo.one
-        |> Ecto.Changeset.cast(args, [:token_expiry_days, :temporary_trainings, :bacs])
+        |> Ecto.Changeset.cast(args, [:token_expiry_days, :temporary_trainings, :bacs, :enable_booking])
         |> Oas.Repo.update
         |> OasWeb.Schema.SchemaUtils.handle_error
       end
