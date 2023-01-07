@@ -4,14 +4,23 @@ import { useQuery, gql, useMutation } from "@apollo/client"
 import { Table, TableContainer, Box, Button,
   TableHead, TableRow, Stack,
   TableCell, TextField, Alert,
-  TableBody, IconButton, FormControl
+  TableBody, IconButton, FormControl,
+  Switch, FormControlLabel
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { get, has } from 'lodash'
 import SaveIcon from '@mui/icons-material/Save';
 import { parseErrors } from "../utils/util";
 
-const onChange = ({formData, setFormData, key, direct}) => (event) => {
+const onChange = ({formData, setFormData, key, isCheckbox}) => (event) => {
+  if (isCheckbox) {
+    setFormData({
+      ...formData,
+      [key]: event.target.checked
+    })
+    return;
+  }
+
   setFormData({
     ...formData,
     [key]: !event.target.value ? undefined : event.target.value
@@ -37,7 +46,8 @@ export const ConfigTokens = () => {
       config_config {
         token_expiry_days,
         temporary_trainings,
-        bacs
+        bacs,
+        enable_booking
       }
     }
   `);
@@ -57,8 +67,18 @@ export const ConfigTokens = () => {
   `)
 
   const [saveGlobalMutation, {error: error2}] = useMutation(gql`
-    mutation($token_expiry_days: Int, $temporary_trainings: Int, $free_trainings: Int, $bacs: String) {
-      save_config_config(token_expiry_days: $token_expiry_days, temporary_trainings: $temporary_trainings, free_trainings: $free_trainings, bacs: $bacs) {
+    mutation(
+      $token_expiry_days: Int,
+      $temporary_trainings: Int,
+      $bacs: String,
+      $enable_booking: Boolean
+    ) {
+      save_config_config(
+        token_expiry_days: $token_expiry_days,
+        temporary_trainings: $temporary_trainings,
+        bacs: $bacs, 
+        enable_booking: $enable_booking
+      ) {
         id
       }
     }
@@ -141,6 +161,17 @@ export const ConfigTokens = () => {
             helperText={get(errors, 'bacs', []). join(" ")}
             />
       </FormControl>
+
+      <FormControl fullWidth sx={{mb: 2}}>
+        <FormControlLabel
+          control={
+            <Switch 
+              checked={get(globalFormData, 'enable_booking', false) || false}
+              onChange={onChange({formData: globalFormData, setFormData: setGlobalFormData, key: 'enable_booking', isCheckbox: true})}/>
+          }
+          label="Enable booking functionality" />
+      </FormControl>
+
       <FormControl fullWidth>
         <TextField
             label="Token Expiry Days"

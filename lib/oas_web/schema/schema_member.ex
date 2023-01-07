@@ -218,13 +218,16 @@ defmodule OasWeb.Schema.SchemaMember do
       arg :name, non_null(:string)
       arg :email, non_null(:string)
       arg :member_details, non_null(:member_details_arg)
-      arg :password, non_null(:string)
+      arg :password, :string
       resolve fn _, args, _ ->
-        # length=12
-        # password = :crypto.strong_rand_bytes(length) |> Base.encode64 |> binary_part(0, length)
-        # attrs = Map.merge(%{password: password, is_active: true}, args)
-
-        attrs = Map.merge(%{is_active: true}, args)
+        config = from(c in Oas.Config.Config, select: c) |> Oas.Repo.one
+        attrs = if !config.enable_booking do
+          length=12
+          password = :crypto.strong_rand_bytes(length) |> Base.encode64 |> binary_part(0, length)
+          Map.merge(%{password: password, is_active: true}, args)
+        else
+          Map.merge(%{is_active: true}, args)
+        end
 
         result = %Oas.Members.Member{}
         |> Oas.Members.Member.registration_changeset(attrs)

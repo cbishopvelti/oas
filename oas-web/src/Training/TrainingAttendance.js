@@ -45,6 +45,9 @@ export const TrainingAttendance = ({trainingId, setAttendance}) => {
       training {
         when
       }
+    },
+    config_config {
+      enable_booking
     }
   }`, {
     variables: {
@@ -154,7 +157,13 @@ export const TrainingAttendance = ({trainingId, setAttendance}) => {
           <TableBody>
             {
               (attendance || []).map((attendance, i) => (
-                <TrainingAttendanceRow key={i} attendance={attendance} deleteAttendanceClick={deleteAttendanceClick} refetch={refetch} />
+                <TrainingAttendanceRow
+                  key={i}
+                  attendance={attendance}
+                  deleteAttendanceClick={deleteAttendanceClick}
+                  refetch={refetch}
+                  config={get(data, "config_config", {})}
+                  />
               ))
             }
           </TableBody>
