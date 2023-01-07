@@ -61,8 +61,8 @@ Make emails optional.
 - Registration form merge
 - HARD due to https://stackoverflow.com/questions/74862749/in-ecto-migration-is-there-a-way-to-rename-a-table-without-updating-the-constrai?noredirect=1#comment132116590_74862749
 
-Configurable tempory member sessions.
-- Free sessions
+~~Configurable tempory member sessions.~~
+~~- Free sessions (if needed, generate)~~
 
 ## Add tokens
 

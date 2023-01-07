@@ -5,6 +5,7 @@ defmodule Oas.Config.Config do
   schema "config_config" do
     field :token_expiry_days, :integer
     field :temporary_trainings, :integer
+    field :bacs, :string
     timestamps()
   end
 end
