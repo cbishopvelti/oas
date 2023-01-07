@@ -30,6 +30,7 @@ docker run -it -d `
 --name=oas-staging `
 -e DANGEROUSLY_DISABLE_HOST_CHECK=true `
 -e REACT_APP_ADMIN_URL="https://admin.staging.oxfordshireacrosociety.co.uk" `
+-e REACT_APP_PUBLIC_URL="https://www.staging.oxfordshireacrosociety.co.uk" `
 -e REACT_APP_SERVER_URL="https://server.staging.oxfordshireacrosociety.co.uk" `
 -e REACT_APP_PUBLIC_URL="https://www.staging.oxfordshireacrosociety.co.uk" `
 -e DOMAIN=".staging.oxfordshireacrosociety.co.uk" `
@@ -56,13 +57,20 @@ C:\Users\chris\nginx-1.23.2\html-staging
 
 Save success
 
+
 Make emails optional.
 - Registration form merge
 This is hard due to https://stackoverflow.com/questions/74862749/in-ecto-migration-is-there-a-way-to-rename-a-table-without-updating-the-constrai?noredirect=1#comment132116590_74862749
 
 Put booking behind configuration
 
+## Add tokens
 
+%Oas.Tokens.Token{
+  member_id: 29,
+  expires_on: Date.add(Date.utc_today(), 365),
+  value: 4.5
+} |> Oas.Repo.insert()
 
 
 

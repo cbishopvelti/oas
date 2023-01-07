@@ -48,8 +48,6 @@ export const Tokens = () => {
   
   const member_email = get(outletContext, 'user.email') || searchParams.get('email') || '';
 
-  console.log("001", outletContext)
-
   const [formData, setFormData] = useState({
     email: member_email
   })
