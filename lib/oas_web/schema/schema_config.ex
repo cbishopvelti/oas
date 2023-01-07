@@ -12,7 +12,7 @@ defmodule OasWeb.Schema.SchemaConfig do
     field :id, :integer
     field :token_expiry_days, :integer
     field :temporary_trainings, :integer
-    field :free_trainings, :integer
+    field :bacs, :string
   end
 
   object :config_queries do
@@ -65,11 +65,12 @@ defmodule OasWeb.Schema.SchemaConfig do
     field :save_config_config, :config_config do
       arg :token_expiry_days, :integer
       arg :temporary_trainings, :integer
+      arg :bacs, :string
       arg :free_trainings, :integer
       resolve fn _, args, _ -> 
         from(cc in Oas.Config.Config, select: cc) 
         |> Oas.Repo.one
-        |> Ecto.Changeset.cast(args, [:token_expiry_days, :temporary_trainings, :free_trainings])
+        |> Ecto.Changeset.cast(args, [:token_expiry_days, :temporary_trainings, :bacs])
         |> Oas.Repo.update
         |> OasWeb.Schema.SchemaUtils.handle_error
       end

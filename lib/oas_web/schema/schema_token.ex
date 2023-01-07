@@ -97,8 +97,9 @@ defmodule OasWeb.Schema.SchemaToken do
         case member do
           nil ->
             {:error, "Member not found"}
-          _ -> 
-            {:ok, ["Anne Hedegaard", "20-65-18", "13072630"]}
+          _ ->
+            config = from(cc in Oas.Config.Config, select: cc) |> Oas.Repo.one
+            {:ok, String.split(config.bacs || "", "\n", trim: true)}
         end
       end
     end
