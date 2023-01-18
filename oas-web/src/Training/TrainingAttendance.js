@@ -113,11 +113,8 @@ export const TrainingAttendance = ({trainingId, setAttendance}) => {
   }
 
   return <>
-    <Box sx={{m: 2}}>
-      <h2 >Attendance</h2>
-    </Box>
     <Box sx={{display: 'flex', flexWrap: 'wrap', alignItems: "center" }}>
-      <FormControl sx={{m: 2, minWidth: 256}}>
+      <FormControl sx={{mb: 2, minWidth: 256}}>
         <Autocomplete
           id="member"
           value={addAttendance.member_name || ''}
@@ -136,7 +133,7 @@ export const TrainingAttendance = ({trainingId, setAttendance}) => {
           />
       </FormControl>
 
-      <FormControl sx={{m: 2}}>
+      <FormControl sx={{ml: 2, mb: 2}}>
         <Button onClick={addAttendanceClick({addAttendance, trainingId})}>Add</Button>
       </FormControl>
     </Box>

@@ -47,7 +47,8 @@ export const ConfigTokens = () => {
         token_expiry_days,
         temporary_trainings,
         bacs,
-        enable_booking
+        enable_booking,
+        name
       }
     }
   `);
@@ -71,13 +72,15 @@ export const ConfigTokens = () => {
       $token_expiry_days: Int,
       $temporary_trainings: Int,
       $bacs: String,
-      $enable_booking: Boolean
+      $enable_booking: Boolean,
+      $name: String
     ) {
       save_config_config(
         token_expiry_days: $token_expiry_days,
         temporary_trainings: $temporary_trainings,
         bacs: $bacs, 
-        enable_booking: $enable_booking
+        enable_booking: $enable_booking,
+        name: $name
       ) {
         id
       }
@@ -140,7 +143,17 @@ export const ConfigTokens = () => {
       </Stack>
       <FormControl fullWidth sx={{mb: 2}}>
         <TextField
-            label="Trainings someone is allowed to attend before they need membership"
+            label="Society name (for emails)"
+            value={get(globalFormData, "name", '')}
+            type="text"
+            onChange={onChange({formData: globalFormData, setFormData: setGlobalFormData, key: "name"})}
+            error={has(errors, "name")}
+            helperText={get(errors, 'name', []). join(" ")}
+          />
+      </FormControl>
+      <FormControl fullWidth sx={{mb: 2}}>
+        <TextField
+            label="Trainings someone is allowed to attend before they need full membership"
             value={get(globalFormData, "temporary_trainings", '')}
             type="number"
             pattern='[0-9]*'
@@ -172,7 +185,7 @@ export const ConfigTokens = () => {
           label="Enable booking functionality" />
       </FormControl>
 
-      <FormControl fullWidth>
+      <FormControl fullWidth sx={{mb:2}}>
         <TextField
             label="Token Expiry Days"
             value={get(globalFormData, "token_expiry_days", '')}

@@ -77,7 +77,8 @@ defmodule Oas.Attendance do
     case (warnings) do
       [] -> nil
       warnings -> 
-        Oas.Tokens.TokenNotifier.deliver(member.email, "OAS notification",
+        config = from(cc in Oas.Config.Config, select: cc) |> Oas.Repo.one
+        Oas.Tokens.TokenNotifier.deliver(member.email, "#{config.name} notification",
         """
         Hi #{member.name}
 
@@ -85,7 +86,7 @@ defmodule Oas.Attendance do
 
         Thanks
 
-        OAS
+        #{config.name}
         """)
     end
 

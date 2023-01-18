@@ -8,6 +8,7 @@ defmodule Oas.Trainings.Training do
     has_many :attendance, Oas.Trainings.Attendance
     many_to_many :training_tags, Oas.Trainings.TrainingTags,
       join_through: "training_training_tags", join_keys: [training_id: :id, training_tag_id: :id], on_replace: :delete
+    field :notes, :string
 
     timestamps()
   end

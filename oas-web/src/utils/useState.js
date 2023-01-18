@@ -1,4 +1,4 @@
-import { useState as useReactState } from "react";
+import { useEffect, useState as useReactState } from "react";
 import moment from 'moment'
 
 export const useState = (initState, {id}) => {
@@ -13,7 +13,11 @@ export const useState = (initState, {id}) => {
   } else {
     theInitState = initState
   }
+
   const state = useReactState(theInitState)
+  useEffect(() => {
+    state[1](theInitState)
+  }, [id]) 
 
   const localSetState = (newState) => {
     const toSaveState = {
@@ -24,5 +28,5 @@ export const useState = (initState, {id}) => {
     state[1](newState);
   }
 
-  return [state[0], localSetState]
+  return [theInitState, localSetState]
 }
