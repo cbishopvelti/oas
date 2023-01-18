@@ -14,7 +14,7 @@ config :oas,
 config :oas, OasWeb.Endpoint,
   url: [host: "0.0.0.0"],
   domain: System.get_env("DOMAIN") || "localhost",
-  check_origine: false,
+  check_origin: false,
   render_errors: [view: OasWeb.ErrorView, accepts: ~w(html json), layout: false],
   pubsub_server: Oas.PubSub,
   live_view: [signing_salt: "MF+gGR26"]

@@ -7,6 +7,7 @@ defmodule Oas.Config.Config do
     field :temporary_trainings, :integer
     field :bacs, :string
     field :enable_booking, :boolean
+    field :name, :string
     timestamps()
   end
 end

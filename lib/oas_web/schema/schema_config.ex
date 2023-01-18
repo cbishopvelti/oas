@@ -14,6 +14,7 @@ defmodule OasWeb.Schema.SchemaConfig do
     field :temporary_trainings, :integer
     field :bacs, :string
     field :enable_booking, :boolean
+    field :name, :string
   end
 
   object :public_config_config do
@@ -84,13 +85,12 @@ defmodule OasWeb.Schema.SchemaConfig do
       arg :temporary_trainings, :integer
       arg :bacs, :string
       arg :enable_booking, :boolean
+      arg :name, :string
       resolve fn _, args, _ -> 
-
-        IO.inspect(args)
 
         from(cc in Oas.Config.Config, select: cc) 
         |> Oas.Repo.one
-        |> Ecto.Changeset.cast(args, [:token_expiry_days, :temporary_trainings, :bacs, :enable_booking])
+        |> Ecto.Changeset.cast(args, [:token_expiry_days, :temporary_trainings, :bacs, :enable_booking, :name])
         |> Oas.Repo.update
         |> OasWeb.Schema.SchemaUtils.handle_error
       end

@@ -1,0 +1,176 @@
+import { useState, useEffect } from "react";
+
+import { useQuery, useMutation, gql } from "@apollo/client";
+import moment from "moment";
+import { get, omit, has } from 'lodash';
+import { Box, Stack, Alert, FormControl,
+  TextField, Button } from '@mui/material'
+import { TrainingTags } from "./TrainingTags";
+import { TrainingWhere } from "./TrainingWhere";
+import {useNavigate} from 'react-router-dom'
+import { parseErrors } from "../utils/util";
+
+
+
+export const TrainingForm = ({id}) => {
+  const navigate = useNavigate();
+
+
+  const {data} = useQuery(gql`
+    query($id: Int!) {
+      training(id: $id) {
+        id,
+        when,
+        notes,
+        training_where {
+          id,
+          name
+        }
+        training_tags {
+          id,
+          name
+        }
+      }
+    }
+  `, {
+    variables: {
+      id: id
+    },
+    skip: !id
+  })
+
+  const defaultData = {
+    when: moment().format("YYYY-MM-DD"),
+    training_tags: []
+  }
+  const [formData, setFormData] = useState(defaultData);
+
+  useEffect(() => {
+    
+    if (!id) {
+      setFormData(defaultData)
+    }
+  }, [id])
+
+  useEffect(() => {
+    if (!data) {
+      return;
+    }
+    setFormData(
+      {
+        ...get(data, "training")
+      }
+    )
+  }, [data])
+
+  const onChange = ({formData, setFormData, key, direct}) => (event) => {
+    setFormData({
+      ...formData,
+      [key]: !event.target.value ? undefined : event.target.value
+    })
+  }
+  const [ insertMutation, {error: error1} ] = useMutation(gql`
+    mutation ($when: String!, $training_tags: [TrainingTagArg]!, $training_where: TrainingWhereArg!, $notes: String) {
+      insert_training (when: $when, training_tags: $training_tags, training_where: $training_where, notes: $notes) {
+        id
+      }
+    }
+  `);
+  const [updateMutation, {error: error2}] = useMutation(gql`
+    mutation ($id: Int!, $when: String!, $training_tags: [TrainingTagArg]!, $training_where: TrainingWhereArg!, $notes: String){
+      update_training (
+        when: $when,
+        id: $id,
+        training_tags: $training_tags,
+        training_where: $training_where,
+        notes: $notes
+      ) {
+        id
+      }
+    }
+  `)
+
+  const save = (formData) => async () => {
+    if (!formData.id) {
+      const { data } = await insertMutation({
+        variables: {
+          ...omit(formData, ["training_tags.__typename", "training_where.__typename"])
+        }
+      });
+
+      navigate(`/training/${get(data, "insert_training.id")}`)
+    } else if (formData.id) {
+      const { data } = await updateMutation({
+        variables: {
+          ...omit(formData, ["training_tags.__typename", "training_where.__typename"])
+        }
+      });
+    }
+    setFormData({
+      ...formData,
+      saveCount: get(formData, "saveCount", 0) + 1
+    })
+  }
+
+  const errors = parseErrors([
+    ...get(error1, "graphQLErrors", []),
+    ...get(error2, "graphQLErrors", [])
+  ]);
+
+  return <Box sx={{width: '100%'}}>
+    <Stack sx={{ width: '100%' }}>
+        {errors.global?.map((message, i) => (
+          <Alert key={i} sx={{m:2}} severity="error">{message}</Alert>
+        ))}
+      </Stack>
+      <FormControl fullWidth sx={{mb: 2}}>
+        <TrainingWhere
+          formData={formData}
+          setFormData={setFormData}
+          errors={errors}
+          />
+      </FormControl>
+      {/* <FormControl fullWidth sx={{mt: 2, mb: 2}}>
+        <TrainingTags 
+          formData={formData}
+          setFormData={setFormData}
+        />
+      </FormControl> */}
+      <FormControl fullWidth sx={{mt: 2, mb: 2}}>
+        <TextField
+          required
+          id="when"
+          label="When"
+          value={get(formData, "when", '')}
+          type="date"
+          onChange={
+            onChange({formData, setFormData, key: "when"})
+          }
+          InputLabelProps={{
+            shrink: true,
+          }}
+          error={has(errors, "when")}
+          helperText={get(errors, "when", []).join(" ")}
+          />
+      </FormControl>
+      <FormControl fullWidth sx={{mt: 2, mb: 2}}>
+        <TextField
+          required
+          id="notes"
+          label="Notes"
+          value={get(formData, "notes", '') || ''}
+          type="text"
+          multiline
+          onChange={
+            onChange({formData, setFormData, key: "notes"})
+          }
+          error={has(errors, "notes")}
+          helperText={get(errors, "notes", []).join(" ")}
+          />
+      </FormControl>
+
+      <FormControl fullWidth sx={{mt: 2, mb: 2}}>
+        <Button onClick={save(formData)}>Save</Button>
+      </FormControl>
+  </Box>
+}
