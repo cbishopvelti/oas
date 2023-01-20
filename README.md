@@ -32,14 +32,13 @@ docker run -it -d `
 -e REACT_APP_ADMIN_URL="https://admin.staging.oxfordshireacrosociety.co.uk" `
 -e REACT_APP_PUBLIC_URL="https://www.staging.oxfordshireacrosociety.co.uk" `
 -e REACT_APP_SERVER_URL="https://server.staging.oxfordshireacrosociety.co.uk" `
--e REACT_APP_PUBLIC_URL="https://www.staging.oxfordshireacrosociety.co.uk" `
 -e DOMAIN=".staging.oxfordshireacrosociety.co.uk" `
 -e DB_FILE=/dbs/sqlite-stage.db `
 -e MIX_ENV=stage `
 -p 5000:4000 -p 4999:3999 -p 4998:3998 `
 -v D:/oas-dbs:/dbs `
 -v C:/oas-dbs-staging-backup:/dbs-backup `
-chrisjbishop155/oas:booking
+chrisjbishop155/oas:latest
 
 Certs
 ```

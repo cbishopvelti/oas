@@ -195,11 +195,14 @@ export const Transaction = () => {
   const save = (formData) => async () => {
     formData = omit(formData, "training_tags.__typename");
 
+    console.log("001", formData)
+
     const variables = {
       ...formData,
       amount: parseFloat(get(formData, 'amount')),
       ...(get(formData, 'who_member_id') ? {who_member_id: parseInt(get(formData, 'who_member_id'))} : {}),
       ...(formData.token_quantity ? {token_quantity: parseInt(formData.token_quantity)}: {}),
+      ...(formData.token_quantity ? {token_value: parseFloat(formData.token_value)}: {}),
       transaction_tags: (formData.transaction_tags?.map((item) => omit(item, '__typename') )),
       ...(formData.tokens ? {tokens: formData.tokens.map((item) => omit(item, '__typename'))} : {})
     };
