@@ -27,14 +27,14 @@ const onChange = ({formData, setFormData, key}) => (event) => {
   setFormData(formData)
 }
 
-const isUsable = (member_email) => (token) => {
+const isUsable = (member_id) => (token) => {
   if (moment(token.expires_on).isBefore(moment())) {
     return false;
   }
   if(token.used_on) {
     return false
   }
-  if (token.member.email != member_email) {
+  if (token.member.id != member_id) {
     // given to someone else
     return false;
   }
@@ -69,6 +69,7 @@ export const Tokens = () => {
         expires_on,
         used_on,
         member {
+          id,
           name
         },
         tr_member {
@@ -83,6 +84,9 @@ export const Tokens = () => {
           quantity,
           value
         }
+      },
+      public_member(email: $email) {
+        id
       }
     }
   `, {
@@ -93,11 +97,12 @@ export const Tokens = () => {
   })
   const tokens = get(data, 'public_tokens', []);
   const errors = uniqBy(get(error, 'graphQLErrors', []), "message")
+  const member_id = get(data, 'public_member.id');
 
   const outstanding_attendance = get(data, 'public_outstanding_attendance', [])
 
   let tokenCount = chain(get(data, 'public_tokens'))
-    .filter(isUsable(member_email))
+    .filter(isUsable(member_id))
     .value()
     .length
   tokenCount = tokenCount - get(data, 'public_outstanding_attendance', []).length
@@ -211,7 +216,7 @@ export const Tokens = () => {
             {
               tokens.map((token) => {
                 const sx = {
-                  ...(!isUsable(member_email)(token) ? {
+                  ...(!isUsable(member_id)(token) ? {
                     color: "gray",
                     textDecoration: "line-through"
                   }: {}),

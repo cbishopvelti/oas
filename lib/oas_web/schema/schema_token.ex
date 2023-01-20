@@ -19,6 +19,7 @@ defmodule OasWeb.Schema.SchemaToken do
   end
 
   object :public_member do
+    field :id, :integer
     field :name, :string
     field :member_status, :member_status do
       resolve &OasWeb.Schema.SchemaMember.member_status_resolver/3

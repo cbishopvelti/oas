@@ -5,7 +5,7 @@
 </p>
 <%= if (@current_member != nil) and (@current_member.is_admin == true or @current_member.is_reviewer == true) do %>
   <p>
-  You are logged in, please goto <a href={@app_url}><%= @app_url %></a> to use the app.
+  You are logged in, please goto <a href={@app_url}><%= @app_url %></a> to use the admin app.
   </p>
 <% end %>
 <%= if (@current_member != nil) and @current_member.is_active do %>
