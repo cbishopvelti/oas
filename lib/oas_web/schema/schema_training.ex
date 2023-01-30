@@ -39,7 +39,12 @@ defmodule OasWeb.Schema.SchemaTraining do
         #   select: t, where: t.id == ^id
         # )
         # result = Oas.Repo.one(query)
-        result = Oas.Repo.get!(Oas.Trainings.Training, id) |> Oas.Repo.preload(:training_where) |> Oas.Repo.preload(:training_tags)
+        result = Oas.Repo.get!(Oas.Trainings.Training, id)
+        |> Oas.Repo.preload(:training_where)
+        |> Oas.Repo.preload(:training_tags)
+        |> Oas.Repo.preload(:attendance)
+        |> (&(%{ &1 | attendance: length(&1.attendance) })).()
+
         {:ok, result}
       end
     end

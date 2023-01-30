@@ -26,7 +26,7 @@ export const Training = () => {
   }
   const [attendance, setAttendance] = useReactState(0);
 
-  const {data} = useQuery(gql`
+  const {data, refetch} = useQuery(gql`
     query($id: Int!) {
       training(id: $id) {
         id,
@@ -39,7 +39,8 @@ export const Training = () => {
         training_tags {
           id,
           name
-        }
+        },
+        attendance
       }
     }
   `, {
@@ -49,14 +50,15 @@ export const Training = () => {
     skip: !id
   })
 
+  const parent_attendance = get(data, 'training.attendance', 0)
 
   useEffect(() => {
     if (!id) {
       setTitle("New Training");
     } else {
-      setTitle(`Editing Training: ${get(data, 'training.training_where.name', id)} on ${get(data, 'training.when', '')}: ${attendance}`)
+      setTitle(`Editing Training: ${get(data, 'training.training_where.name', id)} on ${get(data, 'training.when', '')}: ${attendance || parent_attendance}`)
     }
-  }, [get(data, 'training.training_where.name'), attendance])
+  }, [get(data, 'training.training_where.name'), attendance, parent_attendance])
 
   const [{value}, setValue] = useState({value: (!id ? '1' : '2')}, {id: `trainings-tabs-${id}`});
 
@@ -71,7 +73,7 @@ export const Training = () => {
           {id && <Tab value={'2'} label="Attendance" />}
         </TabList>
         <TabPanel value={'1'} sx={{width: '100%'}}>
-          <TrainingForm id={id} />
+          <TrainingForm id={id} data={data} refetch={refetch} />
         </TabPanel>
         {id && 
           <TabPanel value={'2'} sx={{width: '100%'}}>

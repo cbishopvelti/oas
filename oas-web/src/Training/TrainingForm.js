@@ -12,32 +12,32 @@ import { parseErrors } from "../utils/util";
 
 
 
-export const TrainingForm = ({id}) => {
+export const TrainingForm = ({id, data, refetch}) => {
   const navigate = useNavigate();
 
 
-  const {data} = useQuery(gql`
-    query($id: Int!) {
-      training(id: $id) {
-        id,
-        when,
-        notes,
-        training_where {
-          id,
-          name
-        }
-        training_tags {
-          id,
-          name
-        }
-      }
-    }
-  `, {
-    variables: {
-      id: id
-    },
-    skip: !id
-  })
+  // const {data} = useQuery(gql`
+  //   query($id: Int!) {
+  //     training(id: $id) {
+  //       id,
+  //       when,
+  //       notes,
+  //       training_where {
+  //         id,
+  //         name
+  //       }
+  //       training_tags {
+  //         id,
+  //         name
+  //       }
+  //     }
+  //   }
+  // `, {
+  //   variables: {
+  //     id: id
+  //   },
+  //   skip: !id
+  // })
 
   const defaultData = {
     when: moment().format("YYYY-MM-DD"),
@@ -94,7 +94,8 @@ export const TrainingForm = ({id}) => {
     if (!formData.id) {
       const { data } = await insertMutation({
         variables: {
-          ...omit(formData, ["training_tags.__typename", "training_where.__typename"])
+          ...omit(formData, ["training_tags.__typename", "training_where.__typename"]),
+          notes: formData.notes || ""
         }
       });
 
@@ -102,7 +103,8 @@ export const TrainingForm = ({id}) => {
     } else if (formData.id) {
       const { data } = await updateMutation({
         variables: {
-          ...omit(formData, ["training_tags.__typename", "training_where.__typename"])
+          ...omit(formData, ["training_tags.__typename", "training_where.__typename"]),
+          notes: formData.notes || ""
         }
       });
     }
@@ -110,6 +112,7 @@ export const TrainingForm = ({id}) => {
       ...formData,
       saveCount: get(formData, "saveCount", 0) + 1
     })
+    refetch()
   }
 
   const errors = parseErrors([
@@ -155,7 +158,6 @@ export const TrainingForm = ({id}) => {
       </FormControl>
       <FormControl fullWidth sx={{mt: 2, mb: 2}}>
         <TextField
-          required
           id="notes"
           label="Notes"
           value={get(formData, "notes", '') || ''}
