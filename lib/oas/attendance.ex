@@ -266,33 +266,28 @@ defmodule Oas.Attendance do
     config = from(c in Oas.Config.Config, select: c)
       |> Oas.Repo.one
 
-    if (
-      result > config.temporary_trainings
-    ) do
-      {
-        Map.put(member, :warnings, [member.name <> " has attended " <> to_string(result)
-          <> " session"
-          <> case result do
-            1 -> ""
-            _ -> "s"
-          end
-          <> " but is not a member" | Map.get(member, :warnings, [])]),
-        :not_member
-      }
-    else
-      if (
-        (member
-        |> Oas.Repo.preload(:memberships)
+    cond do
+      (member
+        |> Oas.Repo.preload(:memberships, force: true)
         |> Map.get(:memberships)
-        |> Enum.count) > 0
-      ) do
+        |> Enum.count) > 0 ->
         {
           Map.put(member, :warnings, [member.name <> " is an x-member" | Map.get(member, :warnings, []) ]),
           :x_member
         }
-      else
+      result > config.temporary_trainings -> 
+        {
+          Map.put(member, :warnings, [member.name <> " has attended " <> to_string(result)
+            <> " session"
+            <> case result do
+              1 -> ""
+              _ -> "s"
+            end
+            <> " but is not a member" | Map.get(member, :warnings, [])]),
+          :not_member
+        }
+      true ->
         {member, :temporary_member}
-      end
     end
   end
   def check_membership(member) do
