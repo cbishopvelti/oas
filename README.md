@@ -46,7 +46,7 @@ certbot certonly --webroot
 server.oxfordshireacrosociety.co.uk admin.oxfordshireacrosociety.co.uk www.oxfordshireacrosociety.co.uk
 server.staging.oxfordshireacrosociety.co.uk admin.staging.oxfordshireacrosociety.co.uk www.staging.oxfordshireacrosociety.co.uk
 
-www.societybishop.co.uk societybishop.co.uk
+www.societybishop.co.uk societybishop.co.uk server.demo.societybishop.co.uk admin.demo.societybishop.co.uk
 C:\Users\chris\nginx-1.23.2\html
 C:\Users\chris\nginx-1.23.2\html-staging
 ```
