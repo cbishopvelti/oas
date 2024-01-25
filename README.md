@@ -9,7 +9,7 @@ docker push chrisjbishop155/oas
 ```
 docker pull chrisjbishop155/oas
 ```
-
+```
 docker stop oas; docker rm oas; `
 docker run -it -d `
 --name=oas `
@@ -24,7 +24,8 @@ docker run -it -d `
 -v D:/oas-dbs:/dbs `
 -v C:/oas-dbs-backup:/dbs-backup `
 chrisjbishop155/oas:latest
-
+```
+```
 docker stop oas-staging; docker rm oas-staging; `
 docker run -it -d `
 --name=oas-staging `
@@ -39,6 +40,7 @@ docker run -it -d `
 -v D:/oas-dbs:/dbs `
 -v C:/oas-dbs-staging-backup:/dbs-backup `
 chrisjbishop155/oas:latest
+```
 
 Certs
 ```
@@ -46,7 +48,7 @@ certbot certonly --webroot
 server.oxfordshireacrosociety.co.uk admin.oxfordshireacrosociety.co.uk www.oxfordshireacrosociety.co.uk
 server.staging.oxfordshireacrosociety.co.uk admin.staging.oxfordshireacrosociety.co.uk www.staging.oxfordshireacrosociety.co.uk
 
-www.societybishop.co.uk societybishop.co.uk
+www.societybishop.co.uk societybishop.co.uk server.demo.societybishop.co.uk admin.demo.societybishop.co.uk
 C:\Users\chris\nginx-1.23.2\html
 C:\Users\chris\nginx-1.23.2\html-staging
 ```
