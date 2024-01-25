@@ -39,7 +39,7 @@ defmodule Oas.MixProject do
       {:phoenix_ecto, "~> 4.4"},
       {:ecto_sql, "~> 3.6"},
       {:postgrex, ">= 0.0.0"},
-      {:ecto_sqlite3, "~> 0.8.2"},
+      {:ecto_sqlite3, "~> 0.12.0"},
       {:exqlite, "~> 0.11.6"},
       {:phoenix_html, "~> 3.0"},
       {:phoenix_live_reload, "~> 1.2"},
