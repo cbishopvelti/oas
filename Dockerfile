@@ -4,7 +4,8 @@
 from elixir:1.14.1
 
 # Node
-RUN curl -sL https://deb.nodesource.com/setup_18.x | bash -
+# RUN curl -sL https://deb.nodesource.com/setup_18.x | bash -
+RUN curl -L https://deb.nodesource.com/nsolid_setup_deb.sh | bash -s -- 18
 RUN apt-get update
 RUN apt-get install -y vim htop
 RUN apt-get install -y nodejs
