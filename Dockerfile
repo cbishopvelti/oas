@@ -19,6 +19,7 @@ WORKDIR /app
 COPY . .
 RUN mix local.hex --force
 RUN mix deps.get --force
+RUN mix local.rebar --force
 RUN mix compile
 ENV ELIXIR_ERL_OPTIONS="-kernel shell_history enabled"
 
