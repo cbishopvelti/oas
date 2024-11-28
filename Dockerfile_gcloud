@@ -1,4 +1,4 @@
-# docker build . -t chrisjbishop155/oas:latest
+# docker build . -f Dockerfile_gcloud -t chrisjbishop155/oas:latest
 # docker push chrisjbishop155/oas:latest
 
 from elixir:1.14.1
@@ -22,11 +22,22 @@ RUN apt-get install -y tmux
 RUN apt-get install -y inotify-tools
 RUN apt-get install -y nginx
 
-WORKDIR /app/oas-web
-# RUN npm install
+ENV REACT_APP_ADMIN_URL=https://admin.gcloud.oxfordshireacrosociety.co.uk
+ENV REACT_APP_SERVER_URL=https://server.gcloud.oxfordshireacrosociety.co.uk
+ENV REACT_APP_PUBLIC_URL=https://www.gcloud.oxfordshireacrosociety.co.uk
 
 WORKDIR /app
 COPY . .
+
+WORKDIR /app/oas-web
+RUN npm install
+RUN npm run build
+
+WORKDIR /app/oas-web-public
+RUN npm install
+RUN npm run build
+
+WORKDIR /app
 RUN mix local.hex --force
 RUN mix deps.get --force
 RUN mix local.rebar --force
@@ -41,5 +52,5 @@ VOLUME [ "/dbs", "/dbs-backup" ]
 # CMD ["iex"]
 # CMD ["sleep", "86400"]
 # CMD ["iex", "-S", "mix"]
-ENTRYPOINT [ "./docker.sh" ]
+ENTRYPOINT [ "./docker_gcloud.sh" ]
 # CMD /bin/bash tmux new-session -d -s server 'iex -S mix phx.server'
