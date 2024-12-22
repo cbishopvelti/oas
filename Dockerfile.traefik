@@ -1,0 +1,55 @@
+# docker build . -f Dockerfile_gcloud -t chrisjbishop155/oas:latest
+# docker push chrisjbishop155/oas:latest
+
+FROM node:18-bullseye AS web-builder
+
+WORKDIR /app/
+COPY ./oas-web/ .
+
+ENV REACT_APP_ADMIN_URL=https://admin.gcloud.oxfordshireacrosociety.co.uk
+ENV REACT_APP_SERVER_URL=https://server.gcloud.oxfordshireacrosociety.co.uk
+ENV REACT_APP_PUBLIC_URL=https://www.gcloud.oxfordshireacrosociety.co.uk
+
+RUN npm install
+RUN npm run build
+
+FROM node:18-bullseye AS public-builder
+
+WORKDIR /app/
+COPY ./oas-web-public/ .
+
+ENV REACT_APP_ADMIN_URL=https://admin.gcloud.oxfordshireacrosociety.co.uk
+ENV REACT_APP_SERVER_URL=https://server.gcloud.oxfordshireacrosociety.co.uk
+ENV REACT_APP_PUBLIC_URL=https://www.gcloud.oxfordshireacrosociety.co.uk
+
+RUN npm install
+RUN npm run build
+
+FROM elixir:1.14.1
+
+RUN apt-get update
+
+# RUN apt-get install -y vim htop
+RUN apt-get install -y inotify-tools tmux nginx
+
+ENV REACT_DIST=/app/build
+
+
+WORKDIR /app
+COPY . .
+
+# React apps
+COPY --from=web-builder $REACT_DIST /app/oas-web/dist
+COPY --from=public-builder $REACT_DIST  /app/oas-web-public/dist
+
+
+RUN mix local.hex --force
+RUN HEX_HTTP_CONCURRENCY=1 HEX_HTTP_TIMEOUT=120 mix deps.get --force
+RUN mix local.rebar --force
+ENV MIX_ENV=gcloud
+RUN mix compile
+ENV ELIXIR_ERL_OPTIONS="-kernel shell_history enabled"
+
+VOLUME [ "/dbs", "/dbs-backup" ]
+
+ENTRYPOINT [ "./docker_traefik.sh" ]
