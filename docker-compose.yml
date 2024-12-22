@@ -8,13 +8,70 @@ services:
       - REACT_APP_ADMIN_URL="https://admin.gcloud.oxfordshireacrosociety.co.uk"
       - REACT_APP_SERVER_URL="https://server.gcloud.oxfordshireacrosociety.co.uk"
       - REACT_APP_PUBLIC_URL="https://www.gcloud.oxfordshireacrosociety.co.uk"
-      - DOMAIN=".gcloud.oxfordshireacrosociety.co.uk"
+      - DOMAIN=".pete-hamlin.com"
       - DB_FILE=/dbs/sqlite-prod.db
       - MIX_ENV=gcloud
-    ports:
-      - 4000:4000
-      - 4001:4001
-      - 4002:4002
+    # ports:
+    #   - 8000:8000
+    #   - 8001:8001
+    #   - 8002:8002
     volumes:
-      - ./data/dbs:/dbs
-      - ./data/dbs-backup:/dbs-backup
+      - /usr/share/homelabos/oas/data/dbs:/dbs
+      - /usr/share/homelabos/oas/data/dbs-backup:/dbs-backup
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=homelabos_traefik"
+      # Server
+      - "traefik.http.services.oasserver.loadbalancer.server.scheme=http"
+      - "traefik.http.services.oasserver.loadbalancer.server.port=8000"
+      - "traefik.enable=true"
+      - "traefik.docker.network=homelabos_traefik"
+      - "traefik.http.routers.oasserver-http.service=oasserver"
+      - "traefik.http.routers.oasserver-http.rule=Host(`oasserver.pete-hamlin.com`)"
+      - "traefik.http.routers.oasserver-http.entrypoints=web"
+      - "traefik.http.routers.oasserver-http.middlewares=redirect@file"
+      - "traefik.http.routers.oasserver.service=oasserver"
+      - "traefik.http.routers.oasserver.rule=Host(`oasserver.pete-hamlin.com`)"
+      - "traefik.http.routers.oasserver.entrypoints=web-secure"
+      - "traefik.http.routers.oasserver.middlewares=chain-bypass@file"
+      - "traefik.http.routers.oasserver.tls=true"
+      - "traefik.http.routers.oasserver.priority=99"
+      - "traefik.http.routers.oasserver.tls.certresolver=dns"
+      - "traefik.http.routers.oasserver.tls.domains[0].main=pete-hamlin.com"
+      - "traefik.http.routers.oasserver.tls.domains[0].sans=*.pete-hamlin.com"
+
+      # admin
+      - "traefik.http.services.oasadmin.loadbalancer.server.scheme=http"
+      - "traefik.http.services.oasadmin.loadbalancer.server.port=8001"
+      - "traefik.http.routers.oasadmin-http.service=oasadmin"
+      - "traefik.http.routers.oasadmin-http.rule=Host(`oasadmin.pete-hamlin.com`)"
+      - "traefik.http.routers.oasadmin-http.entrypoints=web"
+      - "traefik.http.routers.oasadmin-http.middlewares=redirect@file"
+      - "traefik.http.routers.oasadmin.service=oasadmin"
+      - "traefik.http.routers.oasadmin.rule=Host(`oasadmin.pete-hamlin.com`)"
+      - "traefik.http.routers.oasadmin.entrypoints=web-secure"
+      - "traefik.http.routers.oasadmin.middlewares=chain-bypass@file"
+      - "traefik.http.routers.oasadmin.tls=true"
+      - "traefik.http.routers.oasadmin.priority=99"
+      - "traefik.http.routers.oasadmin.tls.certresolver=dns"
+      - "traefik.http.routers.oasadmin.tls.domains[0].main=pete-hamlin.com"
+      - "traefik.http.routers.oasadmin.tls.domains[0].sans=*.pete-hamlin.com"
+
+      # public
+      - "traefik.http.services.oas.loadbalancer.server.scheme=http"
+      - "traefik.http.services.oas.loadbalancer.server.port=8002"
+      - "traefik.enable=true"
+      - "traefik.docker.network=homelabos_traefik"
+      - "traefik.http.routers.oas-http.service=oas"
+      - "traefik.http.routers.oas-http.rule=Host(`oas.pete-hamlin.com`)"
+      - "traefik.http.routers.oas-http.entrypoints=web"
+      - "traefik.http.routers.oas-http.middlewares=redirect@file"
+      - "traefik.http.routers.oas.service=oas"
+      - "traefik.http.routers.oas.rule=Host(`oas.pete-hamlin.com`)"
+      - "traefik.http.routers.oas.entrypoints=web-secure"
+      - "traefik.http.routers.oas.middlewares=chain-bypass@file"
+      - "traefik.http.routers.oas.tls=true"
+      - "traefik.http.routers.oas.priority=99"
+      - "traefik.http.routers.oas.tls.certresolver=dns"
+      - "traefik.http.routers.oas.tls.domains[0].main=pete-hamlin.com"
+      - "traefik.http.routers.oas.tls.domains[0].sans=*.pete-hamlin.com"

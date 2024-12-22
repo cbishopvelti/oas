@@ -1,0 +1,20 @@
+services:
+  oas:
+    build:
+      context: .
+      dockerfile: ./Dockerfile.traefik
+    environment:
+      # - DANGEROUSLY_DISABLE_HOST_CHECK=true
+      - REACT_APP_ADMIN_URL="https://admin.gcloud.oxfordshireacrosociety.co.uk"
+      - REACT_APP_SERVER_URL="https://server.gcloud.oxfordshireacrosociety.co.uk"
+      - REACT_APP_PUBLIC_URL="https://www.gcloud.oxfordshireacrosociety.co.uk"
+      - DOMAIN=".gcloud.oxfordshireacrosociety.co.uk"
+      - DB_FILE=/dbs/sqlite-prod.db
+      - MIX_ENV=gcloud
+    ports:
+      - 4000:4000
+      - 4001:4001
+      - 4002:4002
+    volumes:
+      - ./data/dbs:/dbs
+      - ./data/dbs-backup:/dbs-backup
