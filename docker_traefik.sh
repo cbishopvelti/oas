@@ -5,4 +5,5 @@ tmux new-session -d -s server 'mix ecto.migrate --no-compile && iex -S mix phx.s
 cp /app/nginx/traefik_nginx.conf /etc/nginx/nginx.conf
 nginx
 
-/bin/bash
+sleep infinity
+
