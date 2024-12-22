@@ -1,5 +1,13 @@
+networks:
+  traefik_network:
+    external: true
+    name: homelabos_traefik
+
 services:
   oas:
+    restart: unless-stopped
+    networks:
+      - traefik_network
     build:
       context: .
       dockerfile: ./Dockerfile.traefik
