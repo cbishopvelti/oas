@@ -77,3 +77,7 @@ Put booking behind configuration
 
 
 
+### Domains
+
+https://account.squarespace.com/domains
+un: chrisjbishop155@gmail.com
