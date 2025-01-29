@@ -46,7 +46,7 @@ defmodule Oas.MixProject do
       {:phoenix_live_view, "~> 0.17.5"},
       {:floki, ">= 0.30.0", only: :test},
       {:phoenix_live_dashboard, "~> 0.6"},
-      {:esbuild, "~> 0.3", runtime: Mix.env() == :dev},
+      {:esbuild, "~> 0.3"}, # , runtime: Mix.env() == :dev
       {:hackney, "~> 1.18"},
       {:gen_smtp, "~> 1.2"},
       {:swoosh, "~> 1.3"},
