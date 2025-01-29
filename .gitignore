@@ -37,3 +37,12 @@ npm-debug.log
 .DS_Store
 
 /dbs
+rel/overlays/bin/server.bat
+rel/overlays/bin/server
+rel/overlays/bin/migrate.bat
+rel/overlays/bin/migrate
+rel/env.sh.eex
+lib/oas/release.ex
+fly.toml
+config/fly.exs
+.github/workflows/fly-deploy.yml
