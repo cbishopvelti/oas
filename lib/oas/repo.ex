@@ -21,7 +21,7 @@ defmodule Oas.Repo do
   # end
 
   def backup() do
-    %{pid: pid } = Ecto.Adapter.lookup_meta(Oas.Repo.get_dynamic_repo())
+    %{pid: _pid } = Ecto.Adapter.lookup_meta(Oas.Repo.get_dynamic_repo())
 
     {:ok, conn} = Exqlite.Sqlite3.open(
       Application.get_env(:oas, Oas.Repo)[:database]
@@ -35,7 +35,7 @@ defmodule Oas.Repo do
 
     data
     |> (&(IO.binwrite(file, &1))).()
-    
+
     File.close(file)
     Exqlite.Sqlite3.close(conn)
   end

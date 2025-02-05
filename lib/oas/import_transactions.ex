@@ -6,8 +6,8 @@ defmodule Oas.ImportTransactions do
     rows
     |> Enum.map(fn (row = %{
       bank_account_name: bank_account_name
-    }) -> 
-      
+    }) ->
+
       csvDate = Map.get(row, :date)
 
       # bank_details = Map.get(row, :bank_account_name) <> "\n" <> Map.get(row, :account)
@@ -58,7 +58,7 @@ defmodule Oas.ImportTransactions do
 
         case membershipPeriod do
           nil -> row
-          %{value: value} -> 
+          %{value: value} ->
             cond do
               Decimal.eq?(amount, value) ->
                 if (is_map_key(row, :who_member_id)) do
@@ -91,7 +91,7 @@ defmodule Oas.ImportTransactions do
           end
         ) do
           nil -> row
-          configToken = %{quantity: no, value: value} ->
+          configToken = %{quantity: _no, value: _value} ->
             if (is_map_key(row, :who_member_id)) do
               Map.put(row, :state, :tokens)
                 |> Map.put(:state_data, configToken)
@@ -110,7 +110,7 @@ defmodule Oas.ImportTransactions do
 
   def processWhoMemberId(rows) do
     rows
-    |> Enum.map(fn (row = %{bank_account_name: bank_account_name}) -> 
+    |> Enum.map(fn (row = %{bank_account_name: bank_account_name}) ->
       id = from(m in Oas.Members.Member,
         where: m.bank_account_name == ^bank_account_name
       )
@@ -146,7 +146,7 @@ defmodule Oas.ImportTransactions do
   # -----------------------------------
 
   defp doTokens(%{
-    who_member_id: who_member_id, 
+    who_member_id: who_member_id,
     quantity: quantity,
     value: value,
     when1: when1
@@ -188,11 +188,11 @@ defmodule Oas.ImportTransactions do
       amount: amount,
       bank_account_name: bank_account_name,
       date: date,
-      memo: memo,
+      memo: _memo,
       my_reference: my_reference,
       transaction_tags: transaction_tags
     }) ->
-      
+
       who = case Map.get(row, :who_member_id, nil) do
         nil -> bank_account_name
         id -> Oas.Repo.get!(Oas.Members.Member, id) |> Map.get(:name)
@@ -223,7 +223,7 @@ defmodule Oas.ImportTransactions do
 
       if (Map.get(row, :state, nil) == :membership) do
         doMembership(%{
-          when1: date, 
+          when1: date,
           who_member_id: Map.get(row, :who_member_id, nil),
           amount: amount
         }, result)

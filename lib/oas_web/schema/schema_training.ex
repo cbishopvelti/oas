@@ -1,6 +1,6 @@
-import Ecto.Query, only: [from: 2, where: 3]
+import Ecto.Query, only: [from: 2]
 defmodule OasWeb.Schema.SchemaTraining do
-  use Absinthe.Schema.Notation  
+  use Absinthe.Schema.Notation
 
   object :training_where do
     field :id, :integer
@@ -28,7 +28,7 @@ defmodule OasWeb.Schema.SchemaTraining do
     field :notes, :string
     field :training_tags, list_of(:training_tag)
   end
-  
+
   object :training_queries do
     field :training, :training do
       arg :id, non_null(:integer)
@@ -84,7 +84,7 @@ defmodule OasWeb.Schema.SchemaTraining do
       end
     end
     field :training_where, list_of(:training_where) do
-      resolve fn _,_,_ -> 
+      resolve fn _,_,_ ->
         result = Oas.Repo.all(from(w in Oas.Trainings.TrainingWhere, select: w))
         {:ok, result}
       end
@@ -99,7 +99,7 @@ defmodule OasWeb.Schema.SchemaTraining do
       arg :training_tags, non_null(list_of(:training_tag_arg))
       arg :notes, :string
       resolve fn _, args, _ ->
-        %{training_tags: training_tags, training_where: training_where} = args 
+        %{training_tags: training_tags, training_where: training_where} = args
 
         training_tags = training_tags
           |> Enum.map(fn
@@ -186,26 +186,26 @@ defmodule OasWeb.Schema.SchemaTraining do
         removedTrainingWhere = Ecto.Changeset.get_change(toSave, :training_where)
         case removedTrainingWhere do
           nil -> nil
-          %{action: :update, data: %{id: id}} -> from(w in Oas.Trainings.TrainingWhere,
+          %{action: :update, data: %{id: _id}} -> from(w in Oas.Trainings.TrainingWhere,
               as: :training_where,
               where: not(exists(
                 from(
-                  t in Oas.Trainings.Training, 
+                  t in Oas.Trainings.Training,
                   where: t.training_where_id == parent_as(:training_where).id
                 )
               )) and w.id == ^training.training_where.id
             )  |> Oas.Repo.delete_all
-          %{action: :insert, data: %{id: id}} -> from(w in Oas.Trainings.TrainingWhere,
+          %{action: :insert, data: %{id: _id}} -> from(w in Oas.Trainings.TrainingWhere,
               as: :training_where,
               where: not(exists(
                 from(
-                  t in Oas.Trainings.Training, 
+                  t in Oas.Trainings.Training,
                   where: t.training_where_id == parent_as(:training_where).id
                 )
               )) and w.id == ^training.training_where.id
             )  |> Oas.Repo.delete_all
         end
-        
+
 
         # EO deleting
 
@@ -214,7 +214,7 @@ defmodule OasWeb.Schema.SchemaTraining do
     end
     field :delete_training, type: :success do
       arg :id, non_null(:integer)
-      resolve fn _, %{id: id}, _ -> 
+      resolve fn _, %{id: id}, _ ->
         {:ok, result} = Oas.Repo.get!(Oas.Trainings.Training, id)
           |> Oas.Repo.delete
 
@@ -222,12 +222,12 @@ defmodule OasWeb.Schema.SchemaTraining do
         as: :training_where,
         where: not(exists(
           from(
-            t in Oas.Trainings.Training, 
+            t in Oas.Trainings.Training,
             where: t.training_where_id == parent_as(:training_where).id
           )
         )) and w.id == ^result.training_where_id
         )  |> Oas.Repo.delete_all
-        
+
         {:ok, %{success: true}}
       end
     end

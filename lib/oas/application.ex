@@ -18,11 +18,12 @@ defmodule Oas.Application do
       OasWeb.Endpoint,
       # Start a worker by calling: Oas.Worker.start_link(arg)
       # {Oas.Worker, arg}
-      Oas.BackupJob
+      Oas.BackupJob,
+      Oas.Gocardless.Server
     ]
-    
+
     :ets.new(:user_table, [:named_table, :public, :set, read_concurrency: true])
-    
+
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: Oas.Supervisor]

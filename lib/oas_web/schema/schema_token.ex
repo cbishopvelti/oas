@@ -1,4 +1,4 @@
-import Ecto.Query, only: [from: 2, where: 3]
+import Ecto.Query, only: [from: 2]
 defmodule OasWeb.Schema.SchemaToken do
   use Absinthe.Schema.Notation
 
@@ -106,12 +106,12 @@ defmodule OasWeb.Schema.SchemaToken do
     end
 
     field :public_config_tokens, type: :public_config_tokens do
-      resolve fn _, _, _ -> 
+      resolve fn _, _, _ ->
         token_expiry_days = from(con in Oas.Config.Config,
           select: con.token_expiry_days
         ) |> Oas.Repo.one
 
-        tokens = from(tok in Oas.Config.Tokens, 
+        tokens = from(tok in Oas.Config.Tokens,
           order_by: [asc: tok.quantity]
         ) |> Oas.Repo.all
 
@@ -132,14 +132,14 @@ defmodule OasWeb.Schema.SchemaToken do
     field :public_member, type: :public_member do
       arg :email, non_null(:string)
       resolve fn _, %{email: email}, _ ->
-        member = from(m in Oas.Members.Member, 
+        member = from(m in Oas.Members.Member,
           where: m.email == ^email
         ) |> Oas.Repo.one
 
         case member do
           nil ->
             {:error, "Member not found"}
-          member -> 
+          member ->
             {:ok, member}
         end
       end
@@ -173,7 +173,7 @@ defmodule OasWeb.Schema.SchemaToken do
                 %{when: when1} -> Map.put(&1, :training_date, Map.get(train, :when, when1))
                 _ -> &1
               end)).()
-                
+
             end)
 
             {:ok, tokens}
@@ -183,7 +183,7 @@ defmodule OasWeb.Schema.SchemaToken do
 
     field :public_outstanding_attendance, type: list_of(:public_attendance) do
       arg :email, non_null(:string)
-      resolve fn _, %{email: email}, _ -> 
+      resolve fn _, %{email: email}, _ ->
         trainings = from(
           tr in Oas.Trainings.Training,
           preload: :training_where,
@@ -205,8 +205,8 @@ defmodule OasWeb.Schema.SchemaToken do
       arg :member_id, :integer
       arg :amount, :integer
       arg :value, :float
-      resolve fn _, %{amount: amount, transaction_id: transaction_id, member_id: member_id, value: value}, _ -> 
-        result = Oas.Attendance.add_tokens(%{
+      resolve fn _, %{amount: amount, transaction_id: transaction_id, member_id: member_id, value: value}, _ ->
+        Oas.Attendance.add_tokens(%{
           member_id: member_id,
           transaction_id: transaction_id,
           quantity: amount,
@@ -224,7 +224,7 @@ defmodule OasWeb.Schema.SchemaToken do
         if (token.attendance_id != nil) do
           {:error, "Token has been used"}
         else
-          result = Oas.Repo.delete(token)
+          Oas.Repo.delete(token)
           {:ok, %{success: true}}
         end
       end
@@ -238,9 +238,9 @@ defmodule OasWeb.Schema.SchemaToken do
           {:error, "Token has been used"}
         else
           token = Oas.Attendance.transfer_token(%{token: token, member_id: member_id})
-          
+
           {:ok, token}
-        end        
+        end
       end
     end
   end

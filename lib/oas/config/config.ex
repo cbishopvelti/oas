@@ -1,6 +1,5 @@
 defmodule Oas.Config.Config do
   use Ecto.Schema
-  import Ecto.Changeset
 
   schema "config_config" do
     field :token_expiry_days, :integer
@@ -8,6 +7,10 @@ defmodule Oas.Config.Config do
     field :bacs, :string
     field :enable_booking, :boolean
     field :name, :string
+    field :gocardless_id, :string
+    field :gocardless_key, :string
+    field :gocardless_requisition_id, :string
+    field :gocardless_account_id, :string
     timestamps()
   end
 end

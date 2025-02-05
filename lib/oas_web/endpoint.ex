@@ -7,7 +7,7 @@ defmodule OasWeb.Endpoint do
   @session_options [
     store: :cookie,
     key: "_oas_key",
-    domain: Application.get_env(:oas, OasWeb.Endpoint)[:domain],
+    domain: Application.compile_env(:oas, OasWeb.Endpoint)[:domain],
     signing_salt: "gM7uiSTx"
   ]
 
@@ -46,16 +46,16 @@ defmodule OasWeb.Endpoint do
     parsers: [:urlencoded, :multipart, :json, Absinthe.Plug.Parser],
     pass: ["*/*"],
     json_decoder: Phoenix.json_library()
-  
+
   # plug Absinthe.Plug,
   #   schema: OasWeb.Schema
 
-  
-  
+
+
   plug Plug.MethodOverride
   plug Plug.Head
   plug Plug.Session, @session_options
   plug OasWeb.Router
 
-  
+
 end

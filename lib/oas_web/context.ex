@@ -5,7 +5,7 @@ defmodule OasWeb.Context do
     opts
   end
 
-  def call(conn, opts) do
+  def call(conn, _opts) do
     newConn = OasWeb.MemberAuth.fetch_current_member(conn, %{});
 
     %{assigns: %{current_member: currentMember}} = newConn

@@ -1,6 +1,5 @@
 defmodule Oas.Members.Membership do
   use Ecto.Schema
-  import Ecto.Changeset
 
   schema "memberships" do
     belongs_to :member, Oas.Members.Member
@@ -9,7 +8,7 @@ defmodule Oas.Members.Membership do
     belongs_to :transaction, Oas.Transactions.Transaction
 
     field :notes, :string
-    
+
     timestamps()
   end
 end

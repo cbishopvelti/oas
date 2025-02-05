@@ -1,6 +1,5 @@
 defmodule Oas.Trainings.Training do
   use Ecto.Schema
-  import Ecto.Changeset
 
   schema "trainings" do
     belongs_to :training_where, Oas.Trainings.TrainingWhere, on_replace: :nilify

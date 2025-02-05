@@ -1,4 +1,4 @@
-import Ecto.Query, only: [from: 2, where: 3]
+import Ecto.Query, only: [from: 2]
 
 defmodule OasWeb.Schema.SchemaAttendance do
   use Absinthe.Schema.Notation
@@ -65,7 +65,7 @@ defmodule OasWeb.Schema.SchemaAttendance do
 
   # QUERIES
   object :attendance_queries do
-    field :attendance, list_of(:member_attendance_attendance) do 
+    field :attendance, list_of(:member_attendance_attendance) do
       arg :training_id, non_null(:integer)
       resolve fn _, %{training_id: training_id}, _ ->
         training = Oas.Repo.get!(Oas.Trainings.Training, training_id)
@@ -135,5 +135,5 @@ defmodule OasWeb.Schema.SchemaAttendance do
       end
     end
   end
-  
+
 end
