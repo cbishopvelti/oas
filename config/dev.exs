@@ -10,7 +10,8 @@ import Config
 #   pool_size: 10
 
 config :oas, Oas.Repo,
-  database: System.get_env("DB_FILE") || "./dbs/sqlite-2023-dev.db",
+  # database: System.get_env("DB_FILE") || "./dbs/sqlite-2023-dev.db",
+  database: System.get_env("DB_FILE") || "./dbs/sqlite-prod-02-2025.db",
   backup_database: "./dbs/sqlite-backup"
 
 config :oas, Oas.Repo.Replica1,
