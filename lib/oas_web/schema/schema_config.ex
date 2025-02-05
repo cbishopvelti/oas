@@ -1,7 +1,7 @@
 import Ecto.Query, only: [from: 2]
 defmodule OasWeb.Schema.SchemaConfig do
   use Absinthe.Schema.Notation
-  
+
   object :config_token do
     field :id, :integer
     field :value, :string
@@ -15,6 +15,9 @@ defmodule OasWeb.Schema.SchemaConfig do
     field :bacs, :string
     field :enable_booking, :boolean
     field :name, :string
+    field :gocardless_id, :string
+    field :gocardless_key, :string
+    field :gocardless_account_id, :string
   end
 
   object :public_config_config do
@@ -31,7 +34,7 @@ defmodule OasWeb.Schema.SchemaConfig do
       end
     end
     field :config_tokens, list_of(:config_token) do
-      resolve fn _, _, _ -> 
+      resolve fn _, _, _ ->
         results = from(ct in Oas.Config.Tokens, select: ct, order_by: [asc: ct.quantity])
           |> Oas.Repo.all
 
@@ -64,7 +67,7 @@ defmodule OasWeb.Schema.SchemaConfig do
     field :save_config_token, :config_token do
       arg :quantity, non_null(:integer)
       arg :value, non_null(:string)
-      resolve fn _, args, _ -> 
+      resolve fn _, args, _ ->
         %Oas.Config.Tokens{}
         |> Ecto.Changeset.cast(args, [:quantity, :value])
         |> Oas.Repo.insert
@@ -74,7 +77,7 @@ defmodule OasWeb.Schema.SchemaConfig do
     field :delete_config_token, :success do
       arg :id, non_null(:integer)
       resolve fn _, %{id: id}, _ ->
-        result = Oas.Repo.get!(Oas.Config.Tokens, id) |>
+        Oas.Repo.get!(Oas.Config.Tokens, id) |>
           Oas.Repo.delete!
 
         {:ok, %{success: true}}
@@ -86,17 +89,25 @@ defmodule OasWeb.Schema.SchemaConfig do
       arg :bacs, :string
       arg :enable_booking, :boolean
       arg :name, :string
-      resolve fn _, args, _ -> 
+      arg :gocardless_id, :string
+      arg :gocardless_key, :string
+      arg :gocardless_account_id, :string
+      resolve fn _, args, _ ->
 
-        from(cc in Oas.Config.Config, select: cc) 
+        result = from(cc in Oas.Config.Config, select: cc)
         |> Oas.Repo.one
-        |> Ecto.Changeset.cast(args, [:token_expiry_days, :temporary_trainings, :bacs, :enable_booking, :name])
+        |> Ecto.Changeset.cast(args, [
+          :token_expiry_days, :temporary_trainings,
+          :bacs, :enable_booking, :name,
+          :gocardless_id, :gocardless_key, :gocardless_account_id
+        ])
         |> Oas.Repo.update
         |> OasWeb.Schema.SchemaUtils.handle_error
+
+        Process.send(Oas.Gocardless.Server, :init, [])
+
+        result
       end
     end
   end
 end
-
-
-

@@ -27,6 +27,8 @@ import { createLink } from "apollo-absinthe-upload-link";
 import { MembershipPeriodMembers } from './MembershipPeriod/MembershipPeriodMembers';
 import { MemberTrainingAttendance } from './Member/MemberTrainingAttendance';
 import { ConfigTokens } from './Config/ConfigTokens';
+import { Gocardless } from './Config/Gocardless';
+import { GocardlessRequisition } from './Config/GocardlessRequisition';
 import { AnalysisAttendance } from './Analysis/AnalysisAttendance';
 import { AnalysisBalance } from './Analysis/AnalysisBalance';
 
@@ -144,6 +146,16 @@ const router = createBrowserRouter([
         id: "config",
         path: "config",
         element: <ConfigTokens />
+      },
+      {
+        id: "gocardless",
+        path: "config/gocardless",
+        element: <Gocardless />
+      },
+      {
+        id: "gocardless-requisition",
+        path: "config/gocardless/requisition",
+        element: <GocardlessRequisition />
       }
     ],
   },

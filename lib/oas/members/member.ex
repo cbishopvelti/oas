@@ -50,7 +50,7 @@ defmodule Oas.Members.Member do
     |> validate_password(opts)
   end
 
-  def changeset(member, attrs, opts \\ []) do
+  def changeset(member, attrs, _opts \\ []) do
     member
     |> cast(attrs, [:email, :name, :is_active, :is_admin, :is_reviewer, :bank_account_name])
     |> validate_required([:name])

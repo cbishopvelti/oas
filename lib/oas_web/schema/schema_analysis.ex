@@ -1,4 +1,4 @@
-import Ecto.Query, only: [from: 2, where: 3]
+import Ecto.Query, only: [from: 2]
 defmodule OasWeb.Schema.SchemaAnalysis do
   use Absinthe.Schema.Notation
 
@@ -31,17 +31,17 @@ defmodule OasWeb.Schema.SchemaAnalysis do
         to = Date.from_iso8601!(to)
 
         transactions_income = from(t in Oas.Transactions.Transaction,
-          where: t.when >= ^from and t.when <= ^to and t.type == "INCOMING" and 
+          where: t.when >= ^from and t.when <= ^to and t.type == "INCOMING" and
             (t.not_transaction == false or is_nil(t.not_transaction)),
           select: sum(t.amount)
         ) |> Oas.Repo.one! || Decimal.new(0)
-      
+
         transactions_outgoing = from(t in Oas.Transactions.Transaction,
           where: t.when >= ^from and t.when <= ^to and t.type == "OUTGOING" and
             (t.not_transaction == false or is_nil(t.not_transaction)),
           select: sum(t.amount)
         ) |> Oas.Repo.one! || Decimal.new(0)
-      
+
         transactions_difference = from(t in Oas.Transactions.Transaction,
           where: t.when >= ^from and t.when <= ^to and
             (t.not_transaction == false or is_nil(t.not_transaction)),
@@ -82,7 +82,7 @@ defmodule OasWeb.Schema.SchemaAnalysis do
 
         case abs(Date.diff(from, to)) do
           x when x > 1825 -> {:error, "Date difference is too large, max difference is 5 years"}
-          _ -> 
+          _ ->
             {:ok, %{
               balance: Oas.Analysis.series_balance(from, to),
               outstanding_tokens: Oas.Analysis.outstanding_tokens(from, to),
@@ -93,5 +93,5 @@ defmodule OasWeb.Schema.SchemaAnalysis do
     end
   end
 
-  
+
 end

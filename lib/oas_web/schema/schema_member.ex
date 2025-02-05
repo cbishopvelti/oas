@@ -57,16 +57,16 @@ defmodule OasWeb.Schema.SchemaMember do
     field :inserted_at, :string
 
     field :member_details, :member_details
-    
+
     field :membership_periods, list_of(:membership_period) do
-      resolve fn %{id: id}, _, _ -> 
+      resolve fn %{id: id}, _, _ ->
         member = Oas.Repo.get(Oas.Members.Member, id) |> Oas.Repo.preload(:membership_periods)
         {:ok, member.membership_periods}
       end
     end
 
     field :memberships, list_of(:membership) do
-      resolve fn %{id: id}, _, _ -> 
+      resolve fn %{id: id}, _, _ ->
         member = Oas.Repo.get(Oas.Members.Member, id)
         |> Oas.Repo.preload(memberships: [:transaction, :membership_period])
 
@@ -75,7 +75,7 @@ defmodule OasWeb.Schema.SchemaMember do
     end
 
     field :transactions, list_of(:transaction) do
-      resolve fn %{id: id}, _, _ -> 
+      resolve fn %{id: id}, _, _ ->
         member = Oas.Repo.get(Oas.Members.Member, id) |> Oas.Repo.preload(:transactions)
         {:ok, member.transactions}
       end
@@ -164,7 +164,7 @@ defmodule OasWeb.Schema.SchemaMember do
       arg :is_reviewer, :boolean
       arg :is_admin, :boolean
       arg :member_details, :member_details_arg
-      resolve fn _parent, args, context ->
+      resolve fn _parent, args, _context ->
 
         toSave = case Map.get(args, :id) do
           nil ->
@@ -176,18 +176,18 @@ defmodule OasWeb.Schema.SchemaMember do
           id ->
             member = Oas.Repo.get!(Oas.Members.Member, id) |> Oas.Repo.preload(:member_details)
             attrs = case member do
-              x = %{member_details: %{id: id}} ->
+              _x = %{member_details: %{id: id}} ->
                 case Map.get(args, :member_details) do
                   nil -> args
                   _ -> put_in(args, [:member_details, :id], id)
                 end
-              x -> args
+              _x -> args
             end
             member |> Oas.Members.Member.changeset(attrs)
-        end        
+        end
 
         result = toSave
-        
+
         |> (&(case Map.get(args, :member_details) do
           nil -> &1
           _ -> Ecto.Changeset.cast_assoc(&1, :member_details)
@@ -233,7 +233,7 @@ defmodule OasWeb.Schema.SchemaMember do
         |> Oas.Members.Member.registration_changeset(attrs)
         |> Ecto.Changeset.cast_assoc(:member_details)
         |> Oas.Repo.insert
-        
+
         case result do
           {:ok, result} ->
             # Oas.Members.deliver_member_confirmation_instructions(
@@ -249,9 +249,9 @@ defmodule OasWeb.Schema.SchemaMember do
         end
       end
 
-      middleware(fn resolution, ho ->
+      middleware(fn resolution, _ho ->
         case resolution.value do
-          %{public_register_member: public_register_member} -> 
+          %{public_register_member: public_register_member} ->
             Map.update!(
               resolution,
               :context,

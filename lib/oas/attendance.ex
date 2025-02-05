@@ -33,7 +33,7 @@ defmodule Oas.Attendance do
   end
 
   def maybe_send_warnings_email(member) do
-    lastTransaction = from(t in Oas.Transactions.Transaction, 
+    lastTransaction = from(t in Oas.Transactions.Transaction,
       order_by: [desc: t.when, desc: t.id],
       limit: 1
     ) |> Oas.Repo.one
@@ -48,7 +48,7 @@ defmodule Oas.Attendance do
     ) |> Oas.Repo.all
 
     case attendance do
-      [firstAttendance, %{token: nil, training: %{when: when1}}] when when1 > lastTransaction.when  ->
+      [_firstAttendance, %{token: nil, training: %{when: when1}}] when when1 > lastTransaction.when  ->
         nil
       _ ->
         maybe_send_warnings_email_2(member)
@@ -57,7 +57,7 @@ defmodule Oas.Attendance do
   end
 
   def maybe_send_warnings_email_2(member) do
-    
+
     warnings = []
     tokens = Oas.Attendance.get_token_amount(%{member_id: member.id})
 
@@ -66,7 +66,7 @@ defmodule Oas.Attendance do
     ) |> Oas.Repo.one
 
     warnings = if (tokens <= 0) do
-      warnings = ["You have run out of tokens (#{tokens}), please buy more.\n(If you bought tokens since #{last_transaction}, please ignore)" | warnings]
+      ["You have run out of tokens (#{tokens}), please buy more.\n(If you bought tokens since #{last_transaction}, please ignore)" | warnings]
     else
       warnings
     end
@@ -79,7 +79,7 @@ defmodule Oas.Attendance do
 
     case (warnings) do
       [] -> nil
-      warnings -> 
+      warnings ->
         config = from(cc in Oas.Config.Config, select: cc) |> Oas.Repo.one
         Oas.Tokens.TokenNotifier.deliver(member.email, "#{config.name} notification",
         """
@@ -154,18 +154,18 @@ defmodule Oas.Attendance do
         limit: 1
       ) |> Oas.Repo.one
 
-      attendance_id = case debtAttendance do
-        nil -> 
+      case debtAttendance do
+        nil ->
           attendance.token |>
             Ecto.Changeset.cast(%{used_on: nil, attendance_id: nil}, [:used_on, :attendance_id])
             |> Oas.Repo.update!
-        %{id: id, training: %{when: when1}} -> 
+        %{id: id, training: %{when: _when1}} ->
           attendance.token |>
             Ecto.Changeset.cast(%{used_on: get_used_on(attendance.training.when), attendance_id: id}, [:used_on, :attendance_id])
             |> Oas.Repo.update!
       end
     end
-    
+
     Oas.Repo.delete!(attendance)
 
     {:ok, %{success: true}}
@@ -179,7 +179,7 @@ defmodule Oas.Attendance do
       select: count(a.id)
     ) |> Oas.Repo.one
 
-    creditTokens = from(t in Oas.Tokens.Token, 
+    creditTokens = from(t in Oas.Tokens.Token,
       where: t.member_id == ^member_id and t.expires_on >= from_now(0, "day") and is_nil(t.used_on),
       select: count(t.id)
     ) |> Oas.Repo.one
@@ -224,7 +224,7 @@ defmodule Oas.Attendance do
 
     debtAttendancesStream = Stream.concat(debtAttendances, Stream.cycle([nil]))
 
-    toInsert = List.duplicate(token, quantity)
+    List.duplicate(token, quantity)
       |> Enum.zip_with(debtAttendancesStream, fn
         a, nil -> a
         a, %{id: id, training: %{when: when1}} -> %{a | attendance_id: id, used_on: get_used_on(when1)} end
@@ -236,7 +236,7 @@ defmodule Oas.Attendance do
 
 
   def transfer_token(%{member_id: member_id, token: token}) do
-    
+
     # FIX DEBT
     {attendanceId, when1} = from(a in Oas.Trainings.Attendance,
       left_join: to in assoc(a, :token), on: to.member_id == ^member_id,
@@ -275,7 +275,7 @@ defmodule Oas.Attendance do
           Map.put(member, :warnings, [member.name <> " is an x-member" | Map.get(member, :warnings, []) ]),
           :x_member
         }
-      result > config.temporary_trainings -> 
+      result > config.temporary_trainings ->
         {
           Map.put(member, :warnings, [member.name <> " has attended " <> to_string(result)
             <> " session"

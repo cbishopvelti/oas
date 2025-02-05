@@ -1,6 +1,5 @@
 defmodule Oas.Trainings.TrainingTags do
   use Ecto.Schema
-  import Ecto.Changeset
 
   schema "training_tags" do
     field :name, :string

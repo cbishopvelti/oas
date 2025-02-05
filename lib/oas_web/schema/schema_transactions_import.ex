@@ -1,4 +1,3 @@
-import Ecto.Query, only: [from: 2, where: 3]
 defmodule OasWeb.Schema.SchemaTransactionsImport do
   use Absinthe.Schema.Notation
 
@@ -36,12 +35,12 @@ defmodule OasWeb.Schema.SchemaTransactionsImport do
   end
 
   object :transactions_import_queries do
-    
+
     field :transactions_import, type: list_of :transactions_import do
       resolve fn _, _, %{context: %{ current_member: current_member, user_table: user_table }} ->
         # [{_, rows}] = :ets.lookup(user_table, current_member.id)
         case :ets.lookup(user_table, current_member.id) do
-          [{_, rows}] -> 
+          [{_, rows}] ->
             {:ok, rows}
           _ -> {:ok, nil}
         end
@@ -105,8 +104,8 @@ defmodule OasWeb.Schema.SchemaTransactionsImport do
           current_member.id
         )
 
-        result = rows 
-        |> Enum.map(fn (row) -> 
+        result = rows
+        |> Enum.map(fn (row) ->
           Map.delete(row, :errors) |> Map.delete(:warnings)
         end)
         |> Oas.ImportTransactions.process
@@ -127,7 +126,7 @@ defmodule OasWeb.Schema.SchemaTransactionsImport do
         |> CSV.decode(headers: true, field_transform: fn (field) -> String.trim(field) end, validate_row_length: true)
         # |> Enum.take(1) # DEBUG ONLY
         |> Enum.filter(fn
-          {:error, message} -> 
+          {:error, message} ->
             !String.contains?(message, ":validate_row_length")
           _ -> true
         end)
@@ -177,12 +176,12 @@ defmodule OasWeb.Schema.SchemaTransactionsImport do
     field :do_import_transactions, type: :success do
       # arg :indexes_to_import, non_null(list_of(:integer))
       # arg :to_import, non_null(list_of(:to_import_arg))
-      
+
       resolve fn
         _,
         _, # %{to_import: to_import},
         %{context: %{ user_table: user_table, current_member: current_member }}
-      -> 
+      ->
 
         [{_, rows}] = :ets.lookup(user_table, current_member.id)
         rowsToImport = rows
@@ -199,7 +198,7 @@ defmodule OasWeb.Schema.SchemaTransactionsImport do
 
           {Map.put(row, :transaction_tags, transaction_tags), id}
         end)
-        |> Enum.map(fn ({row, id}) -> row end)
+        |> Enum.map(fn ({row, _id}) -> row end)
 
         Oas.ImportTransactions.doImport(rowsToImport)
 
