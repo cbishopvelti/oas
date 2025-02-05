@@ -351,4 +351,21 @@ defmodule Oas.Members do
       {:error, :member, changeset, _} -> {:error, changeset}
     end
   end
+
+  # ONLY moves attendance, USE WITH CARE
+  # Oas.Members.merge_members!(106, 111)
+  def merge_members!(from_id, to_id) do
+    result = Ecto.Query.from(t in Oas.Trainings.Training,
+
+      join: a in assoc(t, :attendance),
+      join: m in assoc(a, :member),
+      where: m.id == ^from_id,
+      select: {t, a}
+    ) |> Repo.all()
+
+    result |> Enum.map(fn {training, attendance} ->
+      Oas.Attendance.delete_attendance(%{attendance_id: attendance.id})
+      Oas.Attendance.add_attendance(%{member_id: to_id, training_id: training.id}, %{inserted_by_member_id: 1})
+    end)
+  end
 end
