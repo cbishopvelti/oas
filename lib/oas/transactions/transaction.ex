@@ -20,6 +20,8 @@ defmodule Oas.Transactions.Transaction do
     has_many :tokens, Oas.Tokens.Token, foreign_key: :transaction_id
     has_one :membership, Oas.Members.Membership, on_replace: :delete
 
+    has_one :gocardless_transaction_iid, Oas.Transactions.Gocardless, foreign_key: :transaction_id, on_replace: :delete
+
     timestamps()
   end
 
@@ -42,7 +44,10 @@ defmodule Oas.Transactions.Transaction do
 
   def changeset(transaction, params \\ %{}) do
     transaction
-    |> cast(params, [:what, :when, :who, :who_member_id, :type, :amount, :bank_details, :notes, :their_reference, :my_reference])
+    |> cast(params, [:what, :when, :who, :who_member_id,
+      :type, :amount, :bank_details, :notes,
+      :their_reference, :my_reference], empty_values: [[], nil])
+    |> IO.inspect(label: "003")
     |> validate_required([:what, :when, :who, :type, :amount])
     |> validate_type
     |> validate_amount

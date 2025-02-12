@@ -37,6 +37,7 @@ defmodule OasWeb.Schema.SchemaTransaction do
     field :membership, :membership
     field :their_reference, :string
     field :my_reference, :string
+    field :warnings, :string
   end
 
   object :transaction_queries do
@@ -53,7 +54,7 @@ defmodule OasWeb.Schema.SchemaTransaction do
         query = from(
           t in Oas.Transactions.Transaction,
           select: t,
-          preload: [:transaction_tags, :tokens, :membership],
+          preload: [:transaction_tags, :tokens, :membership, :gocardless_transaction_iid],
           where: t.when <= ^to and t.when >= ^from
             and (t.not_transaction == false or is_nil(t.not_transaction)),
           order_by: [desc: t.when, desc: t.id]
@@ -70,6 +71,10 @@ defmodule OasWeb.Schema.SchemaTransaction do
 
         # IO.inspect(Oas.Repo.to_sql(:all, query) |> elem(0))
         result = Oas.Repo.all(query)
+        result = result |> Enum.map(fn transaction ->
+          warnings = (Map.get(transaction, :gocardless_transaction_iid, %{}) || %{}) |> Map.get(:warnings)
+          Map.put(transaction, :warnings, warnings)
+        end)
         {:ok, result}
       end
     end
@@ -80,8 +85,11 @@ defmodule OasWeb.Schema.SchemaTransaction do
           |> Oas.Repo.preload(:transaction_tags)
           |> Oas.Repo.preload(:membership)
           |> Oas.Repo.preload(:tokens)
+          |> Oas.Repo.preload(:gocardless_transaction_iid)
 
-        {:ok, transaction}
+        warnings = (Map.get(transaction, :gocardless_transaction_iid, %{}) || %{}) |> Map.get(:warnings)
+
+        {:ok, transaction |> Map.put(:warnings, warnings)}
       end
     end
     field :transaction_tags, list_of(:transaction_tag) do
@@ -196,6 +204,7 @@ defmodule OasWeb.Schema.SchemaTransaction do
         #   end
         # end
 
+        IO.inspect(args, label: "001 args")
         toSave = case Map.get(args, :id) do
           nil -> %Oas.Transactions.Transaction{}
           id -> Oas.Repo.get!(Oas.Transactions.Transaction, id) |> Oas.Repo.preload(:transaction_tags)
@@ -263,6 +272,21 @@ defmodule OasWeb.Schema.SchemaTransaction do
           )) # and tt.id in ^removedTransactionTags
         ) |> Oas.Repo.delete_all
         # EO delete unused tags
+
+        {:ok, %{success: true}}
+      end
+    end
+
+    field :transaction_clear_warnings, type: :success do
+      arg :transaction_id, non_null(:integer)
+      resolve fn _, %{transaction_id: transaction_id}, _ ->
+        transaction = Oas.Repo.get!(Oas.Transactions.Transaction, transaction_id)
+        |> Oas.Repo.preload(:gocardless_transaction_iid)
+
+        Ecto.Changeset.change(transaction.gocardless_transaction_iid,
+          warnings: nil
+        )
+        |> Oas.Repo.update!()
 
         {:ok, %{success: true}}
       end

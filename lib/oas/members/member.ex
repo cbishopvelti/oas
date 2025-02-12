@@ -12,6 +12,7 @@ defmodule Oas.Members.Member do
     field :is_reviewer, :boolean
     field :is_active, :boolean
     field :bank_account_name, :string
+    field :gocardless_name, :string
     has_many :attendance, Oas.Trainings.Attendance
 
     has_one :member_details, Oas.Members.MemberDetails, on_replace: :nilify
@@ -44,7 +45,7 @@ defmodule Oas.Members.Member do
   """
   def registration_changeset(member, attrs, opts \\ []) do
     member
-    |> cast(attrs, [:email, :password, :name, :is_active, :is_admin, :is_reviewer, :bank_account_name])
+    |> cast(attrs, [:email, :password, :name, :is_active, :is_admin, :is_reviewer, :bank_account_name, :gocardless_name])
     |> validate_required([:name])
     |> validate_email()
     |> validate_password(opts)
@@ -52,7 +53,7 @@ defmodule Oas.Members.Member do
 
   def changeset(member, attrs, _opts \\ []) do
     member
-    |> cast(attrs, [:email, :name, :is_active, :is_admin, :is_reviewer, :bank_account_name])
+    |> cast(attrs, [:email, :name, :is_active, :is_admin, :is_reviewer, :bank_account_name, :gocardless_name])
     |> validate_required([:name])
     |> validate_email()
   end

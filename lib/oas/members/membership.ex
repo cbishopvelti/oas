@@ -11,4 +11,9 @@ defmodule Oas.Members.Membership do
 
     timestamps()
   end
+
+  def changeset(struct, params) do
+    struct
+    |> Ecto.Changeset.cast(params, [:member_id, :membership_period_id])
+  end
 end

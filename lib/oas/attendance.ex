@@ -201,7 +201,7 @@ defmodule Oas.Attendance do
     quantity: quantity,
     when1: when1,
     value: value
-  }) do
+  }, do_insert \\ true) do
     # FIX DEBT
     config = from(cc in Oas.Config.Config, select: cc) |> Oas.Repo.one
     debtAttendances = from(a in Oas.Trainings.Attendance,
@@ -224,14 +224,20 @@ defmodule Oas.Attendance do
 
     debtAttendancesStream = Stream.concat(debtAttendances, Stream.cycle([nil]))
 
-    List.duplicate(token, quantity)
-      |> Enum.zip_with(debtAttendancesStream, fn
-        a, nil -> a
-        a, %{id: id, training: %{when: when1}} -> %{a | attendance_id: id, used_on: get_used_on(when1)} end
-      )
-      |> Enum.map(&Oas.Repo.insert/1)
+    tokens = List.duplicate(token, quantity)
+    |> Enum.zip_with(debtAttendancesStream, fn
+      a, nil -> a
+      a, %{id: id, training: %{when: when1}} ->
+        %{a | attendance_id: id, used_on: get_used_on(when1)}
+      end
+    )
 
-    :ok
+    if (do_insert) do
+      tokens |> Enum.map(&Oas.Repo.insert/1)
+      :ok
+    else
+      tokens
+    end
   end
 
 

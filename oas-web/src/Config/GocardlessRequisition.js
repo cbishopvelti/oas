@@ -1,7 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useState, useRef} from "react";
 import { useMutation, gql } from "@apollo/client"
 
 export const GocardlessRequisition = () => {
+  const initialized = useRef(false)
 
   const [mutation, { data, loading, error }] = useMutation(gql`
     mutation {
@@ -12,13 +13,16 @@ export const GocardlessRequisition = () => {
   `)
 
   useEffect(() => {
-    mutation()
+    if (!initialized.current) {
+      initialized.current = true
+      mutation()
+    }
   },
   []);
 
   return <div>
     {error && <div>Error occurred</div>}
     {loading && <div>Please wait</div>}
-    {data && <div>Success</div>}
+    {data && <div>Success, please go back to config and select the account.</div>}
   </div>
 }

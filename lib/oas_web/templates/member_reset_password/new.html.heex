@@ -1,8 +1,8 @@
 <h1>Forgot your password?</h1>
 
-<.form let={@f} for={:member} action={Routes.member_reset_password_path(@conn, :create)}>
-  <%= label @f, :email %>
-  <%= email_input @f, :email, required: true %>
+<.form :let={f} for={:member} action={Routes.member_reset_password_path(@conn, :create)}>
+  <%= label f, :email %>
+  <%= email_input f, :email, required: true %>
 
   <div>
     <%= submit "Send instructions to reset password" %>

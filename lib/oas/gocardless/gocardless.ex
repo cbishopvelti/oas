@@ -70,7 +70,7 @@ defmodule Oas.Gocardless do
     }
   end
 
-  defp get_headers(access_token) do
+  def get_headers(access_token) do
     [
       {<<"accept">>, <<"application/json">>},
       {<<"Content-Type">>, <<"application/json">>},
@@ -78,7 +78,8 @@ defmodule Oas.Gocardless do
     ]
   end
 
-  def get_banks(%{access_token: access_token}) do
+  def get_banks() do
+    {:ok, access_token} = GenServer.call(Oas.Gocardless.AuthServer, :get_access_token)
 
     {:ok, 200, _headers, client} = :hackney.request(:get, "https://bankaccountdata.gocardless.com/api/v2/institutions/?country=gb",
       get_headers(access_token)
@@ -103,7 +104,10 @@ defmodule Oas.Gocardless do
     data
   end
 
-  def get_accounts(%{access_token: access_token, requisition_id: requisition_id}) do
+  def get_accounts() do
+    {:ok, access_token} = GenServer.call(Oas.Gocardless.AuthServer, :get_access_token)
+    requisition_id = from(cc in Oas.Config.Config, select: cc.gocardless_requisition_id) |> Oas.Repo.one()
+
     {:ok, 200, _headers, client} = :hackney.request(
       :get, "https://bankaccountdata.gocardless.com/api/v2/requisitions/#{requisition_id}/",
         get_headers(access_token)
@@ -117,22 +121,4 @@ defmodule Oas.Gocardless do
     []
   end
 
-  def get_transactions(%{access_token: access_token}) do
-    # id = "ab1c7c82-5edc-4bfc-9901-be55704adc80"
-    id = "AF4B5D2A5539FA49055ECF82EBCEDFFA"
-
-    # GB48NWBK60052420591675
-
-    {:ok, 200, _headers, client} = :hackney.request(
-      :get, "https://bankaccountdata.gocardless.com/api/v2/accounts/#{id}/transactions/", [
-        {<<"accept">>, <<"application/json">>},
-        {<<"Content-Type">>, <<"application/json">>},
-        {<<"Authorization">>, <<"Bearer #{access_token}">>}
-      ]
-    )
-    {:ok, response_string} = :hackney.body(client)
-    {:ok, data} = JSON.decode(response_string)
-
-    IO.inspect(data, label: "004")
-  end
 end
