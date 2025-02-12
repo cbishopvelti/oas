@@ -1,20 +1,20 @@
 <h1>Log in</h1>
 
-<.form let={@f} for={@conn} action={Routes.member_session_path(@conn, :create)} as={:member}>
+<.form :let={f} for={@conn} action={Routes.member_session_path(@conn, :create)} as={:member}>
   <%= if @error_message do %>
     <div class="alert alert-danger">
       <p><%= @error_message %></p>
     </div>
   <% end %>
 
-  <%= label @f, :email %>
-  <%= email_input @f, :email, required: true %>
+  <%= label f, :email %>
+  <%= email_input f, :email, required: true %>
 
-  <%= label @f, :password %>
-  <%= password_input @f, :password, required: true %>
+  <%= label f, :password %>
+  <%= password_input f, :password, required: true %>
 
-  <%= label @f, :remember_me, "Keep me logged in for 180 days" %>
-  <%= checkbox @f, :remember_me %>
+  <%= label f, :remember_me, "Keep me logged in for 180 days" %>
+  <%= checkbox f, :remember_me %>
 
   <div>
     <%= submit "Log in" %>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Fragment } from 'react'
 import {
   Box,
   FormControl,
@@ -21,10 +21,13 @@ import { Tokens } from './Tokens';
 import { TransactionTags } from './TransactionTags';
 import { TransactionMembershipPeriod } from './TransactionMembershipPeriod';
 import { parseErrors } from '../utils/util';
+import { IconButton } from '@mui/material';
+import LinkIcon from '@mui/icons-material/Link';
+
 
 export const Transaction = () => {
   const { setTitle } = useOutletContext();
-  
+
   const navigate = useNavigate();
   let { id } = useParams()
   if (id) {
@@ -51,6 +54,7 @@ export const Transaction = () => {
         notes,
         their_reference,
         my_reference,
+        warnings,
         transaction_tags {
           id,
           name
@@ -82,7 +86,7 @@ export const Transaction = () => {
   }, [id])
   useEffect(() => {
     if (get(data, "transaction")) {
-      
+
       setFormData({
         ...get(data, "transaction", {}),
         ...(has(data, "transaction.membership.membership_period_id") ? { membership_period_id: get(data, "transaction.membership.membership_period_id")} : {})
@@ -96,7 +100,7 @@ export const Transaction = () => {
       })
     }
   }, [formData.type])
-  
+
 
   let { data: membersData, refetch: refetechMembers } = useQuery(gql`query {
     members {
@@ -110,7 +114,7 @@ export const Transaction = () => {
   }, [])
 
   const onChange = ({formData, setFormData, key}) => (event) => {
-    
+
     let extraData = {}
     if(key == 'amount' && !formData.type) {
       if (parseFloat(event.target.value) >= 0) {
@@ -153,6 +157,27 @@ export const Transaction = () => {
     dupRefetch()
   }, [formData])
 
+  const [whoLinkMutate, { data: whoData}] = useMutation(gql`mutation(
+    $who_member_id: Int!,
+    $gocardless_name: String!
+    ) {
+      gocardless_who_link (
+        who_member_id: $who_member_id,
+        gocardless_name: $gocardless_name
+      ) {
+        success
+      }
+    }
+  `)
+
+  const [clearWarnings, {data: clearWarningsData}] = useMutation(gql`mutation(
+    $transaction_id: Int!
+    ) {
+      transaction_clear_warnings(transaction_id: $transaction_id) {
+        success
+      }
+    }
+  `)
 
   const [mutate, {error}] = useMutation(gql`mutation (
     $id: Int,
@@ -195,8 +220,6 @@ export const Transaction = () => {
   const save = (formData) => async () => {
     formData = omit(formData, "training_tags.__typename");
 
-    console.log("001", formData)
-
     const variables = {
       ...formData,
       amount: parseFloat(get(formData, 'amount')),
@@ -222,12 +245,26 @@ export const Transaction = () => {
     navigate(`/transaction/${get(data, 'transaction.id')}`)
   }
 
+  console.log("001", data?.transaction);
   return <>
     <Box sx={{display: 'flex', flexWrap: 'wrap' }}>
       <Stack sx={{ width: '100%' }}>
         {errors.global?.map((message, i) => (
           <Alert key={i} sx={{m:2}} severity="error">{message}</Alert>
         ))}
+        {
+          JSON.parse(data?.transaction?.warnings || "[]").length > 0 &&
+          clearWarningsData?.transaction_clear_warnings?.success !== true &&
+          <Alert sx={{m:2}} severity="warning"
+            onClose={() => {clearWarnings({variables: {
+              transaction_id: id
+            }})}}
+          >
+            {(JSON.parse(data?.transaction?.warnings || "[]")).map((message, i) => (
+              <div key={i}>{message}</div>
+            ))}
+          </Alert>
+        }
       </Stack>
       <FormControl fullWidth sx={{m: 2}}>
         <TextField
@@ -267,6 +304,27 @@ export const Transaction = () => {
             options={(members || []).map(({name, id}) => ({label: name, who_member_id: id }))}
             renderInput={(params) => <TextField
               {...params}
+              InputProps={{
+                ...params.InputProps,
+                endAdornment: (<Fragment>
+                  {params.InputProps.endAdornment}
+                  {data?.transaction?.who_member_id == null &&
+                    formData.who !== data?.transaction?.who &&
+                    formData.who_member_id != null &&
+                    whoData?.gocardless_who_link?.success !== true &&
+                    <IconButton title="Link this gocardless id to this member" sx={{ color: "#0000EE;" }} onClick={() => {
+                      console.log("fromData", formData);
+                      whoLinkMutate({
+                        variables: {
+                          gocardless_name: data.transaction.who,
+                          who_member_id: formData.who_member_id
+                        }
+                      })
+                    }}>
+                      <LinkIcon />
+                    </IconButton>}
+                </Fragment>)
+              }}
               label="Who"
               required
               error={has(errors, "who") || has(errors, "who_member_id")}
@@ -295,25 +353,25 @@ export const Transaction = () => {
                 setFormData({
                   ...formData,
                   who: newValue.who,
-                  who_member_id: undefined
+                  who_member_id: null
                 })
               } else if (newValue?.who_member_id) {
                 setFormData({
                   ...formData,
                   who: newValue.label,
-                  who_member_id: newValue.who_member_id 
+                  who_member_id: newValue.who_member_id
                 })
               } else {
                 setFormData({
                   ...formData,
-                  who: undefined,
-                  who_member_id: undefined
+                  who: null,
+                  who_member_id: null
                 })
               }
             }}
           />
       </FormControl>
-      
+
       <FormControl fullWidth sx={{m: 2}}>
         <InputLabel required id="transaction-type">Type</InputLabel>
 
@@ -352,7 +410,7 @@ export const Transaction = () => {
       </FormControl>
 
       <FormControl fullWidth sx={{m: 2}}>
-        <TextField 
+        <TextField
           label="Amount"
           value={get(formData, "amount", '')}
           type="text"
@@ -366,7 +424,7 @@ export const Transaction = () => {
       </FormControl>
 
       <FormControl fullWidth sx={{m: 2}}>
-        <TransactionTags 
+        <TransactionTags
           formData={formData}
           setFormData={setFormData}
         />
@@ -394,7 +452,7 @@ export const Transaction = () => {
           helperText={get(errors, "notes", []).join(' ')}
           />
       </FormControl>
-      
+
 
       <TransactionMembershipPeriod
         formData={formData}
@@ -402,7 +460,7 @@ export const Transaction = () => {
         id={id}
       />
 
-      <TransactionNewToken 
+      <TransactionNewToken
         formData={formData}
         setFormData={setFormData}
         id={id} />

@@ -19,7 +19,8 @@ defmodule OasWeb.Schema.SchemaGocardless do
   object :gocardless_queries do
     field :gocardless_banks, list_of(:gocardless_bank) do
       resolve fn _, _, _  ->
-        data = GenServer.call(Oas.Gocardless.Server, :get_banks)
+        # data = GenServer.call(Oas.Gocardless.Server, :get_banks)
+        data = Oas.Gocardless.get_banks()
 
         {:ok, Enum.map(data, fn %{"id" => id, "name" => name} ->
           %{
@@ -31,7 +32,8 @@ defmodule OasWeb.Schema.SchemaGocardless do
     end
     field :gocardless_accounts, list_of(:gocardless_account) do
       resolve fn _, _, _ ->
-        data = GenServer.call(Oas.Gocardless.Server, :get_accounts)
+        # data = GenServer.call(Oas.Gocardless.Server, :get_accounts)
+        data = Oas.Gocardless.get_accounts()
         {:ok, data |> Enum.map(fn account_id -> %{id: account_id} end)}
       end
     end
@@ -41,7 +43,7 @@ defmodule OasWeb.Schema.SchemaGocardless do
     field :gocardless_requisitions, :gocardless_requisition do
       arg :institution_id, non_null(:string)
       resolve fn _, %{institution_id: institution_id}, _ ->
-        data = GenServer.call(Oas.Gocardless.Server, {:get_requisitions, %{institution_id: institution_id}})
+        data = GenServer.call(Oas.Gocardless.AuthServer, {:get_requisitions, %{institution_id: institution_id}})
 
         {:ok, %{
           id: data["id"],
@@ -51,7 +53,7 @@ defmodule OasWeb.Schema.SchemaGocardless do
     end
     field :gocardless_save_requistions, :success do
       resolve fn _, _, _ ->
-        GenServer.call(Oas.Gocardless.Server, :save_requistions)
+        GenServer.call(Oas.Gocardless.AuthServer, :save_requisitions)
 
         {:ok, %{
           success: true

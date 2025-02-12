@@ -1,6 +1,6 @@
 import Ecto.Query, only: [from: 2]
 
-defmodule Oas.Gocardless.Server do
+defmodule Oas.Gocardless.AuthServer do
   use GenServer
 
   # Oas.Gocardless.Server.start_link()
@@ -18,8 +18,7 @@ defmodule Oas.Gocardless.Server do
     if (Map.has_key?(state, :timer_ref)) do
       Process.cancel_timer(state.timer_ref)
     end
-    with {:ok, access_tokens} <- Oas.Gocardless.get_access_token(),
-      %{gocardless_requisition_id: requisition_id} <- from(cc in Oas.Config.Config, select: cc) |> Oas.Repo.one
+    with {:ok, access_tokens} <- Oas.Gocardless.get_access_token()
     do
       timer_ref = Process.send_after(self(), :refresh_tokens, access_tokens.access_expires)
 
@@ -27,7 +26,6 @@ defmodule Oas.Gocardless.Server do
         state,
         access_tokens
       )
-      |> Map.put(:requisition_id, requisition_id)
       |> Map.put(:timer_ref, timer_ref)}
     else
       {:noconfig} -> {:noreply, state}
@@ -42,26 +40,24 @@ defmodule Oas.Gocardless.Server do
       access_tokens
     )}
   end
-  def handle_info(:get_transactions, state) do
-    Oas.Gocardless.get_transactions(state)
-    {:noreply, state}
+
+
+  def handle_call(:get_access_token, _from, %{access_token: access_token} = state) do
+    {:reply, {:ok, access_token}, state}
   end
 
-  @impl true
-  def handle_call(:get_banks, _from, state) do
-    data = Oas.Gocardless.get_banks(state)
-    {:reply, data, state}
-  end
+  # Temporaly save requisition_id here until success, where it will be written to the database
   def handle_call({:get_requisitions, %{institution_id: institution_id}}, _from, state) do
     data = Oas.Gocardless.get_requisitions(state, %{institution_id: institution_id})
 
+    IO.inspect(data["id"], label: "001 requisition_id")
+
     new_state = state |> Map.put(:requisition_id, data["id"])
-    IO.inspect(new_state, label: "009 new_state")
 
     {:reply, data, new_state}
   end
 
-  def handle_call(:save_requistions, _from, state) do
+  def handle_call(:save_requisitions, _from, state) do
     from(cc in Oas.Config.Config, select: cc)
     |> Oas.Repo.one
     |> Ecto.Changeset.cast(%{gocardless_requisition_id: state.requisition_id} , [
@@ -69,13 +65,6 @@ defmodule Oas.Gocardless.Server do
     ])
     |> Oas.Repo.update
 
-    {:reply, {}, state}
+    {:reply, {}, state |> Map.drop([:requisition_id])}
   end
-
-  def handle_call(:get_accounts, _from, state) do
-    data = Oas.Gocardless.get_accounts(state)
-
-    {:reply, data, state}
-  end
-
 end

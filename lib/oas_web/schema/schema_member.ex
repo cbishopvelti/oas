@@ -42,6 +42,7 @@ defmodule OasWeb.Schema.SchemaMember do
     field :name, :string
     field :email, :string
     field :bank_account_name, :string
+    field :gocardless_name, :string
     field :tokens, list_of(:token)
     field :token_count, :integer do
       resolve fn %{id: id}, _, _ ->
@@ -160,6 +161,7 @@ defmodule OasWeb.Schema.SchemaMember do
       arg :name, non_null(:string)
       arg :email, non_null(:string)
       arg :bank_account_name, :string
+      arg :gocardless_name, :string
       arg :is_active, :boolean
       arg :is_reviewer, :boolean
       arg :is_admin, :boolean
@@ -208,6 +210,19 @@ defmodule OasWeb.Schema.SchemaMember do
       arg :member_id, non_null(:integer)
       resolve fn _, %{member_id: member_id}, _ ->
         Oas.Repo.get!(Oas.Members.Member, member_id) |> Oas.Repo.delete!
+
+        {:ok, %{success: true}}
+      end
+    end
+
+    field :gocardless_who_link, type: :success do
+      arg :who_member_id, non_null(:integer)
+      arg :gocardless_name, non_null(:string)
+      resolve fn _, %{who_member_id: who_member_id, gocardless_name: gocardless_name}, _ ->
+        IO.puts("001")
+        Oas.Repo.get!(Oas.Members.Member, who_member_id)
+        |> Ecto.Changeset.change(gocardless_name: gocardless_name)
+        |> Oas.Repo.update!()
 
         {:ok, %{success: true}}
       end

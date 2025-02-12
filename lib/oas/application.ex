@@ -19,7 +19,7 @@ defmodule Oas.Application do
       # Start a worker by calling: Oas.Worker.start_link(arg)
       # {Oas.Worker, arg}
       Oas.BackupJob,
-      Oas.Gocardless.Server
+      Oas.Gocardless.AuthServer
     ]
 
     :ets.new(:user_table, [:named_table, :public, :set, read_concurrency: true])

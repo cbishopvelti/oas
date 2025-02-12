@@ -104,7 +104,7 @@ defmodule OasWeb.Schema.SchemaConfig do
         |> Oas.Repo.update
         |> OasWeb.Schema.SchemaUtils.handle_error
 
-        Process.send(Oas.Gocardless.Server, :init, [])
+        Process.send(Oas.Gocardless.AuthServer, :init, [])
 
         result
       end
