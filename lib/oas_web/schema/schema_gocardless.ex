@@ -33,6 +33,7 @@ defmodule OasWeb.Schema.SchemaGocardless do
     field :gocardless_accounts, list_of(:gocardless_account) do
       resolve fn _, _, _ ->
         # data = GenServer.call(Oas.Gocardless.Server, :get_accounts)
+
         data = Oas.Gocardless.get_accounts()
         {:ok, data |> Enum.map(fn account_id -> %{id: account_id} end)}
       end
@@ -52,8 +53,25 @@ defmodule OasWeb.Schema.SchemaGocardless do
       end
     end
     field :gocardless_save_requistions, :success do
-      resolve fn _, _, _ ->
+      resolve fn _, _, %{context: context} ->
         GenServer.call(Oas.Gocardless.AuthServer, :save_requisitions)
+
+        # DOSNT WORK, doesn't trigger the subscription for some reason
+        # mutation = """
+        # mutation ($key: String!) {
+        #   global_warnings_clear(key: $key) {
+        #     key
+        #   }
+        # }
+        # """
+        # Absinthe.run(mutation,
+        #   OasWeb.Schema,
+        #   variables: %{"key" => "gocardless_get_accounts"
+        #   },
+        #   context: context
+        # )
+
+        Oas.Gocardless.delete_warning(:gocardless_get_accounts)
 
         {:ok, %{
           success: true

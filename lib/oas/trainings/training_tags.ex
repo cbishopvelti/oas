@@ -7,7 +7,6 @@ defmodule Oas.Trainings.TrainingTags do
   end
 
   def changeset(struct, params) do
-    IO.puts("102 training_tags.changeset")
     struct
     |> Ecto.Changeset.cast(params, [:name])
   end

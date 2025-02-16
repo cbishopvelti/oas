@@ -27,6 +27,7 @@ config :oas, OasWeb.Endpoint,
   # Change to `ip: {0, 0, 0, 0}` to allow access from other machines.
   http: [ip: {0, 0, 0, 0}, port: 4000],
   url: [host: "localhost", port: "443", scheme: "https"],
+  pubsub_server: Oas.PubSub,
   check_origin: false,
   code_reloader: true,
   debug_errors: true,

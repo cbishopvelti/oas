@@ -1,4 +1,5 @@
 defmodule OasWeb.Endpoint do
+  use Absinthe.Phoenix.Endpoint
   use Phoenix.Endpoint, otp_app: :oas
 
   # The session will be stored in the cookie and signed,
@@ -6,12 +7,17 @@ defmodule OasWeb.Endpoint do
   # Set :encryption_salt if you would also like to encrypt it.
   @session_options [
     store: :cookie,
-    key: "_oas_key",
-    domain: Application.compile_env(:oas, OasWeb.Endpoint)[:domain],
-    signing_salt: "gM7uiSTx"
+    key: "oas_key",
+    # domain: Application.compile_env(:oas, OasWeb.Endpoint)[:domain],
+    signing_salt: "gM7uiSTx",
+    http_only: false
   ]
 
+  def signing_salt, do: @session_options[:signing_salt]
+
   socket "/live", Phoenix.LiveView.Socket, websocket: [connect_info: [session: @session_options]]
+  socket "/socket", OasWeb.UserSocket, longpoll: false
+    # websocket: [connect_info: [session: @session_options]]
 
   plug Corsica, max_age: 600, origins: "*", expose_headers: ~w(X-Foo), allow_headers: ["content-type"]
 
