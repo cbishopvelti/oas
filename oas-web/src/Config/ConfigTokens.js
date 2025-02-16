@@ -22,12 +22,16 @@ const onChange = ({formData, setFormData, key, isCheckbox}) => (event) => {
     return;
   }
 
+  console.log("001", event.target.value);
 
-
-  setFormData({
+  const newFormData = ({
     ...formData,
-    [key]: !event.target.value ? undefined : event.target.value
+    [key]: !event.target.value ? "" : event.target.value
   })
+
+  console.log("001.1", newFormData)
+
+  setFormData(newFormData)
 }
 
 export const ConfigTokens = () => {
@@ -149,6 +153,8 @@ export const ConfigTokens = () => {
     ...get(error, 'graphQLErrors', []),
     ...get(error2, 'graphQLErrors', [])
   ]);
+
+    console.log("002", globalFormData);
 
   return <div>
     <Box sx={{m: 2, display: 'flex', flexWrap: 'wrap' }}>

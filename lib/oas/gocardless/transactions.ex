@@ -34,7 +34,6 @@ defmodule Oas.Gocardless.Transactions do
 
   defp process_tokens(out_transaction) when is_map_key(out_transaction, :state) do out_transaction end
   defp process_tokens(out_transaction) do
-    IO.inspect("001")
     case Enum.find(
       Oas.Tokens.Token.getPossibleTokenAmount(),
       fn %{quantity: no, value: value} ->
@@ -172,7 +171,8 @@ defmodule Oas.Gocardless.Transactions do
       select: max(tra.when)
     ) |> Oas.Repo.one
 
-    {:ok, transactions} = get_transactions_mock_1(last_transaction) # DEBUG ONLY, change to get_transactions_real()
+    # {:ok, transactions, headers} = get_transactions_real(last_transaction)
+    {:ok, transactions, headers} = get_transactions_mock_1(last_transaction) # DEBUG ONLY, change to get_transactions_real()
 
     transactions
     # PREPROCESS
@@ -201,10 +201,10 @@ defmodule Oas.Gocardless.Transactions do
 
       # Add transaction
     end)
-
+    {:ok, headers}
   end
 
-  # Oas.Gocardless.Transactions.get_transactions_real()
+    # Oas.Gocardless.Transactions.get_transactions_real()
   def get_transactions_real(from \\ nil) do
     {:ok, access_token} = GenServer.call(Oas.Gocardless.AuthServer, :get_access_token)
     account_id = from(cc in Oas.Config.Config, select: cc.gocardless_account_id) |> Oas.Repo.one()
@@ -215,14 +215,15 @@ defmodule Oas.Gocardless.Transactions do
       ""
     end
 
-    {:ok, 200, _headers, client} = :hackney.request(
+    {:ok, 200, headers, client} = :hackney.request(
       :get, "https://bankaccountdata.gocardless.com/api/v2/accounts/#{account_id}/transactions/#{query_string}",
       Oas.Gocardless.get_headers(access_token)
     )
     {:ok, response_string} = :hackney.body(client)
     {:ok, data} = JSON.decode(response_string)
 
-    {:ok, data["transactions"]["booked"]}
+    IO.inspect(headers, label: "007 headers")
+    {:ok, data["transactions"]["booked"], headers}
   end
 
   def get_transactions_mock_1(_when) do
@@ -235,7 +236,36 @@ defmodule Oas.Gocardless.Transactions do
       "remittanceInformationUnstructured" => "0543 06JAN25      LV INSURANCE W    0330 1239970 GB",
       "transactionAmount" => %{"amount" => "5", "currency" => "GBP"},
       "transactionId" => "8AD4A5144E8D4C5987C0BAC4913DBD6340C9D083424B1AA5F38729B4A81C3C3E82153E637BD4BAA5CD31D80B26B28489"
-    }]}
+    }],
+    [
+      {"Date", "Sun, 16 Feb 2025 11:29:24 GMT"},
+      {"Content-Type", "application/json"},
+      {"Transfer-Encoding", "chunked"},
+      {"Connection", "keep-alive"},
+      {"vary", "Accept, Accept-Language, Cookie"},
+      {"vary", "Accept-Encoding"},
+      {"allow", "GET, HEAD, OPTIONS"},
+      {"http_x_ratelimit_limit", "100"},
+      {"http_x_ratelimit_remaining", "99"},
+      {"http_x_ratelimit_reset", "59"},
+      {"http_x_ratelimit_account_success_limit", "4"},
+      {"http_x_ratelimit_account_success_remaining", "0"},
+      {"http_x_ratelimit_account_success_reset", "86307"},
+      {"Cache-Control", "no-store, no-cache, max-age=0"},
+      {"x-c-uuid", "07a75933-1cbc-44e2-bd48-98cd61d08edb"},
+      {"x-u-uuid", "e6913b9b-0c57-41e2-9d65-0264ffb6c276"},
+      {"x-frame-options", "DENY"},
+      {"content-language", "en"},
+      {"x-content-type-options", "nosniff"},
+      {"referrer-policy", "same-origin"},
+      {"client-region", "ES"},
+      {"cf-ipcountry", "GB"},
+      {"strict-transport-security", "max-age=31556926; includeSubDomains;"},
+      {"CF-Cache-Status", "BYPASS"},
+      {"Server", "cloudflare"},
+      {"CF-RAY", "912d33138a2171ec-LHR"}
+    ]
+    }
   end
 
   def get_transactions_mock_2(_when) do

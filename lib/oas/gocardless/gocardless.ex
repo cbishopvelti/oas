@@ -104,21 +104,74 @@ defmodule Oas.Gocardless do
     data
   end
 
+  # Oas.Gocardless.get_accounts()
   def get_accounts() do
+    with pid when pid != nil <- Process.whereis(Oas.Gocardless.AuthServer),
+      {:ok, access_token} <- GenServer.call(Oas.Gocardless.AuthServer, :get_access_token),
+      requisition_id <- from(cc in Oas.Config.Config, select: cc.gocardless_requisition_id) |> Oas.Repo.one(),
+      {:ok, 200, _headers, client} <- :hackney.request(
+      :get, "https://bankaccountdata.gocardless.com/api/v2/requisitions/#{requisition_id}/",
+        get_headers(access_token)
+      ) do
+      {:ok, response_string} = :hackney.body(client)
+      {:ok, data} = JSON.decode(response_string)
+
+      data["accounts"]
+    else
+      {:ok, status, _headers, client} ->
+        {:ok, response_string} = :hackney.body(client)
+        {:ok, data} = JSON.decode(response_string)
+
+        send_warning(:gocardless_get_accounts, "Gocardless, #{status}, #{data |> Map.get("summary", "¯\_(ツ)_/¯")}")
+        []
+      {:error, :no_access_token} ->
+        []
+      nil ->
+        []
+    end
+  end
+  def get_accounts(_) do
+    []
+  end
+
+  def send_warning(key, warning) do
+    :ets.insert(:global_warnings, {key, warning})
+    items = :ets.tab2list(:global_warnings)
+
+    Absinthe.Subscription.publish(OasWeb.Endpoint, items |> Enum.map(fn {key, warning} ->
+      %{
+        key: key,
+        warning: warning
+      }
+    end), [global_warnings: "*"])
+  end
+
+  def delete_warning(key) do
+    :ets.delete(:global_warnings, key)
+    items = :ets.tab2list(:global_warnings)
+    |> Enum.map(fn {key, warning} ->
+      %{
+        key: key,
+        warning: warning
+      }
+    end)
+
+    Absinthe.Subscription.publish(OasWeb.Endpoint, items, [global_warnings: "*"])
+  end
+
+  # Oas.Gocardless.delete_requisitions()
+  def delete_requisitions() do
     {:ok, access_token} = GenServer.call(Oas.Gocardless.AuthServer, :get_access_token)
     requisition_id = from(cc in Oas.Config.Config, select: cc.gocardless_requisition_id) |> Oas.Repo.one()
 
     {:ok, 200, _headers, client} = :hackney.request(
-      :get, "https://bankaccountdata.gocardless.com/api/v2/requisitions/#{requisition_id}/",
-        get_headers(access_token)
+      :delete,
+      "https://bankaccountdata.gocardless.com/api/v2/requisitions/#{requisition_id}/",
+      get_headers(access_token)
     )
     {:ok, response_string} = :hackney.body(client)
     {:ok, data} = JSON.decode(response_string)
-
-    data["accounts"]
-  end
-  def get_accounts(_) do
-    []
+    {:ok, data}
   end
 
 end

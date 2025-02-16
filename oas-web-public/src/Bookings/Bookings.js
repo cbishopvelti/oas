@@ -26,13 +26,13 @@ const canUndo = ({
   }
 
   if (
-    moment(booking.inserted_at).isSame(booking.when, 'day') && 
+    moment(booking.inserted_at).isSame(booking.when, 'day') &&
     moment().isBefore(moment(booking.inserted_at).add(60, 'seconds'))
   ) {
     return moment(booking.inserted_at).add(60, 'seconds')
   }
 
-  
+
   return false;
 }
 
@@ -47,7 +47,7 @@ export const Bookings = () => {
     query {
       user_bookings {
         id,
-        where, 
+        where,
         when,
         attendance_id,
         inserted_by_member_id,
@@ -55,8 +55,6 @@ export const Bookings = () => {
       }
     }
   `);
-
-  // console.log("001", data);
 
   const [attendMutation] = useMutation(gql`
     mutation($training_id: Int!) {

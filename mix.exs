@@ -59,6 +59,7 @@ defmodule Oas.MixProject do
       {:plug_cowboy, "~> 2.5"},
       {:absinthe, "~> 1.7.8"},
       {:absinthe_plug, "~> 1.5.8"},
+      {:absinthe_phoenix, "~> 2.0"},
       {:corsica, "~> 1.2"},
       {:csv, "~> 3.0"},
       {:nimble_csv, "~> 1.2"},

@@ -245,7 +245,6 @@ export const Transaction = () => {
     navigate(`/transaction/${get(data, 'transaction.id')}`)
   }
 
-  console.log("001", data?.transaction);
   return <>
     <Box sx={{display: 'flex', flexWrap: 'wrap' }}>
       <Stack sx={{ width: '100%' }}>

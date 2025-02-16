@@ -59,6 +59,10 @@ defmodule OasWeb.Schema do
     import_fields :gocardless_mutations
   end
 
+  subscription do
+    import_fields :config_subscriptions
+  end
+
 
   # Public resolvers
   def myMiddleware(middleware, %Absinthe.Type.Field{identifier: :public_register}, %Absinthe.Type.Object{identifier: :mutation}) do

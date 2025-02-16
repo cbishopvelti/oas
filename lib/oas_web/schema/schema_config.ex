@@ -1,4 +1,4 @@
-import Ecto.Query, only: [from: 2]
+  import Ecto.Query, only: [from: 2]
 defmodule OasWeb.Schema.SchemaConfig do
   use Absinthe.Schema.Notation
 
@@ -51,12 +51,8 @@ defmodule OasWeb.Schema.SchemaConfig do
     end
     field :public_config_config, :public_config_config do
       resolve fn _, _, _ ->
-        IO.puts("001 SHOULD HAPPEN")
-
         result = from(cc in Oas.Config.Config, select: cc)
           |> Oas.Repo.one
-
-        IO.inspect(result)
 
         {:ok, result}
       end
@@ -100,14 +96,87 @@ defmodule OasWeb.Schema.SchemaConfig do
           :token_expiry_days, :temporary_trainings,
           :bacs, :enable_booking, :name,
           :gocardless_id, :gocardless_key, :gocardless_account_id
-        ])
+        ], empty_values: [[], ""])
         |> Oas.Repo.update
         |> OasWeb.Schema.SchemaUtils.handle_error
 
-        Process.send(Oas.Gocardless.AuthServer, :init, [])
+        Oas.Gocardless.Supervisor.restart()
 
         result
       end
     end
+
+    field :global_warnings_clear, list_of(:global_warning) do
+      arg :key, non_null(:string)
+      resolve fn _, %{key: key}, _ ->
+        :ets.delete(:global_warnings, String.to_existing_atom(key))
+        items = :ets.tab2list(:global_warnings)
+        |> Enum.map(fn {key, warning} ->
+          %{
+            key: key,
+            warning: warning
+          }
+        end)
+
+        {:ok, items}
+      end
+    end
+  end
+
+  object :global_warning do
+    field :key, :string
+    field :warning, :string
+  end
+
+  object :config_subscriptions do
+    field :global_warnings, list_of(:global_warning) do
+      config fn args, _ ->
+        # Send any existing errors
+        spawn(fn ->
+          items = :ets.tab2list(:global_warnings)
+          Absinthe.Subscription.publish(OasWeb.Endpoint, items |> Enum.map(fn {key, warning} ->
+            %{
+              key: key,
+              warning: warning
+            }
+          end), [global_warnings: "*"])
+        end)
+        {:ok, topic: "*"}
+      end
+      trigger :global_warnings_clear, topic: fn args ->
+        IO.puts("101 trigger")
+        "*"
+      end
+      resolve fn args, _, _ ->
+        {:ok, args}
+      end
+    end
+  end
+
+  # OasWeb.Schema.SchemaConfig.test_warning_subscription()
+  def test_warning_subscription do
+    # Phoenix.PubSub.broadcast!(Oas.PubSub, "global_warnings", "global_warnings")
+    # Absinthe.Subscription.publish(OasWeb.Endpoint, [%{key: "1", warning: "This is a warning"}], [global_warnings: "*"])
+    Oas.Gocardless.send_warning(:gocardless_get_accounts, "gocardless error")
+  end
+
+  # OasWeb.Schema.SchemaConfig.test_delete_warning()
+  def test_delete_warning do
+    # DOESNT WORK, doesnt trigger the subscription for some reason
+    # mutation = """
+    # mutation ($key: String!) {
+    #   global_warnings_clear(key: $key) {
+    #     key,
+    #     warning
+    #   }
+    # }
+    # """
+    # Absinthe.run(mutation, OasWeb.Schema, variables: %{"key" => "gocardless_get_accounts"}, context: %{
+    #   current_member: %{
+    #     is_admin: true,
+    #     is_active: true
+    #   }
+    # })
+    Oas.Gocardless.delete_warning(:gocardless_get_accounts)
   end
 end

@@ -1,7 +1,7 @@
 import './App.css';
-import { gql, useQuery } from '@apollo/client';
+import { gql, useMutation, useQuery, useSubscription } from '@apollo/client';
 import { Members } from '../Member/Members';
-import { MenuList, MenuItem, ListItemText, Divider, ListItem, Drawer, IconButton, Box } from '@mui/material';
+import { MenuList, MenuItem, ListItemText, Divider, ListItem, Drawer, IconButton, Box, Alert } from '@mui/material';
 import { Outlet } from "react-router-dom";
 import { styled, useTheme } from '@mui/material/styles';
 import { useState } from 'react';
@@ -21,7 +21,43 @@ const DrawerHeader = styled('div')(({ theme }) => ({
 }));
 
 const DrawerBar = ({title}) => {
-  return <Box sx={{pt: '11px'}}>{title}</Box>
+  const {loading, data} = useSubscription(gql`
+    subscription {
+      global_warnings {
+        key,
+        warning
+      }
+    }
+  `)
+
+  const [ mutate ] = useMutation(gql`
+    mutation($key: String!) {
+      global_warnings_clear(key: $key) {
+        key,
+        warning
+      }
+    }
+  `)
+
+  return <Box sx={{ minHeight: "48px", display: "flex", justifyContent: "space-between", width: "100%"}}>
+    <Box sx={{pt: '15px'}}>
+      {title}
+    </Box>
+    <Box>
+      {data?.global_warnings && data.global_warnings.map((warning, i) => {
+        return <Alert
+          onClose={() => { mutate({
+            variables: {
+              key: warning.key
+            }
+          })}}
+          severity="warning"
+          key={i} sx={{ mt: "0px" }}>
+          {warning.warning}
+        </Alert>
+      })}
+    </Box>
+  </Box>
 }
 
 function App() {
@@ -29,6 +65,8 @@ function App() {
   const [title, setTitle] = useState('');
 
   const drawerWidth = 256;
+
+
 
   return (
     <div className="App">

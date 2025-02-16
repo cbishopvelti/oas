@@ -3,7 +3,10 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App/App';
 import reportWebVitals from './reportWebVitals';
-import { ApolloClient, InMemoryCache, ApolloProvider, gql } from '@apollo/client';
+import { ApolloClient, InMemoryCache, ApolloProvider, gql, split, from } from '@apollo/client';
+import { GraphQLWsLink } from "@apollo/client/link/subscriptions";
+import { createClient } from "graphql-ws";
+import { getMainDefinition } from "@apollo/client/utilities";
 import {
   createBrowserRouter,
   RouterProvider,
@@ -31,6 +34,10 @@ import { Gocardless } from './Config/Gocardless';
 import { GocardlessRequisition } from './Config/GocardlessRequisition';
 import { AnalysisAttendance } from './Analysis/AnalysisAttendance';
 import { AnalysisBalance } from './Analysis/AnalysisBalance';
+import { Socket as PhoenixSocket } from "phoenix";
+import Cookies from "js-cookie";
+import * as AbsintheSocket from "@absinthe/socket";
+import { createAbsintheSocketLink } from "@absinthe/socket-apollo-link";
 
 
 
@@ -168,11 +175,47 @@ const uploadLink = createLink({
   uri: `${process.env["REACT_APP_ADMIN_URL"]}/api/graphql`
 });
 
+// Create a standard Phoenix websocket connection. If you need
+// to provide additional params, like an authentication token,
+// you can configure them in the `params` option.
+const phoenixSocket = new PhoenixSocket(`${process.env["REACT_APP_SERVER_URL"].replace(/^http/, "ws")}/socket`, {
+  reconnectAfterMs: (() => 120_000),
+	rejoinAfterMs: (() => 120_000),
+  params: () => {
+    if (Cookies.get("oas_key")) {
+      return { cookie: Cookies.get("oas_key") };
+    } else {
+      return {};
+    }
+  }
+});
+// Wrap the Phoenix socket in an AbsintheSocket.
+const absintheSocket = AbsintheSocket.create(phoenixSocket);
+// Create an Apollo link from the AbsintheSocket instance.
+const subscriptionLink = createAbsintheSocketLink(absintheSocket);
+
+const theLink = split(
+  ({ query }) => {
+    const definition = getMainDefinition(query);
+
+    const out = !(
+      definition.kind === "OperationDefinition" &&
+      definition.operation === "subscription"
+    );
+
+    return out;
+  },
+  uploadLink,
+  subscriptionLink
+)
+
+
 const client = new ApolloClient({
   // uri: 'http://localhost:3999/',
   // uri: `${process.env["REACT_APP_ADMIN_URL"]}/api/graphql`,
   cache: new InMemoryCache(),
-  link: uploadLink,
+  // link: uploadLink,
+  link: theLink
 });
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
