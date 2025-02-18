@@ -10,4 +10,12 @@ defmodule Oas.Transactions.Gocardless do
     field :warnings, :string
   end
 
+  def changeset(gocardless, params \\ %{}) do
+    IO.puts("SHOULD HAPPEN 007")
+    gocardless
+    |> cast(params, [:transaction_iid, :gocardless_data, :warnings], empty_values: [[], nil])
+    |> Ecto.Changeset.unique_constraint(
+      :transaction_iid
+    )
+  end
 end

@@ -20,7 +20,7 @@ defmodule Oas.Transactions.Transaction do
     has_many :tokens, Oas.Tokens.Token, foreign_key: :transaction_id
     has_one :membership, Oas.Members.Membership, on_replace: :delete
 
-    has_one :gocardless_transaction_iid, Oas.Transactions.Gocardless, foreign_key: :transaction_id, on_replace: :delete
+    has_one :gocardless_transaction_iid, Oas.Transactions.Gocardless, foreign_key: :transaction_id
 
     timestamps()
   end

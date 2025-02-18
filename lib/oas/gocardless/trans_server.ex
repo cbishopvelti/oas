@@ -32,15 +32,15 @@ defmodule Oas.Gocardless.TransServer do
 
     {:ok, headers} = Oas.Gocardless.Transactions.process_transacitons()
 
-    remaining = Keyword.get("http_x_ratelimit_account_success_remaining") |> String.to_integer()
-    reset_seconds = Keyword.get("http_x_ratelimit_account_success_reset") |> String.to_integer()
+    remaining = List.keyfind!(headers, "http_x_ratelimit_account_success_remaining", 0) |> elem(1) |> String.to_integer()
+    reset_seconds = List.keyfind!(headers, "http_x_ratelimit_account_success_reset", 0) |> elem(1) |> String.to_integer()
 
-    timeout = (remaining + 1) / reset_seconds
+    timeout = div(reset_seconds, (remaining + 1))
 
-    timer_ref = Process.send_after(self, :init, timeout)
+    timer_ref = Process.send_after(self(), :init, timeout)
     {:noreply,
       %{
-        timer_ref: state.timer_ref
+        timer_ref: timer_ref
       }
     }
   end
