@@ -29,7 +29,7 @@ defmodule Oas.Application do
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
-    opts = [strategy: :one_for_one, name: Oas.Supervisor]
+    opts = [strategy: :one_for_one, name: Oas.Supervisor, max_restarts: 1]
     Supervisor.start_link(children, opts)
   end
 

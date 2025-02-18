@@ -37,10 +37,6 @@ defmodule Oas.Gocardless.Transactions do
     case Enum.find(
       Oas.Tokens.Token.getPossibleTokenAmount(),
       fn %{quantity: no, value: value} ->
-        IO.inspect(no, label: "001.1")
-        IO.inspect(value, label: "001.2")
-        IO.inspect(Map.get(out_transaction, :amount), label: "001.3")
-
         Decimal.mult(value, no) == Map.get(out_transaction, :amount)
       end
     ) do
@@ -59,7 +55,6 @@ defmodule Oas.Gocardless.Transactions do
                 value: value,
                 quantity: quantity
               }, false)
-              |> IO.inspect(label: "005")
             )
         else
           Map.put(
@@ -130,7 +125,7 @@ defmodule Oas.Gocardless.Transactions do
       amount: amount,
       bank_details: name,
       my_reference: Map.get(in_transaction, "remittanceInformationUnstructured")
-    }
+    } |> Map.put(:tags, ["Gocardless"])
 
     out_transaction =
       process_membership(out_transaction)
@@ -138,15 +133,19 @@ defmodule Oas.Gocardless.Transactions do
 
     out_transaction
     |> Oas.Transactions.Transaction.changeset()
-    |> Ecto.Changeset.put_assoc(:gocardless_transaction_iid, %Oas.Transactions.Gocardless{
-      gocardless_data: JSON.encode!(in_transaction |> Map.drop([:name, :maybe_member, :date, :amount])),
-      warnings: (case Map.get(out_transaction, :warnings, nil) do
-        nil -> nil
-        [] -> nil
-        warnings -> JSON.encode!(warnings)
-      end),
-      transaction_iid: Map.get(in_transaction, "transactionId")
-    })
+    |> Ecto.Changeset.put_assoc(:gocardless_transaction_iid, %Oas.Transactions.Gocardless{}
+      |> Oas.Transactions.Gocardless.changeset(
+        %{
+          gocardless_data: JSON.encode!(in_transaction |> Map.drop([:name, :maybe_member, :date, :amount])),
+          warnings: (case Map.get(out_transaction, :warnings, nil) do
+            nil -> nil
+            [] -> nil
+            warnings -> JSON.encode!(warnings)
+          end),
+          transaction_iid: Map.get(in_transaction, "transactionId")
+        }
+      )
+    )
     |> Oas.Transactions.TransactionTags.doTransactionTags(
       %{transaction_tags: Map.get(out_transaction, :tags, []) |> Enum.map(fn name -> %{name: name} end)
     })
@@ -222,7 +221,6 @@ defmodule Oas.Gocardless.Transactions do
     {:ok, response_string} = :hackney.body(client)
     {:ok, data} = JSON.decode(response_string)
 
-    IO.inspect(headers, label: "007 headers")
     {:ok, data["transactions"]["booked"], headers}
   end
 
@@ -231,11 +229,11 @@ defmodule Oas.Gocardless.Transactions do
       "bookingDate" => "2025-02-11",
       "bookingDateTime" => "2025-02-07T00:00:00.000Z",
       "debtorName" => "CHRISB",
-      "internalTransactionId" => "1bb4606bd800c76abfebffb5a5511dbe",
+      "internalTransactionId" => "1bb4606bd800c76abfebffb5a5511db0",
       "proprietaryBankTransactionCode" => "POS",
       "remittanceInformationUnstructured" => "0543 06JAN25      LV INSURANCE W    0330 1239970 GB",
       "transactionAmount" => %{"amount" => "5", "currency" => "GBP"},
-      "transactionId" => "8AD4A5144E8D4C5987C0BAC4913DBD6340C9D083424B1AA5F38729B4A81C3C3E82153E637BD4BAA5CD31D80B26B28489"
+      "transactionId" => "8AD4A5144E8D4C5987C0BAC4913DBD6340C9D083424B1AA5F38729B4A81C3C3E82153E637BD4BAA5CD31D80B26B2848A"
     }],
     [
       {"Date", "Sun, 16 Feb 2025 11:29:24 GMT"},

@@ -1,5 +1,5 @@
 defmodule Oas.Gocardless.Supervisor do
-  use Supervisor
+  use Supervisor, restart: :temporary
 
   # Process.whereis(Oas.Gocardless.AuthServer) |> Process.alive?()
   def start_link(init_arg) do
@@ -13,16 +13,23 @@ defmodule Oas.Gocardless.Supervisor do
       Oas.Gocardless.TransServer
     ]
 
-    Supervisor.init(children, strategy: :rest_for_one, max_seconds: 86_400, max_restarts: 1)
+    Supervisor.init(children,
+      strategy: :rest_for_one,
+      # strategy: :one_for_one,
+      max_seconds: 86_400,
+      max_restarts: 1)
   end
 
+  # Oas.Gocardless.Supervisor.restart()
   def restart do
-    Supervisor.terminate_child(Oas.Gocardless.Supervisor, Oas.Gocardless.AuthServer)
-    Supervisor.restart_child(Oas.Gocardless.Supervisor, Oas.Gocardless.AuthServer)
 
-    Supervisor.terminate_child(Oas.Gocardless.Supervisor, Oas.Gocardless.TransServer)
-    Supervisor.restart_child(Oas.Gocardless.Supervisor, Oas.Gocardless.TransServer)
-
-    :ok
+    if (Process.whereis(Oas.Gocardless.Supervisor) != nil) do
+      if (Process.whereis(Oas.Gocardless.Supervisor) |> Process.alive?()) do
+        Supervisor.terminate_child(Oas.Supervisor, Oas.Gocardless.Supervisor)
+      end
+      Supervisor.restart_child(Oas.Supervisor, Oas.Gocardless.Supervisor)
+    else
+      Supervisor.start_child(Oas.Supervisor, Oas.Gocardless.Supervisor)
+    end
   end
 end
