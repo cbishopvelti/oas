@@ -1,4 +1,3 @@
-import Ecto.Query, only: [from: 2, where: 3]
 defmodule OasWeb.Schema.SchemaGocardless do
   use Absinthe.Schema.Notation
 
@@ -53,7 +52,7 @@ defmodule OasWeb.Schema.SchemaGocardless do
       end
     end
     field :gocardless_save_requistions, :success do
-      resolve fn _, _, %{context: context} ->
+      resolve fn _, _, %{context: _context} ->
         GenServer.call(Oas.Gocardless.AuthServer, :save_requisitions)
 
         # DOSNT WORK, doesn't trigger the subscription for some reason

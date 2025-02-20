@@ -3,7 +3,7 @@ defmodule Oas.Transactions.Gocardless do
   import Ecto.Changeset
 
   schema "gocardless_transaction_iids" do
-    belongs_to :transaction, Oas.Members.Transaction
+    belongs_to :transaction, Oas.Transactions.Transaction
 
     field :transaction_iid, :string
     field :gocardless_data, :string

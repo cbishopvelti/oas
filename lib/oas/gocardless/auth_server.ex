@@ -19,6 +19,7 @@ defmodule Oas.Gocardless.AuthServer do
     end
   end
 
+  @impl true
   def handle_info(:init, state) do
     if (Map.has_key?(state, :timer_ref)) do
       Process.cancel_timer(state.timer_ref)
@@ -51,7 +52,7 @@ defmodule Oas.Gocardless.AuthServer do
     ) |> Map.put(:timer_ref, timer_ref)}
   end
 
-
+  @impl true
   def handle_call(:get_access_token, _from, %{access_token: access_token} = state) do
     {:reply, {:ok, access_token}, state}
   end

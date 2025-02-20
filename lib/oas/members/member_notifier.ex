@@ -41,7 +41,7 @@ defmodule Oas.Members.MemberNotifier do
   Deliver instructions to reset a member password.
   """
   def deliver_reset_password_instructions(member, url) do
-    IO.puts("000")
+    # IO.puts("000")
     result = deliver(member.email, "Reset password instructions", """
 
     ==============================
@@ -56,8 +56,8 @@ defmodule Oas.Members.MemberNotifier do
 
     ==============================
     """)
-    IO.puts("001")
-    IO.inspect(result)
+    # IO.puts("001")
+    # IO.inspect(result)
   end
 
   @doc """

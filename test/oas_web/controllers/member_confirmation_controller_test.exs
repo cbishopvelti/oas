@@ -26,7 +26,7 @@ defmodule OasWeb.MemberConfirmationControllerTest do
         })
 
       assert redirected_to(conn) == "/"
-      assert get_flash(conn, :info) =~ "If your email is in our system"
+      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "If your email is in our system"
       assert Repo.get_by!(Members.MemberToken, member_id: member.id).context == "confirm"
     end
 
@@ -39,7 +39,7 @@ defmodule OasWeb.MemberConfirmationControllerTest do
         })
 
       assert redirected_to(conn) == "/"
-      assert get_flash(conn, :info) =~ "If your email is in our system"
+      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "If your email is in our system"
       refute Repo.get_by(Members.MemberToken, member_id: member.id)
     end
 
@@ -50,7 +50,7 @@ defmodule OasWeb.MemberConfirmationControllerTest do
         })
 
       assert redirected_to(conn) == "/"
-      assert get_flash(conn, :info) =~ "If your email is in our system"
+      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "If your email is in our system"
       assert Repo.all(Members.MemberToken) == []
     end
   end
@@ -75,7 +75,7 @@ defmodule OasWeb.MemberConfirmationControllerTest do
 
       conn = post(conn, Routes.member_confirmation_path(conn, :update, token))
       assert redirected_to(conn) == "/"
-      assert get_flash(conn, :info) =~ "Member confirmed successfully"
+      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "Member confirmed successfully"
       assert Members.get_member!(member.id).confirmed_at
       refute get_session(conn, :member_token)
       assert Repo.all(Members.MemberToken) == []
@@ -83,7 +83,7 @@ defmodule OasWeb.MemberConfirmationControllerTest do
       # When not logged in
       conn = post(conn, Routes.member_confirmation_path(conn, :update, token))
       assert redirected_to(conn) == "/"
-      assert get_flash(conn, :error) =~ "Member confirmation link is invalid or it has expired"
+      assert Phoenix.Flash.get(conn.assigns.flash, :error) =~ "Member confirmation link is invalid or it has expired"
 
       # When logged in
       conn =
@@ -98,7 +98,7 @@ defmodule OasWeb.MemberConfirmationControllerTest do
     test "does not confirm email with invalid token", %{conn: conn, member: member} do
       conn = post(conn, Routes.member_confirmation_path(conn, :update, "oops"))
       assert redirected_to(conn) == "/"
-      assert get_flash(conn, :error) =~ "Member confirmation link is invalid or it has expired"
+      assert Phoenix.Flash.get(conn.assigns.flash, :error) =~ "Member confirmation link is invalid or it has expired"
       refute Members.get_member!(member.id).confirmed_at
     end
   end
