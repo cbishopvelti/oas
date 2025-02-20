@@ -85,14 +85,14 @@ defmodule OasWeb.MemberSessionControllerTest do
       conn = conn |> log_in_member(member) |> delete(Routes.member_session_path(conn, :delete))
       assert redirected_to(conn) == "/"
       refute get_session(conn, :member_token)
-      assert get_flash(conn, :info) =~ "Logged out successfully"
+      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "Logged out successfully"
     end
 
     test "succeeds even if the member is not logged in", %{conn: conn} do
       conn = delete(conn, Routes.member_session_path(conn, :delete))
       assert redirected_to(conn) == "/"
       refute get_session(conn, :member_token)
-      assert get_flash(conn, :info) =~ "Logged out successfully"
+      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "Logged out successfully"
     end
   end
 end

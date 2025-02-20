@@ -13,7 +13,7 @@ defmodule OasWeb.UserSocket do
     opts =
       Plug.Session.COOKIE.init([
         secret_key_base: secret_key_base,
-        signing_salt: OasWeb.Endpoint.signing_salt()
+        signing_salt: signing_salt
       ])
 
     {:term, %{

@@ -41,7 +41,8 @@ defmodule OasWeb.MemberAuthTest do
 
       assert %{value: signed_token, max_age: max_age} = conn.resp_cookies[@remember_me_cookie]
       assert signed_token != get_session(conn, :member_token)
-      assert max_age == 5_184_000
+      # assert max_age == 5_184_000
+      assert max_age == 15_552_000
     end
   end
 
@@ -132,7 +133,7 @@ defmodule OasWeb.MemberAuthTest do
       conn = conn |> fetch_flash() |> MemberAuth.require_authenticated_member([])
       assert conn.halted
       assert redirected_to(conn) == Routes.member_session_path(conn, :new)
-      assert get_flash(conn, :error) == "You must log in to access this page."
+      assert Phoenix.Flash.get(conn.assigns.flash, :error) == "You must log in to access this page."
     end
 
     test "stores the path to redirect to on GET", %{conn: conn} do

@@ -130,7 +130,7 @@ defmodule OasWeb.Schema.SchemaConfig do
 
   object :config_subscriptions do
     field :global_warnings, list_of(:global_warning) do
-      config fn args, _ ->
+      config fn _args, _ ->
         # Send any existing errors
         spawn(fn ->
           items = :ets.tab2list(:global_warnings)
@@ -143,8 +143,7 @@ defmodule OasWeb.Schema.SchemaConfig do
         end)
         {:ok, topic: "*"}
       end
-      trigger :global_warnings_clear, topic: fn args ->
-        IO.puts("101 trigger")
+      trigger :global_warnings_clear, topic: fn _args ->
         "*"
       end
       resolve fn args, _, _ ->

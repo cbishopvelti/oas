@@ -47,7 +47,6 @@ defmodule Oas.Transactions.Transaction do
     |> cast(params, [:what, :when, :who, :who_member_id,
       :type, :amount, :bank_details, :notes,
       :their_reference, :my_reference], empty_values: [[], nil])
-    |> IO.inspect(label: "003")
     |> validate_required([:what, :when, :who, :type, :amount])
     |> validate_type
     |> validate_amount

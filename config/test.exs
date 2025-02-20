@@ -9,10 +9,11 @@ config :bcrypt_elixir, :log_rounds, 1
 # to provide built-in test partitioning in CI environment.
 # Run `mix help test` for more information.
 config :oas, Oas.Repo,
-  username: "postgres",
-  password: "postgres",
-  hostname: "localhost",
-  database: "oas_test#{System.get_env("MIX_TEST_PARTITION")}",
+  database: System.get_env("DB_FILE") || "./dbs/sqlite-2023-test.db",
+  # username: "postgres",
+  # password: "postgres",
+  # hostname: "localhost",
+  # database: "oas_test#{System.get_env("MIX_TEST_PARTITION")}",
   pool: Ecto.Adapters.SQL.Sandbox,
   pool_size: 10
 
@@ -27,7 +28,11 @@ config :oas, OasWeb.Endpoint,
 config :oas, Oas.Mailer, adapter: Swoosh.Adapters.Test
 
 # Print only warnings and errors during test
-config :logger, level: :warn
+config :logger, level: :warning
 
 # Initialize plugs at runtime for faster test compilation
 config :phoenix, :plug_init_mode, :runtime
+
+config :oas,
+  app_url: "http://localhost:3999",
+  public_url: System.get_env("REACT_APP_PUBLIC_URL") || "http://localhost:3998"

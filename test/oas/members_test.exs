@@ -97,7 +97,7 @@ defmodule Oas.MembersTest do
   describe "change_member_registration/2" do
     test "returns a changeset" do
       assert %Ecto.Changeset{} = changeset = Members.change_member_registration(%Member{})
-      assert changeset.required == [:password, :email]
+      assert changeset.required == [:password, :email, :name]
     end
 
     test "allows fields to be set" do

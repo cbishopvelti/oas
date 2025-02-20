@@ -103,18 +103,17 @@ defmodule Oas.Gocardless.Transactions do
   end
 
   defp generate_transaction(%{
-    "bookingDate" => booking_date,
     name: name,
     maybe_member: maybe_member,
     date: date,
     amount: amount
   } = in_transaction) do
 
-    warning = if amount >= 0 and maybe_member == nil do
-      true
-    else
-      false
-    end
+    # warning = if amount >= 0 and maybe_member == nil do
+    #   true
+    # else
+    #   false
+    # end
 
     out_transaction = %Oas.Transactions.Transaction{
       what: "From gocardless",
