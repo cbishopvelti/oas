@@ -22,6 +22,16 @@ defmodule OasWeb.Schema.SchemaTransaction do
     field :membership_period, :membership_period
   end
 
+  input_object :credit_arg do
+    field :id, :integer
+    field :amount, :float
+  end
+
+  object :credit do
+    field :amount, :string
+    field :expires_on, :string
+  end
+
   object :transaction do
     field :id, :integer
     field :what, :string
@@ -38,6 +48,7 @@ defmodule OasWeb.Schema.SchemaTransaction do
     field :their_reference, :string
     field :my_reference, :string
     field :warnings, :string
+    field :credit, :credit
   end
 
   object :transaction_queries do
@@ -69,7 +80,6 @@ defmodule OasWeb.Schema.SchemaTransaction do
             |> group_by([t], t.id)
         end)).()
 
-        # IO.inspect(Oas.Repo.to_sql(:all, query) |> elem(0))
         result = Oas.Repo.all(query)
         result = result |> Enum.map(fn transaction ->
           warnings = (Map.get(transaction, :gocardless_transaction_iid, %{}) || %{}) |> Map.get(:warnings)
@@ -86,10 +96,12 @@ defmodule OasWeb.Schema.SchemaTransaction do
           |> Oas.Repo.preload(:membership)
           |> Oas.Repo.preload(:tokens)
           |> Oas.Repo.preload(:gocardless_transaction_iid)
+          |> Oas.Repo.preload(:credit)
 
         warnings = (Map.get(transaction, :gocardless_transaction_iid, %{}) || %{}) |> Map.get(:warnings)
 
-        {:ok, transaction |> Map.put(:warnings, warnings)}
+        {:ok, transaction
+          |> Map.put(:warnings, warnings)}
       end
     end
     field :transaction_tags, list_of(:transaction_tag) do
@@ -167,6 +179,18 @@ defmodule OasWeb.Schema.SchemaTransaction do
         |> Oas.Repo.update
     end
   end
+  # defp maybeDoCredits(args = %{credits_amount: credit_amount}, %{id: id,
+  #   who_member_id: member_id,
+  #   credit_id: credit_id
+  # }, when1) do
+  #   from(c in Oas.Credits.Credits, where: c.id == credit_id)
+  #   |> case do
+  #     nil -> %Oas.Credits.Credits {
+  #       amount: credit_amount,
+  #       who_member_id: member_id
+  #     }
+  #   end
+  # end
 
   object :transaction_mutations do
     @desc "Create or Update transaction"
@@ -186,6 +210,8 @@ defmodule OasWeb.Schema.SchemaTransaction do
       arg :membership_period_id, :integer
       arg :their_reference, :string
       arg :my_reference, non_null(:string)
+      # arg :credit_amount, :float
+      arg :credit, :credit_arg
       resolve fn _parent, args, _context ->
         when1 = Date.from_iso8601!(args.when)
         args = %{args | when: when1}
@@ -204,14 +230,15 @@ defmodule OasWeb.Schema.SchemaTransaction do
         #   end
         # end
 
-        IO.inspect(args, label: "001 args")
         toSave = case Map.get(args, :id) do
           nil -> %Oas.Transactions.Transaction{}
-          id -> Oas.Repo.get!(Oas.Transactions.Transaction, id) |> Oas.Repo.preload(:transaction_tags)
+          id -> Oas.Repo.get!(Oas.Transactions.Transaction, id)
+            |> Oas.Repo.preload(:transaction_tags)
+            |> Oas.Repo.preload(:credit)
         end
         |> Oas.Transactions.Transaction.changeset(args)
-        # |> doTransactionTags.()
         |> Oas.Transactions.TransactionTags.doTransactionTags(args)
+        |> Oas.Credits.Credit.doCredit(Map.get(args, :credit, nil))
 
         result = toSave
           |> (&(case &1 do
@@ -244,6 +271,8 @@ defmodule OasWeb.Schema.SchemaTransaction do
         case result do
           {:error, error} -> {:error, error}
           {:ok, result} ->
+            # Adds credits
+            # maybeDoCredits(args, result, when1)
             # Adds tokens
             maybeDoTokens(args, result, when1)
             # Adds membership

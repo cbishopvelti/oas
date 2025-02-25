@@ -34,14 +34,14 @@ defmodule Oas.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
-      {:bcrypt_elixir, "~> 3.0"},
+      {:bcrypt_elixir, "~> 3.2.1"},
       {:phoenix, "~> 1.7.18"},
       {:phoenix_view, "~> 2.0"},
       {:phoenix_ecto, "~> 4.6.3"},
-      {:ecto_sql, "~> 3.6"},
+      {:ecto_sql, "~> 3.12.1"},
       {:postgrex, ">= 0.0.0"},
-      {:ecto_sqlite3, "~> 0.12.0"},
-      {:exqlite, "~> 0.11.6"},
+      {:ecto_sqlite3, "~> 0.18.1"},
+      {:exqlite, "~> 0.29.0"},
       {:phoenix_html, "~> 4.2.0"},
       {:phoenix_html_helpers, "~> 1.0"},
       {:phoenix_live_reload, "~> 1.5.3"},

@@ -20,6 +20,7 @@ import { Transactions } from './Money/Transactions';
 import { Training } from './Training/Training';
 import { Trainings } from './Training/Trainings';
 import { MemberTokens } from './Member/MemberTokens';
+import { MemberCredits } from './Member/MemberCredits';
 import { Analysis } from './Analysis/Analysis';
 import { MembershipPeriod } from './MembershipPeriod/MembershipPeriod';
 import { MembershipPeriods } from './MembershipPeriod/MembershipPeriods';
@@ -109,7 +110,13 @@ const router = createBrowserRouter([
         id: "member-tokens",
         path: "member/:id/tokens",
         element: <MemberTokens />
-      }, {
+      },
+      {
+        id: "member-credits",
+        path: "member/:id/credits",
+        element: <MemberCredits />
+      },
+      {
         id: "member-membership-periods",
         path: "member/:member_id/membership-periods",
         element: <MemberMembershipPeriods />

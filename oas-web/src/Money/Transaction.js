@@ -23,6 +23,7 @@ import { TransactionMembershipPeriod } from './TransactionMembershipPeriod';
 import { parseErrors } from '../utils/util';
 import { IconButton } from '@mui/material';
 import LinkIcon from '@mui/icons-material/Link';
+import { TransactionCredits } from './TransactionCredits';
 
 
 export const Transaction = () => {
@@ -64,6 +65,10 @@ export const Transaction = () => {
         },
         membership {
           membership_period_id
+        },
+        credit {
+          amount,
+          expires_on
         }
       }
     }
@@ -193,8 +198,9 @@ export const Transaction = () => {
     $token_value: Float,
     $transaction_tags: [TransactionTagArg],
     $membership_period_id: Int,
-    $their_reference: String
-    $my_reference: String!
+    $their_reference: String,
+    $my_reference: String!,
+    $credit: CreditArg
   ){
     transaction (
       id: $id,
@@ -211,7 +217,8 @@ export const Transaction = () => {
       transaction_tags: $transaction_tags,
       membership_period_id: $membership_period_id,
       their_reference: $their_reference,
-      my_reference: $my_reference
+      my_reference: $my_reference,
+      credit: $credit
     ) {
       id
     }
@@ -227,7 +234,8 @@ export const Transaction = () => {
       ...(formData.token_quantity ? {token_quantity: parseInt(formData.token_quantity)}: {}),
       ...(formData.token_quantity ? {token_value: parseFloat(formData.token_value)}: {}),
       transaction_tags: (formData.transaction_tags?.map((item) => omit(item, '__typename') )),
-      ...(formData.tokens ? {tokens: formData.tokens.map((item) => omit(item, '__typename'))} : {})
+      ...(formData.tokens ? {tokens: formData.tokens.map((item) => omit(item, '__typename'))} : {}),
+      ...(formData.credit?.amount ? { credit: { amount: parseFloat( formData.credit?.amount) } } : {})
     };
 
     const { data } = await mutate({
@@ -452,6 +460,13 @@ export const Transaction = () => {
           />
       </FormControl>
 
+      <TransactionCredits
+        formData={formData}
+        data={get(data, "transaction.credit")}
+        setFormData={setFormData}
+        id={id}
+        errors={errors}
+      />
 
       <TransactionMembershipPeriod
         formData={formData}

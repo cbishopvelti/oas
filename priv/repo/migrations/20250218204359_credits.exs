@@ -7,7 +7,7 @@ defmodule Oas.Repo.Migrations.Credits do
       add :amount, :decimal, null: false
       add :when, :date, null: false
       add :who_member_id, references(:members, on_delete: :restrict), null: false
-      add :transaction_id, references(:transactions, on_delete: :restrict), null: false
+      add :transaction_id, references(:transactions, on_delete: :restrict), null: true
       add :expires_on, :date, null: true
       timestamps()
     end
@@ -21,5 +21,9 @@ defmodule Oas.Repo.Migrations.Credits do
     end
 
     create unique_index(:credits_credits, [:used_for_id, :uses_id])
+
+    # alter table(:transactions) do
+    #   add :credit_id, references(:credits, on_delete: :restrict), null: true
+    # end
   end
 end
