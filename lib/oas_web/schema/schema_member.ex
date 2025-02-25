@@ -51,6 +51,12 @@ defmodule OasWeb.Schema.SchemaMember do
         {:ok, token_count}
       end
     end
+    field :credit_amount, :string do
+      resolve fn %{id: id}, _, _ ->
+        credit_amount = Oas.Credits.Credit.get_credit_amount(%{member_id: id})
+        {:ok, credit_amount}
+      end
+    end
 
     field :is_active, :boolean
     field :is_admin, :boolean

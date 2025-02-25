@@ -22,6 +22,8 @@ defmodule Oas.Transactions.Transaction do
 
     has_one :gocardless_transaction_iid, Oas.Transactions.Gocardless, foreign_key: :transaction_id
 
+    has_one :credit, Oas.Credits.Credit, foreign_key: :transaction_id, on_replace: :delete
+
     timestamps()
   end
 

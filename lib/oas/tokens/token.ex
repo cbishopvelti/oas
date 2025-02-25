@@ -15,7 +15,6 @@ defmodule Oas.Tokens.Token do
   end
 
   def getPossibleTokenAmount do
-
     from(tk in Oas.Config.Tokens, select: tk)
       |> Oas.Repo.all
 

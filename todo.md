@@ -8,7 +8,13 @@ Stop delete transactions re importing. ✅
 Testing
 
 ## credits
-## Merge accounts for Emily tomson ✅
+Add credits ✅
+List credits for user
+Transfur credits
+Attendance
+Membership
+Things
+Refunds transactions
 ## Honory members
 ## Move server back to my computer
 ## ssl certificate

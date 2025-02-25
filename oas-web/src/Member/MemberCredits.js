@@ -2,11 +2,11 @@ import { gql, useQuery } from "@apollo/client";
 import { useParams, useOutletContext } from "react-router-dom";
 
 import { get } from 'lodash'
-import { Tokens } from "../Money/Tokens";
+import { Credits } from "../Credits/Credits";
 import { useEffect } from "react";
 
+export const MemberCredits = (params) => {
 
-export const MemberTokens = (params) => {
   const { setTitle } = useOutletContext();
 
   let { id } = useParams();
@@ -19,7 +19,7 @@ export const MemberTokens = (params) => {
       member(member_id: $member_id) {
         id,
         name,
-        token_count
+        credit_amount
       }
     }
   `, {
@@ -28,11 +28,13 @@ export const MemberTokens = (params) => {
     }
   })
 
+  console.log("003 WAT", data, id)
+
   useEffect(() => {
-    setTitle(`Member: ${get(data, 'member.name', id)}'s Tokens: ${get(data, 'member.token_count', 0)}`);
+    setTitle(`Member: ${get(data, 'member.name', id)}'s Credits: ${get(data, 'member.credit_amount', 0.0)}`);
   }, [data])
 
   return <div>
-    <Tokens member_id={id} />
+    <Credits member_id={id} />
   </div>
 }

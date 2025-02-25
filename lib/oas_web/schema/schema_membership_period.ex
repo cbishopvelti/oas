@@ -12,6 +12,9 @@ defmodule OasWeb.Schema.SchemaMembershipPeriod do
     field :memberships, list_of(:membership)
   end
 
+  defp with_transaction_id(nil), do: true
+  defp with_transaction_id(transaction_id), do: Ecto.Query.dynamic([m], m.transaction_id != ^transaction_id)
+
   object :membership_period_queries do
     field :membership_period, :membership_period do
       arg :id, non_null(:integer)
@@ -43,13 +46,12 @@ defmodule OasWeb.Schema.SchemaMembershipPeriod do
           %{member_id: member_id} when member_id != nil ->
 
             transaction_id = Map.get(args, :transaction_id, 0)
-
+            #  and m.member_id == ^member_id and parent_as(:membership_periods).id == m.membership_period_id
+            where = Ecto.Query.dynamic([m], ^with_transaction_id(transaction_id) and m.member_id == ^member_id and parent_as(:membership_periods).id == m.membership_period_id)
             where(&1, [p],
               not(exists(from(
                 m in Oas.Members.Membership,
-                where: m.member_id == ^member_id and parent_as(:membership_periods).id == m.membership_period_id and (
-                  is_nil(m.transaction_id) or m.transaction_id != ^transaction_id
-                )
+                where: ^where
               )))
             )
           _ ->
