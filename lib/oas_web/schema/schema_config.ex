@@ -18,6 +18,7 @@ defmodule OasWeb.Schema.SchemaConfig do
     field :gocardless_id, :string
     field :gocardless_key, :string
     field :gocardless_account_id, :string
+    field :credits, :boolean
   end
 
   object :public_config_config do
@@ -88,6 +89,7 @@ defmodule OasWeb.Schema.SchemaConfig do
       arg :gocardless_id, :string
       arg :gocardless_key, :string
       arg :gocardless_account_id, :string
+      arg :credits, :boolean
       resolve fn _, args, _ ->
 
         result = from(cc in Oas.Config.Config, select: cc)
@@ -95,7 +97,8 @@ defmodule OasWeb.Schema.SchemaConfig do
         |> Ecto.Changeset.cast(args, [
           :token_expiry_days, :temporary_trainings,
           :bacs, :enable_booking, :name,
-          :gocardless_id, :gocardless_key, :gocardless_account_id
+          :gocardless_id, :gocardless_key, :gocardless_account_id,
+          :credits
         ], empty_values: [[], ""])
         |> Oas.Repo.update
         |> OasWeb.Schema.SchemaUtils.handle_error

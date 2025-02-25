@@ -111,23 +111,17 @@ defmodule Oas.Attendance do
       training_id: training_id,
       inserted_by_member_id: inserted_by_member_id,
     }
-    # |> (&( case member_id == inserted_by_member_id do
-    #   true ->
-    #     case Date.compare(Date.utc_today, training.when) do
-    #       :eq ->
-    #         IO.inspect(DateTime.add(DateTime.utc_now(), 60))
-    #         Map.put(&1, :undo_until, DateTime.add(DateTime.utc_now(), 60) |> DateTime.truncate(:second))
-    #       :lt -> Map.put(&1, :undo_until, Timex.to_datetime(training.when))
-    #       :gt -> &1
-    #     end
-    #   false -> &1
-    # end)).()
     |> Oas.Repo.insert!
-
     get_unsued_token_result = get_unused_token(member_id)
 
     case get_unsued_token_result do
-      nil -> nil
+      nil -> # User has no tokens, use credits instead
+        config = from(c in Oas.Configs.Config, limit: 1) |> Repo.one!()
+        if (config.credits) do
+          Oas.Credits.Credit.deduct_credits(attendance, member, training.credit_amount)
+        else
+          nil
+        end
       token -> use_token(token, attendance.id, training.when)
     end
 
