@@ -58,7 +58,8 @@ export const ConfigTokens = () => {
         name,
         gocardless_id,
         gocardless_key,
-        gocardless_account_id
+        gocardless_account_id,
+        credits
       },
       gocardless_accounts {
         id
@@ -91,6 +92,7 @@ export const ConfigTokens = () => {
       $gocardless_id: String
       $gocardless_key: String
       $gocardless_account_id: String
+      $credits: Boolean
     ) {
       save_config_config(
         token_expiry_days: $token_expiry_days,
@@ -101,6 +103,7 @@ export const ConfigTokens = () => {
         gocardless_id: $gocardless_id,
         gocardless_key: $gocardless_key,
         gocardless_account_id: $gocardless_account_id
+        credits: $credits
       ) {
         id
       }
@@ -245,6 +248,16 @@ export const ConfigTokens = () => {
           label="Enable booking functionality" />
       </FormControl>
 
+      <FormControl fullWidth sx={{mb: 2}}>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={get(globalFormData, 'credits', false) || false}
+              onChange={onChange({formData: globalFormData, setFormData: setGlobalFormData, key: 'credits', isCheckbox: true})}/>
+          }
+          label="Enable credits functionality" />
+      </FormControl>
+
       <FormControl fullWidth sx={{mb:2}}>
         <TextField
             label="Token Expiry Days"
@@ -256,6 +269,7 @@ export const ConfigTokens = () => {
             helperText={get(errors, 'token_expiry_days', []). join(" ")}
             />
       </FormControl>
+      
       <FormControl fullWidth>
         <Button onClick={saveGlobal}>Save</Button>
       </FormControl>

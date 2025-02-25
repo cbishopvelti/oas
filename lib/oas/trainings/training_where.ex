@@ -3,6 +3,7 @@ defmodule Oas.Trainings.TrainingWhere do
 
   schema "training_where" do
     field :name, :string
+    field :credit_amount, :decimal
 
     timestamps()
   end

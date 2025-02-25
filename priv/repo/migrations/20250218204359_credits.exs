@@ -22,6 +22,9 @@ defmodule Oas.Repo.Migrations.Credits do
 
     create unique_index(:credits_credits, [:used_for_id, :uses_id])
 
+    alter table(:config_config) do
+      add :credits, :boolean, default: false
+    end
     # alter table(:transactions) do
     #   add :credit_id, references(:credits, on_delete: :restrict), null: true
     # end

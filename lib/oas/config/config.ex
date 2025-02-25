@@ -11,6 +11,7 @@ defmodule Oas.Config.Config do
     field :gocardless_key, :string
     field :gocardless_requisition_id, :string
     field :gocardless_account_id, :string
+    field :credits, :boolean
     timestamps()
   end
 end
