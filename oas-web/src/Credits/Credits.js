@@ -1,4 +1,6 @@
-import { useQuery, gql, useMutation } from "@apollo/client";
+import { useEffect } from "react";
+import { useQuery, gql } from "@apollo/client";
+import { Link } from 'react-router-dom';
 import { get } from 'lodash';
 import {
   Table,
@@ -10,6 +12,7 @@ import {
   IconButton,
   Box
 } from '@mui/material';
+import PaidIcon from '@mui/icons-material/Paid';
 
 export const Credits = ({
   member_id,
@@ -34,6 +37,7 @@ export const Credits = ({
         amount,
         when,
         what,
+        after_amount,
         transaction {
           id
         }
@@ -45,7 +49,10 @@ export const Credits = ({
     }
   })
 
-  console.log("001 data", data)
+  useEffect(() => {
+    refetch();
+  }, [])
+
   const credits = get(data, "credits", []);
 
   return <div>
@@ -58,6 +65,7 @@ export const Credits = ({
             <TableCell>When</TableCell>
             <TableCell>Expires on</TableCell>
             <TableCell>Amount</TableCell>
+            <TableCell>Cumulating</TableCell>
             <TableCell>Actions</TableCell>
           </TableRow>
         </TableHead>
@@ -69,7 +77,17 @@ export const Credits = ({
               <TableCell>{credit.when}</TableCell>
               <TableCell>{credit.expires_on}</TableCell>
               <TableCell>{credit.amount}</TableCell>
-              <TableCell></TableCell>
+              <TableCell>{credit.after_amount}</TableCell>
+              <TableCell>
+                {credit?.transaction?.id &&
+                  <IconButton
+                    title="Go to transaction"
+                    component={Link}
+                    to={`/transaction/${credit.transaction.id}`}>
+                    <PaidIcon />
+                  </IconButton>
+                }
+              </TableCell>
             </TableRow>
           })}
         </TableBody>

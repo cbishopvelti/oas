@@ -39,6 +39,8 @@ import { Socket as PhoenixSocket } from "phoenix";
 import Cookies from "js-cookie";
 import * as AbsintheSocket from "@absinthe/socket";
 import { createAbsintheSocketLink } from "@absinthe/socket-apollo-link";
+import { Venue } from './Venue/Venue';
+import { Venues } from './Venue/Venues';
 
 
 
@@ -170,6 +172,18 @@ const router = createBrowserRouter([
         id: "gocardless-requisition",
         path: "config/gocardless/requisition",
         element: <GocardlessRequisition />
+      }, {
+        id: "venues",
+        path: "venues",
+        element: <Venues />
+      }, {
+        id: "venue",
+        path: "venue",
+        element: <Venue />
+      }, {
+        id: "venue-id",
+        path: "venue/:id",
+        element: <Venue />
       }
     ],
   },

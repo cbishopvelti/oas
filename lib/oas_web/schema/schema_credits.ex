@@ -8,6 +8,7 @@ defmodule OasWeb.Schema.SchemaCredits do
     field :when, :string
     field :expires_on, :string
     field :amount, :string
+    field :after_amount, :string
     field :who_member_id, :integer
     field :transaction, :transaction
   end
@@ -16,13 +17,14 @@ defmodule OasWeb.Schema.SchemaCredits do
     field :credits, list_of(:credits) do
       arg :member_id, :integer
       resolve fn _, %{member_id: member_id}, _ ->
-        result = from(c in Oas.Credits.Credit,
-          preload: [:transaction, ],
-          where: c.who_member_id == ^member_id, order_by: [desc: c.when, desc: c.id]
-        )
-        |> Oas.Repo.all()
+        # result = from(c in Oas.Credits.Credit,
+        #   preload: [:transaction, ],
+        #   where: c.who_member_id == ^member_id, order_by: [desc: c.when, desc: c.id]
+        # )
+        # |> Oas.Repo.all()
+        {credits, _} = Oas.Credits.Credit.get_credit_amount(%{member_id: member_id})
 
-        {:ok, result}
+        {:ok, credits}
       end
     end
   end

@@ -14,7 +14,7 @@ export const MemberCredits = (params) => {
     id = parseInt(id);
   }
 
-  const { data } = useQuery(gql`
+  const { data, refetch } = useQuery(gql`
     query ($member_id: Int!) {
       member(member_id: $member_id) {
         id,
@@ -28,7 +28,9 @@ export const MemberCredits = (params) => {
     }
   })
 
-  console.log("003 WAT", data, id)
+  useEffect(() => {
+      refetch()
+  }, [])
 
   useEffect(() => {
     setTitle(`Member: ${get(data, 'member.name', id)}'s Credits: ${get(data, 'member.credit_amount', 0.0)}`);

@@ -16,6 +16,7 @@ defmodule OasWeb.Schema do
   import_types OasWeb.Schema.SchemaConfig
   import_types OasWeb.Schema.SchemaGocardless
   import_types OasWeb.Schema.SchemaCredits
+  import_types OasWeb.Schema.SchemaTrainingWhere
 
   query do
     import_fields :attendance_queries
@@ -29,6 +30,7 @@ defmodule OasWeb.Schema do
     import_fields :token_queries
 
     import_fields :training_queries
+    import_fields :training_where_queries
 
     import_fields :analysis_queries
 
@@ -52,6 +54,7 @@ defmodule OasWeb.Schema do
     import_fields :token_mutations
 
     import_fields :training_mutations
+    import_fields :training_where_mutations
 
     import_fields :attendance_mutations
 

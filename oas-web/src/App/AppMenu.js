@@ -19,6 +19,7 @@ import { MenuTransaction } from './MenuTransaction';
 import { MenuTraining } from './MenuTraining';
 import { MenuMembershipPeriod } from './MenuMembershipPeriod';
 import { MenuAnalysis } from './MenuAnalysis';
+import { MenuVenue } from './MenuVenue';
 
 
 export const AppMenu = ({ setOpen }) => {
@@ -50,7 +51,7 @@ export const AppMenu = ({ setOpen }) => {
   }, [])
   /*
   {
-    [menu_id]: 
+    [menu_id]:
   }
   */
 
@@ -87,6 +88,7 @@ export const AppMenu = ({ setOpen }) => {
     </MenuItem> */}
     <MenuTraining />
 
+    <MenuVenue />
 
     <MenuMembershipPeriod />
 
@@ -121,7 +123,7 @@ export const AppMenu = ({ setOpen }) => {
     >
       <a
         style={{
-          color: 'inherit', textDecoration: 'none', 
+          color: 'inherit', textDecoration: 'none',
           display: 'inline-block',
           width: '100%',
           padding: '6px 16px'

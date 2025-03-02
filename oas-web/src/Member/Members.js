@@ -74,6 +74,7 @@ export const Members = () => {
       name,
       email,
       token_count,
+      credit_amount,
       inserted_at,
       member_status,
       tokens {
