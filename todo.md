@@ -9,10 +9,17 @@ Testing
 
 ## credits
 Add credits ✅
+Venues ✅
 List credits for user
+- Link to attendance
+- Link to membership
+- Link to things
+Events
+Imports (credits)
 Transfur credits
 Attendance
 Membership
+Auto add tags for transactions
 Things
 Refunds transactions
 ## Honory members

@@ -25,8 +25,9 @@ defmodule Oas.Repo.Migrations.Credits do
     alter table(:config_config) do
       add :credits, :boolean, default: false
     end
-    # alter table(:transactions) do
-    #   add :credit_id, references(:credits, on_delete: :restrict), null: true
-    # end
+
+    alter table(:training_where) do
+      add :credit_amount, :decimal, null: true
+    end
   end
 end

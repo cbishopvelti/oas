@@ -75,7 +75,7 @@ export const Training = () => {
         <TabPanel value={'1'} sx={{width: '100%'}}>
           <TrainingForm id={id} data={data} refetch={refetch} />
         </TabPanel>
-        {id && 
+        {id &&
           <TabPanel value={'2'} sx={{width: '100%'}}>
             <TrainingAttendance setAttendance={setAttendance} trainingId={id} />
           </TabPanel>

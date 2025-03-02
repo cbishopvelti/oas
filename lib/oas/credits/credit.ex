@@ -74,11 +74,16 @@ defmodule Oas.Credits.Credit do
   def get_credit_amount(%{member_id: member_id}) do
     credits = from(c in Oas.Credits.Credit,
       where: c.who_member_id == ^member_id,
+      preload: [:transaction],
       order_by: [asc: coalesce(c.expires_on, c.when), asc_nulls_first: c.expires_on, asc: c.id]
     )
     |> Oas.Repo.all()
 
-
+    {credits, total} = process_credits(credits)
+    {
+      credits |> Enum.reverse(),
+      total,
+    }
   end
 
   def deduct_debit(ledger, debit, opts \\ %{now: Date.utc_today()})

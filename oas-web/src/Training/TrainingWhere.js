@@ -13,7 +13,7 @@ export const TrainingWhere = ({
 
   const { data, refetch } = useQuery(gql`
     query {
-      training_where {
+      training_wheres {
         id,
         name
       }
@@ -22,7 +22,7 @@ export const TrainingWhere = ({
   useEffect(() => {
     refetch()
   }, [formData.saveCount])
-  const trainingWhere = get(data, 'training_where', [])
+  const trainingWhere = get(data, 'training_wheres', [])
 
   // || get(formData, 'training_where.name')
   return <Autocomplete

@@ -5,6 +5,7 @@ defmodule OasWeb.Schema.SchemaTraining do
   object :training_where do
     field :id, :integer
     field :name, :string
+    field :credit_amount, :string
   end
   input_object :training_where_arg do
     field :id, :integer
@@ -83,7 +84,7 @@ defmodule OasWeb.Schema.SchemaTraining do
         {:ok, result}
       end
     end
-    field :training_where, list_of(:training_where) do
+    field :training_wheres, list_of(:training_where) do
       resolve fn _,_,_ ->
         result = Oas.Repo.all(from(w in Oas.Trainings.TrainingWhere, select: w))
         {:ok, result}
