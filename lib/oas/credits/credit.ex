@@ -9,6 +9,8 @@ defmodule Oas.Credits.Credit do
     field :amount, :decimal
     belongs_to :member, Oas.Members.Member, foreign_key: :who_member_id
     belongs_to :transaction, Oas.Transactions.Transaction, foreign_key: :transaction_id
+    belongs_to :attendance, Oas.Trainings.Attendance, foreign_key: :attendance_id
+    belongs_to :membership, Oas.Members.Membership, foreign_key: :membership_id
     field :when, :date
     field :expires_on, :date
 
@@ -133,6 +135,41 @@ defmodule Oas.Credits.Credit do
     }
   end
 
+  def deduct_credit(from, member, amount, opts = %{now: now} \\ %{
+    now: Date.utc_today(),
+    changeset: false
+  }) do
+
+    if Decimal.positive?(amount) do
+      raise "Oas.CRedits.Credit.deduct_credit amount is positive"
+    end
+
+    config = from(cc in Oas.Config.Config, select: cc) |> Oas.Repo.one
+
+    from = case from do
+      %Ecto.Changeset{} ->
+        from
+      item ->
+        from
+        |> Oas.Repo.preload(:credit)
+        |> Ecto.Changeset.change
+    end
+
+    out_changeset = from
+    |> Ecto.Changeset.put_assoc(:credit, %Oas.Credits.Credit{
+      what: "From #{from.__struct__}",
+      when: now,
+      amount: amount,
+      who_member_id: member.id,
+      expires_on: Date.add(now, config.token_expiry_days)
+    })
+
+    if (opts |> Map.get(:changeset, false)) do
+      out_changeset
+    else
+      out_changeset |> Oas.Repo.update()
+    end
+  end
 
   @deprecated
   def get_credits(member, now \\ Date.utc_today()) do

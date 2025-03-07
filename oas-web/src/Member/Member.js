@@ -37,6 +37,7 @@ export const Member = () => {
         is_active,
         is_admin,
         is_reviewer
+        honorary_member
         member_details {
           phone,
           address,
@@ -101,6 +102,7 @@ export const Member = () => {
     $is_active: Boolean,
     $is_admin: Boolean,
     $is_reviewer: Boolean,
+    $honorary_member: Boolean,
     $member_details: MemberDetailsArg,
     $bank_account_name: String,
     $gocardless_name: String
@@ -110,6 +112,7 @@ export const Member = () => {
       is_reviewer: $is_reviewer,
       is_active: $is_active,
       is_admin: $is_admin,
+      honorary_member: $honorary_member,
       member_details: $member_details,
       bank_account_name: $bank_account_name,
       gocardless_name: $gocardless_name
@@ -211,7 +214,17 @@ export const Member = () => {
                 onChange={onChange({formData, setFormData, key: 'is_admin', isCheckbox: true})}/>
             }
             label="Is admin" />
+
+        <FormControlLabel
+            control={
+              <Switch
+                checked={get(formData, 'honorary_member', false) || false}
+                onChange={onChange({formData, setFormData, key: 'honorary_member', isCheckbox: true})}/>
+            }
+            label="Honorary member" />
       </FormControl>
+
+
 
       <FormControl fullWidth sx={{m:2}}>
         <FormControlLabel

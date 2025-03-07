@@ -22,6 +22,7 @@ Membership
 Auto add tags for transactions
 Things
 Refunds transactions
+public display credits
 ## Honory members
 ## Move server back to my computer
 ## ssl certificate

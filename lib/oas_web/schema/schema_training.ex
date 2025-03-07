@@ -110,7 +110,12 @@ defmodule OasWeb.Schema.SchemaTraining do
 
         training_where = case training_where do
           %{id: id} -> Oas.Repo.get!(Oas.Trainings.TrainingWhere, id)
-          rest -> rest
+          data ->
+            value = from(t in Oas.Config.Tokens,
+              select: max(t.value)
+            )
+            |> Oas.Repo.one
+            data |> Map.put(:credit_amount, value)
         end
 
 

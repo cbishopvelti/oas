@@ -55,6 +55,7 @@ defmodule OasWeb.Schema.SchemaAttendance do
       end
     end
     field :token, :token
+    field :credit, :credit
     field :training, :training
     field :warnings, list_of(:string)
     field :inserted_at, :string
@@ -74,6 +75,7 @@ defmodule OasWeb.Schema.SchemaAttendance do
           inner_join: m in assoc(a, :member),
           preload: [
             :training,
+            :credit,
             member: [membership_periods: ^from(mp in Oas.Members.MembershipPeriod, where: mp.from <= ^training.when and mp.to >= ^training.when)]
           ],
           select: a,
@@ -92,7 +94,12 @@ defmodule OasWeb.Schema.SchemaAttendance do
           end
 
           case Oas.Attendance.check_membership(member) do
-            {%{warnings: warnings}, _} -> Map.put(record, :warnings, warnings)
+            {%{warnings: warnings}, _} -> Map.put(record, :warnings, warnings ++ Map.get(record, :warnings, []))
+            _ -> record
+          end
+
+          case Oas.Credits.Credit.get_credit_amount(%{member_id: member.id}) do
+            {_, %Decimal{sign: -1}} -> Map.put(record, :warnings, ["No credits"] ++ Map.get(record, :warnings, []))
             _ -> record
           end
         end)
@@ -132,6 +139,23 @@ defmodule OasWeb.Schema.SchemaAttendance do
       arg :attendance_id, non_null(:integer)
       resolve fn _, args, _ ->
         Oas.Attendance.delete_attendance(args)
+      end
+    end
+
+    field :attendance_save_credit_amount, type: :success do
+      arg :id, non_null(:integer)
+      arg :amount, non_null(:string)
+      resolve fn _, args, _ ->
+        %{sign: -1} = amount = Decimal.new(args.amount)
+
+        Oas.Repo.get!(Oas.Credits.Credit, args.id)
+        |> Ecto.Changeset.cast(%{
+          amount: amount
+        },
+          [:amount]
+        )
+        |> Oas.Repo.update()
+        {:ok, %{sucess: true}}
       end
     end
   end

@@ -63,6 +63,7 @@ defmodule OasWeb.Schema.SchemaMember do
     field :is_admin, :boolean
     field :is_reviewer, :boolean
     field :inserted_at, :string
+    field :honorary_member, :boolean
 
     field :member_details, :member_details
 
@@ -172,6 +173,7 @@ defmodule OasWeb.Schema.SchemaMember do
       arg :is_active, :boolean
       arg :is_reviewer, :boolean
       arg :is_admin, :boolean
+      arg :honorary_member, :boolean
       arg :member_details, :member_details_arg
       resolve fn _parent, args, _context ->
 

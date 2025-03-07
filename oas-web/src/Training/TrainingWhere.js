@@ -33,7 +33,7 @@ export const TrainingWhere = ({
     options={(trainingWhere || []).map(({name, id}) => ({label: name, name, id }))}
     renderInput={(params) => <TextField
       {...params}
-      label="Where"
+      label="Venue"
       required
       error={has(errors, "training_where")}
       helperText={get(errors, "training_where", []).join(" ")}
@@ -56,14 +56,12 @@ export const TrainingWhere = ({
     selectOnFocus
     handleHomeEndKeys
     onChange={(event, newValue, a, b, c, d) => {
-      console.log("001 newValue", newValue)
       if (!newValue) {
         return;
       }
 
       const id = newValue instanceof String ? find(trainingWhere, (name) => name === newValue).id : newValue.id
 
-      console.log("001.1", id)
       const objToSet = {
         ...formData,
         training_where: {
@@ -71,6 +69,7 @@ export const TrainingWhere = ({
           ...(id ? {id: id} : {} )
         }
       }
+      console.log("001", objToSet)
       setFormData(objToSet)
     }}
   />

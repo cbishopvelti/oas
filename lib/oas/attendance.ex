@@ -51,7 +51,11 @@ defmodule Oas.Attendance do
       [_firstAttendance, %{token: nil, training: %{when: when1}}] when when1 > lastTransaction.when  ->
         nil
       _ ->
-        maybe_send_warnings_email_2(member)
+        config = from(c in Oas.Config.Config, limit: 1) |> Oas.Repo.one!()
+        case config.credits do
+          true -> nil #TODO
+          false -> maybe_send_warnings_email_2(member)
+        end
     end
 
   end
@@ -95,8 +99,42 @@ defmodule Oas.Attendance do
 
   end
 
+
+  defp get_membership_period(when1) do
+    from(mp in Oas.Members.MembershipPeriod,
+      where: (mp.from <= ^when1 and ^when1 <= mp.to),
+      order_by: [asc: mp.from],
+      limit: 1
+    ) |> Oas.Repo.one()
+  end
+
+  defp add_attendance_membership(training, %{membership_periods: []} = member, %{now: now}) do
+    IO.puts("401")
+    case check_membership(member) do
+      {_, membership} when membership == :x_member or membership == :not_member or membership == :honorary_member ->
+        IO.puts("402")
+        case get_membership_period(training.when) do
+          nil -> nil # No membership period to add to
+          membership_period ->
+            # todo
+            Oas.Members.Membership.add_membership(membership_period, member, %{now: now})
+            nil
+        end
+      _membership -> # Temporary_member
+        IO.inspect(_membership, label: "403 should not happen")
+        nil
+    end
+  end
+  defp add_attendance_membership(_, _, _) do # already a member, do nothing
+    nil
+  end
+
   def add_attendance(%{member_id: member_id, training_id: training_id}, %{inserted_by_member_id: inserted_by_member_id}) do
     training = Oas.Repo.get!(Oas.Trainings.Training, training_id)
+    |> Oas.Repo.preload(:training_where)
+
+    now = Date.utc_today()
+
     member = Oas.Repo.get!(Oas.Members.Member, member_id)
     |> Oas.Repo.preload([
       membership_periods: from(
@@ -112,13 +150,29 @@ defmodule Oas.Attendance do
       inserted_by_member_id: inserted_by_member_id,
     }
     |> Oas.Repo.insert!
+
     get_unsued_token_result = get_unused_token(member_id)
+
+    config = from(c in Oas.Config.Config, limit: 1) |> Oas.Repo.one!()
+    if config.credits do # Membership
+      add_attendance_membership(
+        training,
+        member,
+        %{now: now}
+      )
+    end
 
     case get_unsued_token_result do
       nil -> # User has no tokens, use credits instead
-        config = from(c in Oas.Configs.Config, limit: 1) |> Repo.one!()
         if (config.credits) do
-          Oas.Credits.Credit.deduct_credits(attendance, member, training.credit_amount)
+          Oas.Credits.Credit.deduct_credit(
+            attendance,
+            member,
+            Decimal.sub(0, training.training_where.credit_amount),
+            %{
+              now: now
+            }
+          )
         else
           nil
         end
@@ -136,6 +190,7 @@ defmodule Oas.Attendance do
     attendance = Oas.Repo.get!(Oas.Trainings.Attendance, attendance_id)
       |> Oas.Repo.preload(:token)
       |> Oas.Repo.preload(:member)
+      |> Oas.Repo.preload(:training)
 
     if (attendance.token != nil) do
       debtAttendance = from(a in Oas.Trainings.Attendance,
@@ -160,6 +215,13 @@ defmodule Oas.Attendance do
       end
     end
 
+    # Maybe delete membership
+    Oas.Members.Membership.maybe_delete_membership(
+      attendance.training,
+      attendance.member
+    )
+    # EO maybe delete membership
+
     Oas.Repo.delete!(attendance)
 
     {:ok, %{success: true}}
@@ -169,7 +231,8 @@ defmodule Oas.Attendance do
 
     debtAttendances = from(a in Oas.Trainings.Attendance,
       left_join: t in assoc(a, :token), on: t.member_id == ^member_id,
-      where: a.member_id == ^member_id and is_nil(t.id),
+      left_join: c in assoc(a, :credit),
+      where: a.member_id == ^member_id and is_nil(t.id) and is_nil(c.id),
       select: count(a.id)
     ) |> Oas.Repo.one
 
@@ -267,6 +330,8 @@ defmodule Oas.Attendance do
       |> Oas.Repo.one
 
     cond do
+      (member.honorary_member) ->
+        {member, :honorary_member}
       (member
         |> Oas.Repo.preload(:memberships, force: true)
         |> Map.get(:memberships)
