@@ -32,13 +32,18 @@ export const TrainingAttendance = ({trainingId, setAttendance}) => {
     },
     attendance (training_id: $training_id) {
       id,
-      warnings, 
+      warnings,
       member {
         id,
         name,
         email,
         token_count,
-        member_status
+        member_status,
+        credit_amount
+      },
+      credit {
+        id,
+        amount
       },
       inserted_at,
       inserted_by_member_id,
@@ -145,9 +150,11 @@ export const TrainingAttendance = ({trainingId, setAttendance}) => {
               <TableCell>Member Id</TableCell>
               <TableCell>Attendance Id</TableCell>
               <TableCell>Name</TableCell>
-              <TableCell>Email</TableCell>
+              {/* <TableCell>Email</TableCell> */}
               <TableCell>Status</TableCell>
               <TableCell>Tokens</TableCell>
+              <TableCell>Credits used</TableCell>
+              <TableCell>Credits remaining</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>

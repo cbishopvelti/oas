@@ -68,8 +68,26 @@ export const Venues = () => {
     refetch();
   }
 
-  return <>
-    <TableContainer>
+  // return <TableContainer>
+  //   <Table>
+  //     <TableHead>
+  //       <TableRow>
+  //         <TableCell>Id</TableCell>
+  //         <TableCell>Name</TableCell>
+  //         <TableCell>Amount</TableCell>
+  //         <TableCell>Actions</TableCell>
+  //       </TableRow>
+  //     </TableHead>
+  //   </Table>
+  // </TableContainer>
+
+  // {thisError && <StyledTableRow className="errors" key={`row-error-${training_where.id}`}>
+  //   <TableCell colSpan={4}>
+  //     Delete failed: {thisError}
+  //   </TableCell>
+  // </StyledTableRow>}
+
+  return <TableContainer>
     <Table>
       <TableHead>
         <TableRow>
@@ -84,7 +102,7 @@ export const Venues = () => {
             (training_wheres || []).map((training_where) => {
               const thisError = (error?.graphQLErrors || []).find(({id}) => id === training_where.id)?.message
               return (
-                <>
+                [
                   <TableRow key={`row-${training_where.id}`}>
                     <TableCell>{training_where.id}</TableCell>
                     <TableCell>{training_where.name}</TableCell>
@@ -97,18 +115,17 @@ export const Venues = () => {
                         <DeleteIcon sx={{ color: 'red' }} />
                       </IconButton>}
                     </TableCell>
-                  </TableRow>
-                  {thisError && <StyledTableRow className="errors" key={`row-error-${training_where.id}`}>
+                  </TableRow>,
+                  ...(thisError ? [<StyledTableRow className="errors" key={`row-error-${training_where.id}`}>
                     <TableCell colSpan={4}>
-                      Delete failed: {thisError}
+                       Delete failed: {thisError}
                     </TableCell>
-                  </StyledTableRow>}
-                </>
+                  </StyledTableRow>] : [])
+                ]
               )
             })
         }
       </TableBody>
     </Table>
   </TableContainer>
-  </>
 }

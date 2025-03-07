@@ -157,8 +157,6 @@ export const ConfigTokens = () => {
     ...get(error2, 'graphQLErrors', [])
   ]);
 
-    console.log("002", globalFormData);
-
   return <div>
     <Box sx={{m: 2, display: 'flex', flexWrap: 'wrap' }}>
       <Stack sx={{ width: '100%' }}>
@@ -260,7 +258,7 @@ export const ConfigTokens = () => {
 
       <FormControl fullWidth sx={{mb:2}}>
         <TextField
-            label="Token Expiry Days"
+            label="Credit/Token Expiry Days"
             value={get(globalFormData, "token_expiry_days", '')}
             type="number"
             pattern='[0-9]*'
@@ -269,7 +267,7 @@ export const ConfigTokens = () => {
             helperText={get(errors, 'token_expiry_days', []). join(" ")}
             />
       </FormControl>
-      
+
       <FormControl fullWidth>
         <Button onClick={saveGlobal}>Save</Button>
       </FormControl>

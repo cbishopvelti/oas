@@ -8,6 +8,8 @@ defmodule Oas.Trainings.Attendance do
 
     belongs_to :inserted_by, Oas.Members.Member, foreign_key: :inserted_by_member_id
 
+    has_one :credit, Oas.Credits.Credit, foreign_key: :attendance_id
+
     timestamps()
   end
 end

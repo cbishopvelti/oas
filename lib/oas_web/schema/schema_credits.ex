@@ -2,7 +2,7 @@ import Ecto.Query, only: [from: 2]
 defmodule OasWeb.Schema.SchemaCredits do
   use Absinthe.Schema.Notation
 
-  object :credits do
+  object :credit do
     field :id, :integer
     field :what, :string
     field :when, :string
@@ -14,7 +14,7 @@ defmodule OasWeb.Schema.SchemaCredits do
   end
 
   object :credits_queries do
-    field :credits, list_of(:credits) do
+    field :credits, list_of(:credit) do
       arg :member_id, :integer
       resolve fn _, %{member_id: member_id}, _ ->
         # result = from(c in Oas.Credits.Credit,

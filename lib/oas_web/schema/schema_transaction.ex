@@ -27,7 +27,7 @@ defmodule OasWeb.Schema.SchemaTransaction do
     field :amount, :float
   end
 
-  object :credit do
+  object :transaction_credit do
     field :amount, :string
     field :expires_on, :string
   end
@@ -48,7 +48,7 @@ defmodule OasWeb.Schema.SchemaTransaction do
     field :their_reference, :string
     field :my_reference, :string
     field :warnings, :string
-    field :credit, :credit
+    field :credit, :transaction_credit
   end
 
   object :transaction_queries do
