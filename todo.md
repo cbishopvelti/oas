@@ -17,11 +17,13 @@ List credits for user
 - Link to things
 Events ✅
 Imports (credits) ✅
+Gocradless handling Tokens/Credits
 Transfer credits ✅
 Attendance ✅
 Membership ✅
 - adding to multiple memberships ✅
 Auto add tags for transactions
+venue deleting
 Refunds transactions (ensure they don't expire)
 public display credits
 Email warnings

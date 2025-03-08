@@ -17,6 +17,7 @@ defmodule OasWeb.Schema do
   import_types OasWeb.Schema.SchemaGocardless
   import_types OasWeb.Schema.SchemaCredits
   import_types OasWeb.Schema.SchemaTrainingWhere
+  import_types OasWeb.Schema.SchemaThing
 
   query do
     import_fields :attendance_queries
@@ -41,6 +42,8 @@ defmodule OasWeb.Schema do
     import_fields :gocardless_queries
 
     import_fields :credits_queries
+
+    import_fields :thing_queries
   end
 
 
@@ -65,6 +68,8 @@ defmodule OasWeb.Schema do
     import_fields :gocardless_mutations
 
     import_fields :credits_mutations
+
+    import_fields :thing_mutations
   end
 
   subscription do

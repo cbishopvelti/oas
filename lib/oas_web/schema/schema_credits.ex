@@ -10,6 +10,7 @@ defmodule OasWeb.Schema.SchemaCredits do
     field :amount, :string
     field :after_amount, :string
     field :who_member_id, :integer
+    field :member, :member
     field :transaction, :transaction
     field :debit, :credit
     field :credit, :credit
@@ -107,6 +108,23 @@ defmodule OasWeb.Schema.SchemaCredits do
         {:ok, %{
           success: true
         }}
+      end
+    end
+
+    field :save_credit_amount, type: :success do
+      arg :id, non_null(:integer)
+      arg :amount, non_null(:string)
+      resolve fn _, args, _ ->
+        %{sign: -1} = amount = Decimal.new(args.amount)
+
+        Oas.Repo.get!(Oas.Credits.Credit, args.id)
+        |> Ecto.Changeset.cast(%{
+          amount: amount
+        },
+          [:amount]
+        )
+        |> Oas.Repo.update()
+        {:ok, %{sucess: true}}
       end
     end
   end

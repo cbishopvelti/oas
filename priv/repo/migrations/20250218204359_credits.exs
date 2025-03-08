@@ -2,6 +2,12 @@ defmodule Oas.Repo.Migrations.Credits do
   use Ecto.Migration
 
   def change do
+    create table(:things) do
+      add :what, :string, null: false
+      add :value, :decimal, null: true
+      add :when, :date, null: false
+    end
+
     create table(:credits) do
       add :what, :string, null: false
       add :amount, :decimal, null: false
@@ -11,6 +17,7 @@ defmodule Oas.Repo.Migrations.Credits do
       add :attendance_id, references(:attendance, on_delete: :delete_all), null: true
       add :membership_id, references(:memberships, on_delete: :delete_all), null: true
       add :credit_id, references(:credits, on_delete: :delete_all), null: true
+      add :thing_id, references(:things, on_delete: :restrict), null: true
       add :expires_on, :date, null: true
       timestamps()
     end
