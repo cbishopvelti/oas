@@ -12,17 +12,16 @@ Add credits ✅
 Venues ✅
 Things
 List credits for user
-- Link to attendance
-- Link to membership
+- Link to attendance ✅
+- Link to membership ✅
 - Link to things
 Events ✅
 Imports (credits) ✅
-Transfer credits
+Transfer credits ✅
 Attendance ✅
-Membership
-- adding to multiple memberships
+Membership ✅
+- adding to multiple memberships ✅
 Auto add tags for transactions
-Things
 Refunds transactions (ensure they don't expire)
 public display credits
 Email warnings
