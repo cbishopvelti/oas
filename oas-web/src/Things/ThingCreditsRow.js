@@ -1,17 +1,19 @@
 import { useEffect, useState } from "react";
-import { TextField, TableRow, TableCell, Button, IconButton } from "@mui/material";
+import { TextField, TableRow, TableCell, Button,
+  IconButton } from "@mui/material";
 import SaveIcon from '@mui/icons-material/Save';
 import DeleteIcon from '@mui/icons-material/Delete';
 import moment from "moment";
 import { useState as useReactState } from "react";
 import isString from 'lodash/isString';
+import TollIcon from '@mui/icons-material/Toll';
+import { Link } from 'react-router-dom';
 
 export const ThingCreditsRow = ({ credit, updateDebit, deleteDebit }) => {
 
   const [newAmount, setNewAmount] = useState(null);
 
   const handleSave = () => {
-    console.log("001", credit);
     updateDebit({
       id: credit.id,
       amount: newAmount
@@ -55,6 +57,7 @@ export const ThingCreditsRow = ({ credit, updateDebit, deleteDebit }) => {
           >
           <SaveIcon />
         </IconButton>}
+        <IconButton title={`View ${credit.member.name}'s credits`} component={Link} to={`/member/${credit.member.id}/credits`}><TollIcon/></IconButton>
         <IconButton
           onClick={() => deleteDebit(credit.id)}
           title="Delete credit"

@@ -16,6 +16,7 @@ defmodule OasWeb.Schema.SchemaCredits do
     field :credit, :credit
     field :membership, :membership
     field :attendance, :attendance
+    field :thing_id, :integer
   end
 
   object :credits_queries do

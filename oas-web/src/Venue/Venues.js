@@ -68,25 +68,6 @@ export const Venues = () => {
     refetch();
   }
 
-  // return <TableContainer>
-  //   <Table>
-  //     <TableHead>
-  //       <TableRow>
-  //         <TableCell>Id</TableCell>
-  //         <TableCell>Name</TableCell>
-  //         <TableCell>Amount</TableCell>
-  //         <TableCell>Actions</TableCell>
-  //       </TableRow>
-  //     </TableHead>
-  //   </Table>
-  // </TableContainer>
-
-  // {thisError && <StyledTableRow className="errors" key={`row-error-${training_where.id}`}>
-  //   <TableCell colSpan={4}>
-  //     Delete failed: {thisError}
-  //   </TableCell>
-  // </StyledTableRow>}
-
   return <TableContainer>
     <Table>
       <TableHead>
