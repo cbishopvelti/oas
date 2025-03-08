@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useQuery, gql } from "@apollo/client";
+import { useQuery, gql, useMutation } from "@apollo/client";
 import { Link } from 'react-router-dom';
 import { get } from 'lodash';
 import {
@@ -13,21 +13,18 @@ import {
   Box
 } from '@mui/material';
 import PaidIcon from '@mui/icons-material/Paid';
+import DeleteIcon from '@mui/icons-material/Delete';
+import TollIcon from '@mui/icons-material/Toll'
+import PeopleIcon from '@mui/icons-material/People';
+import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 
 export const Credits = ({
   member_id,
-  refetch: parentRefetch = () => {}
+  refetch: parentRefetch = () => {},
+  setChangeNo,
+  changeNo = 0
 }) => {
 
-  // attendance {
-  //   training {
-  //     id
-  //   }
-  // }
-  // transaction {
-  //   id,
-  //   when
-  // }
   const { data, refetch } = useQuery(gql`
     query ($member_id: Int) {
       credits(member_id: $member_id) {
@@ -41,6 +38,20 @@ export const Credits = ({
         transaction {
           id
         }
+        debit {
+          id,
+          who_member_id
+        }
+        credit {
+          id,
+          who_member_id
+        }
+        membership {
+          membership_period_id
+        },
+        attendance {
+          training_id
+        }
       }
     }
   `, {
@@ -49,11 +60,28 @@ export const Credits = ({
     }
   })
 
+  const [mutate] = useMutation(gql`
+    mutation ($id: Int!) {
+      delete_credit (id: $id) {
+        success
+      }
+    }
+  `)
+
   useEffect(() => {
     refetch();
-  }, [])
+  }, [changeNo])
 
   const credits = get(data, "credits", []);
+
+  const deleteClick = (id) => async() => {
+    await mutate({
+      variables: {
+        id: id
+      }
+    })
+    setChangeNo(changeNo + 1)
+  }
 
   return <div>
     <TableContainer>
@@ -77,8 +105,26 @@ export const Credits = ({
               <TableCell>{credit.when}</TableCell>
               <TableCell>{credit.expires_on}</TableCell>
               <TableCell>{credit.amount}</TableCell>
-              <TableCell>{credit.after_amount}</TableCell>
+              <TableCell sx = {{...(credit.after_amount < 0 ? { color: "red" } : {})}}>{credit.after_amount}</TableCell>
               <TableCell>
+                {credit?.attendance?.training_id &&
+                  <IconButton
+                    title="Go to training"
+                    component={Link}
+                    to={`/training/${credit?.attendance?.training_id}`}
+                  >
+                    <FitnessCenterIcon />
+                  </IconButton>
+                }
+                {credit?.membership?.membership_period_id &&
+                  <IconButton
+                    title="Go to membership period"
+                    component={Link}
+                    to={`/membership-period/${credit?.membership?.membership_period_id}/members`}
+                  >
+                    <PeopleIcon />
+                  </IconButton>
+                }
                 {credit?.transaction?.id &&
                   <IconButton
                     title="Go to transaction"
@@ -86,6 +132,28 @@ export const Credits = ({
                     to={`/transaction/${credit.transaction.id}`}>
                     <PaidIcon />
                   </IconButton>
+                }
+                {credit?.credit?.id && <IconButton
+                  title="Go to member"
+                  component={Link}
+                  to={`/member/${credit?.credit?.who_member_id}/credits`}>
+                  <TollIcon />
+                </IconButton>
+                }
+                {credit?.debit?.id &&
+                  <>
+                    <IconButton
+                      title="Go to member's credits"
+                      component={Link}
+                      to={`/member/${credit?.debit?.who_member_id}/credits`}>
+                        <TollIcon />
+                    </IconButton>
+                    <IconButton
+                      title="Delete credit"
+                      onClick={deleteClick(credit.id)}>
+                      <DeleteIcon sx={{color: "red"}} />
+                    </IconButton>
+                  </>
                 }
               </TableCell>
             </TableRow>

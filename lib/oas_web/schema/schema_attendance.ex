@@ -6,6 +6,7 @@ defmodule OasWeb.Schema.SchemaAttendance do
   object :attendance do
     field :id, :integer
     field :when, :string
+    field :training_id, :integer
   end
 
   object :member_attendance do

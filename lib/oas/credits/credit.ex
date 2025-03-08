@@ -11,6 +11,7 @@ defmodule Oas.Credits.Credit do
     belongs_to :transaction, Oas.Transactions.Transaction, foreign_key: :transaction_id
     belongs_to :attendance, Oas.Trainings.Attendance, foreign_key: :attendance_id
     belongs_to :membership, Oas.Members.Membership, foreign_key: :membership_id
+    belongs_to :credit, Oas.Credits.Credit, foreign_key: :credit_id
     field :when, :date
     field :expires_on, :date
 
@@ -21,6 +22,8 @@ defmodule Oas.Credits.Credit do
 
     has_many :uses_credits_credits, Oas.Credits.CreditsCredits, foreign_key: :used_for_id
     has_many :used_for_credits_credits, Oas.Credits.CreditsCredits, foreign_key: :uses_id
+
+    has_one :debit, Oas.Credits.Credit, foreign_key: :credit_id
 
     timestamps()
   end
@@ -41,14 +44,16 @@ defmodule Oas.Credits.Credit do
     ], empty_values: [[], nil])
   end
 
+  # Called from Transaction
   def doCredit(changeset, nil) do
     out = case get_assoc(changeset, :credit) do
-      nil -> %Oas.Credits.Credit{}
+      nil -> changeset
       assoc ->
         Ecto.Changeset.put_assoc(changeset, :credit, nil)
     end
   end
   def doCredit(changeset, args) do
+
     config = from(cc in Oas.Config.Config, select: cc) |> Oas.Repo.one
 
     out = case get_assoc(changeset, :credit) do
@@ -59,6 +64,10 @@ defmodule Oas.Credits.Credit do
 
     out = case args do
       %{amount: amount} ->
+
+        # if (amount < 0.0) do
+        #   raise "Oas.Credits.Credit.doCredit can't be negative"
+        # end
         credit = out
         |> changeset(%{
           amount: amount,
@@ -66,7 +75,7 @@ defmodule Oas.Credits.Credit do
           who_member_id: get_field(changeset, :who_member_id),
           what: get_field(changeset, :what),
           when: get_field(changeset, :when),
-          expires_on: get_field(changeset, :when) |> Date.add(config.token_expiry_days)
+          expires_on: (if amount > 0.0, do: get_field(changeset, :when) |> Date.add(config.token_expiry_days), else: nil)
         })
     end
 
@@ -76,7 +85,7 @@ defmodule Oas.Credits.Credit do
   def get_credit_amount(%{member_id: member_id}) do
     credits = from(c in Oas.Credits.Credit,
       where: c.who_member_id == ^member_id,
-      preload: [:transaction],
+      preload: [:transaction, :debit, :credit, :membership, :attendance],
       order_by: [asc: coalesce(c.expires_on, c.when), asc_nulls_first: c.expires_on, asc: c.id]
     )
     |> Oas.Repo.all()
@@ -139,29 +148,30 @@ defmodule Oas.Credits.Credit do
     now: Date.utc_today(),
     changeset: false
   }) do
-
     if Decimal.positive?(amount) do
-      raise "Oas.CRedits.Credit.deduct_credit amount is positive"
+      raise "Oas.Credits.Credit.deduct_credit amount is positive"
     end
 
-    config = from(cc in Oas.Config.Config, select: cc) |> Oas.Repo.one
-
-    from = case from do
+    {from, name} = case from do
       %Ecto.Changeset{} ->
-        from
+        {from, from.data.__struct__ |> Module.split() |> List.last()}
       item ->
-        from
-        |> Oas.Repo.preload(:credit)
-        |> Ecto.Changeset.change
+        {
+          from
+          |> Oas.Repo.preload(:credit)
+          |> Ecto.Changeset.change(),
+          # from.__struct__.to_string() |> String.split(~r/\./) |> List.last
+          from.__struct__ |> Module.split() |> List.last()
+        }
+
     end
 
     out_changeset = from
     |> Ecto.Changeset.put_assoc(:credit, %Oas.Credits.Credit{
-      what: "From #{from.__struct__}",
+      what: "#{name}",
       when: now,
       amount: amount,
-      who_member_id: member.id,
-      expires_on: Date.add(now, config.token_expiry_days)
+      who_member_id: member.id
     })
 
     if (opts |> Map.get(:changeset, false)) do

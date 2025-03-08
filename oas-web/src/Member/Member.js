@@ -120,7 +120,9 @@ export const Member = () => {
       id,
       password
     }
-  }`)
+  }`, {
+    onError: () => { }
+  })
   const errors = parseErrors(error?.graphQLErrors)
 
   const save = (formData) => async () => {
@@ -132,7 +134,9 @@ export const Member = () => {
       variables: omit(formData, 'member_details.__typename')
     })
 
-    navigate(`/member/${get(data, 'member.id')}`);
+    if (get(data, 'member.id')) {
+      navigate(`/member/${get(data, 'member.id')}`);
+    }
   }
 
   if (get(mutationData, 'member.password')) {

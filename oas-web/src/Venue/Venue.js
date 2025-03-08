@@ -11,8 +11,6 @@ import { get, omit, has } from 'lodash'
 import { useNavigate, useParams, useOutletContext } from "react-router-dom";
 import { parseErrors } from "../utils/util";
 
-
-
 export const Venue = () => {
   const { setTitle } = useOutletContext();
   const navigate = useNavigate();
@@ -76,14 +74,16 @@ export const Venue = () => {
         id
       }
     }
-  `)
+  `, {
+    onError: () => { }
+  })
 
   const save = (formData) => async () => {
     const variables = {
       ...formData
     }
 
-    const { data } = await mutate({
+    const { data, errors } = await mutate({
       variables
     });
 
@@ -94,11 +94,13 @@ export const Venue = () => {
 
     // return; // DEBUG ONLY, remove
 
-    refetch()
-    navigate(`/venue/${get(data, 'training_where.id')}`)
+    if (get(data, 'training_where.id')) {
+      refetch()
+      navigate(`/venue/${get(data, 'training_where.id')}`)
+    }
   }
 
-  const errors = parseErrors(error);
+  const errors = parseErrors(error?.graphQLErrors);
 
   return <Box sx={{display: 'flex', flexWrap: 'wrap' }}>
     <FormControl fullWidth sx={{mt: 2, mb: 2, m: 2}}>
