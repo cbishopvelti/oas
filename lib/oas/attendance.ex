@@ -100,28 +100,26 @@ defmodule Oas.Attendance do
   end
 
 
-  defp get_membership_period(when1) do
+  defp get_membership_periods(when1) do
     from(mp in Oas.Members.MembershipPeriod,
       where: (mp.from <= ^when1 and ^when1 <= mp.to),
-      order_by: [asc: mp.from],
-      limit: 1
-    ) |> Oas.Repo.one()
+      order_by: [asc: mp.from]
+    ) |> Oas.Repo.all()
   end
 
   defp add_attendance_membership(training, %{membership_periods: []} = member, %{now: now}) do
-    IO.puts("401")
     case check_membership(member) do
       {_, membership} when membership == :x_member or membership == :not_member or membership == :honorary_member ->
-        IO.puts("402")
-        case get_membership_period(training.when) do
+        case get_membership_periods(training.when) do
           nil -> nil # No membership period to add to
-          membership_period ->
-            # todo
-            Oas.Members.Membership.add_membership(membership_period, member, %{now: now})
+          [] -> nil
+          membership_periods ->
+            membership_periods |> Enum.map(fn membership_period ->
+              Oas.Members.Membership.add_membership(membership_period, member, %{now: now})
+            end)
             nil
         end
       _membership -> # Temporary_member
-        IO.inspect(_membership, label: "403 should not happen")
         nil
     end
   end
