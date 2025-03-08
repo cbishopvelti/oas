@@ -10,20 +10,26 @@ Testing
 ## credits
 Add credits ✅
 Venues ✅
+Things
 List credits for user
 - Link to attendance
 - Link to membership
 - Link to things
-Events
-Imports (credits)
-Transfur credits
-Attendance
+Events ✅
+Imports (credits) ✅
+Transfer credits
+Attendance ✅
 Membership
+- adding to multiple memberships
 Auto add tags for transactions
 Things
-Refunds transactions
+Refunds transactions (ensure they don't expire)
 public display credits
-## Honory members
+Email warnings
+- old depricated email refactor
+Other spending algorithems
+- split cost
+## Honory members ✅ (for credit system)
 ## Move server back to my computer
 ## ssl certificate
 ## Booking

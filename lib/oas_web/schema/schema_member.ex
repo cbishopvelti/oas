@@ -18,6 +18,7 @@ defmodule OasWeb.Schema.SchemaMember do
     value :x_member
     value :temporary_member
     value :not_member
+    value :honorary_member
   end
 
   def member_status_resolver(args = %{id: id}, _, _) do

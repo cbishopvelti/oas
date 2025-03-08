@@ -10,6 +10,7 @@ defmodule Oas.Repo.Migrations.Credits do
       add :transaction_id, references(:transactions, on_delete: :delete_all), null: true
       add :attendance_id, references(:attendance, on_delete: :delete_all), null: true
       add :membership_id, references(:memberships, on_delete: :delete_all), null: true
+      add :credit_id, references(:credits, on_delete: :delete_all), null: true
       add :expires_on, :date, null: true
       timestamps()
     end

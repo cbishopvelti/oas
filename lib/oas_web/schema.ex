@@ -63,6 +63,8 @@ defmodule OasWeb.Schema do
     import_fields :config_mutations
 
     import_fields :gocardless_mutations
+
+    import_fields :credits_mutations
   end
 
   subscription do
