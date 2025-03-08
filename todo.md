@@ -10,7 +10,7 @@ Testing
 ## credits
 Add credits ✅
 Venues ✅
-Things
+Things ✅
 List credits for user
 - Link to attendance ✅
 - Link to membership ✅

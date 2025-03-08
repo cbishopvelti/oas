@@ -17,6 +17,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import TollIcon from '@mui/icons-material/Toll'
 import PeopleIcon from '@mui/icons-material/People';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 
 export const Credits = ({
   member_id,
@@ -35,6 +36,7 @@ export const Credits = ({
         when,
         what,
         after_amount,
+        thing_id,
         transaction {
           id
         }
@@ -107,6 +109,13 @@ export const Credits = ({
               <TableCell>{credit.amount}</TableCell>
               <TableCell sx = {{...(credit.after_amount < 0 ? { color: "red" } : {})}}>{credit.after_amount}</TableCell>
               <TableCell>
+                {credit?.thing_id && <IconButton
+                  title="Go to thing"
+                  component={Link}
+                  to={`/thing/${credit?.thing_id}`}
+                >
+                  <ShoppingCartIcon />
+                </IconButton>}
                 {credit?.attendance?.training_id &&
                   <IconButton
                     title="Go to training"

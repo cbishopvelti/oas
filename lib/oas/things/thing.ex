@@ -10,5 +10,7 @@ defmodule Oas.Things.Thing do
     field :when, :date
 
     has_many :credits, Oas.Credits.Credit, foreign_key: :thing_id
+
+    timestamps()
   end
 end

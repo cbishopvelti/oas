@@ -6,6 +6,8 @@ defmodule Oas.Repo.Migrations.Credits do
       add :what, :string, null: false
       add :value, :decimal, null: true
       add :when, :date, null: false
+
+      timestamps()
     end
 
     create table(:credits) do
