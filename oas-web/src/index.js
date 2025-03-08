@@ -41,7 +41,8 @@ import * as AbsintheSocket from "@absinthe/socket";
 import { createAbsintheSocketLink } from "@absinthe/socket-apollo-link";
 import { Venue } from './Venue/Venue';
 import { Venues } from './Venue/Venues';
-
+import { Thing } from './Things/Thing';
+import { Things } from './Things/Things';
 
 
 const router = createBrowserRouter([
@@ -184,6 +185,18 @@ const router = createBrowserRouter([
         id: "venue-id",
         path: "venue/:id",
         element: <Venue />
+      }, {
+        id: "things",
+        path: "things",
+        element: <Things />
+      }, {
+        id: "thing",
+        path: "/thing",
+        element: <Thing />
+      }, {
+        id: "thing-id",
+        path: "thing/:id",
+        element: <Thing />
       }
     ],
   },

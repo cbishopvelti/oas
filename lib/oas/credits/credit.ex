@@ -12,6 +12,7 @@ defmodule Oas.Credits.Credit do
     belongs_to :attendance, Oas.Trainings.Attendance, foreign_key: :attendance_id
     belongs_to :membership, Oas.Members.Membership, foreign_key: :membership_id
     belongs_to :credit, Oas.Credits.Credit, foreign_key: :credit_id
+    belongs_to :thing, Oas.Things.Thing, foreign_key: :thing_id
     field :when, :date
     field :expires_on, :date
 
@@ -163,7 +164,6 @@ defmodule Oas.Credits.Credit do
           # from.__struct__.to_string() |> String.split(~r/\./) |> List.last
           from.__struct__ |> Module.split() |> List.last()
         }
-
     end
 
     out_changeset = from

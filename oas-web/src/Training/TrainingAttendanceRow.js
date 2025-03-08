@@ -61,7 +61,7 @@ export const TrainingAttendanceRow = ({
 
   const [mutation] = useMutation(gql`
     mutation($amount: String!, $id: Int!) {
-      attendance_save_credit_amount(amount: $amount, id: $id) {
+      save_credit_amount(amount: $amount, id: $id) {
         success
       }
     }

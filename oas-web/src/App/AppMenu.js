@@ -20,6 +20,7 @@ import { MenuTraining } from './MenuTraining';
 import { MenuMembershipPeriod } from './MenuMembershipPeriod';
 import { MenuAnalysis } from './MenuAnalysis';
 import { MenuVenue } from './MenuVenue';
+import { MenuThing } from './MenuThing';
 
 
 export const AppMenu = ({ setOpen }) => {
@@ -91,6 +92,8 @@ export const AppMenu = ({ setOpen }) => {
     <MenuVenue />
 
     <MenuMembershipPeriod />
+
+    <MenuThing setMenuOpen={setOpen} />
 
     <MenuMember setMenuOpen={setOpen} />
 
