@@ -29,7 +29,10 @@ export const Venues = () => {
       training_wheres {
         id,
         name,
-        credit_amount
+        credit_amount,
+        trainings {
+          id
+        }
       },
     }
   `, {
@@ -92,7 +95,7 @@ export const Venues = () => {
                       <IconButton title={`Edit ${training_where.name}`} component={Link} to={`/venue/${training_where.id}`}>
                         <FitnessCenterIcon />
                       </IconButton>
-                      {<IconButton title={`Delete ${training_where.id}`} onClick={deleteTraningClick(training_where.id)}>
+                      {training_where.trainings.length === 0 && <IconButton title={`Delete ${training_where.id}`} onClick={deleteTraningClick(training_where.id)}>
                         <DeleteIcon sx={{ color: 'red' }} />
                       </IconButton>}
                     </TableCell>

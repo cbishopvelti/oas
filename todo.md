@@ -11,10 +11,10 @@ Testing
 Add credits ✅
 Venues ✅
 Things ✅
-List credits for user
+List credits for user ✅
 - Link to attendance ✅
 - Link to membership ✅
-- Link to things
+- Link to things ✅
 Events ✅
 Imports (credits) ✅
 Gocradless handling Tokens/Credits
@@ -22,13 +22,13 @@ Transfer credits ✅
 Attendance ✅
 Membership ✅
 - adding to multiple memberships ✅
+Refunds transactions (ensure they don't expire) ✅
 Auto add tags for transactions
-venue deleting
-Refunds transactions (ensure they don't expire)
+venue deleting ✅
 public display credits
 Email warnings
 - old depricated email refactor
-Other spending algorithems
+Other venue algorithems
 - split cost
 ## Honory members ✅ (for credit system)
 ## Move server back to my computer
