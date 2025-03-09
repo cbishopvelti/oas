@@ -96,11 +96,6 @@ defmodule Oas.ImportTransactions do
               configToken = Oas.Tokens.Token.getPossibleTokenAmount()
               |> Enum.sort_by(fn %{value: value} -> value |> Decimal.to_float() end, :asc)
               |> Enum.filter(fn %{quantity: no, value: value} ->
-                # IO.inspect(%{quantity: no, value: value}, label: "009")
-                # IO.inspect(Map.get(row, :amount), label: "009.1")
-                # IO.inspect((no * Decimal.to_float(value)), label: "009.2")
-                # IO.inspect((no * Decimal.to_float(value)) <= Map.get(row, :amount), label: "009.3")
-
                 (no * Decimal.to_float(value)) <= Map.get(row, :amount)
               end)
               |> List.first()
@@ -139,7 +134,6 @@ defmodule Oas.ImportTransactions do
                   end)).()
               end
           end
-
         else
           Map.put(row, :warnings, ["Didn't find member (via bank_account_name), so not adding credits" | Map.get(row, :warnings, [])])
         end

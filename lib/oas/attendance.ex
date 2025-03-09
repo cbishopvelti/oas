@@ -194,8 +194,9 @@ defmodule Oas.Attendance do
       debtAttendance = from(a in Oas.Trainings.Attendance,
         left_join: to in assoc(a, :token), on: to.member_id == ^attendance.member.id,
         inner_join: tr in assoc(a, :training),
+        left_join: c in assoc(a, :credit),
         preload: [training: tr],
-        where: a.member_id == ^attendance.member.id and is_nil(to.id),
+        where: a.member_id == ^attendance.member.id and is_nil(to.id) and is_nil(c.id),
         select: a,
         order_by: [asc: tr.when, asc: tr.id],
         limit: 1
@@ -250,6 +251,45 @@ defmodule Oas.Attendance do
     end
   end
 
+  def add_tokens_changeset(changeset, %{
+    member_id: member_id,
+    quantity: quantity,
+    when1: when1,
+    value: value
+  }) do
+    # FIX DEBT
+    config = from(cc in Oas.Config.Config, select: cc) |> Oas.Repo.one
+    debtAttendances = from(a in Oas.Trainings.Attendance,
+      left_join: to in assoc(a, :token), on: to.member_id == ^member_id,
+      inner_join: tr in assoc(a, :training),
+      left_join: c in assoc(a, :credit),
+      preload: [training: tr],
+      where: a.member_id == ^member_id and is_nil(to.id) and is_nil(c.id),
+      select: a,
+      order_by: [asc: tr.when, asc: tr.id],
+      limit: ^quantity
+    ) |> Oas.Repo.all
+
+    token = %Oas.Tokens.Token{
+      member_id: member_id,
+      expires_on: Date.add(when1, config.token_expiry_days), # add a year
+      attendance_id: nil,
+      value: value
+    }
+
+    debtAttendancesStream = Stream.concat(debtAttendances, Stream.cycle([nil]))
+
+    tokens = List.duplicate(token, quantity)
+    |> Enum.zip_with(debtAttendancesStream, fn
+      a, nil -> a
+      a, %{id: id, training: %{when: when1}} ->
+        %{a | attendance_id: id, used_on: get_used_on(when1)}
+      end
+    )
+
+    changeset |> Ecto.Changeset.put_assoc(:tokens, tokens)
+  end
+
   def add_tokens(%{
     member_id: member_id,
     transaction_id: transaction_id,
@@ -262,8 +302,9 @@ defmodule Oas.Attendance do
     debtAttendances = from(a in Oas.Trainings.Attendance,
       left_join: to in assoc(a, :token), on: to.member_id == ^member_id,
       inner_join: tr in assoc(a, :training),
+      left_join: c in assoc(a, :credit),
       preload: [training: tr],
-      where: a.member_id == ^member_id and is_nil(to.id),
+      where: a.member_id == ^member_id and is_nil(to.id) and is_nil(c.id),
       select: a,
       order_by: [asc: tr.when, asc: tr.id],
       limit: ^quantity
