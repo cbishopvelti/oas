@@ -24,6 +24,7 @@ import { parseErrors } from '../utils/util';
 import { IconButton } from '@mui/material';
 import LinkIcon from '@mui/icons-material/Link';
 import { TransactionCredits } from './TransactionCredits';
+import SyncIcon from '@mui/icons-material/Sync';
 
 
 export const Transaction = () => {
@@ -175,6 +176,17 @@ export const Transaction = () => {
     }
   `)
 
+  const [reprocessTranactionMutate, {data: reprocessTransactionData}] = useMutation(gql`
+    mutation(
+      $who_member_id: Int!,
+      $id: Int!
+    ) {
+      reprocess_transaction(id: $id, who_member_id: $who_member_id) {
+        success
+      }
+    }
+  `)
+
   const [clearWarnings, {data: clearWarningsData}] = useMutation(gql`mutation(
     $transaction_id: Int!
     ) {
@@ -319,8 +331,7 @@ export const Transaction = () => {
                     formData.who !== data?.transaction?.who &&
                     formData.who_member_id != null &&
                     whoData?.gocardless_who_link?.success !== true &&
-                    <IconButton title="Link this gocardless id to this member" sx={{ color: "#0000EE;" }} onClick={() => {
-                      console.log("fromData", formData);
+                    <IconButton title="Link this gocardless id to this member (wont save/effect this transaction, as save will also be required)" sx={{ color: "#0000EE;" }} onClick={() => {
                       whoLinkMutate({
                         variables: {
                           gocardless_name: data.transaction.who,
@@ -330,7 +341,29 @@ export const Transaction = () => {
                     }}>
                       <LinkIcon />
                     </IconButton>}
-                </Fragment>)
+                  {
+                    data?.transaction?.id &&
+                    formData.who_member_id &&
+                    data?.transaction?.who_member_id !== formData.who_member_id &&
+                    !data?.transaction?.tokens &&
+                    !data?.transaction?.credit &&
+                    !data?.transaction?.membership &&
+                    <IconButton
+                    title="Reprocess this transaction now that who has been set."
+                    sx={{ color: "#0000EE;" }}
+                    onClick={async () => {
+                      await reprocessTranactionMutate({
+                        variables: {
+                          id: data?.transaction?.id,
+                          who_member_id: formData.who_member_id
+                        }
+                      })
+                      refetch();
+                    }}>
+                    <SyncIcon />
+                  </IconButton>}
+                </Fragment>
+                )
               }}
               label="Who"
               required
