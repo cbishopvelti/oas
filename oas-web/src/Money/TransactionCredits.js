@@ -11,8 +11,6 @@ export const TransactionCredits = ({
   data,
   errors
 }) => {
-  console.log("001", formData?.credit)
-
   const isDisabled = !formData.who_member_id
 
   useEffect(() => {

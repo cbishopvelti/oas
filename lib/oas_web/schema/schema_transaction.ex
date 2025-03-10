@@ -319,5 +319,37 @@ defmodule OasWeb.Schema.SchemaTransaction do
       end
     end
 
+    field :reprocess_transaction, :success do
+      arg :id, non_null(:integer)
+      arg :who_member_id, non_null(:integer)
+      resolve fn _, %{id: id, who_member_id: who_member_id}, _ ->
+        member = Oas.Repo.get!(Oas.Members.Member, who_member_id)
+        transaction = Oas.Repo.get!(Oas.Transactions.Transaction, id)
+        |> Oas.Repo.preload(:credit)
+        |> Oas.Repo.preload(:tokens)
+        |> Oas.Repo.preload(:membership)
+        |> Oas.Repo.preload(:transaction_tags)
+
+        if (transaction.credit != nil || transaction.credit != nil || transaction.tokens != []) do
+          raise "This transaciton already has credit or tokens or membership"
+        end
+
+        out_transaction = transaction
+        |> Ecto.Changeset.cast(%{
+          who: member.name,
+          who_member_id: who_member_id
+        }, [:who, :who_member_id])
+
+        out_transaction = out_transaction
+        |> Oas.Gocardless.TransactionsCredits.generate_transaction_credits_2(%{
+          transaction_tags: transaction.transaction_tags |> Enum.map(fn %{name: name} -> name end)
+        })
+
+        result = out_transaction |> Oas.Repo.update!()
+
+        {:ok, %{success: true}}
+      end
+    end
+
   end
 end

@@ -72,13 +72,28 @@ defmodule Oas.Gocardless.TransactionsCredits do
     end
   end
 
+  def generate_transaction_credits_2(changeset, data) do
+    {out_changeset, data} = case Ecto.Changeset.get_field(changeset, :who_member_id) do
+      who_member_id when is_integer(who_member_id) ->
+        changeset
+        |> process_credits(data)
+      _ -> {changeset, data}
+    end
+
+    out_changeset = out_changeset
+    |> Oas.Transactions.TransactionTags.doTransactionTags(
+      %{transaction_tags: Map.get(data, :transaction_tags, []) |> Enum.map(fn tag -> %{name: tag} end)
+    })
+
+    out_changeset
+  end
+
   def generate_transaction_credits(%{
     name: name,
     maybe_member: maybe_member,
     date: date,
     amount: amount
   } = in_transaction) do
-    IO.inspect(maybe_member, label: "001")
     out_transaction = Oas.Transactions.Transaction.changeset(
       %Oas.Transactions.Transaction{},
       %{
@@ -93,15 +108,11 @@ defmodule Oas.Gocardless.TransactionsCredits do
       }
     )
 
-    data = %{transaction_tags: ["Gocradless"]}
+    data = %{
+      transaction_tags: ["Gocradless"]
+    }
 
-    {out_changeset, data} = out_transaction
-    |> process_credits(data)
-
-    out_changeset = out_changeset
-    |> Oas.Transactions.TransactionTags.doTransactionTags(
-      %{transaction_tags: Map.get(data, :transaction_tags, []) |> Enum.map(fn tag -> %{name: tag} end)
-    })
+    out_changeset = generate_transaction_credits_2(out_transaction, data)
 
     # Go cardless
     out_changeset = out_changeset
@@ -119,10 +130,7 @@ defmodule Oas.Gocardless.TransactionsCredits do
       )
     )
 
-    IO.inspect(out_changeset.changes, label: "005")
-
     result = out_changeset |> Oas.Repo.insert()
-    IO.inspect(result, label: "006")
     :ok
   end
 end
