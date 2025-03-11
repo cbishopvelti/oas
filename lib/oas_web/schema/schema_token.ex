@@ -162,7 +162,7 @@ defmodule OasWeb.Schema.SchemaToken do
               left_join: mftr in assoc(tr, :member),
               left_join: att in assoc(to, :attendance),
               left_join: train in assoc(att, :training),
-              where: m.email == ^email or mftr.email == ^email,
+              where: (m.email == ^email or mftr.email == ^email),
               select: {to, m, mftr, train},
               order_by: [desc_nulls_first: train.when, desc: to.expires_on, desc: to.id]
             ) |> Oas.Repo.all
@@ -188,9 +188,10 @@ defmodule OasWeb.Schema.SchemaToken do
           tr in Oas.Trainings.Training,
           preload: :training_where,
           inner_join: at in assoc(tr, :attendance),
+          left_join: cr in assoc(at, :credit),
           inner_join: m in assoc(at, :member),
           left_join: to in assoc(at, :token),
-          where: is_nil(to.id) and m.email == ^email,
+          where: is_nil(to.id) and m.email == ^email and is_nil(cr.id),
           order_by: [desc: tr.when]
         ) |> Oas.Repo.all
 
@@ -229,6 +230,7 @@ defmodule OasWeb.Schema.SchemaToken do
         end
       end
     end
+
     field :transfer_token, type: :token do
       arg :token_id, non_null(:integer)
       arg :member_id, non_null(:integer)

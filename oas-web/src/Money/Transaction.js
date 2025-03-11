@@ -328,6 +328,7 @@ export const Transaction = () => {
                 endAdornment: (<Fragment>
                   {params.InputProps.endAdornment}
                   {data?.transaction?.who_member_id == null &&
+                    data?.transaction.who &&
                     formData.who !== data?.transaction?.who &&
                     formData.who_member_id != null &&
                     whoData?.gocardless_who_link?.success !== true &&
@@ -345,7 +346,7 @@ export const Transaction = () => {
                     data?.transaction?.id &&
                     formData.who_member_id &&
                     data?.transaction?.who_member_id !== formData.who_member_id &&
-                    !data?.transaction?.tokens &&
+                    data?.transaction?.tokens?.length === 0 &&
                     !data?.transaction?.credit &&
                     !data?.transaction?.membership &&
                     <IconButton

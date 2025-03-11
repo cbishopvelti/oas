@@ -107,7 +107,7 @@ defmodule Oas.Credits.Credit do
     [head | deduct_debit(tail, debit, opts)]
   end
   def deduct_debit([head | tail], debit, opts ) do
-    IO.puts("vvvvv")
+    # IO.puts("vvvvv")
     out = cond do
       # head has expired
       Map.get(head, :expires_on, nil) != nil and Date.after?(debit.when, head.expires_on) ->
@@ -121,7 +121,7 @@ defmodule Oas.Credits.Credit do
       Decimal.lt?(Decimal.abs(debit.amount), Decimal.abs(head.amount)) ->
         [%{head | amount: Decimal.add(head.amount, debit.amount)} | tail]
     end
-    IO.puts("^^^^^")
+    # IO.puts("^^^^^")
     out
   end
 

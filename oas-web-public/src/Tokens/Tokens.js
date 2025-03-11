@@ -3,7 +3,7 @@ import { Button, Box, FormControl, TextField,
   Table,
   TableContainer,
   TableCell,
-  TableHead, 
+  TableHead,
   TableRow,
   TableBody,
   Stack,
@@ -22,7 +22,7 @@ import { useParams, useNavigate, useSearchParams, useOutletContext } from 'react
 
 const onChange = ({formData, setFormData, key}) => (event) => {
   let value = event.target.value
-  
+
   formData = setWith(clone(formData), key, value, clone)
   setFormData(formData)
 }
@@ -45,7 +45,7 @@ const isUsable = (member_id) => (token) => {
 export const Tokens = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [outletContext] = useOutletContext();
-  
+
   const member_email = get(outletContext, 'user.email') || searchParams.get('email') || '';
 
   const [formData, setFormData] = useState({
@@ -107,7 +107,7 @@ export const Tokens = () => {
     .length
   tokenCount = tokenCount - get(data, 'public_outstanding_attendance', []).length
 
-  
+
   const onClick = () => {
     setSearchParams(formData)
   }
@@ -142,9 +142,10 @@ export const Tokens = () => {
         <Alert key={i} severity="error">{message}</Alert>
       ))}
     </Stack>}
-    
+
     {errors.length == 0 && has(data, 'public_tokens') &&
       <h3 style={style}>You have <b>{tokenCount}</b> token{tokenCount == 1 ? '' : 's'}.</h3>}
+    <p>Tokens are deprecated, after your token balance becomes zero, you will be switched to a credit system.</p>
     {errors.length == 0 && has(data, 'public_tokens') &&
       <p>(The last transaction was on the {get(data, 'public_config_tokens.last_transaction_when', 'loading')}, this token count doesn't include tokens bought since then)</p>}
 
@@ -168,12 +169,12 @@ export const Tokens = () => {
               </span>
             })}
             Tokens are valid for {get(data, 'public_config_tokens.token_expiry_days', 'loading')} days from purchase and are non-refundable. Tokens can be transferred between members.<br/>
-            
+
           </Typography>
         </AccordionDetails>
       </Accordion>
     }
-    
+
     {outstanding_attendance.length > 0 && <>
       <h3>Outstanding Attendance</h3>
         <TableContainer>
@@ -197,7 +198,7 @@ export const Tokens = () => {
           </Table>
         </TableContainer>
       </>}
-    
+
     {has(data, 'public_tokens') && <>
       <h3>Tokens</h3>
       <TableContainer>

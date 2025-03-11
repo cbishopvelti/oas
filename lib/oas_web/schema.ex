@@ -99,6 +99,9 @@ defmodule OasWeb.Schema do
   def myMiddleware(middleware, %Absinthe.Type.Field{identifier: :public_config_config}, %Absinthe.Type.Object{identifier: :query}) do
     middleware
   end
+  def myMiddleware(middleware, %Absinthe.Type.Field{identifier: :public_credits}, %Absinthe.Type.Object{identifier: :query}) do
+    middleware
+  end
   # User resolvers
   def myMiddleware(middleware, %Absinthe.Type.Field{identifier: :user}, %Absinthe.Type.Object{identifier: :query}) do
     [OasWeb.Schema.MiddlewareUser | middleware]

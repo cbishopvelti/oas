@@ -114,6 +114,9 @@ function App() {
               {(!enableBooking || !get(data, 'user')) && <MenuItem component={NavLink} to={'/register'}>
                 <ListItemText>Register</ListItemText>
               </MenuItem>}
+              <MenuItem component={NavLink} to={'/credits'}>
+                <ListItemText>My Credits</ListItemText>
+              </MenuItem>
               <MenuItem component={NavLink} to={'/tokens'}>
                 <ListItemText>My Tokens</ListItemText>
               </MenuItem>
@@ -136,7 +139,7 @@ function App() {
                 >
                   <a
                     style={{
-                      color: 'inherit', textDecoration: 'none', 
+                      color: 'inherit', textDecoration: 'none',
                       display: 'inline-block',
                       width: '100%',
                       padding: '6px 16px'

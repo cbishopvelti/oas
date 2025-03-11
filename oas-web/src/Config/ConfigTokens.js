@@ -22,14 +22,10 @@ const onChange = ({formData, setFormData, key, isCheckbox}) => (event) => {
     return;
   }
 
-  console.log("001", event.target.value);
-
   const newFormData = ({
     ...formData,
     [key]: !event.target.value ? "" : event.target.value
   })
-
-  console.log("001.1", newFormData)
 
   setFormData(newFormData)
 }
