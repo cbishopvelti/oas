@@ -33,6 +33,21 @@ defmodule OasWeb.Schema.SchemaCredits do
         {:ok, credits}
       end
     end
+
+    field :public_credits, list_of(:credit) do
+      arg :email, non_null(:string)
+
+      resolve fn _, %{email: email}, _ ->
+        member = from(
+          m in Oas.Members.Member,
+          where: m.email == ^email,
+          limit: 1
+        ) |> Oas.Repo.one!()
+
+        {credits, _} = Oas.Credits.Credit.get_credit_amount(%{member_id: member.id})
+        {:ok, credits}
+      end
+    end
   end
 
   object :credits_mutations do

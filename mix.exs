@@ -63,7 +63,11 @@ defmodule Oas.MixProject do
       {:corsica, "~> 1.2"},
       {:csv, "~> 3.0"},
       {:nimble_csv, "~> 1.2"},
-      {:timex, "~> 3.7"}
+      {:timex, "~> 3.7"},
+      {:nx, "~> 0.9.2"},
+      {:bumblebee, "~> 0.6.0"},
+      {:exla, "~> 0.9.2"}, # Hardware acceleration (optional but recommended)
+      {:explorer, "~> 0.10.1"}
     ]
   end
 

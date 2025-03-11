@@ -57,6 +57,8 @@ defmodule Oas.Members.Member do
     |> cast(attrs, [:email, :name, :is_active, :is_admin, :is_reviewer, :honorary_member, :bank_account_name, :gocardless_name])
     |> validate_required([:name])
     |> validate_email()
+    |> unique_constraint(:gocardless_name)
+    |> unique_constraint(:bank_account_name)
   end
 
   def validate_email(changeset) do

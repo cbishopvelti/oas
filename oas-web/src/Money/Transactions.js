@@ -137,7 +137,6 @@ export const Transactions = () => {
         transaction_id
       }
     })
-    console.log("010")
     refetch();
   }
 

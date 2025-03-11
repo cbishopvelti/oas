@@ -26,13 +26,14 @@ venue deleting ✅
 Transaction what happens to credits if transaction_who changes ✅
 Gocradless handling Tokens/Credits ✅
 Auto add tags for transactions ✅
-Venues with no value
+Venues with no value ✅
 public display credits
 Email warnings
 - old depricated email refactor
 Other venue algorithems
 - split cost
 Auto generate gocradless_name
+Analysis
 ## Honory members ✅ (for credit system)
 ## Move server back to my computer
 ## ssl certificate
