@@ -151,7 +151,11 @@ defmodule Oas.Attendance do
 
     get_unsued_token_result = get_unused_token(member_id)
 
-    config = from(c in Oas.Config.Config, limit: 1) |> Oas.Repo.one!()
+    config = from(
+      c in Oas.Config.Config,
+      limit: 1
+    ) |> Oas.Repo.one!()
+
     if config.credits do # Membership
       add_attendance_membership(
         training,
@@ -163,10 +167,15 @@ defmodule Oas.Attendance do
     case get_unsued_token_result do
       nil -> # User has no tokens, use credits instead
         if (config.credits) do
+
+
           Oas.Credits.Credit.deduct_credit(
             attendance,
             member,
-            Decimal.sub(0, training.training_where.credit_amount),
+            Decimal.sub(
+              0,
+              training.training_where.credit_amount || Oas.Config.Tokens.get_min_token().value
+            ),
             %{
               now: now
             }
