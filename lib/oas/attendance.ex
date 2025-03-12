@@ -32,74 +32,6 @@ defmodule Oas.Attendance do
     :ok
   end
 
-  def maybe_send_warnings_email(member) do
-    lastTransaction = from(t in Oas.Transactions.Transaction,
-      order_by: [desc: t.when, desc: t.id],
-      limit: 1
-    ) |> Oas.Repo.one
-
-    attendance = from(a in Oas.Trainings.Attendance,
-      inner_join: m in assoc(a, :member),
-      inner_join: tr in assoc(a, :training),
-      preload: [:token, training: tr],
-      where: m.id == ^member.id,
-      order_by: [desc: tr.when, desc: a.id],
-      limit: 2
-    ) |> Oas.Repo.all
-
-    case attendance do
-      [_firstAttendance, %{token: nil, training: %{when: when1}}] when when1 > lastTransaction.when  ->
-        nil
-      _ ->
-        config = from(c in Oas.Config.Config, limit: 1) |> Oas.Repo.one!()
-        case config.credits do
-          true -> nil #TODO
-          false -> maybe_send_warnings_email_2(member)
-        end
-    end
-
-  end
-
-  def maybe_send_warnings_email_2(member) do
-
-    warnings = []
-    tokens = Oas.Attendance.get_token_amount(%{member_id: member.id})
-
-    last_transaction = from(tra in Oas.Transactions.Transaction,
-      select: max(tra.when)
-    ) |> Oas.Repo.one
-
-    warnings = if (tokens <= 0) do
-      ["You have run out of tokens (#{tokens}), please buy more.\n(If you bought tokens since #{last_transaction}, please ignore)" | warnings]
-    else
-      warnings
-    end
-
-    warnings = case check_membership(member) do
-      {_, :not_member} -> ["You are not a valid member, please pay for membership" | warnings]
-      {_, :x_member} -> ["You are not a valid member, please pay for membership" | warnings]
-      _ -> warnings
-    end
-
-    case (warnings) do
-      [] -> nil
-      warnings ->
-        config = from(cc in Oas.Config.Config, select: cc) |> Oas.Repo.one
-        Oas.Tokens.TokenNotifier.deliver(member.email, "#{config.name} notification",
-        """
-        Hi #{member.name}
-
-        #{Enum.join(warnings, "\n")}
-
-        Thanks
-
-        #{config.name}
-        """)
-    end
-
-  end
-
-
   defp get_membership_periods(when1) do
     from(mp in Oas.Members.MembershipPeriod,
       where: (mp.from <= ^when1 and ^when1 <= mp.to),
@@ -187,7 +119,7 @@ defmodule Oas.Attendance do
     end
 
     Task.async(fn ->
-      maybe_send_warnings_email(member)
+      Oas.TokenMailer.maybe_send_warnings_email(member)
     end)
 
     {:ok, %{id: attendance.id}}

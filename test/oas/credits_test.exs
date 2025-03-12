@@ -198,7 +198,7 @@ defmodule Oas.CreditsTest do
       [c0, c1] = from(c in Oas.Credits.Credit,
         where: c.who_member_id == ^member.id,
         order_by: [asc: coalesce(c.expires_on, c.when), asc_nulls_first: c.expires_on, asc: c.id]
-      ) |> Oas.Repo.all() |> IO.inspect()
+      ) |> Oas.Repo.all()
 
       assert(Decimal.eq?(c0.amount, -2) )
       assert(Decimal.eq?(c1.amount, 3) )
@@ -249,7 +249,7 @@ defmodule Oas.CreditsTest do
       assert Decimal.eq?(total, Decimal.new("20.00"))
     end
 
-    @tag only: true
+    # @tag only: true
     test "process_credits handles multiple expired and non-expired credits" do
       today = ~D[2025-02-24]
       yesterday = Date.add(today, -1)

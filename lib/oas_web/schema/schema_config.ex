@@ -13,6 +13,7 @@ defmodule OasWeb.Schema.SchemaConfig do
     field :token_expiry_days, :integer
     field :temporary_trainings, :integer
     field :bacs, :string
+    field :content, :string
     field :enable_booking, :boolean
     field :name, :string
     field :gocardless_id, :string
@@ -23,6 +24,8 @@ defmodule OasWeb.Schema.SchemaConfig do
 
   object :public_config_config do
     field :enable_booking, :boolean
+    field :content, :string
+    field :credits, :boolean
   end
 
   object :config_queries do
@@ -84,6 +87,7 @@ defmodule OasWeb.Schema.SchemaConfig do
       arg :token_expiry_days, :integer
       arg :temporary_trainings, :integer
       arg :bacs, :string
+      arg :content, :string
       arg :enable_booking, :boolean
       arg :name, :string
       arg :gocardless_id, :string
@@ -98,7 +102,7 @@ defmodule OasWeb.Schema.SchemaConfig do
           :token_expiry_days, :temporary_trainings,
           :bacs, :enable_booking, :name,
           :gocardless_id, :gocardless_key, :gocardless_account_id,
-          :credits
+          :credits, :content
         ], empty_values: [[], ""])
         |> Oas.Repo.update
         |> OasWeb.Schema.SchemaUtils.handle_error

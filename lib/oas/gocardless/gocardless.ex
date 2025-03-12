@@ -15,7 +15,6 @@ defmodule Oas.Gocardless do
 
     {:ok, response_string} = :hackney.body(client)
     if status != 200 do
-      IO.inspect(response_string)
       raise "Error: #{status} #{response_string}"
     end
 
