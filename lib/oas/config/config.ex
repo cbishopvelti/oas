@@ -5,6 +5,7 @@ defmodule Oas.Config.Config do
     field :token_expiry_days, :integer
     field :temporary_trainings, :integer
     field :bacs, :string
+    field :content, :string
     field :enable_booking, :boolean
     field :name, :string
     field :gocardless_id, :string

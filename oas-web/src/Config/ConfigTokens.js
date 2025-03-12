@@ -50,6 +50,7 @@ export const ConfigTokens = () => {
         token_expiry_days,
         temporary_trainings,
         bacs,
+        content,
         enable_booking,
         name,
         gocardless_id,
@@ -83,6 +84,7 @@ export const ConfigTokens = () => {
       $token_expiry_days: Int,
       $temporary_trainings: Int,
       $bacs: String,
+      $content: String,
       $enable_booking: Boolean,
       $name: String
       $gocardless_id: String
@@ -94,6 +96,7 @@ export const ConfigTokens = () => {
         token_expiry_days: $token_expiry_days,
         temporary_trainings: $temporary_trainings,
         bacs: $bacs,
+        content: $content,
         enable_booking: $enable_booking,
         name: $name,
         gocardless_id: $gocardless_id,
@@ -184,13 +187,26 @@ export const ConfigTokens = () => {
       <FormControl fullWidth sx={{mb: 2}}>
         <TextField
             label="Bacs details"
-            value={get(globalFormData, "bacs", '')}
+            value={get(globalFormData, "bacs", '') || ''}
             type="text"
             multiline
             minRows={3}
             onChange={onChange({formData: globalFormData, setFormData: setGlobalFormData, key: "bacs"})}
             error={has(errors, "bacs")}
             helperText={get(errors, 'bacs', []). join(" ")}
+            />
+      </FormControl>
+
+      <FormControl fullWidth sx={{mb: 2}}>
+        <TextField
+            label="Content"
+            value={get(globalFormData, "content", '') || ''}
+            type="text"
+            multiline
+            minRows={3}
+            onChange={onChange({formData: globalFormData, setFormData: setGlobalFormData, key: "content"})}
+            error={has(errors, "content")}
+            helperText={get(errors, 'content', []). join(" ")}
             />
       </FormControl>
 

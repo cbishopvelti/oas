@@ -36,7 +36,8 @@ config :oas, OasWeb.Endpoint,
     esbuild: {Esbuild, :install_and_run, [:default, ~w(--sourcemap=inline --watch)]}
   ]
 
-config :oas, Oas.Mailer, adapter: Swoosh.Adapters.SMTP,
+config :oas, Oas.Mailer,
+  adapter: Swoosh.Adapters.SMTP,
   relay: "smtp.gmail.com",
   username: "chrisjbishop155",
   port: 587,

@@ -163,8 +163,8 @@ defmodule Oas.Gocardless.Transactions do
       select: max(tra.when)
     ) |> Oas.Repo.one
 
-    # {:ok, transactions, headers} = Oas.Gocardless.TransactionsMockData.get_transactions_real(last_transaction) # DEBUG ONLY, change to get_transactions_real()
-    {:ok, transactions, headers} = Oas.Gocardless.TransactionsMockData.get_transactions_mock_1(last_transaction) # DEBUG ONLY, change to get_transactions_real()
+    {:ok, transactions, headers} = Oas.Gocardless.TransactionsMockData.get_transactions_real(last_transaction)
+    # {:ok, transactions, headers} = Oas.Gocardless.TransactionsMockData.get_transactions_mock_1(last_transaction) # DEBUG ONLY, change to get_transactions_real()
 
     config = from(c in Oas.Config.Config,
       limit: 1

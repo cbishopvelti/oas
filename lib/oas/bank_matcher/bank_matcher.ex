@@ -56,7 +56,6 @@ defmodule Oas.BankMatcher do
     # Calculate similarities and find best match
     bank_embeddings
     |> Enum.map(fn {name, emb} -> {name, similarity(person_embedding, emb)} end)
-    |> IO.inspect(label: "004")
     |> Enum.sort_by(fn {_, sim} -> sim end, :desc)
     |> Enum.filter(fn {_, sim} -> Nx.to_number(sim) >= threshold end)
   end
@@ -66,7 +65,6 @@ defmodule Oas.BankMatcher do
     t0 = DateTime.utc_now()
     match_name("CHRIS BISHOP", ["CHRIS", "C BISHOP"])
     DateTime.diff(DateTime.utc_now(), t0)
-    |> IO.inspect(label: "006")
   end
 
 end

@@ -6,7 +6,6 @@ defmodule OasWeb.Context do
   end
 
   def call(conn, _opts) do
-    # IO.inspect(conn, label: "201")
     newConn = OasWeb.MemberAuth.fetch_current_member(conn, %{});
 
     %{assigns: %{current_member: currentMember}} = newConn

@@ -27,9 +27,12 @@ Transaction what happens to credits if transaction_who changes ✅
 Gocradless handling Tokens/Credits ✅
 Auto add tags for transactions ✅
 Venues with no value ✅
-public display credits
-Email warnings
-- old depricated email refactor
+public display credits ✅
+Configerable public message ✅
+Email warnings ✅
+- old depricated email refactor ✅
+- put last_warning_email on member, to avoid unessacery spam ✅
+Gocardless fake/test account setup
 Other venue algorithems
 - split cost
 Auto generate gocradless_name

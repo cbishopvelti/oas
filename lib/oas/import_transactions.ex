@@ -25,7 +25,6 @@ defmodule Oas.ImportTransactions do
       )
 
       # queryString = Oas.Repo.to_sql(:all, query)
-      # IO.inspect(queryString)
 
       dupliate = Oas.Repo.one(query)
 

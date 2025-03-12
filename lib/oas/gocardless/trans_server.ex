@@ -36,6 +36,7 @@ defmodule Oas.Gocardless.TransServer do
     reset_seconds = List.keyfind!(headers, "http_x_ratelimit_account_success_reset", 0) |> elem(1) |> String.to_integer()
 
     timeout = div(reset_seconds, (remaining + 1))
+    timeout = Enum.max([timeout, 3600])
 
     timer_ref = Process.send_after(self(), :init, timeout)
     {:noreply,

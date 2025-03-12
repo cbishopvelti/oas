@@ -36,6 +36,7 @@ defmodule Oas.Repo.Migrations.Credits do
 
     alter table(:config_config) do
       add :credits, :boolean, default: false
+      add :content, :string, null: true
     end
 
     alter table(:training_where) do
