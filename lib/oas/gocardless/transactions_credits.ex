@@ -101,7 +101,7 @@ defmodule Oas.Gocardless.TransactionsCredits do
         when: date,
         who: (maybe_member || %{}) |> Map.get(:name, name),
         who_member_id: (maybe_member || %{}) |> Map.get(:id, nil),
-        type: if amount < 0 do "OUTGOING" else "INCOMING" end,
+        type: if Decimal.lt?(amount, "0.0") do "OUTGOING" else "INCOMING" end,
         amount: amount,
         bank_details: name,
         my_reference: Map.get(in_transaction, "remittanceInformationUnstructured")

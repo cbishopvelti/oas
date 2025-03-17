@@ -235,18 +235,21 @@ export const ConfigTokens = () => {
         <Link to={'/config/gocardless'}>Configure gocardless</Link>
       </FormControl>
 
-      <FormControl fullWidth sx={{mb: 2}}>
+      {gocardless_accounts &&
+        // gocardless_accounts.find(({id}) => id == globalFormData.gocardless_account_id) &&
+        gocardless_accounts.length > 0 &&
+      <FormControl fullWidth sx={{ mb: 2 }}>
         <InputLabel required id="account">Account</InputLabel>
         <Select
           labelId="account"
           label="Account"
-          onChange={onChange({formData: globalFormData, setFormData: setGlobalFormData, key: "gocardless_account_id"})}
+          onChange={onChange({ formData: globalFormData, setFormData: setGlobalFormData, key: "gocardless_account_id" })}
           value={globalFormData.gocardless_account_id || ""}>
           {gocardless_accounts && gocardless_accounts.map((dat, id) => {
-            return <MenuItem key={ `account-${id}`} value={ dat.id }>{dat.id}</MenuItem>
+            return <MenuItem key={`account-${id}`} value={dat.id}>{dat.id}</MenuItem>
           })}
         </Select>
-      </FormControl>
+      </FormControl>}
 
       <FormControl fullWidth sx={{mb: 2}}>
         <FormControlLabel

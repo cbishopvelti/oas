@@ -57,6 +57,7 @@ export const Gocardless = () => {
           {data?.gocardless_banks && data.gocardless_banks.map((dat, id) => {
             return <MenuItem key={ `bank-${id}`} value={ dat.id }>{dat.name}</MenuItem>
           })}
+          {<MenuItem key={'bank-gocardless'} value={'SANDBOXFINANCE_SFIN0000'}>SANDBOXFINANCE_SFIN0000</MenuItem>}
         </Select>
 
       </FormControl>
