@@ -9,6 +9,8 @@ defmodule OasWeb.Schema.SchemaAnalysis do
     field :unused_tokens, :integer
     field :unused_tokens_amount, :float
     field :transactions_ballance, :float
+    field :credit, :float
+    field :debt, :float
   end
 
   object :analysis_balance_series do
@@ -69,7 +71,9 @@ defmodule OasWeb.Schema.SchemaAnalysis do
           transactions_difference: transactions_difference |> Decimal.to_float,
           unused_tokens: unused_tokens,
           unused_tokens_amount: (unused_tokens_amount || Decimal.new(0)) |> Decimal.to_float,
-          transactions_ballance: transactions_ballance |> Decimal.to_float
+          transactions_ballance: transactions_ballance |> Decimal.to_float,
+          credit: Oas.Credits.Credit.get_global_credits(),
+          debt: Oas.Credits.Credit.get_global_debt()
         }}
       end
     end

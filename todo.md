@@ -32,12 +32,12 @@ Configerable public message ✅
 Email warnings ✅
 - old depricated email refactor ✅
 - put last_warning_email on member, to avoid unessacery spam ✅
-Gocardless fake/test account setup
+Auto generate gocradless_name
 Other venue algorithems
 - split cost
-Auto generate gocradless_name
 Analysis
+- Totals ✅
+- Graph, (do after getting data)
 ## Honory members ✅ (for credit system)
-## Move server back to my computer
 ## ssl certificate
 ## Booking
