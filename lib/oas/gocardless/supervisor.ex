@@ -1,5 +1,5 @@
 defmodule Oas.Gocardless.Supervisor do
-  use Supervisor, restart: :transient
+  use Supervisor, restart: :temporary # restart: :transient
 
   # Process.whereis(Oas.Gocardless.AuthServer) |> Process.alive?()
   def start_link(init_arg) do

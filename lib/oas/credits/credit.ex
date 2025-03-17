@@ -97,6 +97,29 @@ defmodule Oas.Credits.Credit do
       total,
     }
   end
+  def get_global_credits() do
+    members = from(m in Oas.Members.Member, where: true)
+    |> Oas.Repo.all()
+    members
+    |> Enum.map(fn %{id: id} -> %{member_id: id} end)
+    |> Enum.map(fn arg ->
+      get_credit_amount(arg) |> elem(1) |> Decimal.to_float()
+    end)
+    |> Enum.filter(fn amount -> amount > 0.0 end)
+    |> Enum.sum()
+  end
+
+  def get_global_debt() do
+    members = from(m in Oas.Members.Member, where: true)
+    |> Oas.Repo.all()
+    members
+    |> Enum.map(fn %{id: id} -> %{member_id: id} end)
+    |> Enum.map(fn arg ->
+      get_credit_amount(arg) |> elem(1) |> Decimal.to_float()
+    end)
+    |> Enum.filter(fn amount -> amount < 0 end)
+    |> Enum.sum()
+  end
 
   def deduct_debit(ledger, debit, opts \\ %{now: Date.utc_today()})
   def deduct_debit([], debit, opts) do
