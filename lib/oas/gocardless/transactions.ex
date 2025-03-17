@@ -156,16 +156,7 @@ defmodule Oas.Gocardless.Transactions do
   # CREDITS
 
   # Oas.Gocardless.Transactions.process_transacitons()
-  def process_transacitons() do
-
-    # get last transaction
-    last_transaction = from(tra in Oas.Transactions.Transaction,
-      select: max(tra.when)
-    ) |> Oas.Repo.one
-
-    {:ok, transactions, headers} = Oas.Gocardless.TransactionsMockData.get_transactions_real(last_transaction)
-    # {:ok, transactions, headers} = Oas.Gocardless.TransactionsMockData.get_transactions_mock_1(last_transaction) # DEBUG ONLY, change to get_transactions_real()
-
+  def process_transactions_2(transactions) do
     config = from(c in Oas.Config.Config,
       limit: 1
     ) |> Oas.Repo.one()
@@ -200,7 +191,25 @@ defmodule Oas.Gocardless.Transactions do
           .generate_transaction_credits(transaction)
       end
     end)
-    {:ok, headers}
+  end
+  def process_transacitons() do
+
+    # get last transaction
+    last_transaction = from(tra in Oas.Transactions.Transaction,
+      select: max(tra.when)
+    ) |> Oas.Repo.one
+
+    transactions = get_transactions_real(last_transaction)
+    # {:ok, transactions, headers} = Oas.Gocardless.TransactionsMockData.get_transactions_mock_1(last_transaction) # DEBUG ONLY, change to get_transactions_real()
+
+    case transactions do
+      {:ok, transactions, headers} ->
+        transactions = transactions |> Enum.take(1) # DEBUG ONLY
+        process_transactions_2(transactions)
+        {:ok, headers}
+      {:to_many_requests, _, headers} ->
+        {:ok, headers}
+    end
   end
 
     # Oas.Gocardless.Transactions.get_transactions_real()
@@ -214,14 +223,18 @@ defmodule Oas.Gocardless.Transactions do
       ""
     end
 
-    {:ok, 200, headers, client} = :hackney.request(
+    with {:ok, 200, headers, client} <- :hackney.request(
       :get, "https://bankaccountdata.gocardless.com/api/v2/accounts/#{account_id}/transactions/#{query_string}",
       Oas.Gocardless.get_headers(access_token)
     )
-    {:ok, response_string} = :hackney.body(client)
-    {:ok, data} = JSON.decode(response_string)
+    do
+      {:ok, response_string} = :hackney.body(client)
+      {:ok, data} = JSON.decode(response_string)
 
-    {:ok, data["transactions"]["booked"], headers}
-    :ok
+      {:ok, data["transactions"]["booked"], headers}
+    else
+      {:ok, 429, headers, client} ->
+        {:to_many_requests, nil, headers}
+    end
   end
 end
