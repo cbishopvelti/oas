@@ -124,10 +124,9 @@ function App() {
                 <ListItemText>My Bookings</ListItemText>
               </MenuItem>}
 
-              {enableBooking && <>
-                <Divider />
-
-                {!!get(data, "user") && [<ListItem key="1">
+              {enableBooking && [
+                <Divider key="a" />,
+                ...(!!get(data, "user") ? [<ListItem key="1">
                   <ListItemText>
                     {get(data, "user.name")}
                   </ListItemText>
@@ -150,8 +149,8 @@ function App() {
                     >
                     Logout
                   </a>
-                </MenuItem>]}
-                {!get(data, "user") && <MenuItem onClick={onClick}
+                </MenuItem>] : []),
+                ...(!get(data, "user") ? [<MenuItem onClick={onClick}
                   sx={{
                     padding: 0
                   }}
@@ -167,8 +166,8 @@ function App() {
                     href={`${process.env.REACT_APP_SERVER_URL}/members/log_in`}>
                     Login
                   </a>
-                </MenuItem>}
-              </>}
+                </MenuItem>] : [])
+              ]}
             </MenuList>
           </div>
         </Drawer>

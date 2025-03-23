@@ -90,7 +90,7 @@ export const Bookings = () => {
 
   return <Box>
     <h2>My Bookings</h2>
-    {!has(data, "user_bookings") || get(data, "user_bookings", []).length == 0 && <p>No upcoming events</p>}
+    {(get(data, "user_bookings", []).length == 0) && <p>No upcoming events</p>}
     {has(data, "user_bookings") && get(data, "user_bookings", []).length != 0 && <TableContainer><Table>
       <TableHead>
         <TableRow>
@@ -101,10 +101,10 @@ export const Bookings = () => {
       </TableHead>
       <TableBody>
         {get(data, "user_bookings", []).map((training, i) => {
-          return <TableRow key={i}>
-            <TableCell>{training.where}</TableCell>
+          return (<TableRow key={i}>
+            <TableCell>{training.where.split('#')[0].trim()}</TableCell>
             <TableCell>{training.when}</TableCell>
-            <TableCell>
+            <TableCell sx={{maxWidth: "162px"}}>
               {!training.attendance_id && <Button onClick={onAttend(training.id)} color="success" sx={{width: '100%'}}>Attend</Button>}
               {user && canUndo({user})(training) && <UndoButton
                 refetch={refetch}
@@ -115,7 +115,7 @@ export const Bookings = () => {
               >Undo</UndoButton>}
               {training.attendance_id && user && !canUndo({user})(training) && <Button disabled={true} sx={{width: '100%'}} color="success">Attending</Button>}
             </TableCell>
-          </TableRow>
+          </TableRow>)
         })}
       </TableBody>
     </Table></TableContainer>}

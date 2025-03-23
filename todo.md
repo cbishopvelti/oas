@@ -41,3 +41,5 @@ Analysis
 ## Honory members ✅ (for credit system)
 ## ssl certificate
 ## Booking
+Queuing
+Time

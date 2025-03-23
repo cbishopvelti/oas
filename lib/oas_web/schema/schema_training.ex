@@ -7,6 +7,10 @@ defmodule OasWeb.Schema.SchemaTraining do
     field :name, :string
     field :credit_amount, :string
     field :trainings, list_of(:training)
+    field :time, :string
+    field :cutoff_booking, :string
+    field :cutoff_queue, :string
+    field :max_attendees, :integer
   end
   input_object :training_where_arg do
     field :id, :integer

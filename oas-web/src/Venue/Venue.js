@@ -4,6 +4,7 @@ import { FormControl, TextField, Box, Button,
 import TabContext from '@mui/lab/TabContext';
 import TabList from '@mui/lab/TabList';
 import TabPanel from '@mui/lab/TabPanel';
+import { TimePicker } from "@mui/x-date-pickers/TimePicker"
 import { useEffect, useState as useReactState } from "react";
 // import { useState } from "../utils/useState";
 import moment from "moment";
@@ -18,7 +19,8 @@ export const Venue = () => {
   let id = params?.id
   const defaultData = {
     name: "",
-    credit_amount: ""
+    credit_amount: "",
+    time: ""
   }
   const [formData, setFormData] = useReactState(defaultData);
   if (id) {
@@ -27,10 +29,29 @@ export const Venue = () => {
   const [attendance, setAttendance] = useReactState(0);
 
   const onChange = ({formData, setFormData, key}) => (event) => {
-    setFormData({
-      ...formData,
-      [key]: !event.target.value ? undefined : event.target.value
-    })
+    if ((key === "cutoff_booking" || key === "cutoff_queue")) {
+      if ( /^\d{0,3}:?\d{0,2}$/.test(event.target.value)) {
+        setFormData({
+          ...formData,
+          [key]: event.target.value
+        })
+      } else {
+        setFormData({
+          ...formData,
+          [key]: ""
+        })
+      }
+    } else if (key === "time") {
+      setFormData({
+        ...formData,
+        [key]: event
+      })
+    } else {
+      setFormData({
+        ...formData,
+        [key]: !event.target.value ? undefined : event.target.value
+      })
+    }
   }
 
   const {data, refetch} = useQuery(gql`
@@ -38,7 +59,9 @@ export const Venue = () => {
       training_where(id: $id) {
         id,
         name,
-        credit_amount
+        credit_amount,
+        time,
+        cutoff_booking
       }
     }
   `, {
@@ -61,16 +84,31 @@ export const Venue = () => {
   }, [id])
   useEffect(() => {
     if (get(data, "training_where")) {
+      console.log("005", get(data, "training_where.time", ""))
+
       setFormData({
         ...get(data, "training_where", {}),
-        credit_amount: get(data, "training_where.credit_amount", "") || ""
+        credit_amount: get(data, "training_where.credit_amount", "") || "",
+        time: moment(get(data, "training_where.time", ""), 'HH:mm:ss') || ""
       });
     }
   }, [data])
 
   const [mutate, {error}] = useMutation(gql`
-    mutation($id: Int, $name: String!, $credit_amount: String!) {
-      training_where(id: $id, name: $name, credit_amount: $credit_amount) {
+    mutation(
+      $id: Int,
+      $name: String!,
+      $credit_amount: String!,
+      $time: String,
+      $cutoff_booking: String,
+    ) {
+      training_where(
+        id: $id,
+        name: $name,
+        credit_amount: $credit_amount,
+        time: $time,
+        cutoff_booking: $cutoff_booking
+      ) {
         id
       }
     }
@@ -80,7 +118,8 @@ export const Venue = () => {
 
   const save = (formData) => async () => {
     const variables = {
-      ...formData
+      ...formData,
+      ...(formData.time ? { time: formData.time.format("HH:mm:ss") } : {})
     }
 
     const { data, errors } = await mutate({
@@ -102,12 +141,14 @@ export const Venue = () => {
 
   const errors = parseErrors(error?.graphQLErrors);
 
+  console.log("006", get(formData, "time", null))
+
   return <Box sx={{display: 'flex', flexWrap: 'wrap' }}>
     <FormControl fullWidth sx={{mt: 2, mb: 2, m: 2}}>
       <TextField
         required
         id="name"
-        label="Name"
+        label="Name (put non-public metadata after a #, eg `Oxsrad # Tuesdays`)"
         value={get(formData, "name", '')}
         onChange={
           onChange({formData, setFormData, key: "name"})
@@ -138,6 +179,36 @@ export const Venue = () => {
         helperText={get(errors, "credit_amount", []).join(" ")}
         />
     </FormControl>
+
+    <FormControl fullWidth sx={{mt: 2, mb: 2, m: 2}}>
+      <TimePicker
+        label="Time"
+        value={get(formData, "time", null)}
+        onChange={
+          onChange({ formData, setFormData, key: "time" })
+        }
+        ampm={false}
+        renderInput={(params) => <TextField {...params}
+          error={has(errors, "time")}
+          helperText={get(errors, "time", []).join(" ")}
+          />}
+      />
+    </FormControl>
+    <FormControl fullWidth sx={{mt: 2, mb: 2, m: 2}}>
+      <TextField
+        label="Booking cutoff (HH:MM), how long before the event a prospective attendee can cancel."
+        value={get(formData, "cutoff_booking", "") || ""}
+        InputLabelProps={{
+          shrink: true,
+        }}
+        onChange={
+          onChange({ formData, setFormData, key: "cutoff_booking" })
+        }
+        placeholder="hh:mm"
+        fullWidth
+        />
+    </FormControl>
+
     <FormControl fullWidth sx={{m: 2}}>
       <Button onClick={save(formData)}>Save</Button>
     </FormControl>
