@@ -22,7 +22,7 @@ config :oas, OasWeb.Endpoint,
   # Change to `ip: {0, 0, 0, 0}` to allow access from other machines.
   http: [ip: {0, 0, 0, 0}, port: 4000],
   url: [
-    host: "server.oxfordshireacrosociety.co.uk",
+    host: "server.gcloud.oxfordshireacrosociety.co.uk",
     port: 443,
     scheme: "https"
   ],

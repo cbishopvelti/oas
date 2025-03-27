@@ -41,3 +41,7 @@ Analysis
 ## Honory members ✅ (for credit system)
 ## ssl certificate
 ## Booking
+## Bugs
+Registering with invalid nok email. ✅
+Updating registration success token price. ✅
+Registration email. ✅
