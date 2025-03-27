@@ -99,8 +99,6 @@ defmodule Oas.Attendance do
     case get_unsued_token_result do
       nil -> # User has no tokens, use credits instead
         if (config.credits) do
-
-
           Oas.Credits.Credit.deduct_credit(
             attendance,
             member,

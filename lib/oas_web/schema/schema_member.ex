@@ -270,7 +270,7 @@ defmodule OasWeb.Schema.SchemaMember do
 
             {:ok, %{success: true, public_register_member: result}}
           errored ->
-            OasWeb.Schema.SchemaUtils.handle_error(errored)
+            OasWeb.Schema.SchemaUtils.handle_error(errored, :member_details)
         end
       end
 

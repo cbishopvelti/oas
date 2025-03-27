@@ -21,7 +21,7 @@ const onChange = ({formData, setFormData, isCheckbox, key}) => (event) => {
   if (isCheckbox) {
     value = event.target.checked
   }
-  
+
   formData = setWith(clone(formData), key, value, clone)
   setFormData(formData)
 }
@@ -31,7 +31,7 @@ const parseErrors = (errors) => {
   return errors.reduce((acc, error) => {
     if (error.db_field) {
       return {
-        ...acc, 
+        ...acc,
         [error.db_field]: [error.message, ...get(acc, error.db_field, [])],
       }
     }
@@ -54,7 +54,7 @@ const parseErrors = (errors) => {
         global: [error.message, ...get(acc, "global", [])]
       }
     }
-    
+
     return acc;
   }, {})
 }
@@ -75,7 +75,7 @@ export const MembershipForm = () => {
   let errors = get(error, 'graphQLErrors', [])
   errors = parseErrors(errors);
   const register = (formData) => async () => {
-    await mutation({
+    const result = await mutation({
       variables: formData
     })
 
@@ -87,7 +87,10 @@ export const MembershipForm = () => {
 
     outletContext.refetchUser();
 
-    navigate(path);
+    console.log("001 success", result)
+    if (result?.data?.public_register?.success) {
+      navigate(path);
+    }
   }
 
   return <Stack spacing={2}>
@@ -123,7 +126,7 @@ export const MembershipForm = () => {
         helperText={get(errors, "email", []).join(" ")}
       />
     </FormControl>
-    
+
     {outletContext.enableBooking && <FormControl fullWidth>
       <TextField
         required
@@ -229,7 +232,7 @@ export const MembershipForm = () => {
     </FormControl>
 
     <div>
-      
+
       <h3>Agreement of Release and Waiver of Liability</h3>
       <p>
         The constitution: <a href="https://drive.google.com/file/d/1g2blgY6CL9IMuXT-8EJzvLMQTaiIGt2p/view">https://drive.google.com/file/d/1g2blgY6CL9IMuXT-8EJzvLMQTaiIGt2p/view?usp=sharing</a><br />
@@ -242,7 +245,7 @@ export const MembershipForm = () => {
       </p>
     </div>
     <FormControl>
-      
+
         <FormControlLabel
           control={
             <Switch
