@@ -1,7 +1,7 @@
 # docker build . -f Dockerfile_gcloud -t chrisjbishop155/oas:latest
 # docker push chrisjbishop155/oas:latest
 
-from elixir:1.14.1
+from elixir:1.18.3
 
 RUN apt-get update
 
@@ -22,9 +22,11 @@ RUN apt-get install -y tmux
 RUN apt-get install -y inotify-tools
 RUN apt-get install -y nginx
 
-ENV REACT_APP_ADMIN_URL=https://admin.gcloud.oxfordshireacrosociety.co.uk
-ENV REACT_APP_SERVER_URL=https://server.gcloud.oxfordshireacrosociety.co.uk
-ENV REACT_APP_PUBLIC_URL=https://www.gcloud.oxfordshireacrosociety.co.uk
+ARG SUBDOMAIN=gcloud
+
+ENV REACT_APP_ADMIN_URL=https://admin.${SUBDOMAIN}.oxfordshireacrosociety.co.uk
+ENV REACT_APP_SERVER_URL=https://server.${SUBDOMAIN}.oxfordshireacrosociety.co.uk
+ENV REACT_APP_PUBLIC_URL=https://www.${SUBDOMAIN}.oxfordshireacrosociety.co.uk
 
 WORKDIR /app
 COPY . .
@@ -41,7 +43,8 @@ WORKDIR /app
 RUN mix local.hex --force
 RUN mix deps.get --force
 RUN mix local.rebar --force
-ENV MIX_ENV=gcloud
+ARG MIX_ENV=gcloud
+ENV MIX_ENV=${MIX_ENV}
 RUN mix compile
 ENV ELIXIR_ERL_OPTIONS="-kernel shell_history enabled"
 

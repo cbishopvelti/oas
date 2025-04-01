@@ -8,7 +8,7 @@ defmodule OasWeb.Endpoint do
   @session_options [
     store: :cookie,
     key: "oas_key",
-    # domain: Application.compile_env(:oas, OasWeb.Endpoint)[:domain],
+    domain: Application.compile_env(:oas, OasWeb.Endpoint)[:domain],
     signing_salt: "gM7uiSTx",
     http_only: false
   ]
