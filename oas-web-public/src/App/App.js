@@ -124,7 +124,7 @@ function App() {
                 <ListItemText>My Bookings</ListItemText>
               </MenuItem>}
 
-              {enableBooking && <>
+              {enableBooking && /* Fixed on the branch v2-credits-booking */ <>
                 <Divider />
 
                 {!!get(data, "user") && [<ListItem key="1">

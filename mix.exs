@@ -5,7 +5,7 @@ defmodule Oas.MixProject do
     [
       app: :oas,
       version: "0.1.0",
-      elixir: "~> 1.12",
+      elixir: "~> 1.18",
       elixirc_paths: elixirc_paths(Mix.env()),
       # compilers: [:gettext] ++ Mix.compilers(),
       compilers: Mix.compilers(),
@@ -63,11 +63,11 @@ defmodule Oas.MixProject do
       {:corsica, "~> 1.2"},
       {:csv, "~> 3.0"},
       {:nimble_csv, "~> 1.2"},
-      {:timex, "~> 3.7"},
-      {:nx, "~> 0.9.2"},
-      {:bumblebee, "~> 0.6.0"},
-      {:exla, "~> 0.9.2"}, # Hardware acceleration (optional but recommended)
-      {:explorer, "~> 0.10.1"}
+      {:timex, "~> 3.7"}
+      # {:nx, "~> 0.9.2"},
+      # {:bumblebee, "~> 0.6.0"},
+      # {:exla, "~> 0.9.2"}, # Hardware acceleration (optional but recommended)
+      # {:explorer, "~> 0.10.1"}
     ]
   end
 
