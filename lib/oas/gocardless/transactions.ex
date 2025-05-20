@@ -1,6 +1,7 @@
 import Ecto.Query, only: [from: 2]
 
 defmodule Oas.Gocardless.Transactions do
+  require Logger
 
   defp is_duplicate(%{
     "bookingDate" => booking_date,
@@ -222,6 +223,7 @@ defmodule Oas.Gocardless.Transactions do
     else
       ""
     end
+    Logger.info("Gocardless.Transactions.process_transacitons(#{from}) starting")
 
     with {:ok, 200, headers, client} <- :hackney.request(
       :get, "https://bankaccountdata.gocardless.com/api/v2/accounts/#{account_id}/transactions/#{query_string}",
@@ -231,9 +233,13 @@ defmodule Oas.Gocardless.Transactions do
       {:ok, response_string} = :hackney.body(client)
       {:ok, data} = JSON.decode(response_string)
 
+      Logger.info("Gocardless.Transactions.process_transacitons(#{from}) finished", data)
+
       {:ok, data["transactions"]["booked"], headers}
     else
       {:ok, 429, headers, client} ->
+        seconds_retry = List.keyfind!(headers, "http_x_ratelimit_account_success_reset", 0) |> elem(1) |> String.to_integer()
+        Logger.warn("Gocardless.Transactions.process_transacitons(#{from}) failed, retrying in #{seconds_retry}s")
         {:to_many_requests, nil, headers}
     end
   end

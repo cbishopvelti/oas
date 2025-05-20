@@ -26,8 +26,10 @@ defmodule Oas.Gocardless.Supervisor do
     if (Process.whereis(Oas.Gocardless.Supervisor) != nil) do
       if (Process.whereis(Oas.Gocardless.Supervisor) |> Process.alive?()) do
         Supervisor.terminate_child(Oas.Supervisor, Oas.Gocardless.Supervisor)
+        Supervisor.start_child(Oas.Supervisor, Oas.Gocardless.Supervisor)
+      else
+        Supervisor.restart_child(Oas.Supervisor, Oas.Gocardless.Supervisor)
       end
-      Supervisor.restart_child(Oas.Supervisor, Oas.Gocardless.Supervisor)
     else
       Supervisor.start_child(Oas.Supervisor, Oas.Gocardless.Supervisor)
     end
