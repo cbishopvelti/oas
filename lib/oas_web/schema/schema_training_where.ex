@@ -1,4 +1,4 @@
-import Ecto.Query, only: [from: 2]
+
 defmodule OasWeb.Schema.SchemaTrainingWhere do
   use Absinthe.Schema.Notation
 
@@ -19,7 +19,7 @@ defmodule OasWeb.Schema.SchemaTrainingWhere do
       arg :name, non_null(:string)
       arg :credit_amount, non_null(:string)
       resolve fn _, args, _ ->
-        result = case args do
+        case args do
           %{id: id} -> Oas.Repo.get(Oas.Trainings.TrainingWhere, id)
           _ -> %Oas.Trainings.TrainingWhere{}
         end
@@ -39,7 +39,7 @@ defmodule OasWeb.Schema.SchemaTrainingWhere do
             {:error, "Training where with id #{id} not found"}
           training_where ->
             try do
-              result = training_where
+              training_where
               |> Ecto.Changeset.change()
               |> Ecto.Changeset.no_assoc_constraint(
                 :trainings

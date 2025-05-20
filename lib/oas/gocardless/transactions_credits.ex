@@ -6,7 +6,7 @@ defmodule Oas.Gocardless.TransactionsCredits do
     changeset, data
   ) do
     case Ecto.Changeset.fetch_field(changeset, :who_member_id) do
-      nil -> {changeset, data}
+      :error -> {changeset, data}
       _ -> process_credits_2(changeset, data)
     end
   end
@@ -130,7 +130,7 @@ defmodule Oas.Gocardless.TransactionsCredits do
       )
     )
 
-    result = out_changeset |> Oas.Repo.insert()
+    out_changeset |> Oas.Repo.insert()
     :ok
   end
 end

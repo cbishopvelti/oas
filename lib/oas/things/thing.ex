@@ -1,8 +1,6 @@
-import Ecto.Query, only: [from: 2]
 
 defmodule Oas.Things.Thing do
   use Ecto.Schema
-  import Ecto.Changeset
 
   schema "things" do
     field :what, :string

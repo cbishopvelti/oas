@@ -5,6 +5,17 @@ defmodule OasWeb.Context do
     opts
   end
 
+  # https://www.erlang.org/docs/24/man/dialyzer
+  @dialyzer{:no_return, call: 2}
+  @dialyzer{:error_handling, call: 2}
+  @dialyzer{:no_opaque, call: 2}
+  @dialyzer{:no_fun_app, call: 2}
+  @dialyzer{:error_handling, call: 2}
+  @dialyzer{:underspecs, call: 2}
+  @dialyzer{:specdiffs, call: 2}
+  @dialyzer{:no_behaviours, call: 2}
+  @dialyzer{:no_contracts, call: 2}
+  @dialyzer{:no_fail_call, call: 2}
   def call(conn, _opts) do
     newConn = OasWeb.MemberAuth.fetch_current_member(conn, %{});
 

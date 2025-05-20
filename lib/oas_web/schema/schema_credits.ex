@@ -95,7 +95,8 @@ defmodule OasWeb.Schema.SchemaCredits do
         end)
         now = Date.utc_today()
         average_date = case sum do
-          0.0 -> now
+          +0.0 -> now
+          -0.0 -> now
           sum -> Date.from_gregorian_days(round(sumprod / sum))
         end
 
@@ -110,7 +111,7 @@ defmodule OasWeb.Schema.SchemaCredits do
             who_member_id: from_member_id
         }, [:when, :what, :amount, :who_member_id])
 
-        credit = %Oas.Credits.Credit{}
+        %Oas.Credits.Credit{}
         |> Ecto.Changeset.cast(%{
           amount: Decimal.new(amount),
           when: now,

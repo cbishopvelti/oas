@@ -81,8 +81,8 @@ defmodule Oas.TokenMailer do
     IO.inspect(last_debits, label: "006")
 
     case last_debits do
-      [a] -> true
-      [a, b | _rest] -> cond do
+      [_a] -> true
+      [_a, b | _rest] -> cond do
         # Second credit is greater than 0.0 so a warning wouldn't have been sent
         Decimal.gte?(b.after_amount, "0.0") -> true
         # There have been transactions after the previous warning and still negative so send another warning
