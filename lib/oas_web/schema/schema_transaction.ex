@@ -345,7 +345,7 @@ defmodule OasWeb.Schema.SchemaTransaction do
           transaction_tags: transaction.transaction_tags |> Enum.map(fn %{name: name} -> name end)
         })
 
-        result = out_transaction |> Oas.Repo.update!()
+        out_transaction |> Oas.Repo.update!()
 
         {:ok, %{success: true}}
       end

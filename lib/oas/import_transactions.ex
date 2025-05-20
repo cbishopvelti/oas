@@ -235,8 +235,8 @@ defmodule Oas.ImportTransactions do
   end
 
   defp doCredits(%{
-    who_member_id: who_member_id,
-    when1: when1,
+    who_member_id: _who_member_id,
+    when1: _when1,
     value: value
   }, result) do
     result = result |> Oas.Repo.preload(:credit)
@@ -250,26 +250,26 @@ defmodule Oas.ImportTransactions do
     |> Oas.Repo.update()
   end
 
-  defp doMembership(%{
-    who_member_id: who_member_id,
-    when1: when1,
-    amount: amount
-  }, result) do
-    # membershipPeriod = from(mp in Oas.Members.MembershipPeriod,
-    #   where: (mp.from <= ^when1 and mp.to > ^Date.add(when1, 31)) or
-    #     (mp.from <= ^Date.add(when1, 31) and mp.to > ^when1),
-    #   limit: 1
-    # )
-    # |> Oas.Repo.one
+  # defp doMembership(%{
+  #   who_member_id: who_member_id,
+  #   when1: when1,
+  #   amount: amount
+  # }, result) do
+  #   # membershipPeriod = from(mp in Oas.Members.MembershipPeriod,
+  #   #   where: (mp.from <= ^when1 and mp.to > ^Date.add(when1, 31)) or
+  #   #     (mp.from <= ^Date.add(when1, 31) and mp.to > ^when1),
+  #   #   limit: 1
+  #   # )
+  #   # |> Oas.Repo.one
 
-    membershipPeriod = Oas.Members.MembershipPeriod.getThisOrNextMembershipPeriod(when1, who_member_id, amount)
+  #   membershipPeriod = Oas.Members.MembershipPeriod.getThisOrNextMembershipPeriod(when1, who_member_id, amount)
 
-    %Oas.Members.Membership{
-      transaction_id: result.id,
-      member_id: who_member_id,
-      membership_period_id: membershipPeriod.id
-    } |> Oas.Repo.insert
-  end
+  #   %Oas.Members.Membership{
+  #     transaction_id: result.id,
+  #     member_id: who_member_id,
+  #     membership_period_id: membershipPeriod.id
+  #   } |> Oas.Repo.insert
+  # end
 
   def doImport(rows) do
     rows

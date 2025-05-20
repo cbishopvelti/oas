@@ -46,7 +46,7 @@ defmodule Oas.Members.Membership do
       inner_join: ms in assoc(mp, :memberships),
       where: ms.member_id == ^member.id and
         mp.from <= ^training.when and mp.to >= ^training.when,
-      preload: [memberships: ms],
+      preload: [memberships: ms]
     ) |> Oas.Repo.all
 
     membership_periods |> Enum.map(fn membership_period ->

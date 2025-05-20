@@ -33,6 +33,7 @@ defmodule Oas.Gocardless.Transactions do
     end
   end
 
+  @dialyzer{:no_match, process_tokens: 1}
   defp process_tokens(out_transaction) when is_map_key(out_transaction, :state) do out_transaction end
   defp process_tokens(out_transaction) do
     case Enum.find(
@@ -43,7 +44,7 @@ defmodule Oas.Gocardless.Transactions do
     ) do
       nil -> out_transaction
       configToken = %{quantity: quantity, value: value} ->
-        if (is_map_key(out_transaction, :who_member_id) && out_transaction.who_member_id != nil) do
+        if is_map_key(out_transaction, :who_member_id) && out_transaction.who_member_id != nil do
           Map.put(out_transaction, :state, :tokens)
             |> Map.put(:state_data, configToken)
             |> Map.put(:tags, ["Tokens" | Map.get(out_transaction, :tags, [])])
@@ -67,6 +68,7 @@ defmodule Oas.Gocardless.Transactions do
     end
   end
 
+  @dialyzer{:no_match, process_membership: 1}
   defp process_membership(out_transaction) when is_map_key(out_transaction, :state) do out_transaction end
   defp process_membership(out_transaction) do
     amount = Map.get(out_transaction, :amount)
@@ -82,7 +84,7 @@ defmodule Oas.Gocardless.Transactions do
       %{value: value} ->
         cond do
           Decimal.eq?(amount, value) ->
-            if (is_map_key(out_transaction, :who_member_id) && out_transaction.who_member_id != nil) do
+            if is_map_key(out_transaction, :who_member_id) && out_transaction.who_member_id != nil do
               Map.put(out_transaction, :state, :membership)
               |> Map.put(:tags, ["Membership" | Map.get(out_transaction, :tags, [])])
               |> Map.put(:what, "Membership")
@@ -237,9 +239,9 @@ defmodule Oas.Gocardless.Transactions do
 
       {:ok, data["transactions"]["booked"], headers}
     else
-      {:ok, 429, headers, client} ->
+      {:ok, 429, headers, _client} ->
         seconds_retry = List.keyfind!(headers, "http_x_ratelimit_account_success_reset", 0) |> elem(1) |> String.to_integer()
-        Logger.warn("Gocardless.Transactions.process_transacitons(#{from}) failed, retrying in #{seconds_retry}s")
+        Logger.warning("Gocardless.Transactions.process_transacitons(#{from}) failed, retrying in #{seconds_retry}s")
         {:to_many_requests, nil, headers}
     end
   end

@@ -29,13 +29,13 @@ defmodule Oas.Credits.Credit do
     timestamps()
   end
 
-  defp validate_transaction(changeset) do
-    cond do
-      Decimal.gt?(get_field(changeset, :amount), 0) && !get_field(changeset, :transaction_id) ->
-        add_error(changeset, :transaction_id, "There must be a transaction")
-      true -> changeset
-    end
-  end
+  # defp validate_transaction(changeset) do
+  #   cond do
+  #     Decimal.gt?(get_field(changeset, :amount), 0) && !get_field(changeset, :transaction_id) ->
+  #       add_error(changeset, :transaction_id, "There must be a transaction")
+  #     true -> changeset
+  #   end
+  # end
 
   def changeset(changeset, params \\ %{}) do
     changeset
@@ -47,9 +47,9 @@ defmodule Oas.Credits.Credit do
 
   # Called from Transaction
   def doCredit(changeset, nil) do
-    out = case get_assoc(changeset, :credit) do
+    case get_assoc(changeset, :credit) do
       nil -> changeset
-      assoc ->
+      _assoc ->
         Ecto.Changeset.put_assoc(changeset, :credit, nil)
     end
   end
@@ -69,7 +69,7 @@ defmodule Oas.Credits.Credit do
         # if (amount < 0.0) do
         #   raise "Oas.Credits.Credit.doCredit can't be negative"
         # end
-        credit = out
+        out
         |> changeset(%{
           amount: amount,
           # who_member_id: get_assoc(changeset, :credit) |> List.first() |> get_field()
@@ -122,7 +122,7 @@ defmodule Oas.Credits.Credit do
   end
 
   def deduct_debit(ledger, debit, opts \\ %{now: Date.utc_today()})
-  def deduct_debit([], debit, opts) do
+  def deduct_debit([], debit, _opts) do
     [debit]
   end
   # Signs are the same, so can't deduct debt
@@ -179,7 +179,7 @@ defmodule Oas.Credits.Credit do
     {from, name} = case from do
       %Ecto.Changeset{} ->
         {from, from.data.__struct__ |> Module.split() |> List.last()}
-      item ->
+      _item ->
         {
           from
           |> Oas.Repo.preload(:credit)
@@ -210,7 +210,7 @@ defmodule Oas.Credits.Credit do
     end
   end
 
-  @deprecated
+  @deprecated "No longer used, use get_credit_amount"
   def get_credits(member, now \\ Date.utc_today()) do
 
     # """

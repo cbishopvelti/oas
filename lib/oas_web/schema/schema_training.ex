@@ -246,11 +246,11 @@ defmodule OasWeb.Schema.SchemaTraining do
     @desc "insert_training_tag, depricated"
     field :insert_training_tag, type: :training_tag do
       arg :name, non_null(:string)
-      resolve fn _, %{name: name}, _ ->
+      resolve fn _, %{name: _name}, _ ->
         # TODO remove
-        raise "Should not happen"
-        result = Oas.Repo.insert!(%Oas.Trainings.TrainingTags{name: name})
-        {:ok, result}
+        # raise "Should not happen"
+        # result = Oas.Repo.insert!(%Oas.Trainings.TrainingTags{name: name})
+        {:error, "Should not happen"}
       end
     end
   end
