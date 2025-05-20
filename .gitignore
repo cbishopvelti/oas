@@ -46,3 +46,4 @@ lib/oas/release.ex
 fly.toml
 config/fly.exs
 .github/workflows/fly-deploy.yml
+local_notes.md

@@ -1,5 +1,23 @@
 defmodule Oas.Gocardless.TransactionsMockData do
 
+  def get_transacitons_mock_2(_when) do
+    {:ok, %{
+      "last_updated" => "2025-05-20T11:28:37.788239Z",
+      "transactions" => %{
+        "booked" => [],
+        "pending" => [
+          %{
+            "bookingDate" => "2025-05-20",
+            "bookingDateTime" => "2025-05-20T00:00:00.000Z",
+            "proprietaryBankTransactionCode" => "BAC",
+            "remittanceInformationUnstructured" => "CHRIS B",
+            "transactionAmount" => %{"amount" => "4.00", "currency" => "GBP"}
+          }
+        ]
+      }
+    }}
+  end
+
   def get_transactions_mock_1(_when) do
     {:ok, [%{
       "bookingDate" => "2025-03-11",
