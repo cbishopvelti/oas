@@ -1,6 +1,7 @@
 import Ecto.Query, only: [from: 2]
 
 defmodule Oas.Gocardless.TransServer do
+  require Logger
   use GenServer, restart: :transient
 
   # Oas.Gocardless.TransServer.start_link()
@@ -10,16 +11,16 @@ defmodule Oas.Gocardless.TransServer do
 
   @impl true
   def init(_) do
-    IO.puts("Oas.Gocardless.TransServer Server init")
     pid = Process.whereis(Oas.Gocardless.AuthServer)
     account_id = from(cc in Oas.Config.Config, select: cc.gocardless_account_id) |> Oas.Repo.one()
-
     case {pid && Process.alive?(pid), account_id} do
-      {true, account_id } when account_id != nil -> IO.puts("alive, start")
+      {true, account_id } when account_id != nil ->
+        # IO.puts("alive, start")
+        Logger.info("Oas.Gocradless.TransServer.init success")
         Process.send_after(self(), :init, 0)
         {:ok, %{}}
       _ ->
-        IO.puts("Not alive, don't start")
+        Logger.warning("Oas.Gocradless.TransServer.init failed, didn't start")
         :ignore
     end
   end
@@ -36,9 +37,14 @@ defmodule Oas.Gocardless.TransServer do
     reset_seconds = List.keyfind!(headers, "http_x_ratelimit_account_success_reset", 0) |> elem(1) |> String.to_integer()
 
     timeout = div(reset_seconds, (remaining + 1))
-    timeout = Enum.max([timeout, 3_600_000])
+    timeout = if Mix.env() != :test do
+      Enum.max([timeout, 3_600])
+    else
+      timeout
+    end
+    timeout_ms = timeout * 1000
 
-    timer_ref = Process.send_after(self(), :init, timeout)
+    timer_ref = Process.send_after(self(), :init, timeout_ms)
     {:noreply,
       %{
         timer_ref: timer_ref

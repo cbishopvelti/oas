@@ -52,6 +52,8 @@ defmodule Oas.CreditsTest do
       now = Date.from_iso8601!("2025-02-02")
 
       credits = Oas.Credits.Credit.get_credits(member, now)
+      # {credits, _total} = Oas.Credits.Credit.get_credit_amount(%{member_id: member.id})
+
       result = credits |> Enum.reduce(Decimal.new("0.0"), fn {_, sum}, acc ->
         Decimal.add(acc, sum)
       end)
@@ -172,7 +174,7 @@ defmodule Oas.CreditsTest do
     test "Get credits in correct order" do
       {transaction, member} = Oas.TransactionFixtures.transaction_fixture()
 
-      income1 = %Oas.Credits.Credit{}
+      %Oas.Credits.Credit{}
       |> Ecto.Changeset.cast(%{
         what: "credit",
         amount: Decimal.new("3.0"),
@@ -184,7 +186,7 @@ defmodule Oas.CreditsTest do
       |> Ecto.Changeset.put_assoc(:member, member)
       |> Oas.Repo.insert!()
 
-      income2 = %Oas.Credits.Credit{}
+      %Oas.Credits.Credit{}
       |> Ecto.Changeset.cast(%{
         what: "debit",
         amount: Decimal.new("-2.0"),
@@ -270,7 +272,7 @@ defmodule Oas.CreditsTest do
       ]
 
       # Initial ledger with an expired credit
-      initial_ledger = [
+      [
         %{
           amount: Decimal.new("50.00"),
           expires_on: yesterday,

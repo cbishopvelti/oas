@@ -235,7 +235,7 @@ defmodule Oas.Gocardless.Transactions do
       {:ok, response_string} = :hackney.body(client)
       {:ok, data} = JSON.decode(response_string)
 
-      Logger.info("Gocardless.Transactions.process_transacitons(#{from}) finished", data)
+      Logger.info("Gocardless.Transactions.process_transacitons(#{from}) finished", data: data)
 
       {:ok, data["transactions"]["booked"], headers}
     else
