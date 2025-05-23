@@ -229,7 +229,6 @@ defmodule OasWeb.Schema.SchemaMember do
       arg :who_member_id, non_null(:integer)
       arg :gocardless_name, non_null(:string)
       resolve fn _, %{who_member_id: who_member_id, gocardless_name: gocardless_name}, _ ->
-        IO.puts("001")
         Oas.Repo.get!(Oas.Members.Member, who_member_id)
         |> Ecto.Changeset.change(gocardless_name: gocardless_name)
         |> Oas.Repo.update!()

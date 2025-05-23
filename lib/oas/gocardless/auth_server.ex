@@ -1,6 +1,7 @@
 import Ecto.Query, only: [from: 2]
 
 defmodule Oas.Gocardless.AuthServer do
+  require Logger
   use GenServer, restart: :transient
 
   # Oas.Gocardless.AuthServer.start_link()
@@ -10,7 +11,8 @@ defmodule Oas.Gocardless.AuthServer do
 
   @impl true
   def init(_) do
-    IO.puts("Oas.Gocardless.AuthServer init")
+    Logger.info("Oas.Gocardless.AuthServer init")
+
     case Oas.Gocardless.get_access_token() do
       {:ok, access_tokens} ->
         Process.send_after(self(), :init, 0)
