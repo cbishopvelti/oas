@@ -16,11 +16,11 @@ defmodule Oas.Gocardless.TransServer do
     case {pid && Process.alive?(pid), account_id} do
       {true, account_id } when account_id != nil ->
         # IO.puts("alive, start")
-        Logger.info("Oas.Gocradless.TransServer.init success")
+        Logger.info("Oas.Gocardless.TransServer.init success")
         Process.send_after(self(), :init, 0)
         {:ok, %{}}
       _ ->
-        Logger.warning("Oas.Gocradless.TransServer.init failed, didn't start")
+        Logger.warning("Oas.Gocardless.TransServer.init failed, didn't start")
         :ignore
     end
   end

@@ -27,6 +27,7 @@ ARG SUBDOMAIN=gcloud
 ENV REACT_APP_ADMIN_URL=https://admin.${SUBDOMAIN}.oxfordshireacrosociety.co.uk
 ENV REACT_APP_SERVER_URL=https://server.${SUBDOMAIN}.oxfordshireacrosociety.co.uk
 ENV REACT_APP_PUBLIC_URL=https://www.${SUBDOMAIN}.oxfordshireacrosociety.co.uk
+ENV DOMAIN=.${SUBDOMAIN}.oxfordshireacrosociety.co.uk
 
 WORKDIR /app
 COPY . .

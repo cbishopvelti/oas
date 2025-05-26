@@ -52,3 +52,9 @@ gcloud compute scp --project oxfordshire-acro --zone europe-west2-a \
 instance-4-dev:/mnt/disks/data/
 
 ```
+
+#### tmux
+```
+tmux attach -t server
+tmux detach CTRL + b then d
+```

@@ -109,7 +109,7 @@ defmodule Oas.Gocardless.TransactionsCredits do
     )
 
     data = %{
-      transaction_tags: ["Gocradless"]
+      transaction_tags: ["Gocardless"]
     }
 
     out_changeset = generate_transaction_credits_2(out_transaction, data)

@@ -143,6 +143,9 @@ export const Members = () => {
           id="member"
           value={filterData.member?.member_name || ''}
           options={members.map(({name, id}) => ({label: name, member_id: id }))}
+          getOptionKey={((item) => {
+            return `${item.label}_${item.member_id}`
+          })}
           renderInput={(params) => <TextField {...params} label="Who" />}
           freeSolo
           selectOnFocus

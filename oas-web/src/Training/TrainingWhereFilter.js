@@ -9,18 +9,19 @@ const filter = createFilterOptions();
 
 export const TrainingWhereFilter = ({
   parentData,
-  formData, 
+  formData,
   setFormData
 }) => {
   const {data, refetch } = useQuery(gql`
     query {
-      training_where {
+      training_wheres {
         id,
         name
       }
     }
   `)
-  let training_where = get(data, 'training_where', []) || []
+
+  let training_where = get(data, 'training_wheres', []) || []
 
   useEffect(() => {
     refetch()
