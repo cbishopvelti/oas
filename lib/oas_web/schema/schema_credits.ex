@@ -72,7 +72,7 @@ defmodule OasWeb.Schema.SchemaCredits do
         {weighted_data, _, _} = trans
         |> Enum.reverse()
         |> Enum.filter(fn tran -> Decimal.gt?(tran.amount, "0.0")  end)
-        |> Enum.reduce_while({[], amount, 0}, fn (credit, {accData, amount, usedAmount}) ->
+        |> Enum.reduce_while({[], Decimal.new(amount), 0}, fn (credit, {accData, amount, usedAmount}) ->
           newAmount = Decimal.sub(amount, Decimal.sub(credit.after_amount, usedAmount))
           {cont, newAccData} = if Decimal.lt?(newAmount, "0.0") do
             {:halt, { amount, credit.when}}
