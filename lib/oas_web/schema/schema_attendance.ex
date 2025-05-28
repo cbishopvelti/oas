@@ -99,7 +99,7 @@ defmodule OasWeb.Schema.SchemaAttendance do
             _ -> record
           end
 
-          case Oas.Credits.Credit.get_credit_amount(%{member_id: member.id}) do
+          case Oas.Credits.Credit2.get_credit_amount(%{member_id: member.id}) do
             {_, %Decimal{sign: -1}} -> Map.put(record, :warnings, ["No credits"] ++ Map.get(record, :warnings, []))
             _ -> record
           end

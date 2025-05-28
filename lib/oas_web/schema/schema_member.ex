@@ -54,7 +54,7 @@ defmodule OasWeb.Schema.SchemaMember do
     end
     field :credit_amount, :string do
       resolve fn %{id: id}, _, _ ->
-        {_, credit_amount} = Oas.Credits.Credit.get_credit_amount(%{member_id: id})
+        {_, credit_amount} = Oas.Credits.Credit2.get_credit_amount(%{member_id: id})
 
         {:ok, credit_amount}
       end
