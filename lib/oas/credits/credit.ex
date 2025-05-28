@@ -83,11 +83,13 @@ defmodule Oas.Credits.Credit do
     Ecto.Changeset.put_assoc(changeset, :credit, out)
   end
 
+  @deprecated "Use Oas.Credits.Credit2.get_credit_amount"
   def get_credit_amount(%{member_id: member_id}) do
     credits = from(c in Oas.Credits.Credit,
       where: c.who_member_id == ^member_id,
       preload: [:transaction, :debit, :credit, :membership, :attendance],
       order_by: [asc: coalesce(c.expires_on, c.when), asc_nulls_first: c.expires_on, asc: c.id]
+      # order_by: [asc_nulls_last: c.expires_on, asc: c.when, asc: c.id]
     )
     |> Oas.Repo.all()
 
@@ -97,13 +99,14 @@ defmodule Oas.Credits.Credit do
       total,
     }
   end
+
   def get_global_credits() do
     members = from(m in Oas.Members.Member, where: true)
     |> Oas.Repo.all()
     members
     |> Enum.map(fn %{id: id} -> %{member_id: id} end)
     |> Enum.map(fn arg ->
-      get_credit_amount(arg) |> elem(1) |> Decimal.to_float()
+      Oas.Credits.Credit2.get_credit_amount(arg) |> elem(1) |> Decimal.to_float()
     end)
     |> Enum.filter(fn amount -> amount > 0.0 end)
     |> Enum.sum()
@@ -121,15 +124,15 @@ defmodule Oas.Credits.Credit do
     |> Enum.sum()
   end
 
-  def deduct_debit(ledger, debit, opts \\ %{now: Date.utc_today()})
-  def deduct_debit([], debit, _opts) do
+  defp deduct_debit(ledger, debit, opts \\ %{now: Date.utc_today()})
+  defp deduct_debit([], debit, _opts) do
     [debit]
   end
   # Signs are the same, so can't deduct debt
-  def deduct_debit([%{amount: %Decimal{sign: sign}} = head | tail], %{amount: %Decimal{sign: sign}} = debit, opts ) do
+  defp deduct_debit([%{amount: %Decimal{sign: sign}} = head | tail], %{amount: %Decimal{sign: sign}} = debit, opts ) do
     [head | deduct_debit(tail, debit, opts)]
   end
-  def deduct_debit([head | tail], debit, opts ) do
+  defp deduct_debit([head | tail], debit, opts ) do
     # IO.puts("vvvvv")
     out = cond do
       # head has expired
@@ -148,7 +151,7 @@ defmodule Oas.Credits.Credit do
     out
   end
 
-  def process_credits(credits) do
+  defp process_credits(credits) do
     {trans, active_ledger} = credits |> Enum.map_reduce([], fn (credit, ledger) ->
       # IO.puts("vvvvvvvvvvvvvvvv")
       new_ledger = deduct_debit(ledger, credit)

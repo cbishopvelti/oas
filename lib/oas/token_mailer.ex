@@ -93,7 +93,7 @@ defmodule Oas.TokenMailer do
     end
   end
   def maybe_send_credits_warning(member) do
-    {credits, total_amount} = Oas.Credits.Credit.get_credit_amount(%{member_id: member.id})
+    {credits, total_amount} = Oas.Credits.Credit2.get_credit_amount(%{member_id: member.id})
 
     last_transaction = from(tra in Oas.Transactions.Transaction,
       select: max(tra.when)

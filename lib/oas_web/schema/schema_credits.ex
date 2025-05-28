@@ -28,7 +28,7 @@ defmodule OasWeb.Schema.SchemaCredits do
         #   where: c.who_member_id == ^member_id, order_by: [desc: c.when, desc: c.id]
         # )
         # |> Oas.Repo.all()
-        {credits, _} = Oas.Credits.Credit.get_credit_amount(%{member_id: member_id})
+        {credits, _} = Oas.Credits.Credit2.get_credit_amount(%{member_id: member_id})
 
         {:ok, credits}
       end
@@ -44,7 +44,7 @@ defmodule OasWeb.Schema.SchemaCredits do
           limit: 1
         ) |> Oas.Repo.one!()
 
-        {credits, _} = Oas.Credits.Credit.get_credit_amount(%{member_id: member.id})
+        {credits, _} = Oas.Credits.Credit2.get_credit_amount(%{member_id: member.id})
         {:ok, credits}
       end
     end
@@ -67,7 +67,7 @@ defmodule OasWeb.Schema.SchemaCredits do
         if (Decimal.lt?(amount, 0) ) do
           raise "Negative numbers not allowed"
         end
-        {trans, _} = Oas.Credits.Credit.get_credit_amount(%{member_id: from_member_id})
+        {trans, _} = Oas.Credits.Credit2.get_credit_amount(%{member_id: from_member_id})
         # Find date to use
         {weighted_data, _, _} = trans
         |> Enum.reverse()
