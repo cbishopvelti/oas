@@ -34,7 +34,10 @@ defmodule Oas.Gocardless.TransServer do
     {:ok, headers} = Oas.Gocardless.Transactions.process_transacitons()
 
     remaining = List.keyfind!(headers, "http_x_ratelimit_account_success_remaining", 0) |> elem(1) |> String.to_integer()
-    reset_seconds = List.keyfind!(headers, "http_x_ratelimit_account_success_reset", 0) |> elem(1) |> String.to_integer()
+    reset_seconds = List.keyfind!(headers, "http_x_ratelimit_account_success_reset", 0)
+      |> elem(1)
+      |> String.to_integer()
+      |> Kernel.+(60) # Insure we have a little buffer.
 
     timeout = div(reset_seconds, (remaining + 1))
     timeout = if Mix.env() != :test do
