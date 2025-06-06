@@ -58,3 +58,12 @@ instance-4-dev:/mnt/disks/data/
 tmux attach -t server
 tmux detach CTRL + b then d
 ```
+tmux scroll mode:
+```
+ctrl + b then [
+q
+```
+
+```
+certbot renew
+```
