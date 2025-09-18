@@ -7,10 +7,12 @@ import Config
 # any compile-time configuration in here, as it won't be applied.
 # The block below contains prod specific runtime configuration.
 
+
 # Start the phoenix server if environment is set and running in a release
-if System.get_env("PHX_SERVER") && System.get_env("RELEASE_NAME") do
+if System.get_env("PHX_SERVER") && System.get_env("RELEASE_NAME") || true do # DEBUG ONLY, remove || true
   config :oas, OasWeb.Endpoint, server: true
 end
+
 
 if config_env() == :prod and false do
   database_url =
