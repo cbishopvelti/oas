@@ -11,7 +11,7 @@ import Config
 
 config :oas, Oas.Repo,
   # database: System.get_env("DB_FILE") || "./dbs/sqlite-2023-dev.db",
-  database:  System.get_env("DB_FILE") || "./dbs/sqlite-prod-2025-09-13b.db",
+  database:  System.get_env("DB_FILE") || "./dbs/sqlite-prod-2025-09-13c.db",
   backup_database: "./dbs/sqlite-backup"
 
 config :oas, Oas.Repo.Replica1,

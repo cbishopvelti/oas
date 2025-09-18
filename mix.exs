@@ -35,7 +35,7 @@ defmodule Oas.MixProject do
   defp deps do
     [
       {:bcrypt_elixir, "~> 3.2.1"},
-      {:phoenix, "~> 1.7.18"},
+      {:phoenix, "~> 1.7.21"},
       {:phoenix_view, "~> 2.0"},
       {:phoenix_ecto, "~> 4.6.3"},
       {:ecto_sql, "~> 3.12.1"},
@@ -50,7 +50,7 @@ defmodule Oas.MixProject do
       {:phoenix_live_dashboard, "~> 0.8.6"},
       {:esbuild, "~> 0.3"}, # , runtime: Mix.env() == :dev
       {:hackney, "~> 1.18"},
-      {:gen_smtp, "~> 1.2"},
+      {:gen_smtp, "~> 1.3"},
       {:swoosh, "~> 1.3"},
       {:telemetry_metrics, "~> 0.6"},
       {:telemetry_poller, "~> 1.0"},

@@ -19,7 +19,8 @@ defmodule Oas.Gocardless.TransServer do
         Logger.info("Oas.Gocardless.TransServer.init success")
         Process.send_after(self(), :init, 0)
         {:ok, %{}}
-      _ ->
+      args ->
+        IO.inspect(args, label: "001 error")
         Logger.warning("Oas.Gocardless.TransServer.init failed, didn't start")
         :ignore
     end
