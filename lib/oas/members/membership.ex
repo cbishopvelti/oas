@@ -22,7 +22,6 @@ defmodule Oas.Members.Membership do
   end
 
   def add_membership(membership_period, member, %{now: now}) do
-    IO.puts("101")
     changeset = %Oas.Members.Membership{}
     |> changeset(%{
       member_id: member.id,
@@ -49,6 +48,13 @@ defmodule Oas.Members.Membership do
       preload: [memberships: ms]
     ) |> Oas.Repo.all
 
+    total_attendance = from(a in Oas.Trainings.Attendance,
+      join: m in assoc(a, :member),
+      where: m.id == ^member.id,
+      select: count(m.id)
+    ) |> Oas.Repo.one
+
+    config = from(c in Oas.Config.Config, select: c) |> Oas.Repo.one
     membership_periods |> Enum.map(fn membership_period ->
       # Does this member have any other trainings in that membership_period period?
       other_trainings_in_period = from(
@@ -57,10 +63,13 @@ defmodule Oas.Members.Membership do
         where: t.id != ^training.id and a.member_id == ^member.id and
           t.when >= ^membership_period.from and t.when <= ^membership_period.to
       )
-      |>Oas.Repo.all
+      |> Oas.Repo.all
 
       # If there are other trainings in that membership period, don't delete the membership
-      if (other_trainings_in_period |> length() > 0) do
+      if (
+        other_trainings_in_period |> length() > 0 and
+        total_attendance > config.temporary_trainings # Not a temporary member
+      ) do
         nil
       else
         [membership] = membership_period.memberships
