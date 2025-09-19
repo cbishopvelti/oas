@@ -23,7 +23,7 @@ defmodule OasWeb.Schema.SchemaTrainingWhere do
           %{id: id} -> Oas.Repo.get(Oas.Trainings.TrainingWhere, id)
           _ -> %Oas.Trainings.TrainingWhere{}
         end
-        |> Ecto.Changeset.cast(args, [:name, :credit_amount])
+        |> Oas.Trainings.TrainingWhere.changeset(args)
         |> (&(case &1 do
           %{data: %{id: nil}} -> Oas.Repo.insert(&1)
           %{data: %{id: _}} -> Oas.Repo.update(&1)

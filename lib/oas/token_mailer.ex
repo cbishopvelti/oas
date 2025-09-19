@@ -78,7 +78,7 @@ defmodule Oas.TokenMailer do
         && (Enum.member?([:gt], Date.compare(when1, last_transaction)))
     end)
 
-    IO.inspect(last_debits, label: "006")
+    # IO.inspect(last_debits, label: "006")
 
     case last_debits do
       [_a] -> true
@@ -111,7 +111,6 @@ defmodule Oas.TokenMailer do
     # last_two_cerdits = from(c from Oas.Credits.Credit,
     #   where: c.member_id == ^member.id and amount < 0
     # )
-
 
     href = "#{Application.fetch_env!(:oas, :public_url)}/credits"
 
