@@ -73,6 +73,7 @@ export const TrainingAttendanceRow = ({
         id: attendance.credit.id
       }
     })
+    setNewAmount(null);
     refetch()
   }
 
