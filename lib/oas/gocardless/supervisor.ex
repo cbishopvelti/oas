@@ -1,4 +1,5 @@
 defmodule Oas.Gocardless.Supervisor do
+  require Logger
   use Supervisor, restart: :temporary # restart: :transient
 
   # Process.whereis(Oas.Gocardless.AuthServer) |> Process.alive?()
@@ -8,10 +9,15 @@ defmodule Oas.Gocardless.Supervisor do
 
   @impl true
   def init(_init_arg) do
-    children = [
-      Oas.Gocardless.AuthServer,
-      Oas.Gocardless.TransServer
-    ]
+    children = case Application.get_env(:oas, :disable_gocardless, false) do
+      true ->
+        Logger.warning("Oas.Gocardless.Supervisor gocardless disabled")
+        []
+      false -> [
+        Oas.Gocardless.AuthServer,
+        Oas.Gocardless.TransServer
+      ]
+    end
 
     Supervisor.init(children,
       strategy: :rest_for_one,
