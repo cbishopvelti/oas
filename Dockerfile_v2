@@ -22,12 +22,12 @@ RUN apt-get install -y tmux
 RUN apt-get install -y inotify-tools
 RUN apt-get install -y nginx
 
-ARG SUBDOMAIN=gcloud
+ARG SUBDOMAIN=""
 
-ENV REACT_APP_ADMIN_URL=https://admin.${SUBDOMAIN}.oxfordshireacrosociety.co.uk
-ENV REACT_APP_SERVER_URL=https://server.${SUBDOMAIN}.oxfordshireacrosociety.co.uk
-ENV REACT_APP_PUBLIC_URL=https://www.${SUBDOMAIN}.oxfordshireacrosociety.co.uk
-ENV DOMAIN=.${SUBDOMAIN}.oxfordshireacrosociety.co.uk
+ENV REACT_APP_ADMIN_URL=https://admin${SUBDOMAIN}.oxfordshireacrosociety.co.uk
+ENV REACT_APP_SERVER_URL=https://server${SUBDOMAIN}.oxfordshireacrosociety.co.uk
+ENV REACT_APP_PUBLIC_URL=https://www${SUBDOMAIN}.oxfordshireacrosociety.co.uk
+ENV DOMAIN=${SUBDOMAIN}.oxfordshireacrosociety.co.uk
 
 WORKDIR /app
 COPY . .
