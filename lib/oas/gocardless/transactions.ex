@@ -194,15 +194,19 @@ defmodule Oas.Gocardless.Transactions do
           .generate_transaction_credits(transaction)
       end
     end)
-  end
-  def process_transacitons() do
-
+    end
+  # Oas.Gocardless.Transactions.process_transacitons("/gocardless_backup/transactions_2025-09-23T08:33:21.264600Z.json")
+  def process_transacitons(file_path \\ nil) do
     # get last transaction
     last_transaction = from(tra in Oas.Transactions.Transaction,
       select: max(tra.when)
     ) |> Oas.Repo.one
 
-    transactions = get_transactions_real(last_transaction)
+    transactions = if (file_path == nil) do
+      get_transactions_real(last_transaction)
+    else
+      get_transactions_file(file_path)
+    end
     # {:ok, transactions, headers} = Oas.Gocardless.TransactionsMockData.get_transactions_mock_1(last_transaction) # DEBUG ONLY, change to get_transactions_real()
 
     case transactions do
@@ -213,6 +217,13 @@ defmodule Oas.Gocardless.Transactions do
       {:to_many_requests, _, headers} ->
         {:ok, headers}
     end
+  end
+
+  def get_transactions_file(path) do
+
+    {:ok, data} = File.read!(path)
+    |> JSON.decode()
+    {:ok, data["transactions"]["booked"], nil}
   end
 
   # Oas.Gocardless.Transactions.get_transactions_real()

@@ -1,3 +1,5 @@
+import Ecto.Query, only: [from: 2]
+
 defmodule Oas.Gocardless.TransactionsCredits do
 
 
@@ -11,6 +13,7 @@ defmodule Oas.Gocardless.TransactionsCredits do
     end
   end
   defp process_credits_2(changeset, data) do
+    config = from(cc in Oas.Config.Config, select: cc) |> Oas.Repo.one
     configToken = case Oas.Attendance.get_token_amount(%{member_id: Ecto.Changeset.get_field(changeset, :who_member_id)}) do
       x when x < 0 ->
         configToken = Oas.Tokens.Token.getPossibleTokenAmount()
@@ -30,7 +33,8 @@ defmodule Oas.Gocardless.TransactionsCredits do
           when: Ecto.Changeset.get_field(changeset, :when),
           what: "Transaction (Gocardless)",
           who_member_id: Ecto.Changeset.get_field(changeset, :who_member_id),
-          amount: Ecto.Changeset.get_field(changeset, :amount)
+          amount: Ecto.Changeset.get_field(changeset, :amount),
+          expires_on: Date.add(changeset |> Ecto.Changeset.get_field(:when), config.token_expiry_days)
         })
         data = %{data | transaction_tags: ["Credits" | data.transaction_tags]}
         {changeset, data}
@@ -57,7 +61,8 @@ defmodule Oas.Gocardless.TransactionsCredits do
               amount: Decimal.sub(
                 Ecto.Changeset.get_field(changeset, :amount),
                 Decimal.mult(configToken.value, configToken.quantity)
-              )
+              ),
+              expires_on: Date.add(changeset |> Ecto.Changeset.get_field(:when), config.token_expiry_days)
             })
             |> Oas.Attendance.add_tokens_changeset(%{
               member_id: changeset |> Ecto.Changeset.get_field(:who_member_id),
