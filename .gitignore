@@ -48,3 +48,4 @@ config/fly.exs
 .github/workflows/fly-deploy.yml
 local_notes.md
 /data
+/gocardless_backup

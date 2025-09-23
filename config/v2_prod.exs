@@ -93,4 +93,5 @@ config :phoenix, :plug_init_mode, :runtime
 
 config :oas,
   app_url: System.get_env("REACT_APP_ADMIN_URL") || "https://admin.oxfordshireacrosociety.co.uk",
-  public_url: System.get_env("REACT_APP_PUBLIC_URL") || "https://www.oxfordshireacrosociety.co.uk"
+  public_url: System.get_env("REACT_APP_PUBLIC_URL") || "https://www.oxfordshireacrosociety.co.uk",
+  gocardless_backup: "/gocardless_backup"

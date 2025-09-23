@@ -11,7 +11,7 @@ import Config
 
 config :oas, Oas.Repo,
   # database: System.get_env("DB_FILE") || "./dbs/sqlite-2023-dev.db",
-  database:  System.get_env("DB_FILE") || "./dbs/sqlite-prod-2025-09-13b.db",
+  database:  System.get_env("DB_FILE") || "./dbs/sqlite-prod-2025-09-22.db",
   backup_database: "./dbs/sqlite-backup"
 
 config :oas, Oas.Repo.Replica1,
@@ -78,7 +78,7 @@ config :oas, OasWeb.Endpoint,
   ]
 
 # Do not include metadata nor timestamps in development logs
-config :logger, :console, format: "[$level] $message\n", level: :info
+config :logger, :console, format: "[$level] $message\n", level: :debug
 
 
 # Set a higher stacktrace during development. Avoid configuring such
@@ -91,4 +91,5 @@ config :phoenix, :plug_init_mode, :runtime
 config :oas,
   app_url: System.get_env("REACT_APP_ADMIN_URL") || "http://localhost:3999",
   public_url: System.get_env("REACT_APP_PUBLIC_URL") || "http://localhost:3998",
-  disable_gocardless: true
+  disable_gocardless: true,
+  gocardless_backup_dir: "./gocardless_backup"

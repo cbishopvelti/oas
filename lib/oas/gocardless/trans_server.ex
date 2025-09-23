@@ -48,7 +48,10 @@ defmodule Oas.Gocardless.TransServer do
     end
     timeout_ms = timeout * 1000
 
-    timer_ref = Process.send_after(self(), :init, timeout_ms)
+    # timer_ref = Process.send_after(self(), :init, timeout_ms)
+
+    # Once a day
+    timer_ref = Process.send_after(self(), :init, 86_400_060)
     {:noreply,
       %{
         timer_ref: timer_ref

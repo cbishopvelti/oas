@@ -46,7 +46,11 @@ Other venue algorithems
 ## Bugs
 GoCrAddless. ✅
 Text to always use the same Credits reference.
-Check gocardless crashing
+Check gocardless crashing ✅
 Fix credit transfur ✅
 Trainings Where filter.
 Dedup users filter with same name.
+
+### 2025-09-22
+
+Error if backup fails

@@ -207,7 +207,7 @@ defmodule Oas.Gocardless.Transactions do
 
     case transactions do
       {:ok, transactions, headers} ->
-        transactions = transactions |> Enum.take(1) # DEBUG ONLY
+        # transactions = transactions |> Enum.take(1) # DEBUG ONLY
         process_transactions_2(transactions)
         {:ok, headers}
       {:to_many_requests, _, headers} ->
@@ -215,26 +215,39 @@ defmodule Oas.Gocardless.Transactions do
     end
   end
 
-    # Oas.Gocardless.Transactions.get_transactions_real()
-  def get_transactions_real(from \\ nil) do
+  # Oas.Gocardless.Transactions.get_transactions_real()
+  # Oas.Gocardless.Transactions.get_transactions_real("2025-05-01", "2025-05-31")
+  def get_transactions_real(from \\ nil, to \\ nil) do
     {:ok, access_token} = GenServer.call(Oas.Gocardless.AuthServer, :get_access_token)
     account_id = from(cc in Oas.Config.Config, select: cc.gocardless_account_id) |> Oas.Repo.one()
 
-    query_string = if (from != nil) do
-      "?date_from=#{from}"
+    query = []
+    query = if (from != nil) do
+      query ++ ["date_from=#{from}"]
     else
-      ""
+      query
     end
-    Logger.info("Gocardless.Transactions.process_transacitons(#{from}) starting")
+
+    query = if (to != nil) do
+      query ++ ["date_to=#{to}"]
+    else
+      query
+    end
+
+    # Logger.info("Gocardless.Transactions.process_transacitons(#{from}) starting")
+    # IO.inspect("https://bankaccountdata.gocardless.com/api/v2/accounts/#{account_id}/transactions/?#{Enum.join(query, "&")}");
+    # exit("TEST")
 
     with {:ok, 200, headers, client} <- :hackney.request(
-      :get, "https://bankaccountdata.gocardless.com/api/v2/accounts/#{account_id}/transactions/#{query_string}",
+      :get, "https://bankaccountdata.gocardless.com/api/v2/accounts/#{account_id}/transactions/?#{Enum.join(query, "&")}",
       Oas.Gocardless.get_headers(access_token)
     )
     do
       {:ok, response_string} = :hackney.body(client)
+      Logger.debug(response_string)
       {:ok, data} = JSON.decode(response_string)
 
+      store_transactions(response_string)
       Logger.info("Gocardless.Transactions.process_transacitons(#{from}) finished", data: data)
 
       {:ok, data["transactions"]["booked"], headers}
@@ -244,5 +257,15 @@ defmodule Oas.Gocardless.Transactions do
         Logger.warning("Gocardless.Transactions.process_transacitons(#{from}) failed, retrying in #{seconds_retry}s")
         {:to_many_requests, nil, headers}
     end
+  end
+
+  # Oas.Gocardless.Transactions.store_transactions("test")
+  def store_transactions(data) do
+    dir = Application.get_env(:oas, :gocardless_backup_dir, "./gocardless_backup")
+
+    when1 = DateTime.utc_now() |> DateTime.to_iso8601()
+    path = Path.join(dir, "transactions_" <> when1 <> ".json")
+
+    File.write!(path, data)
   end
 end
