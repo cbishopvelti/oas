@@ -16,3 +16,7 @@ fix zed ** (Mix.Error) Can't continue due to errors on dependencies
 ```
 rm -r deps _build .elixir_ls && mix deps.get
 ```
+
+
+
+Oas.Gocardless.Transactions.process_transacitons("/gocardless_backup/transactions_2025-09-23T08:33:21.264600Z.json")
