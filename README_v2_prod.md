@@ -24,13 +24,12 @@ docker run -it -d \
 -p 80:80 -p 443:443 \
 -v /oas-dbs:/dbs \
 -v /mnt/disk2/oas-dbs-backup:/oas-dbs-backup \
+-v /gocardless_backup:/gocardless_backup \
 chrisjbishop155/oas:v2_prod
 ```
 
-https://cloud.google.com/compute/docs/disks/format-mount-disk-linux
-
 ```
-docker exec -it oas-dev /bin/bash
+docker exec -it oas /bin/bash
 cp /app/nginx/v2_nginx.conf /etc/nginx/nginx.conf
 certbot --nginx
 nginx -s stop

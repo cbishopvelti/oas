@@ -12,7 +12,7 @@ defmodule Oas.Gocardless.Supervisor do
     children = case Application.get_env(:oas, :disable_gocardless, false) do
       true ->
         Logger.warning("Oas.Gocardless.Supervisor gocardless disabled")
-        []
+        [Oas.Gocardless.AuthServer]
       false -> [
         Oas.Gocardless.AuthServer,
         Oas.Gocardless.TransServer
