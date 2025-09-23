@@ -54,3 +54,4 @@ Dedup users filter with same name.
 ### 2025-09-22
 
 Error if backup fails
+Delete from go_cardless
