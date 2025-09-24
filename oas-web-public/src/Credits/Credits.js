@@ -113,7 +113,7 @@ export const Credits = () => {
             <br/>
             {get(data, 'public_bacs', []).map((item, i) => <span key={i}>{item}<br/></ span>)}
             <br/>
-            Credits will be added to your account after your payment is processed. Credits will expire in 365 days. They are non refundable, but may be transferred between members.
+            Credits will be added to your account after your payment has cleared and been processed, this may take a few days. Credits will expire in 365 days. They are non refundable, but may be transferred between members.
           </Typography>
         </AccordionDetails>
       </Accordion>}

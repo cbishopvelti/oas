@@ -51,7 +51,7 @@ export const TransferCredit = ({
   }
 
   return <>
-    <IconButton title={`Transfer token`} onClick={() => setOpen(true)}>
+    <IconButton title={`Transfer credits`} onClick={() => setOpen(true)}>
       <TransferWithinAStationIcon />
     </IconButton>
     <Dialog open={open} onClose={() => {setOpen(false)}}>
