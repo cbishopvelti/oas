@@ -169,12 +169,15 @@ defmodule Oas.Gocardless.Transactions do
     |> Enum.map(fn transaction ->
       name = Map.get(transaction, "debtorName") || Map.get(transaction, "creditorName")
       amount = Map.get(transaction, "transactionAmount") |> Map.get("amount") |> Decimal.new()
-      maybe_member = from(m in Oas.Members.Member,
-        where: m.gocardless_name == ^name
-      ) |> Oas.Repo.one()
+      maybe_member = case name do
+          nil -> nil
+          name -> from(m in Oas.Members.Member,
+            where: m.gocardless_name == ^name
+          ) |> Oas.Repo.one()
+        end
       date = Map.get(transaction, "bookingDate")
       transaction
-      |> Map.put(:name, name)
+      |> Map.put(:name, name || Map.get(transaction, "remittanceInformationUnstructured") |> String.slice(0..26) |> String.trim())
       |> Map.put(:amount, amount)
       |> Map.put(:maybe_member, maybe_member)
       |> Map.put(:date, date |> Date.from_iso8601!())
@@ -194,8 +197,8 @@ defmodule Oas.Gocardless.Transactions do
           .generate_transaction_credits(transaction)
       end
     end)
-    end
-  # Oas.Gocardless.Transactions.process_transacitons("/gocardless_backup/transactions_2025-09-23T08:33:21.264600Z.json")
+  end
+  # Oas.Gocardless.Transactions.process_transacitons("./gocardless_backup/transactions_2025-09-24_test.json")
   def process_transacitons(file_path \\ nil) do
     # get last transaction
     last_transaction = from(tra in Oas.Transactions.Transaction,
