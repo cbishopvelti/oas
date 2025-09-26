@@ -43,6 +43,7 @@ import { Venue } from './Venue/Venue';
 import { Venues } from './Venue/Venues';
 import { Thing } from './Things/Thing';
 import { Things } from './Things/Things';
+import { PlaidRequisition } from './Plaid/PlaidConfig';
 
 
 const router = createBrowserRouter([
@@ -197,6 +198,10 @@ const router = createBrowserRouter([
         id: "thing-id",
         path: "thing/:id",
         element: <Thing />
+      }, {
+        id: "config-plaid",
+        path: "/config/plaid",
+        element: <PlaidRequisition />
       }
     ],
   },
