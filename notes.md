@@ -20,3 +20,12 @@ rm -r deps _build .elixir_ls && mix deps.get
 
 
 Oas.Gocardless.Transactions.process_transacitons("/gocardless_backup/transactions_2025-09-23T08:33:21.264600Z.json")
+
+
+### truelayer
+key: oas1-9c7b5d
+secret: a703bc02-4d64-4a54-bfd8-6617f0305556
+
+### Natwest
+client_id: Tx4l5sOg0pW8cAL0FFHRo70qBSPskInpRoLSXv0nCVQ=
+client_secret: ezKm6kGxtK40PbdK25fZ9LPsFcaVQ2m_B8ccLa6PvOc=

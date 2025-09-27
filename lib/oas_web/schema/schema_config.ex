@@ -1,4 +1,4 @@
-  import Ecto.Query, only: [from: 2]
+import Ecto.Query, only: [from: 2]
 defmodule OasWeb.Schema.SchemaConfig do
   use Absinthe.Schema.Notation
 

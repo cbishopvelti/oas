@@ -18,6 +18,7 @@ defmodule OasWeb.Schema do
   import_types OasWeb.Schema.SchemaCredits
   import_types OasWeb.Schema.SchemaTrainingWhere
   import_types OasWeb.Schema.SchemaThing
+  import_types OasWeb.Schema.SchemaTruelayer
 
   query do
     import_fields :attendance_queries
@@ -44,6 +45,8 @@ defmodule OasWeb.Schema do
     import_fields :credits_queries
 
     import_fields :thing_queries
+
+    import_fields :truelayer_queries
   end
 
 
@@ -70,6 +73,8 @@ defmodule OasWeb.Schema do
     import_fields :credits_mutations
 
     import_fields :thing_mutations
+
+    import_fields :truelayer_mutations
   end
 
   subscription do
