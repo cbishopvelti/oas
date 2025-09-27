@@ -275,10 +275,11 @@ defmodule Oas.Gocardless.Transactions do
 
   # Oas.Gocardless.Transactions.store_transactions("test")
   def store_transactions(data) do
-    dir = Application.get_env(:oas, :gocardless_backup_dir, "./gocardless_backup")
+    dir = Application.fetch_env!(:oas, :backup_dir)
+    # dir = Application.get_env(:oas, :gocardless_backup_dir, "./gocardless_backup")
 
     when1 = DateTime.utc_now() |> DateTime.to_iso8601()
-    path = Path.join(dir, "transactions_" <> when1 <> ".json")
+    path = Path.join([dir, "gocardless_backup", "transactions_" <> when1 <> ".json"])
 
     File.write!(path, data)
   end

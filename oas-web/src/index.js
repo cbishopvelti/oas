@@ -45,6 +45,8 @@ import { Thing } from './Things/Thing';
 import { Things } from './Things/Things';
 import { ConfigTruelayer } from './Truelayer/Config';
 import { TruelayerCallback } from './Truelayer/Callback';
+import { NatwestConfig } from './Natwest/Config';
+import { NatwestAuthFlow, NatwestCallback } from './Natwest/AuthFlow';
 
 
 const router = createBrowserRouter([
@@ -207,7 +209,23 @@ const router = createBrowserRouter([
         id: "truelayer-callback",
         path: "/truelayer/callback",
         element: <TruelayerCallback />
+      },
+      {
+        id: "config-natwest",
+        path: "/natwest",
+        element: <NatwestConfig />
+      },
+      {
+        id: "natwest-auth-flow",
+        path: "/natwest/auth-flow",
+        element: <NatwestAuthFlow />
+      },
+      {
+        id: "natwest-callback",
+        path: "/natwest/callback",
+        element: <NatwestCallback />
       }
+
     ],
   },
 ]);

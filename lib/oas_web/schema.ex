@@ -19,6 +19,7 @@ defmodule OasWeb.Schema do
   import_types OasWeb.Schema.SchemaTrainingWhere
   import_types OasWeb.Schema.SchemaThing
   import_types OasWeb.Schema.SchemaTruelayer
+  import_types OasWeb.Schema.SchemaNatwest
 
   query do
     import_fields :attendance_queries
@@ -75,6 +76,8 @@ defmodule OasWeb.Schema do
     import_fields :thing_mutations
 
     import_fields :truelayer_mutations
+
+    import_fields :natwest_mutations
   end
 
   subscription do

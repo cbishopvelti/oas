@@ -27,5 +27,13 @@ key: oas1-9c7b5d
 secret: a703bc02-4d64-4a54-bfd8-6617f0305556
 
 ### Natwest
+
+https://developer.sandbox.natwest.com/apps/4853042
+
+https://developer.sandbox.natwest.com/api-catalog/4767019/getting-started
+
+https://natwest-bankofapi-servicemanagement.atlassian.net/servicedesk/customer/portal/2/RSD-8378?created=true
+
+
 client_id: Tx4l5sOg0pW8cAL0FFHRo70qBSPskInpRoLSXv0nCVQ=
 client_secret: ezKm6kGxtK40PbdK25fZ9LPsFcaVQ2m_B8ccLa6PvOc=

@@ -15,7 +15,7 @@ export const MenuConfig = () => {
   const matches = useMatches();
 
   const ids = ["config"];
-  const subIds = ['config-truelayer', 'truelayer-callback'];
+  const subIds = ['config-truelayer', 'truelayer-callback', 'natwest-callback', 'config-natwest', 'natwest-auth-flow'];
   const allIds = [...ids, ...subIds];
   const forceIds = [...subIds];
 
@@ -61,8 +61,16 @@ export const MenuConfig = () => {
         to={`/truelayer`}
         end
         >
-        <ListItemText>TrueLayer</ListItemText>
+        <ListItemText>TrueLayer (Incomplete)</ListItemText>
       </MenuItem>
+      <MenuItem
+        sx={{ml:2}}
+        component={NavLink}
+        to={`/natwest`}
+        end
+      >
+        <ListItemText>Natwest</ListItemText>
+      </MenuItem >
     </Collapse>
   </>
 }

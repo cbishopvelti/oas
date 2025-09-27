@@ -118,9 +118,8 @@ defmodule Oas.Truelayer.Auth do
     IO.inspect(data, label: "012", limit: :infinity)
   end
 
-  # Oas.Gocardless.Transactions.store_transactions("test")
-  def store_transactions(data) do
-    dir = Application.get_env(:oas, :truelayer_backup_dir, "./truelayer_backup")
+  defp store_transactions(data) do
+    dir = Application.get_env(:oas, :truelayer_backup_dir, "./data/truelayer_backup")
 
     when1 = DateTime.utc_now() |> DateTime.to_iso8601()
     path = Path.join(dir, "transactions_" <> when1 <> ".json")
