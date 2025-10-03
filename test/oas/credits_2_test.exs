@@ -37,7 +37,7 @@ defmodule Oas.Credits2Test do
       assert Decimal.eq?(total, 11)
     end
 
-    @tag only: true
+    # @tag only: true
     test "Adds credits expire" do
       # Ecto.Adapters.SQL.Sandbox.checkout(Oas.Repo, sandbox: false)
       %{id: member_id, name: name} = member = Oas.MembersFixtures.member_fixture()
@@ -63,7 +63,7 @@ defmodule Oas.Credits2Test do
       assert Decimal.eq?(total, 3)
     end
 
-    @tag only: true
+    # @tag only: true
     test "One expired diff order" do
       # Ecto.Adapters.SQL.Sandbox.checkout(Oas.Repo, sandbox: false)
       %{id: member_id, name: name} = member = Oas.MembersFixtures.member_fixture()
