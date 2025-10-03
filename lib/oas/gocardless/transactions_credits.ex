@@ -16,13 +16,22 @@ defmodule Oas.Gocardless.TransactionsCredits do
     config = from(cc in Oas.Config.Config, select: cc) |> Oas.Repo.one
     configToken = case Oas.Attendance.get_token_amount(%{member_id: Ecto.Changeset.get_field(changeset, :who_member_id)}) do
       x when x < 0 ->
-        configToken = Oas.Tokens.Token.getPossibleTokenAmount()
+        configTokens = Oas.Tokens.Token.getPossibleTokenAmount()
         |> Enum.sort_by(fn %{value: value} -> value |> Decimal.to_float() end, :asc)
-        |> Enum.filter(fn %{quantity: no, value: value} ->
+
+        configToken = configTokens |> Enum.filter(fn %{quantity: no, value: value} ->
           (no * Decimal.to_float(value)) <= (Ecto.Changeset.get_field(changeset, :amount) |> Decimal.to_float())
         end)
         |> List.first()
-        %{configToken | quantity: abs(x)}
+        configToken = configToken || configTokens |> List.last()
+
+        # Can only buy the amount of outstanding tokens if you've payed enough to cover them.
+        amount = Ecto.Changeset.get_field(changeset, :amount)
+        max_num = Decimal.div(amount, configToken.value) |> Decimal.round(0, :floor)
+          |> Decimal.to_integer()
+        outstanding = abs(x)
+
+        %{configToken | quantity: min(max_num, outstanding)}
       _ -> nil
     end
 

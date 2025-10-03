@@ -168,6 +168,7 @@ defmodule Oas.Gocardless.Transactions do
     # PREPROCESS
     |> Enum.map(fn transaction ->
       name = Map.get(transaction, "debtorName") || Map.get(transaction, "creditorName")
+        || Map.get(transaction, "remittanceInformationUnstructured") |> String.slice(0..26) |> String.trim()
       amount = Map.get(transaction, "transactionAmount") |> Map.get("amount") |> Decimal.new()
       maybe_member = case name do
           nil -> nil
@@ -175,9 +176,10 @@ defmodule Oas.Gocardless.Transactions do
             where: m.gocardless_name == ^name
           ) |> Oas.Repo.one()
         end
+      IO.inspect(maybe_member, label: "301 maybe_member")
       date = Map.get(transaction, "bookingDate")
       transaction
-      |> Map.put(:name, name || Map.get(transaction, "remittanceInformationUnstructured") |> String.slice(0..26) |> String.trim())
+      |> Map.put(:name, name)
       |> Map.put(:amount, amount)
       |> Map.put(:maybe_member, maybe_member)
       |> Map.put(:date, date |> Date.from_iso8601!())

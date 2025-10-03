@@ -63,7 +63,8 @@ defmodule Oas.Attendance do
     training = Oas.Repo.get!(Oas.Trainings.Training, training_id)
     |> Oas.Repo.preload(:training_where)
 
-    now = Date.utc_today()
+    # now = Date.utc_today()
+    now = training.when
 
     member = Oas.Repo.get!(Oas.Members.Member, member_id)
     |> Oas.Repo.preload([

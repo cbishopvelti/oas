@@ -50,7 +50,7 @@ defmodule Oas.Credits.Credit2 do
   end
 
   # Returns new ledger
-  defp deduct_debit(ledger, debit, opts \\ %{now: Date.utc_today()})
+  defp deduct_debit(ledger, debit, _opts) # \\ %{now: Date.utc_today()}
   defp deduct_debit([], debit, _opts) do
     [debit]
   end
