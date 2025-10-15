@@ -118,7 +118,7 @@ function App() {
                 <ListItemText>My Credits</ListItemText>
               </MenuItem>
               <MenuItem component={NavLink} to={'/tokens'}>
-                <ListItemText>My Tokens</ListItemText>
+                <ListItemText><s>My Tokens</s> (depricated)</ListItemText>
               </MenuItem>
               {enableBooking && get(data, 'user') && <MenuItem component={NavLink} to={'/bookings'}>
                 <ListItemText>My Bookings</ListItemText>

@@ -38,20 +38,39 @@ config :oas, OasWeb.Endpoint,
     esbuild: {Esbuild, :install_and_run, [:default, ~w(--sourcemap=inline --watch)]}
   ]
 
-config :oas, Oas.Mailer, adapter: Swoosh.Adapters.SMTP,
+config :oas, Oas.Mailer,
+  adapter: Swoosh.Adapters.SMTP,
   relay: "smtp.gmail.com",
-  username: "chrisjbishop155",
+  username: "chrisjbishop155@gmail.com",
   port: 587,
-  password: "wmtlwjekfjcrksrf",
-  auth: :always
+  password: "jday chpj zfpx pikz",
+  tls: :always,
+  ssl: false,
+  auth: :always,
+  tls_options: [
+    versions: [:"tlsv1.2", :"tlsv1.3"],
+    verify: :verify_peer,
+    cacerts: :public_key.cacerts_get(),
+    depth: 99,
+    server_name_indication: 'smtp.gmail.com'
+  ]
 
 config :oas, Oas.TokenMailer,
   adapter: Swoosh.Adapters.SMTP,
   relay: "smtp.gmail.com",
-  username: "chrisjbishop155",
+  username: "chrisjbishop155@gmail.com",
   port: 587,
-  password: "wmtlwjekfjcrksrf",
-  auth: :always
+  password: "jday chpj zfpx pikz",
+  tls: :always,
+  ssl: false,
+  auth: :always,
+  tls_options: [
+    versions: [:"tlsv1.2", :"tlsv1.3"],
+    verify: :verify_peer,
+    cacerts: :public_key.cacerts_get(),
+    depth: 99,
+    server_name_indication: 'smtp.gmail.com'
+  ]
 
 # ## SSL Support
 #
