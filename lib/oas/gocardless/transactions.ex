@@ -176,7 +176,6 @@ defmodule Oas.Gocardless.Transactions do
             where: m.gocardless_name == ^name
           ) |> Oas.Repo.one()
         end
-      IO.inspect(maybe_member, label: "301 maybe_member")
       date = Map.get(transaction, "bookingDate")
       transaction
       |> Map.put(:name, name)

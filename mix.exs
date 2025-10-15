@@ -51,7 +51,7 @@ defmodule Oas.MixProject do
       {:esbuild, "~> 0.3"}, # , runtime: Mix.env() == :dev
       {:hackney, "~> 1.18"},
       {:gen_smtp, "~> 1.3"},
-      {:swoosh, "~> 1.3"},
+      {:swoosh, "~> 1.19.8"},
       {:telemetry_metrics, "~> 0.6"},
       {:telemetry_poller, "~> 1.0"},
       {:gettext, "~> 0.18"},

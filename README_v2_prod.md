@@ -66,3 +66,10 @@ q
 ```
 certbot renew
 ```
+
+
+#### gmail forwarding
+google app password ***REMOVED***
+
+##### Works:
+:gen_smtp_client.open([port: 587, relay: "smtp.gmail.com", username: "chrisjbishop155@gmail.com", password: "***REMOVED***", auth: :always, sls: :always, ssl: false, tls: :always, tls_options: [verify: :verify_none]])
