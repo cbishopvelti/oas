@@ -56,7 +56,8 @@ export const ConfigTokens = () => {
         gocardless_id,
         gocardless_key,
         gocardless_account_id,
-        credits
+        credits,
+        backup_recipient
       },
       gocardless_accounts {
         id
@@ -91,6 +92,7 @@ export const ConfigTokens = () => {
       $gocardless_key: String
       $gocardless_account_id: String
       $credits: Boolean
+      $backup_recipient: String
     ) {
       save_config_config(
         token_expiry_days: $token_expiry_days,
@@ -103,6 +105,7 @@ export const ConfigTokens = () => {
         gocardless_key: $gocardless_key,
         gocardless_account_id: $gocardless_account_id
         credits: $credits
+        backup_recipient: $backup_recipient
       ) {
         id
       }
@@ -142,13 +145,17 @@ export const ConfigTokens = () => {
 
 
   const saveGlobal = async () => {
-    await saveGlobalMutation({
-      variables: {
-        ...globalFormData,
-        token_expiry_days: parseInt(globalFormData.token_expiry_days),
-        temporary_trainings: parseInt(globalFormData.temporary_trainings)
-      }
-    })
+    try {
+      await saveGlobalMutation({
+        variables: {
+          ...globalFormData,
+          token_expiry_days: parseInt(globalFormData.token_expiry_days),
+          temporary_trainings: parseInt(globalFormData.temporary_trainings)
+        }
+      })
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   const errors = parseErrors([
@@ -166,7 +173,7 @@ export const ConfigTokens = () => {
       <FormControl fullWidth sx={{mb: 2}}>
         <TextField
             label="Society name (for emails)"
-            value={get(globalFormData, "name", '')}
+            value={get(globalFormData, "name", '') || ""}
             type="text"
             onChange={onChange({formData: globalFormData, setFormData: setGlobalFormData, key: "name"})}
             error={has(errors, "name")}
@@ -281,6 +288,17 @@ export const ConfigTokens = () => {
             error={has(errors, "token_expiry_days")}
             helperText={get(errors, 'token_expiry_days', []). join(" ")}
             />
+      </FormControl>
+
+      <FormControl fullWidth sx={{mb: 2}}>
+        <TextField
+            label="Backup recipient"
+            value={get(globalFormData, "backup_recipient", '') || ""}
+            type="email"
+            onChange={onChange({formData: globalFormData, setFormData: setGlobalFormData, key: "backup_recipient"})}
+            error={has(errors, "backup_recipient")}
+            helperText={get(errors, 'backup_recipient', []). join(" ")}
+          />
       </FormControl>
 
       <FormControl fullWidth>

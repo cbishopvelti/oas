@@ -54,8 +54,8 @@ config :oas, Oas.Mailer,
     depth: 99,
     server_name_indication: 'smtp.gmail.com'
   ]
-
 config :oas, Oas.TokenMailer,
+  from: {"OAS", "chris@oxfordshireacrosociety.co.uk"},
   adapter: Swoosh.Adapters.SMTP,
   relay: "smtp.gmail.com",
   username: "chrisjbishop155@gmail.com",
