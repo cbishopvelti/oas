@@ -20,6 +20,7 @@ defmodule OasWeb.Schema.SchemaConfig do
     field :gocardless_key, :string
     field :gocardless_account_id, :string
     field :credits, :boolean
+    field :backup_recipient, :string
   end
 
   object :public_config_config do
@@ -94,6 +95,7 @@ defmodule OasWeb.Schema.SchemaConfig do
       arg :gocardless_key, :string
       arg :gocardless_account_id, :string
       arg :credits, :boolean
+      arg :backup_recipient, :string
       resolve fn _, args, _ ->
 
         result = from(cc in Oas.Config.Config, select: cc)
@@ -102,8 +104,9 @@ defmodule OasWeb.Schema.SchemaConfig do
           :token_expiry_days, :temporary_trainings,
           :bacs, :enable_booking, :name,
           :gocardless_id, :gocardless_key, :gocardless_account_id,
-          :credits, :content
+          :credits, :content, :backup_recipient
         ], empty_values: [[], ""])
+        |> Ecto.Changeset.validate_format(:backup_recipient, ~r/@/)
         |> Oas.Repo.update
         |> OasWeb.Schema.SchemaUtils.handle_error
 

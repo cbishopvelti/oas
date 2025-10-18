@@ -12,7 +12,8 @@ import Config
 config :oas, Oas.Repo,
   # database: System.get_env("DB_FILE") || "./dbs/sqlite-2023-dev.db",
   # database:  System.get_env("DB_FILE") || "./dbs/sqlite-prod-2025-09-22.db",
-  database: "./dbs/prod-backup-2025-10-03T20:39:52.215384Z.db",
+  # database: "./dbs/prod-backup-2025-10-03T20:39:52.215384Z.db",
+  database: "./dbs/dev.db",
   backup_database: "./dbs/sqlite-backup"
 
 config :oas, Oas.Repo.Replica1,
@@ -39,7 +40,11 @@ config :oas, OasWeb.Endpoint,
     esbuild: {Esbuild, :install_and_run, [:default, ~w(--sourcemap=inline --watch)]}
   ]
 
-# config :oas, Oas.Mailer, adapter: Swoosh.Adapters.Local
+config :oas, Oas.Mailer, adapter: Swoosh.Adapters.Local
+
+config :oas, Oas.TokenMailer, adapter: Swoosh.Adapters.Local,
+  from: {"OAS", "chris@oxfordshireacrosociety.co.uk"}
+
 # config :swoosh, :api_client, false
 # config :oas, Oas.Mailer,
 #   adapter: Swoosh.Adapters.SMTP,
@@ -65,27 +70,22 @@ config :oas, OasWeb.Endpoint,
 #   ssl: true,
 #   auth: :always # Explicitly add this for clarity
 
-config :oas, Oas.Mailer,
-  adapter: Swoosh.Adapters.SMTP,
-  relay: "smtp.gmail.com",
-  username: "chrisjbishop155@gmail.com",
-  port: 587,
-  password: "***REMOVED***",
-  tls: :always,
-  ssl: false,
-  auth: :always,
-  tls_options: [
-    versions: [:"tlsv1.2", :"tlsv1.3"],
-    verify: :verify_peer,
-    cacerts: :public_key.cacerts_get(),
-    depth: 99,
-    server_name_indication: 'smtp.gmail.com'
-  ]
-
-
-
-
-
+# config :oas, Oas.Mailer,
+#   adapter: Swoosh.Adapters.SMTP,
+#   relay: "smtp.gmail.com",
+#   username: "chrisjbishop155@gmail.com",
+#   port: 587,
+#   password: "***REMOVED***",
+#   tls: :always,
+#   ssl: false,
+#   auth: :always,
+#   tls_options: [
+#     versions: [:"tlsv1.2", :"tlsv1.3"],
+#     verify: :verify_peer,
+#     cacerts: :public_key.cacerts_get(),
+#     depth: 99,
+#     server_name_indication: 'smtp.gmail.com'
+#   ]
 
 
 
