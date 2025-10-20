@@ -6,6 +6,8 @@ defmodule Oas.Repo do
     # adapter: Ecto.Adapters.Postgres
     adapter: Ecto.Adapters.SQLite3
 
+  require Logger
+
   # @replicas [
   #   Oas.Repo.Replica1
   # ]
@@ -22,6 +24,24 @@ defmodule Oas.Repo do
   #   end
   # end
 
+
+  # Oas.Repo.is_backup_file_valid("./dbs/sqlite-backup-2025-10-20T13:47:51.342997Z.db")
+  def is_backup_file_valid(path) do
+    case Exqlite.Basic.open(path) do
+      {:ok, conn} ->
+        try do
+          with {:ok, _a, %{rows: [_row]}, _b} <- Exqlite.Basic.exec(conn, "SELECT * FROM config_config WHERE TRUE") do
+            true
+          else
+            _ -> false
+          end
+        after
+          Exqlite.Basic.close(conn)
+        end
+      {:error, _} -> false
+    end
+  end
+
   # Oas.Repo.backup()
   def backup() do
     %{pid: _pid } = Ecto.Adapter.lookup_meta(Oas.Repo.get_dynamic_repo())
@@ -32,8 +52,8 @@ defmodule Oas.Repo do
 
     when1 = DateTime.utc_now() |> DateTime.to_iso8601()
 
-
-    {:ok, file} = File.open(Application.get_env(:oas, Oas.Repo)[:backup_database] <> "-" <> when1 <> ".db", [:write])
+    file_path = Application.get_env(:oas, Oas.Repo)[:backup_database] <> "-" <> when1 <> ".db"
+    {:ok, file} = File.open(file_path, [:write])
 
     {:ok, data} = Exqlite.Sqlite3.serialize(conn)
 
@@ -42,6 +62,12 @@ defmodule Oas.Repo do
 
     File.close(file)
     Exqlite.Sqlite3.close(conn)
+
+    if !is_backup_file_valid(file_path) do
+      Logger.error("The backup file is not valid")
+      Application.stop(:oas)
+      System.halt(1)
+    end
 
     config = from(
       c in Oas.Config.Config,

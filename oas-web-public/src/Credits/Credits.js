@@ -57,7 +57,6 @@ export const Credits = () => {
   })
 
   const credits = get(data, 'public_credits', []);
-  console.log("001 credits", credits);
   const errors = uniqBy(get(error, 'graphQLErrors', []), "message")
 
   const onClick = () => {
@@ -69,7 +68,7 @@ export const Credits = () => {
      0;
 
   return <Box>
-    {!get(outletContext, 'user.email') && <Box sx={{display: 'flex', alignItems: 'center'}}>
+    {!get(outletContext, 'user.email') && <><p>Enter your email to find your credits and reveal payment details.</p><Box sx={{display: 'flex', alignItems: 'center'}}>
       <FormControl sx={{flexGrow: 5}}>
         <TextField
           required
@@ -84,7 +83,7 @@ export const Credits = () => {
       <FormControl>
         <Button onClick={onClick}>Find</Button>
       </FormControl>
-    </Box>}
+    </Box></>}
 
     <Box>
       {errors.length !== 0 && <Stack sx={{ width: '100%', mt: 2 }}>

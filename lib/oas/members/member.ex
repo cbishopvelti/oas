@@ -1,3 +1,5 @@
+import Ecto.Query, only: [from: 2]
+
 defmodule Oas.Members.Member do
   use Ecto.Schema
   import Ecto.Changeset
@@ -27,6 +29,24 @@ defmodule Oas.Members.Member do
     timestamps()
   end
 
+  defp validate_name(changeset) do
+    name = changeset |> get_field(:name) |> String.downcase()
+    config = from(
+      c in Oas.Config.Config,
+      limit: 1
+    ) |> Oas.Repo.one!()
+
+    count = from(m in Oas.Members.Member,
+      where: fragment("lower(?)", m.name) ==  ^name,
+      select: count(m.id)
+    ) |> Oas.Repo.one!
+
+    case count do
+      0 -> changeset
+      _ -> changeset |> add_error(:name, "Name already exists, don't fill this form in again, please contact " <> (config.name || "support"))
+    end
+  end
+
   @doc """
   A member changeset for registration.
 
@@ -48,6 +68,7 @@ defmodule Oas.Members.Member do
     member
     |> cast(attrs, [:email, :password, :name, :is_active, :is_admin, :is_reviewer, :bank_account_name, :gocardless_name])
     |> validate_required([:name])
+    |> validate_name()
     |> validate_email()
     |> validate_password(opts)
   end
