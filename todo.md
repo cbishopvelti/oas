@@ -48,10 +48,14 @@ GoCrAddless. ✅
 Text to always use the same Credits reference.
 Check gocardless crashing ✅
 Fix credit transfur ✅
-Trainings Where filter.
-Dedup users filter with same name.
+Trainings Where filter. ✅
+
 
 ### 2025-09-22
 
-Error if backup fails
+Email database backup ✅
+Removed outdated information from the success page ✅.
+Stop people registering with the same name
+Error if backup fails ✅
+Change text on Credits page ✅
 Delete from go_cardless

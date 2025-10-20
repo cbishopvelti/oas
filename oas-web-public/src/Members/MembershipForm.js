@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Box,
   FormControl,
@@ -11,9 +11,10 @@ import {
   Button,
   FormHelperText
 } from "@mui/material"
-import { get, setWith, clone, find, snakeCase, has } from 'lodash'
+import { get, setWith, clone, find, snakeCase, has, startsWith } from 'lodash'
 import { useMutation, gql} from '@apollo/client'
 import { useNavigate, generatePath, createSearchParams, useOutletContext } from 'react-router-dom'
+import moment from 'moment';
 
 const onChange = ({formData, setFormData, isCheckbox, key}) => (event) => {
   let value = event.target.value
@@ -64,6 +65,9 @@ export const MembershipForm = () => {
   const [formData, setFormData] = useState(defaultFormData);
   const [outletContext] = useOutletContext();
   const navigate = useNavigate();
+  const [disableLocalStorageUntil, setDisableLocalStorageUntil] = useState(
+    localStorage.getItem("disable_registration_until") ? moment(localStorage.getItem("disable_registration_until")) : false
+  )
 
   const [mutation, { error }] = useMutation(gql`
     mutation ($name: String!, $email: String!, $password: String, $member_details: MemberDetailsArg!) {
@@ -72,8 +76,20 @@ export const MembershipForm = () => {
       }
     }
   `)
-  let errors = get(error, 'graphQLErrors', [])
-  errors = parseErrors(errors);
+
+  let gqlErrors = get(error, 'graphQLErrors', [])
+  // const disable_registration = get(errors, "")
+  const errors = parseErrors(gqlErrors);
+
+  useEffect(() => {
+    const exists = find(errors.name, (erro) => startsWith(erro, "name: Name already exists"))
+    if (exists) {
+      const disable_until = moment().add(1, "hours")
+      setDisableLocalStorageUntil(disable_until)
+      localStorage.setItem("disable_registration_until", disable_until.toISOString())
+    }
+  }, [gqlErrors])
+
   const register = (formData) => async () => {
     const result = await mutation({
       variables: formData
@@ -87,12 +103,11 @@ export const MembershipForm = () => {
 
     outletContext.refetchUser();
 
-    console.log("001 success", result)
     if (result?.data?.public_register?.success) {
       navigate(path);
     }
   }
-
+  // console.log("001", disableLocalStorageUntil.toString(), moment().toString(), disableLocalStorageUntil.isAfter(moment()))
   return <Stack spacing={2}>
     <Stack sx={{ width: '100%' }}>
         {get(errors, "global", []).map((message, i) => (
@@ -262,7 +277,14 @@ export const MembershipForm = () => {
     </FormControl>
 
     <FormControl >
-      <Button onClick={register(formData)}>Register</Button>
+      <Button
+        disabled={disableLocalStorageUntil && disableLocalStorageUntil.isAfter(moment())}
+        onClick={register(formData)}>Register</Button>
+      <FormHelperText
+        error={disableLocalStorageUntil && disableLocalStorageUntil.isAfter(moment())}>
+        This form has been disable due to previous invalid input. Contact support.
+      </FormHelperText>
     </FormControl>
+
   </Stack>
 }

@@ -6,9 +6,12 @@ import { Table, TableContainer, Box, Button,
   TableCell, TextField, Alert,
   TableBody, IconButton, FormControl,
   Switch, FormControlLabel, InputLabel,
-  MenuItem, Select
+  MenuItem, Select,
+  InputAdornment, OutlinedInput
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { get, has } from 'lodash'
 import SaveIcon from '@mui/icons-material/Save';
 import { parseErrors } from "../utils/util";
@@ -34,6 +37,7 @@ export const ConfigTokens = () => {
   const { setTitle } = useOutletContext();
   const [formData, setFormData] = useState({})
   const [globalFormData, setGlobalFormData] = useState({})
+  const [showGocardlessKey, setShowGocardlessKey] = useState(false);
 
   useEffect(() => {
     setTitle("Config")
@@ -228,18 +232,35 @@ export const ConfigTokens = () => {
             />
       </FormControl>
       <FormControl fullWidth sx={{mb: 2}}>
-        <TextField
+        <InputLabel htmlFor="gocardless-key">Gocardless key</InputLabel>
+        <OutlinedInput
+            id="gocardless-key"
             label="Go cardless key"
             value={get(globalFormData, "gocardless_key", '') || ''}
-            type="text"
+            type={showGocardlessKey ? "text" : "password"}
             onChange={onChange({formData: globalFormData, setFormData: setGlobalFormData, key: "gocardless_key"})}
             error={has(errors, "gocardless_key")}
             helperText={get(errors, 'gocardless_key', []). join(" ")}
+            endAdornment={
+              <InputAdornment position="end">
+                <IconButton
+                  aria-label={
+                    showGocardlessKey ? 'hide the password' : 'display the password'
+                  }
+                  onClick={() => {
+                    setShowGocardlessKey(!showGocardlessKey)
+                  }}
+                  edge="end"
+                >
+                  {showGocardlessKey ? <VisibilityOff /> : <Visibility />}
+                </IconButton>
+              </InputAdornment>
+            }
             />
       </FormControl>
 
       <FormControl fullWidth sx={{mb: 2}}>
-        <Link to={'/config/gocardless'}>Configure gocardless</Link>
+        <Link to={'/config/gocardless'}>Gocardless requisition flow</Link>
       </FormControl>
 
       {gocardless_accounts &&
