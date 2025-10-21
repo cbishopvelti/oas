@@ -11,10 +11,12 @@ defmodule OasWeb.Schema.SchemaUtils do
     end)
   end
 
-  def handle_error(result) do
+  def handle_error(result, assoc \\ nil) do
 
     case result do
-      {:error, %{errors: errors}} ->
+      {:error, %{errors: errors, changes: changes}} ->
+
+        errors = errors ++ Map.get(changes, assoc, %{errors: []}).errors
 
         outError = errors
         |> Enum.map(fn {key, {value, options}} ->

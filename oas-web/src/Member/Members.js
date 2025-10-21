@@ -22,6 +22,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import PaidIcon from '@mui/icons-material/Paid';
 import { includes } from 'lodash';
 import DownloadIcon from '@mui/icons-material/Download';
+import TollIcon from '@mui/icons-material/Toll'
 import { unparse } from 'papaparse'
 import { useState } from '../utils/useState';
 
@@ -37,13 +38,17 @@ export const DeleteMember = ({ refetch }) => {
     let out = []
 
     // if (get(member, "transactions", []).length > 0) {
-      out = [...out, <IconButton key={"1"} title={`Go to ${get(member, 'name')}'s transactions`} component={Link} to={`/member/${member.id}/transactions`}>
-        <PaidIcon />
-      </IconButton>]
+    out = [...out, <IconButton key={"1"} title={`Go to ${get(member, 'name')}'s transactions`} component={Link} to={`/member/${member.id}/transactions`}>
+      <PaidIcon />
+    </IconButton>,
+    <IconButton key={"2"} title={`Go to ${get(member, 'name')}'s credits`} component={Link} to={`/member/${member.id}/credits`}>
+      <TollIcon />
+    </IconButton>
+    ]
     // }
 
     if (get(member, "tokens", []).length == 0 && get(member, "membership_periods", []).length == 0 && get(member, "transactions", []).length == 0) {
-      out = [...out, <IconButton key={"2"} title={`Delete ${get(member, 'name')}`} onClick={async () => {
+      out = [...out, <IconButton key={","} title={`Delete ${get(member, 'name')}`} onClick={async () => {
         await mutation({
           variables: {
             member_id: member.id,
@@ -69,6 +74,7 @@ export const Members = () => {
       name,
       email,
       token_count,
+      credit_amount,
       inserted_at,
       member_status,
       tokens {
@@ -126,7 +132,7 @@ export const Members = () => {
       <FormControl sx={{m:2}}>
         <FormControlLabel
             control={
-              <Switch 
+              <Switch
                 checked={get(filterData, 'show_all', false) || false}
                 onChange={(event) => setFilterData({...filterData, show_all: event.target.checked})}/>
             }
@@ -137,6 +143,9 @@ export const Members = () => {
           id="member"
           value={filterData.member?.member_name || ''}
           options={members.map(({name, id}) => ({label: name, member_id: id }))}
+          getOptionKey={((item) => {
+            return `${item.label}_${item.member_id}`
+          })}
           renderInput={(params) => <TextField {...params} label="Who" />}
           freeSolo
           selectOnFocus

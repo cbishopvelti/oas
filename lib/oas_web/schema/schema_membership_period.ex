@@ -1,4 +1,4 @@
-import Ecto.Query, only: [from: 2, where: 3, dynamic: 2]
+import Ecto.Query, only: [from: 2, where: 3]
 defmodule OasWeb.Schema.SchemaMembershipPeriod do
   use Absinthe.Schema.Notation
 
@@ -12,10 +12,13 @@ defmodule OasWeb.Schema.SchemaMembershipPeriod do
     field :memberships, list_of(:membership)
   end
 
+  defp with_transaction_id(nil), do: true
+  defp with_transaction_id(transaction_id), do: Ecto.Query.dynamic([m], m.transaction_id != ^transaction_id)
+
   object :membership_period_queries do
     field :membership_period, :membership_period do
       arg :id, non_null(:integer)
-      resolve fn _, %{id: id}, _ -> 
+      resolve fn _, %{id: id}, _ ->
 
         membershipQuery = from(m in Oas.Members.Membership, order_by: [desc: m.id])
 
@@ -30,7 +33,7 @@ defmodule OasWeb.Schema.SchemaMembershipPeriod do
     field :membership_periods, list_of(:membership_period) do
       arg :member_id, :integer # not :member_id, with :transaction_id
       arg :transaction_id, :integer
-      resolve fn _, args, _ -> 
+      resolve fn _, args, _ ->
         query = from(
           p in Oas.Members.MembershipPeriod,
           as: :membership_periods,
@@ -39,23 +42,22 @@ defmodule OasWeb.Schema.SchemaMembershipPeriod do
           order_by: [desc: p.to, desc: p.id]
         )
         # For selecting membership periods for the transaction drop down. Removing membreshipPeriods this member already belongs to
-        |> (&(case args do 
+        |> (&(case args do
           %{member_id: member_id} when member_id != nil ->
 
             transaction_id = Map.get(args, :transaction_id, 0)
-
-            where(&1, [p], 
+            #  and m.member_id == ^member_id and parent_as(:membership_periods).id == m.membership_period_id
+            where = Ecto.Query.dynamic([m], ^with_transaction_id(transaction_id) and m.member_id == ^member_id and parent_as(:membership_periods).id == m.membership_period_id)
+            where(&1, [p],
               not(exists(from(
                 m in Oas.Members.Membership,
-                where: m.member_id == ^member_id and parent_as(:membership_periods).id == m.membership_period_id and (
-                  is_nil(m.transaction_id) or m.transaction_id != ^transaction_id
-                )
+                where: ^where
               )))
             )
           _ ->
             &1
         end)).()
-        
+
 
         membershipPeriods = Oas.Repo.all(query)
 
@@ -71,7 +73,7 @@ defmodule OasWeb.Schema.SchemaMembershipPeriod do
       arg :name, non_null(:string)
       arg :from, non_null(:string)
       arg :to, non_null(:string)
-      arg :value, non_null(:string)   
+      arg :value, non_null(:string)
       resolve fn _parent, args, _ ->
         membershipPeriod = case Map.get(args, :id, nil) do
           nil -> %Oas.Members.MembershipPeriod{}
@@ -100,8 +102,8 @@ defmodule OasWeb.Schema.SchemaMembershipPeriod do
     field :delete_membership, type: :success do
       arg :membership_period_id, non_null(:integer)
       arg :member_id, non_null(:integer)
-      resolve fn _, %{membership_period_id: membership_period_id, member_id: member_id}, _ -> 
-        from(m in Oas.Members.Membership, 
+      resolve fn _, %{membership_period_id: membership_period_id, member_id: member_id}, _ ->
+        from(m in Oas.Members.Membership,
           where: m.membership_period_id == ^membership_period_id and m.member_id == ^member_id
         ) |> Oas.Repo.delete_all
 

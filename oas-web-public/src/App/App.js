@@ -114,14 +114,17 @@ function App() {
               {(!enableBooking || !get(data, 'user')) && <MenuItem component={NavLink} to={'/register'}>
                 <ListItemText>Register</ListItemText>
               </MenuItem>}
+              <MenuItem component={NavLink} to={'/credits'}>
+                <ListItemText>My Credits</ListItemText>
+              </MenuItem>
               <MenuItem component={NavLink} to={'/tokens'}>
-                <ListItemText>My Tokens</ListItemText>
+                <ListItemText><s>My Tokens</s> (depricated)</ListItemText>
               </MenuItem>
               {enableBooking && get(data, 'user') && <MenuItem component={NavLink} to={'/bookings'}>
                 <ListItemText>My Bookings</ListItemText>
               </MenuItem>}
 
-              {enableBooking && <>
+              {enableBooking && /* Fixed on the branch v2-credits-booking */ <>
                 <Divider />
 
                 {!!get(data, "user") && [<ListItem key="1">
@@ -136,7 +139,7 @@ function App() {
                 >
                   <a
                     style={{
-                      color: 'inherit', textDecoration: 'none', 
+                      color: 'inherit', textDecoration: 'none',
                       display: 'inline-block',
                       width: '100%',
                       padding: '6px 16px'

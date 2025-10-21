@@ -1,0 +1,167 @@
+{
+  "results": [
+    {
+      "timestamp": "2025-09-23T00:00:00Z",
+      "description": "MARSTON SCOUT HALLOAS RENT 21/09/25 VIA ONLINE - PYMT FP 22/09/25 10 52215826505325000N",
+      "transaction_type": "DEBIT",
+      "transaction_category": "TRANSFER",
+      "transaction_classification": [],
+      "amount": -54.0,
+      "currency": "GBP",
+      "transaction_id": "42eb41566b3c16a725523be0c1b19442",
+      "provider_transaction_id": "BED4AAA0FEFE11760A945987BB6DBA096EAC9DC5497268F4CD0CD2DE5FB2090B6D01BAD9511A396838ED86B08A0685F5",
+      "normalised_provider_transaction_id": "txn-468e0246b50983471",
+      "running_balance": { "currency": "GBP", "amount": 4595.87 },
+      "meta": {
+        "provider_category": "DPC",
+        "transaction_type": "Debit",
+        "provider_id": "BED4AAA0FEFE11760A945987BB6DBA096EAC9DC5497268F4CD0CD2DE5FB2090B6D01BAD9511A396838ED86B08A0685F5"
+      }
+    },
+    {
+      "timestamp": "2025-09-23T00:00:00Z",
+      "description": "Marston Scout HallOAS RENT 14/09/25 VIA ONLINE - PYMT FP 22/09/25 10 06215800585090000N",
+      "transaction_type": "DEBIT",
+      "transaction_category": "TRANSFER",
+      "transaction_classification": [],
+      "amount": -54.0,
+      "currency": "GBP",
+      "transaction_id": "aa9568f240d2153bfb5e6df9d79eed1e",
+      "provider_transaction_id": "BED4AAA0FEFE11760A945987BB6DBA096EAC9DC5497268F4CD0CD2DE5FB2090B42F047DCAA293E92D3218243C1A00F94",
+      "normalised_provider_transaction_id": "txn-5f388947db346b0b6",
+      "running_balance": { "currency": "GBP", "amount": 4649.87 },
+      "meta": {
+        "provider_category": "DPC",
+        "transaction_type": "Debit",
+        "provider_id": "BED4AAA0FEFE11760A945987BB6DBA096EAC9DC5497268F4CD0CD2DE5FB2090B42F047DCAA293E92D3218243C1A00F94"
+      }
+    },
+    {
+      "timestamp": "2025-09-23T00:00:00Z",
+      "description": "CRITCHLEY SG SCOTT CRITCHLEY FP 23/09/25 1156 31115639311600000R.",
+      "transaction_type": "CREDIT",
+      "transaction_category": "CREDIT",
+      "transaction_classification": [],
+      "amount": 50.0,
+      "currency": "GBP",
+      "transaction_id": "b1f0105e89f819fb422115bf8274a0d0",
+      "provider_transaction_id": "BED4AAA0FEFE11760A945987BB6DBA096EAC9DC5497268F4CD0CD2DE5FB2090B9A4006D3A7009CD5A8F69B1BC859DEA2",
+      "normalised_provider_transaction_id": "txn-38ef2ccd710c56862",
+      "running_balance": { "currency": "GBP", "amount": 4703.87 },
+      "meta": {
+        "provider_category": "BAC",
+        "transaction_type": "Credit",
+        "provider_id": "BED4AAA0FEFE11760A945987BB6DBA096EAC9DC5497268F4CD0CD2DE5FB2090B9A4006D3A7009CD5A8F69B1BC859DEA2"
+      }
+    },
+    {
+      "timestamp": "2025-09-23T00:00:00Z",
+      "description": "HEDEGAARD A ANNE TOKENS FP 22/09/25 2201 RP4679965999859600",
+      "transaction_type": "CREDIT",
+      "transaction_category": "CREDIT",
+      "transaction_classification": [],
+      "amount": 80.0,
+      "currency": "GBP",
+      "transaction_id": "9579bbdf2ac8dcc179d1af99dea362d9",
+      "provider_transaction_id": "BED4AAA0FEFE11760A945987BB6DBA096EAC9DC5497268F4CD0CD2DE5FB2090BBD405BCD3F4E2F3F3A5E2568CE06E67B",
+      "normalised_provider_transaction_id": "txn-de2a4cd6bc04fd6b6",
+      "running_balance": { "currency": "GBP", "amount": 4653.87 },
+      "meta": {
+        "provider_category": "BAC",
+        "transaction_type": "Credit",
+        "provider_id": "BED4AAA0FEFE11760A945987BB6DBA096EAC9DC5497268F4CD0CD2DE5FB2090BBD405BCD3F4E2F3F3A5E2568CE06E67B"
+      }
+    },
+    {
+      "timestamp": "2025-09-23T00:00:00Z",
+      "description": "BENJAMIN RICHARD MSENT FROM REVOLUT FP 23/09/25 1719 REV586443704796207",
+      "transaction_type": "CREDIT",
+      "transaction_category": "CREDIT",
+      "transaction_classification": [],
+      "amount": 100.0,
+      "currency": "GBP",
+      "transaction_id": "4d82e34a22c614f036cfb8a9cda3496e",
+      "provider_transaction_id": "BED4AAA0FEFE11760A945987BB6DBA096EAC9DC5497268F4CD0CD2DE5FB2090BAF7BF3F39D8BC83B04EA4EF1EB55F903",
+      "normalised_provider_transaction_id": "txn-0e3c7eec138303f82",
+      "running_balance": { "currency": "GBP", "amount": 4573.87 },
+      "meta": {
+        "provider_category": "BAC",
+        "transaction_type": "Credit",
+        "provider_id": "BED4AAA0FEFE11760A945987BB6DBA096EAC9DC5497268F4CD0CD2DE5FB2090BAF7BF3F39D8BC83B04EA4EF1EB55F903"
+      }
+    },
+    {
+      "timestamp": "2025-09-23T00:00:00Z",
+      "description": "M WEBB MATT WEBB FP 23/09/25 1634 400000001638968774",
+      "transaction_type": "CREDIT",
+      "transaction_category": "CREDIT",
+      "transaction_classification": [],
+      "amount": 40.0,
+      "currency": "GBP",
+      "transaction_id": "0b6397b376200a152c6a545f5ee0c5ad",
+      "provider_transaction_id": "BED4AAA0FEFE11760A945987BB6DBA096EAC9DC5497268F4CD0CD2DE5FB2090B1B229D12FC1B6C5C4196CE7253BDAF23",
+      "normalised_provider_transaction_id": "txn-13dd57899d0cb4948",
+      "running_balance": { "currency": "GBP", "amount": 4473.87 },
+      "meta": {
+        "provider_category": "BAC",
+        "transaction_type": "Credit",
+        "provider_id": "BED4AAA0FEFE11760A945987BB6DBA096EAC9DC5497268F4CD0CD2DE5FB2090B1B229D12FC1B6C5C4196CE7253BDAF23"
+      }
+    },
+    {
+      "timestamp": "2025-09-23T00:00:00Z",
+      "description": "L OZAROWSKA LIDIA OZAROWSKA FP 23/09/25 1211 500000001634027226",
+      "transaction_type": "CREDIT",
+      "transaction_category": "CREDIT",
+      "transaction_classification": [],
+      "amount": 40.0,
+      "currency": "GBP",
+      "transaction_id": "50c9aa973f3d774667d9d7cc9f330d6b",
+      "provider_transaction_id": "BED4AAA0FEFE11760A945987BB6DBA096EAC9DC5497268F4CD0CD2DE5FB2090BBB7C79FDEC40C900813DACCA1709053D",
+      "normalised_provider_transaction_id": "txn-0c7b9153652d555ca",
+      "running_balance": { "currency": "GBP", "amount": 4433.87 },
+      "meta": {
+        "provider_category": "BAC",
+        "transaction_type": "Credit",
+        "provider_id": "BED4AAA0FEFE11760A945987BB6DBA096EAC9DC5497268F4CD0CD2DE5FB2090BBB7C79FDEC40C900813DACCA1709053D"
+      }
+    },
+    {
+      "timestamp": "2025-09-22T00:00:00Z",
+      "description": "HEDEGAARD ANNE ACCOUNT TRANSFER FP 20/09/25 2349 RP4679965741250500",
+      "transaction_type": "CREDIT",
+      "transaction_category": "CREDIT",
+      "transaction_classification": [],
+      "amount": 4388.87,
+      "currency": "GBP",
+      "transaction_id": "fd8fff6745c395bcad1be99b4efa5137",
+      "provider_transaction_id": "BED4AAA0FEFE11760A945987BB6DBA09330F8A0708E9D722F6F03C233D880D4BC177DCE9B687300112CE3A2F4E6B395B",
+      "normalised_provider_transaction_id": "txn-28461ab706e7121b7",
+      "running_balance": { "currency": "GBP", "amount": 4393.87 },
+      "meta": {
+        "provider_category": "BAC",
+        "transaction_type": "Credit",
+        "provider_id": "BED4AAA0FEFE11760A945987BB6DBA09330F8A0708E9D722F6F03C233D880D4BC177DCE9B687300112CE3A2F4E6B395B"
+      }
+    },
+    {
+      "timestamp": "2025-09-22T00:00:00Z",
+      "description": "CHRISTOPHER BISHOPCHRIS B FP 20/09/25 0056 21005624209709000NCHASE",
+      "transaction_type": "CREDIT",
+      "transaction_category": "CREDIT",
+      "transaction_classification": [],
+      "amount": 1.0,
+      "currency": "GBP",
+      "transaction_id": "9e5effd937dce94ea48f23fce444fd62",
+      "provider_transaction_id": "BED4AAA0FEFE11760A945987BB6DBA09330F8A0708E9D722F6F03C233D880D4B79F9EDD524950564C4CCAEAC3A76FF3E",
+      "normalised_provider_transaction_id": "txn-0dfa3bbb6d42a5708",
+      "running_balance": { "currency": "GBP", "amount": 5.0 },
+      "meta": {
+        "provider_category": "BAC",
+        "transaction_type": "Credit",
+        "provider_id": "BED4AAA0FEFE11760A945987BB6DBA09330F8A0708E9D722F6F03C233D880D4B79F9EDD524950564C4CCAEAC3A76FF3E"
+      }
+    }
+  ],
+  "status": "Succeeded"
+}

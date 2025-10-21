@@ -1,6 +1,5 @@
 defmodule Oas.Trainings.TrainingTags do
   use Ecto.Schema
-  import Ecto.Changeset
 
   schema "training_tags" do
     field :name, :string
@@ -8,7 +7,6 @@ defmodule Oas.Trainings.TrainingTags do
   end
 
   def changeset(struct, params) do
-    IO.puts("102 training_tags.changeset")
     struct
     |> Ecto.Changeset.cast(params, [:name])
   end

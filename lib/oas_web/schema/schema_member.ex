@@ -18,6 +18,7 @@ defmodule OasWeb.Schema.SchemaMember do
     value :x_member
     value :temporary_member
     value :not_member
+    value :honorary_member
   end
 
   def member_status_resolver(args = %{id: id}, _, _) do
@@ -42,6 +43,7 @@ defmodule OasWeb.Schema.SchemaMember do
     field :name, :string
     field :email, :string
     field :bank_account_name, :string
+    field :gocardless_name, :string
     field :tokens, list_of(:token)
     field :token_count, :integer do
       resolve fn %{id: id}, _, _ ->
@@ -50,23 +52,31 @@ defmodule OasWeb.Schema.SchemaMember do
         {:ok, token_count}
       end
     end
+    field :credit_amount, :string do
+      resolve fn %{id: id}, _, _ ->
+        {_, credit_amount} = Oas.Credits.Credit2.get_credit_amount(%{member_id: id})
+
+        {:ok, credit_amount}
+      end
+    end
 
     field :is_active, :boolean
     field :is_admin, :boolean
     field :is_reviewer, :boolean
     field :inserted_at, :string
+    field :honorary_member, :boolean
 
     field :member_details, :member_details
-    
+
     field :membership_periods, list_of(:membership_period) do
-      resolve fn %{id: id}, _, _ -> 
+      resolve fn %{id: id}, _, _ ->
         member = Oas.Repo.get(Oas.Members.Member, id) |> Oas.Repo.preload(:membership_periods)
         {:ok, member.membership_periods}
       end
     end
 
     field :memberships, list_of(:membership) do
-      resolve fn %{id: id}, _, _ -> 
+      resolve fn %{id: id}, _, _ ->
         member = Oas.Repo.get(Oas.Members.Member, id)
         |> Oas.Repo.preload(memberships: [:transaction, :membership_period])
 
@@ -75,7 +85,7 @@ defmodule OasWeb.Schema.SchemaMember do
     end
 
     field :transactions, list_of(:transaction) do
-      resolve fn %{id: id}, _, _ -> 
+      resolve fn %{id: id}, _, _ ->
         member = Oas.Repo.get(Oas.Members.Member, id) |> Oas.Repo.preload(:transactions)
         {:ok, member.transactions}
       end
@@ -160,11 +170,13 @@ defmodule OasWeb.Schema.SchemaMember do
       arg :name, non_null(:string)
       arg :email, non_null(:string)
       arg :bank_account_name, :string
+      arg :gocardless_name, :string
       arg :is_active, :boolean
       arg :is_reviewer, :boolean
       arg :is_admin, :boolean
+      arg :honorary_member, :boolean
       arg :member_details, :member_details_arg
-      resolve fn _parent, args, context ->
+      resolve fn _parent, args, _context ->
 
         toSave = case Map.get(args, :id) do
           nil ->
@@ -176,18 +188,18 @@ defmodule OasWeb.Schema.SchemaMember do
           id ->
             member = Oas.Repo.get!(Oas.Members.Member, id) |> Oas.Repo.preload(:member_details)
             attrs = case member do
-              x = %{member_details: %{id: id}} ->
+              _x = %{member_details: %{id: id}} ->
                 case Map.get(args, :member_details) do
                   nil -> args
                   _ -> put_in(args, [:member_details, :id], id)
                 end
-              x -> args
+              _x -> args
             end
             member |> Oas.Members.Member.changeset(attrs)
-        end        
+        end
 
         result = toSave
-        
+
         |> (&(case Map.get(args, :member_details) do
           nil -> &1
           _ -> Ecto.Changeset.cast_assoc(&1, :member_details)
@@ -213,6 +225,18 @@ defmodule OasWeb.Schema.SchemaMember do
       end
     end
 
+    field :gocardless_who_link, type: :success do
+      arg :who_member_id, non_null(:integer)
+      arg :gocardless_name, non_null(:string)
+      resolve fn _, %{who_member_id: who_member_id, gocardless_name: gocardless_name}, _ ->
+        Oas.Repo.get!(Oas.Members.Member, who_member_id)
+        |> Ecto.Changeset.change(gocardless_name: gocardless_name)
+        |> Oas.Repo.update!()
+
+        {:ok, %{success: true}}
+      end
+    end
+
     @desc "register"
     field :public_register, :success do
       arg :name, non_null(:string)
@@ -233,7 +257,7 @@ defmodule OasWeb.Schema.SchemaMember do
         |> Oas.Members.Member.registration_changeset(attrs)
         |> Ecto.Changeset.cast_assoc(:member_details)
         |> Oas.Repo.insert
-        
+
         case result do
           {:ok, result} ->
             # Oas.Members.deliver_member_confirmation_instructions(
@@ -245,13 +269,13 @@ defmodule OasWeb.Schema.SchemaMember do
 
             {:ok, %{success: true, public_register_member: result}}
           errored ->
-            OasWeb.Schema.SchemaUtils.handle_error(errored)
+            OasWeb.Schema.SchemaUtils.handle_error(errored, :member_details)
         end
       end
 
-      middleware(fn resolution, ho ->
+      middleware(fn resolution, _ho ->
         case resolution.value do
-          %{public_register_member: public_register_member} -> 
+          %{public_register_member: public_register_member} ->
             Map.update!(
               resolution,
               :context,

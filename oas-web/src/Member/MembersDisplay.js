@@ -41,7 +41,7 @@ export const MembersDisplay = ({
       column,
       direction: 'desc'
     })
-  } 
+  }
   if (orderBy) {
     data = sortBy(data, (dat) => {
       return (dataKey ? get(dat, dataKey) : dat)[orderBy.column];
@@ -88,8 +88,8 @@ export const MembersDisplay = ({
               >Email</TableSortLabel>
               <IconButton title="Copy emails" onClick={copyAll}>
                 <CopyAllIcon />
-              </IconButton>  
-              
+              </IconButton>
+
             </TableCell>
             {showStatus && <TableCell>
               Status
@@ -100,6 +100,15 @@ export const MembersDisplay = ({
                 direction={orderBy?.direction}
                 onClick={sortByHandler('token_count')}
               >Tokens</TableSortLabel>
+            </TableCell>
+            <TableCell>
+              <TableSortLabel
+                active={orderBy?.column === 'credit_amount'}
+                direction={orderBy?.direction}
+                onClick={sortByHandler('credit_amount')}
+              >
+                Credits
+              </TableSortLabel>
             </TableCell>
             <TableCell>Created at</TableCell>
             <TableCell>Actions</TableCell>
@@ -115,6 +124,7 @@ export const MembersDisplay = ({
                 <TableCell>{member.email}</TableCell>
                 {showStatus && <TableCell>{member.member_status}</TableCell>}
                 <TableCell sx={{...(member.token_count < 0 ? {color: "red"} : {})}}>{member.token_count}</TableCell>
+                <TableCell sx={{...(member.credit_amount < 0 ? {color: "red"} : {})}}>{member.credit_amount}</TableCell>
                 <TableCell>{moment(member.inserted_at).format("DD/MM/YYYY")}</TableCell>
                 <TableCell>
                   <IconButton title={`Go to ${member.name}'s Tokens`} component={Link} to={`/member/${member.id}/tokens`}>

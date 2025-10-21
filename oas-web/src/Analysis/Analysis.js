@@ -7,7 +7,7 @@ import { useQuery, gql } from '@apollo/client';
 import { useOutletContext } from 'react-router-dom'
 
 const onChange = ({formData, setFormData, key}) => (event) => {
-    
+
   setFormData({
     ...formData,
     [key]: !event.target.value ? undefined : event.target.value
@@ -16,7 +16,7 @@ const onChange = ({formData, setFormData, key}) => (event) => {
 
 export const Analysis = () => {
   const { setTitle } = useOutletContext();
-  
+
   const [filterData, setFilterData ] = useState({
     from: moment().subtract(1, 'year').format("YYYY-MM-DD"),
     to: moment().format("YYYY-MM-DD")
@@ -30,7 +30,9 @@ export const Analysis = () => {
         transactions_difference,
         unused_tokens,
         unused_tokens_amount,
-        transactions_ballance
+        transactions_ballance,
+        credit,
+        debt
       }
     }
   `, {
@@ -72,7 +74,7 @@ export const Analysis = () => {
             />
           </FormControl>
         </Box>
-        
+
         <Box>
           <Box sx={{width: '100%'}}>
             <h3>Income (GBP):</h3>
@@ -91,6 +93,15 @@ export const Analysis = () => {
 
       <Container sx={{backgroundColor: 'white', p: 2, m: 2, mt: 0, pt: 0}}>
         <h2>Current State</h2>
+
+        <Box sx={{width: '100%'}}>
+          <h3>Credits</h3>
+          <div>{get(data, 'analysis.credit') && round(get(data, 'analysis.credit'), 2)  || "0.0"}</div>
+        </Box>
+        <Box sx={{width: '100%'}}>
+          <h3>Debt</h3>
+          <div>{get(data, 'analysis.debt') && round(get(data, 'analysis.debt'), 2) || "0.0"}</div>
+        </Box>
 
         <Box sx={{width: '100%'}}>
           <h3>Total unused tokens:</h3>

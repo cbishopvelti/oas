@@ -32,6 +32,7 @@ certbot --nginx
 gcloud compute ssh --project oxfordshire-acro --zone europe-west2-c instance-template-20241125-20241125-110930
 gcloud compute scp --project oxfordshire-acro --zone europe-west2-c --recurse `
 C:\Users\chris\Downloads\to_scp\ instance-template-20241125-20241125-110930:/mnt/disks/data/
+
 ```
 ### Attempt 2
 
@@ -62,4 +63,9 @@ docker run -it -d \
 -v /mnt/disks/data:/dbs \
 --entrypoint /bin/bash \
 chrisjbishop155/oas:latest
+
+
+gcloud compute scp --project oxfordshire-acro --zone europe-west2-b \
+instance-3:/mnt/disks/data/{sqlite-prod.db,sqlite-prod.db-shm,sqlite-prod.db-wal} \
+/Users/chris/playground/oas/dbs/2025-03/
 ```

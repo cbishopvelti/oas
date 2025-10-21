@@ -38,7 +38,7 @@ defmodule OasWeb.MemberAuth do
   end
   def log_in_member_gql(conn, member, params \\ %{}) do
     token = Members.generate_member_session_token(member)
-    member_return_to = get_session(conn, :member_return_to)
+    _member_return_to = get_session(conn, :member_return_to)
 
     conn
     |> renew_session()

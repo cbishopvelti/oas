@@ -11,8 +11,9 @@ import Config
 
 config :oas, Oas.Repo,
   # database: System.get_env("DB_FILE") || "./dbs/sqlite-2023-dev.db",
-  # database: System.get_env("DB_FILE") || "./dbs/sqlite-prod-02-2025.db",
-  database: System.get_env("DB_FILE") || "./dbs/sqlite-prod-2025-09-13.db"
+  # database:  System.get_env("DB_FILE") || "./dbs/sqlite-prod-2025-09-22.db",
+  # database: "./dbs/prod-backup-2025-10-03T20:39:52.215384Z.db",
+  database: "./dbs/dev.db",
   backup_database: "./dbs/sqlite-backup"
 
 config :oas, Oas.Repo.Replica1,
@@ -29,6 +30,7 @@ config :oas, OasWeb.Endpoint,
   # Change to `ip: {0, 0, 0, 0}` to allow access from other machines.
   http: [ip: {0, 0, 0, 0}, port: 4000],
   url: [host: "localhost", port: "443", scheme: "https"],
+  pubsub_server: Oas.PubSub,
   check_origin: false,
   code_reloader: true,
   debug_errors: true,
@@ -39,7 +41,42 @@ config :oas, OasWeb.Endpoint,
   ]
 
 config :oas, Oas.Mailer, adapter: Swoosh.Adapters.Local
-# config :swoosh, :api_client, false
+config :oas, Oas.TokenMailer, adapter: Swoosh.Adapters.Local,
+  from: {"OAS", "chris@oxfordshireacrosociety.co.uk"}
+
+# config :oas, Oas.Mailer,
+#   adapter: Swoosh.Adapters.SMTP,
+#   relay: "smtp.gmail.com",
+#   username: "chrisjbishop155@gmail.com",
+#   port: 587,
+#   password: "jday chpj zfpx pikz",
+#   tls: :always,
+#   ssl: false,
+#   auth: :always,
+#   tls_options: [
+#     versions: [:"tlsv1.2", :"tlsv1.3"],
+#     verify: :verify_peer,
+#     cacerts: :public_key.cacerts_get(),
+#     depth: 99,
+#     server_name_indication: 'smtp.gmail.com'
+#   ]
+# config :oas, Oas.TokenMailer,
+#   from: {"OAS", "chris@oxfordshireacrosociety.co.uk"},
+#   adapter: Swoosh.Adapters.SMTP,
+#   relay: "smtp.gmail.com",
+#   username: "chrisjbishop155@gmail.com",
+#   port: 587,
+#   password: "jday chpj zfpx pikz",
+#   tls: :always,
+#   ssl: false,
+#   auth: :always,
+#   tls_options: [
+#     versions: [:"tlsv1.2", :"tlsv1.3"],
+#     verify: :verify_peer,
+#     cacerts: :public_key.cacerts_get(),
+#     depth: 99,
+#     server_name_indication: 'smtp.gmail.com'
+#   ]
 
 
 # ## SSL Support
@@ -78,7 +115,7 @@ config :oas, OasWeb.Endpoint,
   ]
 
 # Do not include metadata nor timestamps in development logs
-config :logger, :console, format: "[$level] $message\n", level: :info
+config :logger, :console, format: "[$level] $message\n", level: :debug
 
 
 # Set a higher stacktrace during development. Avoid configuring such
@@ -90,4 +127,6 @@ config :phoenix, :plug_init_mode, :runtime
 
 config :oas,
   app_url: System.get_env("REACT_APP_ADMIN_URL") || "http://localhost:3999",
-  public_url: System.get_env("REACT_APP_PUBLIC_URL") || "http://localhost:3998"
+  public_url: System.get_env("REACT_APP_PUBLIC_URL") || "http://localhost:3998",
+  disable_gocardless: true,
+  gocardless_backup_dir: "./gocardless_backup"

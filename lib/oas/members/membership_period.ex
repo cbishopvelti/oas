@@ -2,7 +2,6 @@ import Ecto.Query, only: [from: 2, where: 3]
 
 defmodule Oas.Members.MembershipPeriod do
   use Ecto.Schema
-  import Ecto.Changeset
 
   schema "membership_periods" do
     field :name, :string
@@ -17,7 +16,7 @@ defmodule Oas.Members.MembershipPeriod do
     timestamps()
   end
 
-  def getThisOrNextMembershipPeriod(when1, who_member_id, amount) do 
+  def getThisOrNextMembershipPeriod(when1, who_member_id, amount) do
     query = from(mp in Oas.Members.MembershipPeriod,
       as: :membership_periods,
       where: ((mp.from <= ^when1 and ^when1 <= mp.to and mp.value == ^amount )
@@ -38,5 +37,5 @@ defmodule Oas.Members.MembershipPeriod do
     out = query |> Oas.Repo.one
     out
   end
-  
+
 end

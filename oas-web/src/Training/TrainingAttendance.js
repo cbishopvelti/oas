@@ -16,6 +16,7 @@ import { TrainingAttendanceRow } from './TrainingAttendanceRow';
 export const TrainingAttendance = ({trainingId, setAttendance}) => {
 
   const [addAttendance, setAddAttendance] = useState({})
+  const [error, setError] = useState(false)
 
   // name,
   //     email,
@@ -32,13 +33,18 @@ export const TrainingAttendance = ({trainingId, setAttendance}) => {
     },
     attendance (training_id: $training_id) {
       id,
-      warnings, 
+      warnings,
       member {
         id,
         name,
         email,
         token_count,
-        member_status
+        member_status,
+        credit_amount
+      },
+      credit {
+        id,
+        amount
       },
       inserted_at,
       inserted_by_member_id,
@@ -85,6 +91,11 @@ export const TrainingAttendance = ({trainingId, setAttendance}) => {
   `);
 
   const addAttendanceClick = ({addAttendance, trainingId}) => async () => {
+    if (!addAttendance.member_id) {
+      setError(true);
+      return;
+    }
+
     await mutate({
       variables: {
         member_id: addAttendance.member_id,
@@ -92,6 +103,7 @@ export const TrainingAttendance = ({trainingId, setAttendance}) => {
       }
     })
 
+    setError(false);
     refetch()
     setAddAttendance({})
   }
@@ -119,7 +131,13 @@ export const TrainingAttendance = ({trainingId, setAttendance}) => {
           id="member"
           value={addAttendance.member_name || ''}
           options={members.map(({name, id}) => ({label: name, member_id: id }))}
-          renderInput={(params) => <TextField {...params} label="Who" />}
+          renderInput={
+            (params) =>
+              <TextField
+                {...params}
+                error={(error === true)}
+                label="Who" />
+          }
           freeSolo
           onChange={(event, newValue, a, b, c, d) => {
             if (!newValue) {
@@ -145,9 +163,11 @@ export const TrainingAttendance = ({trainingId, setAttendance}) => {
               <TableCell>Member Id</TableCell>
               <TableCell>Attendance Id</TableCell>
               <TableCell>Name</TableCell>
-              <TableCell>Email</TableCell>
+              {/* <TableCell>Email</TableCell> */}
               <TableCell>Status</TableCell>
               <TableCell>Tokens</TableCell>
+              <TableCell>Credits used</TableCell>
+              <TableCell>Credits remaining</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>

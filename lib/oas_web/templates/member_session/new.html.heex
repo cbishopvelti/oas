@@ -1,6 +1,6 @@
 <h1>Log in</h1>
 
-<.form let={f} for={@conn} action={Routes.member_session_path(@conn, :create)} as={:member}>
+<.form :let={f} for={@conn} action={Routes.member_session_path(@conn, :create)} as={:member}>
   <%= if @error_message do %>
     <div class="alert alert-danger">
       <p><%= @error_message %></p>

@@ -22,7 +22,7 @@ config :oas, OasWeb.Endpoint,
   # Change to `ip: {0, 0, 0, 0}` to allow access from other machines.
   http: [ip: {0, 0, 0, 0}, port: 4000],
   url: [
-    host: "server.oxfordshireacrosociety.co.uk",
+    host: "server.gcloud.oxfordshireacrosociety.co.uk",
     port: 443,
     scheme: "https"
   ],
@@ -36,7 +36,8 @@ config :oas, OasWeb.Endpoint,
     esbuild: {Esbuild, :install_and_run, [:default, ~w(--sourcemap=inline --watch)]}
   ]
 
-config :oas, Oas.Mailer, adapter: Swoosh.Adapters.SMTP,
+config :oas, Oas.Mailer,
+  adapter: Swoosh.Adapters.SMTP,
   relay: "smtp.gmail.com",
   username: "chrisjbishop155",
   port: 587,
