@@ -41,34 +41,8 @@ config :oas, OasWeb.Endpoint,
   ]
 
 config :oas, Oas.Mailer, adapter: Swoosh.Adapters.Local
-
 config :oas, Oas.TokenMailer, adapter: Swoosh.Adapters.Local,
   from: {"OAS", "chris@oxfordshireacrosociety.co.uk"}
-
-# config :swoosh, :api_client, false
-# config :oas, Oas.Mailer,
-#   adapter: Swoosh.Adapters.SMTP,
-#   relay: "smtp.gmail.com",
-#   # username: "chrisjbishop155",
-#   # username: "chris@oxfordshireacrosociety.co.uk",
-#   username: "chrisjbishop155@gmail.com",
-#   # username: "OAS",
-#   # port: 587,
-#   port: 465,
-#   password: "jday chpj zfpx pikz",
-#   # auth: :always,
-#   tls: :never,
-#   ssl: true
-
-# config :oas, Oas.Mailer,
-#   adapter: Swoosh.Adapters.SMTP,
-#   relay: "smtp.gmail.com",
-#   username: "chrisjbishop155@gmail.com",
-#   port: 465,
-#   password: "jday chpj zfpx pikz",
-#   tls: :never,
-#   ssl: true,
-#   auth: :always # Explicitly add this for clarity
 
 # config :oas, Oas.Mailer,
 #   adapter: Swoosh.Adapters.SMTP,
@@ -86,7 +60,23 @@ config :oas, Oas.TokenMailer, adapter: Swoosh.Adapters.Local,
 #     depth: 99,
 #     server_name_indication: 'smtp.gmail.com'
 #   ]
-
+# config :oas, Oas.TokenMailer,
+#   from: {"OAS", "chris@oxfordshireacrosociety.co.uk"},
+#   adapter: Swoosh.Adapters.SMTP,
+#   relay: "smtp.gmail.com",
+#   username: "chrisjbishop155@gmail.com",
+#   port: 587,
+#   password: "jday chpj zfpx pikz",
+#   tls: :always,
+#   ssl: false,
+#   auth: :always,
+#   tls_options: [
+#     versions: [:"tlsv1.2", :"tlsv1.3"],
+#     verify: :verify_peer,
+#     cacerts: :public_key.cacerts_get(),
+#     depth: 99,
+#     server_name_indication: 'smtp.gmail.com'
+#   ]
 
 
 # ## SSL Support
