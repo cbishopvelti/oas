@@ -32,71 +32,40 @@ defmodule Oas.Attendance do
     :ok
   end
 
-  def maybe_send_warnings_email(member) do
-    lastTransaction = from(t in Oas.Transactions.Transaction, 
-      order_by: [desc: t.when, desc: t.id],
-      limit: 1
-    ) |> Oas.Repo.one
-
-    attendance = from(a in Oas.Trainings.Attendance,
-      inner_join: m in assoc(a, :member),
-      inner_join: tr in assoc(a, :training),
-      preload: [:token, training: tr],
-      where: m.id == ^member.id,
-      order_by: [desc: tr.when, desc: a.id],
-      limit: 2
-    ) |> Oas.Repo.all
-
-    case attendance do
-      [firstAttendance, %{token: nil, training: %{when: when1}}] when when1 > lastTransaction.when  ->
-        nil
-      _ ->
-        maybe_send_warnings_email_2(member)
-    end
-
+  defp get_membership_periods(when1) do
+    from(mp in Oas.Members.MembershipPeriod,
+      where: (mp.from <= ^when1 and ^when1 <= mp.to),
+      order_by: [asc: mp.from]
+    ) |> Oas.Repo.all()
   end
 
-  def maybe_send_warnings_email_2(member) do
-    
-    warnings = []
-    tokens = Oas.Attendance.get_token_amount(%{member_id: member.id})
-
-    last_transaction = from(tra in Oas.Transactions.Transaction,
-      select: max(tra.when)
-    ) |> Oas.Repo.one
-
-    warnings = if (tokens <= 0) do
-      warnings = ["You have run out of tokens (#{tokens}), please buy more.\n(If you bought tokens since #{last_transaction}, please ignore)" | warnings]
-    else
-      warnings
+  defp add_attendance_membership(training, %{membership_periods: []} = member, %{now: now}) do
+    case check_membership(member) do
+      {_, membership} when membership == :x_member or membership == :not_member or membership == :honorary_member ->
+        case get_membership_periods(training.when) do
+          nil -> nil # No membership period to add to
+          [] -> nil
+          membership_periods ->
+            membership_periods |> Enum.map(fn membership_period ->
+              Oas.Members.Membership.add_membership(membership_period, member, %{now: now})
+            end)
+            nil
+        end
+      _membership -> # Temporary_member
+        nil
     end
-
-    warnings = case check_membership(member) do
-      {_, :not_member} -> ["You are not a valid member, please pay for membership" | warnings]
-      {_, :x_member} -> ["You are not a valid member, please pay for membership" | warnings]
-      _ -> warnings
-    end
-
-    case (warnings) do
-      [] -> nil
-      warnings -> 
-        config = from(cc in Oas.Config.Config, select: cc) |> Oas.Repo.one
-        Oas.Tokens.TokenNotifier.deliver(member.email, "#{config.name} notification",
-        """
-        Hi #{member.name}
-
-        #{Enum.join(warnings, "\n")}
-
-        Thanks
-
-        #{config.name}
-        """)
-    end
-
+  end
+  defp add_attendance_membership(_, _, _) do # already a member, do nothing
+    nil
   end
 
   def add_attendance(%{member_id: member_id, training_id: training_id}, %{inserted_by_member_id: inserted_by_member_id}) do
     training = Oas.Repo.get!(Oas.Trainings.Training, training_id)
+    |> Oas.Repo.preload(:training_where)
+
+    # now = Date.utc_today()
+    now = training.when
+
     member = Oas.Repo.get!(Oas.Members.Member, member_id)
     |> Oas.Repo.preload([
       membership_periods: from(
@@ -111,28 +80,45 @@ defmodule Oas.Attendance do
       training_id: training_id,
       inserted_by_member_id: inserted_by_member_id,
     }
-    # |> (&( case member_id == inserted_by_member_id do
-    #   true ->
-    #     case Date.compare(Date.utc_today, training.when) do
-    #       :eq ->
-    #         IO.inspect(DateTime.add(DateTime.utc_now(), 60))
-    #         Map.put(&1, :undo_until, DateTime.add(DateTime.utc_now(), 60) |> DateTime.truncate(:second))
-    #       :lt -> Map.put(&1, :undo_until, Timex.to_datetime(training.when))
-    #       :gt -> &1
-    #     end
-    #   false -> &1
-    # end)).()
     |> Oas.Repo.insert!
 
     get_unsued_token_result = get_unused_token(member_id)
 
+    config = from(
+      c in Oas.Config.Config,
+      limit: 1
+    ) |> Oas.Repo.one!()
+
+    if config.credits do # Membership
+      add_attendance_membership(
+        training,
+        member,
+        %{now: now}
+      )
+    end
+
     case get_unsued_token_result do
-      nil -> nil
+      nil -> # User has no tokens, use credits instead
+        if (config.credits) do
+          Oas.Credits.Credit.deduct_credit(
+            attendance,
+            member,
+            Decimal.sub(
+              0,
+              training.training_where.credit_amount || Oas.Config.Tokens.get_min_token().value
+            ),
+            %{
+              now: now
+            }
+          )
+        else
+          nil
+        end
       token -> use_token(token, attendance.id, training.when)
     end
 
     Task.async(fn ->
-      maybe_send_warnings_email(member)
+      Oas.TokenMailer.maybe_send_warnings_email(member)
     end)
 
     {:ok, %{id: attendance.id}}
@@ -142,30 +128,39 @@ defmodule Oas.Attendance do
     attendance = Oas.Repo.get!(Oas.Trainings.Attendance, attendance_id)
       |> Oas.Repo.preload(:token)
       |> Oas.Repo.preload(:member)
+      |> Oas.Repo.preload(:training)
 
     if (attendance.token != nil) do
       debtAttendance = from(a in Oas.Trainings.Attendance,
         left_join: to in assoc(a, :token), on: to.member_id == ^attendance.member.id,
         inner_join: tr in assoc(a, :training),
+        left_join: c in assoc(a, :credit),
         preload: [training: tr],
-        where: a.member_id == ^attendance.member.id and is_nil(to.id),
+        where: a.member_id == ^attendance.member.id and is_nil(to.id) and is_nil(c.id),
         select: a,
         order_by: [asc: tr.when, asc: tr.id],
         limit: 1
       ) |> Oas.Repo.one
 
-      attendance_id = case debtAttendance do
-        nil -> 
+      case debtAttendance do
+        nil ->
           attendance.token |>
             Ecto.Changeset.cast(%{used_on: nil, attendance_id: nil}, [:used_on, :attendance_id])
             |> Oas.Repo.update!
-        %{id: id, training: %{when: when1}} -> 
+        %{id: id, training: %{when: _when1}} ->
           attendance.token |>
             Ecto.Changeset.cast(%{used_on: get_used_on(attendance.training.when), attendance_id: id}, [:used_on, :attendance_id])
             |> Oas.Repo.update!
       end
     end
-    
+
+    # Maybe delete membership
+    Oas.Members.Membership.maybe_delete_membership(
+      attendance.training,
+      attendance.member
+    )
+    # EO maybe delete membership
+
     Oas.Repo.delete!(attendance)
 
     {:ok, %{success: true}}
@@ -175,11 +170,12 @@ defmodule Oas.Attendance do
 
     debtAttendances = from(a in Oas.Trainings.Attendance,
       left_join: t in assoc(a, :token), on: t.member_id == ^member_id,
-      where: a.member_id == ^member_id and is_nil(t.id),
+      left_join: c in assoc(a, :credit),
+      where: a.member_id == ^member_id and is_nil(t.id) and is_nil(c.id),
       select: count(a.id)
     ) |> Oas.Repo.one
 
-    creditTokens = from(t in Oas.Tokens.Token, 
+    creditTokens = from(t in Oas.Tokens.Token,
       where: t.member_id == ^member_id and t.expires_on >= from_now(0, "day") and is_nil(t.used_on),
       select: count(t.id)
     ) |> Oas.Repo.one
@@ -195,9 +191,8 @@ defmodule Oas.Attendance do
     end
   end
 
-  def add_tokens(%{
+  def add_tokens_changeset(changeset, %{
     member_id: member_id,
-    transaction_id: transaction_id,
     quantity: quantity,
     when1: when1,
     value: value
@@ -207,8 +202,49 @@ defmodule Oas.Attendance do
     debtAttendances = from(a in Oas.Trainings.Attendance,
       left_join: to in assoc(a, :token), on: to.member_id == ^member_id,
       inner_join: tr in assoc(a, :training),
+      left_join: c in assoc(a, :credit),
       preload: [training: tr],
-      where: a.member_id == ^member_id and is_nil(to.id),
+      where: a.member_id == ^member_id and is_nil(to.id) and is_nil(c.id),
+      select: a,
+      order_by: [asc: tr.when, asc: tr.id],
+      limit: ^quantity
+    ) |> Oas.Repo.all
+
+    token = %Oas.Tokens.Token{
+      member_id: member_id,
+      expires_on: Date.add(when1, config.token_expiry_days), # add a year
+      attendance_id: nil,
+      value: value
+    }
+
+    debtAttendancesStream = Stream.concat(debtAttendances, Stream.cycle([nil]))
+
+    tokens = List.duplicate(token, quantity)
+    |> Enum.zip_with(debtAttendancesStream, fn
+      a, nil -> a
+      a, %{id: id, training: %{when: when1}} ->
+        %{a | attendance_id: id, used_on: get_used_on(when1)}
+      end
+    )
+
+    changeset |> Ecto.Changeset.put_assoc(:tokens, tokens)
+  end
+
+  def add_tokens(%{
+    member_id: member_id,
+    transaction_id: transaction_id,
+    quantity: quantity,
+    when1: when1,
+    value: value
+  }, do_insert \\ true) do
+    # FIX DEBT
+    config = from(cc in Oas.Config.Config, select: cc) |> Oas.Repo.one
+    debtAttendances = from(a in Oas.Trainings.Attendance,
+      left_join: to in assoc(a, :token), on: to.member_id == ^member_id,
+      inner_join: tr in assoc(a, :training),
+      left_join: c in assoc(a, :credit),
+      preload: [training: tr],
+      where: a.member_id == ^member_id and is_nil(to.id) and is_nil(c.id),
       select: a,
       order_by: [asc: tr.when, asc: tr.id],
       limit: ^quantity
@@ -224,19 +260,25 @@ defmodule Oas.Attendance do
 
     debtAttendancesStream = Stream.concat(debtAttendances, Stream.cycle([nil]))
 
-    toInsert = List.duplicate(token, quantity)
-      |> Enum.zip_with(debtAttendancesStream, fn
-        a, nil -> a
-        a, %{id: id, training: %{when: when1}} -> %{a | attendance_id: id, used_on: get_used_on(when1)} end
-      )
-      |> Enum.map(&Oas.Repo.insert/1)
+    tokens = List.duplicate(token, quantity)
+    |> Enum.zip_with(debtAttendancesStream, fn
+      a, nil -> a
+      a, %{id: id, training: %{when: when1}} ->
+        %{a | attendance_id: id, used_on: get_used_on(when1)}
+      end
+    )
 
-    :ok
+    if (do_insert) do
+      tokens |> Enum.map(&Oas.Repo.insert/1)
+      :ok
+    else
+      tokens
+    end
   end
 
 
   def transfer_token(%{member_id: member_id, token: token}) do
-    
+
     # FIX DEBT
     {attendanceId, when1} = from(a in Oas.Trainings.Attendance,
       left_join: to in assoc(a, :token), on: to.member_id == ^member_id,
@@ -267,6 +309,8 @@ defmodule Oas.Attendance do
       |> Oas.Repo.one
 
     cond do
+      (member.honorary_member) ->
+        {member, :honorary_member}
       (member
         |> Oas.Repo.preload(:memberships, force: true)
         |> Map.get(:memberships)
@@ -275,7 +319,7 @@ defmodule Oas.Attendance do
           Map.put(member, :warnings, [member.name <> " is an x-member" | Map.get(member, :warnings, []) ]),
           :x_member
         }
-      result > config.temporary_trainings -> 
+      result > config.temporary_trainings ->
         {
           Map.put(member, :warnings, [member.name <> " has attended " <> to_string(result)
             <> " session"

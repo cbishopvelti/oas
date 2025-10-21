@@ -1,5 +1,3 @@
-# filename: myapp/schema.ex
-import Ecto.Query, only: [from: 2, where: 3]
 
 defmodule OasWeb.Schema do
   use Absinthe.Schema
@@ -16,6 +14,10 @@ defmodule OasWeb.Schema do
   import_types OasWeb.Schema.SchemaAnalysis
   import_types OasWeb.Schema.SchemaUser
   import_types OasWeb.Schema.SchemaConfig
+  import_types OasWeb.Schema.SchemaGocardless
+  import_types OasWeb.Schema.SchemaCredits
+  import_types OasWeb.Schema.SchemaTrainingWhere
+  import_types OasWeb.Schema.SchemaThing
 
   query do
     import_fields :attendance_queries
@@ -29,16 +31,23 @@ defmodule OasWeb.Schema do
     import_fields :token_queries
 
     import_fields :training_queries
+    import_fields :training_where_queries
 
     import_fields :analysis_queries
-    
+
     import_fields :user_queries
 
     import_fields :config_queries
+
+    import_fields :gocardless_queries
+
+    import_fields :credits_queries
+
+    import_fields :thing_queries
   end
 
 
-  mutation do 
+  mutation do
     import_fields :member_mutations
     import_fields :membership_period_mutations
 
@@ -48,14 +57,25 @@ defmodule OasWeb.Schema do
     import_fields :token_mutations
 
     import_fields :training_mutations
+    import_fields :training_where_mutations
 
     import_fields :attendance_mutations
 
     import_fields :user_mutations
 
     import_fields :config_mutations
+
+    import_fields :gocardless_mutations
+
+    import_fields :credits_mutations
+
+    import_fields :thing_mutations
   end
-  
+
+  subscription do
+    import_fields :config_subscriptions
+  end
+
 
   # Public resolvers
   def myMiddleware(middleware, %Absinthe.Type.Field{identifier: :public_register}, %Absinthe.Type.Object{identifier: :mutation}) do
@@ -79,6 +99,9 @@ defmodule OasWeb.Schema do
   def myMiddleware(middleware, %Absinthe.Type.Field{identifier: :public_config_config}, %Absinthe.Type.Object{identifier: :query}) do
     middleware
   end
+  def myMiddleware(middleware, %Absinthe.Type.Field{identifier: :public_credits}, %Absinthe.Type.Object{identifier: :query}) do
+    middleware
+  end
   # User resolvers
   def myMiddleware(middleware, %Absinthe.Type.Field{identifier: :user}, %Absinthe.Type.Object{identifier: :query}) do
     [OasWeb.Schema.MiddlewareUser | middleware]
@@ -92,13 +115,13 @@ defmodule OasWeb.Schema do
   def myMiddleware(middleware, %Absinthe.Type.Field{identifier: :user_undo_attendance}, %Absinthe.Type.Object{identifier: :mutation}) do
     [OasWeb.Schema.MiddlewareUser | middleware]
   end
-  
+
   # isAdmin and isReviewer can read data
-  def myMiddleware(middleware, field, %Absinthe.Type.Object{identifier: identifier}) when identifier in [:query, :subscription] do
+  def myMiddleware(middleware, _field, %Absinthe.Type.Object{identifier: identifier}) when identifier in [:query, :subscription] do
     [OasWeb.Schema.MiddlewareQuery | middleware]
   end
   # isAdmin can mutate data
-  def myMiddleware(middleware, field, %Absinthe.Type.Object{identifier: identifier}) when identifier in [:mutation] do
+  def myMiddleware(middleware, _field, %Absinthe.Type.Object{identifier: identifier}) when identifier in [:mutation] do
     [OasWeb.Schema.MiddlewareMutation | middleware]
   end
   # for :option
@@ -110,5 +133,5 @@ defmodule OasWeb.Schema do
     middleware
     |> myMiddleware(field, object)
   end
-  
+
 end

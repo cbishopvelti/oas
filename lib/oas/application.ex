@@ -14,18 +14,22 @@ defmodule Oas.Application do
       OasWeb.Telemetry,
       # Start the PubSub system
       {Phoenix.PubSub, name: Oas.PubSub},
-      # Start the Endpoint (http/https)
-      OasWeb.Endpoint,
       # Start a worker by calling: Oas.Worker.start_link(arg)
       # {Oas.Worker, arg}
-      Oas.BackupJob
+      Oas.BackupJob,
+      # Oas.Gocardless.AuthServer,
+      Oas.Gocardless.Supervisor,
+      # Start the Endpoint (http/https)
+      OasWeb.Endpoint,
+      {Absinthe.Subscription, OasWeb.Endpoint}
     ]
-    
+
     :ets.new(:user_table, [:named_table, :public, :set, read_concurrency: true])
-    
+    :ets.new(:global_warnings, [:set, :public, :named_table])
+
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
-    opts = [strategy: :one_for_one, name: Oas.Supervisor]
+    opts = [strategy: :one_for_one, name: Oas.Supervisor, max_restarts: 1]
     Supervisor.start_link(children, opts)
   end
 

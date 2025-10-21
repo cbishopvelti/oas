@@ -1,5 +1,33 @@
+const fs = require('fs');
+
 module.exports = module.exports = {
   webpack: function(config, env) {
+
+    config = {
+      ...config,
+      module: {
+        ...config.module,
+        rules: [
+          ...config.module.rules,
+          {
+            test: /\.m?js/,
+            resolve: {
+              fullySpecified: false
+            }
+          }
+        ]
+      }
+    }
+
+    fs.writeFile("./test.txt", JSON.stringify(config, null, 2), function(err) {
+        if(err) {
+            return console.log(err);
+        }
+        console.log("001 config", config)
+
+        console.log("The file was saved!");
+    });
+
     return config;
   },
   jest: function(config) {

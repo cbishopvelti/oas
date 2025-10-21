@@ -2,7 +2,7 @@ import Ecto.Query, only: [from: 2]
 
 defmodule Oas.Analysis do
   def series_balance(from, to) do
-    startBalance = from(t in Oas.Transactions.Transaction, 
+    startBalance = from(t in Oas.Transactions.Transaction,
       where: t.when <= ^from,
       select: sum(t.amount)
     ) |> Oas.Repo.one
@@ -31,10 +31,10 @@ defmodule Oas.Analysis do
   end
 
 
-  
+
   def outstanding_tokens(from, to) do
 
-    fromDT = Timex.to_naive_datetime(Date.add(from, 1))
+    _fromDT = Timex.to_naive_datetime(Date.add(from, 1))
       |> DateTime.from_naive!("Etc/UTC")
     toDT = Timex.to_naive_datetime(Date.add(to, 1))
       |> DateTime.from_naive!("Etc/UTC")
@@ -66,19 +66,19 @@ defmodule Oas.Analysis do
           from
       end)).()
 
-      endDate = 
+      endDate =
       (token.used_on || token.expires_on)
       |> (&(case Date.compare(&1, to) do
         :lt -> Date.add(&1, -1)
         :eq -> Date.add(&1, -1)
         _ -> to
       end)).()
-      
+
       case Date.compare(startDate, endDate) do
         :gt -> acc
         _ ->
           Date.range(startDate, endDate)
-            |> Enum.reduce(acc, fn (day, acc) -> 
+            |> Enum.reduce(acc, fn (day, acc) ->
               Map.put(acc, day, Decimal.add(Map.get(acc, day, Decimal.new(0)), token.value))
             end)
       end
@@ -114,7 +114,7 @@ defmodule Oas.Analysis do
     frequency = attendance
     |> Enum.reduce(%{}, fn (attendance, acc) ->
       startDate = attendance.training.when
-      
+
       endDate = case (attendance.token && attendance.token.used_on) do
         nil -> to
         x -> Date.add(x, -1)
@@ -122,12 +122,12 @@ defmodule Oas.Analysis do
 
       value = case attendance.token do
         %{value: value} -> value
-        value -> minValue
+        _value -> minValue
       end
 
       case Date.compare(startDate, endDate) do
         :gt -> acc
-        _ -> 
+        _ ->
           Date.range(startDate, endDate)
             |> Enum.reduce(acc, fn (day, acc) ->
               Map.put(acc, day, Decimal.sub(Map.get(acc, day, Decimal.new(0)), value ))
@@ -135,8 +135,8 @@ defmodule Oas.Analysis do
       end
     end)
 
-    out = Date.range(from, to)
-    |> Enum.map(fn day -> 
+    Date.range(from, to)
+    |> Enum.map(fn day ->
       %{
         y: Map.get(frequency, day, Decimal.new(0)) |> Decimal.to_float,
         x: day

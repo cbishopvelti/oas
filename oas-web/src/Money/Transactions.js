@@ -28,6 +28,7 @@ import moment from 'moment'
 import DeleteIcon from '@mui/icons-material/Delete';
 import { unparse } from 'papaparse';
 import DownloadIcon from '@mui/icons-material/Download';
+import { StyledTableRow } from '../utils/util'
 
 const onChange = ({formData, setFormData, key, required}) => (event) => {
   setFormData({
@@ -46,7 +47,7 @@ export const Transactions = () => {
   if (member_id) {
     member_id = parseInt(member_id)
   }
-  
+
   const {data: memberData} = useQuery(gql`query ($member_id: Int!) {
     member(member_id: $member_id) {
       name
@@ -66,6 +67,7 @@ export const Transactions = () => {
       what,
       who,
       amount,
+      warnings
       transaction_tags {
         name
       }
@@ -135,7 +137,6 @@ export const Transactions = () => {
         transaction_id
       }
     })
-    console.log("010")
     refetch();
   }
 
@@ -205,7 +206,7 @@ export const Transactions = () => {
         <TableBody>
           {
             transactions.map((transaction) => (
-              <TableRow key={transaction.id}>
+              <StyledTableRow className={`${transaction.warnings && 'warnings'}`} key={transaction.id}>
                 <TableCell>{transaction.id}</TableCell>
                 <TableCell>{transaction.when}</TableCell>
                 <TableCell>{transaction.what}</TableCell>
@@ -222,7 +223,7 @@ export const Transactions = () => {
                     </IconButton>
                   }
                 </TableCell>
-              </TableRow>
+              </StyledTableRow>
             ))
           }
         </TableBody>

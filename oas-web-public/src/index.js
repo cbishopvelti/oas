@@ -10,6 +10,7 @@ import { MembershipForm } from './Members/MembershipForm';
 import { ApolloClient, InMemoryCache, ApolloProvider, gql } from '@apollo/client';
 import { MembershipSuccess } from './Members/MembershipSuccess';
 import { Tokens } from './Tokens/Tokens';
+import { Credits } from './Credits/Credits';
 import { Bookings } from './Bookings/Bookings';
 
 
@@ -36,6 +37,10 @@ const router = createBrowserRouter([
         path: "tokens",
         element: <Tokens />
       }, {
+        path: "credits",
+        element: <Credits />
+      },
+      {
         path: "bookings",
         element: <Bookings />
       }

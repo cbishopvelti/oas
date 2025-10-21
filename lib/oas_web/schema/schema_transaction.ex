@@ -1,7 +1,7 @@
-import Ecto.Query, only: [from: 2, dynamic: 2, where: 3, join: 5, group_by: 3]
+import Ecto.Query, only: [from: 2, where: 3, join: 5, group_by: 3]
 defmodule OasWeb.Schema.SchemaTransaction do
   use Absinthe.Schema.Notation
-  
+
   input_object :transaction_tag_arg do
     field :id, :integer
     field :name, non_null(:string)
@@ -22,6 +22,16 @@ defmodule OasWeb.Schema.SchemaTransaction do
     field :membership_period, :membership_period
   end
 
+  input_object :credit_arg do
+    field :id, :integer
+    field :amount, :float
+  end
+
+  object :transaction_credit do
+    field :amount, :string
+    field :expires_on, :string
+  end
+
   object :transaction do
     field :id, :integer
     field :what, :string
@@ -37,6 +47,8 @@ defmodule OasWeb.Schema.SchemaTransaction do
     field :membership, :membership
     field :their_reference, :string
     field :my_reference, :string
+    field :warnings, :string
+    field :credit, :transaction_credit
   end
 
   object :transaction_queries do
@@ -45,7 +57,7 @@ defmodule OasWeb.Schema.SchemaTransaction do
       arg :to, :string
       arg :transaction_tags, list_of(:transaction_tag_arg)
       arg :member_id, :integer
-      resolve fn _, args = %{from: from, to: to, transaction_tags: transaction_tags}, %{context: context} ->
+      resolve fn _, args = %{from: from, to: to, transaction_tags: transaction_tags}, %{context: _context} ->
         from = Date.from_iso8601!(from)
         to = Date.from_iso8601!(to)
         transaction_tag_ids = transaction_tags |> Enum.map(fn %{id: id} -> id end)
@@ -53,7 +65,7 @@ defmodule OasWeb.Schema.SchemaTransaction do
         query = from(
           t in Oas.Transactions.Transaction,
           select: t,
-          preload: [:transaction_tags, :tokens, :membership],
+          preload: [:transaction_tags, :tokens, :membership, :gocardless_transaction_iid],
           where: t.when <= ^to and t.when >= ^from
             and (t.not_transaction == false or is_nil(t.not_transaction)),
           order_by: [desc: t.when, desc: t.id]
@@ -68,8 +80,11 @@ defmodule OasWeb.Schema.SchemaTransaction do
             |> group_by([t], t.id)
         end)).()
 
-        # IO.inspect(Oas.Repo.to_sql(:all, query) |> elem(0))
         result = Oas.Repo.all(query)
+        result = result |> Enum.map(fn transaction ->
+          warnings = (Map.get(transaction, :gocardless_transaction_iid, %{}) || %{}) |> Map.get(:warnings)
+          Map.put(transaction, :warnings, warnings)
+        end)
         {:ok, result}
       end
     end
@@ -80,8 +95,13 @@ defmodule OasWeb.Schema.SchemaTransaction do
           |> Oas.Repo.preload(:transaction_tags)
           |> Oas.Repo.preload(:membership)
           |> Oas.Repo.preload(:tokens)
+          |> Oas.Repo.preload(:gocardless_transaction_iid)
+          |> Oas.Repo.preload(:credit)
 
-        {:ok, transaction}
+        warnings = (Map.get(transaction, :gocardless_transaction_iid, %{}) || %{}) |> Map.get(:warnings)
+
+        {:ok, transaction
+          |> Map.put(:warnings, warnings)}
       end
     end
     field :transaction_tags, list_of(:transaction_tag) do
@@ -121,19 +141,19 @@ defmodule OasWeb.Schema.SchemaTransaction do
       })
     end
   end
-  
+
   defp maybeDoMembership(
     args = %{
       membership_period_id: membership_period_id
     },
-    result = %{
+    %{
       id: id,
       who_member_id: member_id
     }
   ) do
-    membershipPeriod = Oas.Repo.get!(Oas.Members.MembershipPeriod, membership_period_id)
+    _membershipPeriod = Oas.Repo.get!(Oas.Members.MembershipPeriod, membership_period_id)
 
-    membership = from(m in Oas.Members.Membership, where: 
+    _membership = from(m in Oas.Members.Membership, where:
       m.transaction_id == ^id
     ) |> Oas.Repo.one
     |> case do
@@ -147,7 +167,7 @@ defmodule OasWeb.Schema.SchemaTransaction do
     |> Ecto.Changeset.cast(args, [:membership_period_id])
     |> (&(case &1 do
       %{data: %{id: nil}} -> Oas.Repo.insert(&1)
-      %{data: %{id: id}} -> Oas.Repo.update(&1)
+      %{data: %{id: _id}} -> Oas.Repo.update(&1)
     end)).()
   end
   defp maybeDoMembership(args, result) do
@@ -159,6 +179,18 @@ defmodule OasWeb.Schema.SchemaTransaction do
         |> Oas.Repo.update
     end
   end
+  # defp maybeDoCredits(args = %{credits_amount: credit_amount}, %{id: id,
+  #   who_member_id: member_id,
+  #   credit_id: credit_id
+  # }, when1) do
+  #   from(c in Oas.Credits.Credits, where: c.id == credit_id)
+  #   |> case do
+  #     nil -> %Oas.Credits.Credits {
+  #       amount: credit_amount,
+  #       who_member_id: member_id
+  #     }
+  #   end
+  # end
 
   object :transaction_mutations do
     @desc "Create or Update transaction"
@@ -178,13 +210,15 @@ defmodule OasWeb.Schema.SchemaTransaction do
       arg :membership_period_id, :integer
       arg :their_reference, :string
       arg :my_reference, non_null(:string)
-      resolve fn _parent, args, context ->
+      # arg :credit_amount, :float
+      arg :credit, :credit_arg
+      resolve fn _parent, args, _context ->
         when1 = Date.from_iso8601!(args.when)
         args = %{args | when: when1}
 
-        # doTransactionTags = fn (changeset) -> 
+        # doTransactionTags = fn (changeset) ->
         #   case args do
-        #     %{transaction_tags: transaction_tags} -> 
+        #     %{transaction_tags: transaction_tags} ->
         #       transaction_tags = transaction_tags
         #         |> Enum.map(fn
         #           %{id: id} -> Oas.Repo.get!(Oas.Transactions.TransactionTags, id)
@@ -198,11 +232,13 @@ defmodule OasWeb.Schema.SchemaTransaction do
 
         toSave = case Map.get(args, :id) do
           nil -> %Oas.Transactions.Transaction{}
-          id -> Oas.Repo.get!(Oas.Transactions.Transaction, id) |> Oas.Repo.preload(:transaction_tags)
+          id -> Oas.Repo.get!(Oas.Transactions.Transaction, id)
+            |> Oas.Repo.preload(:transaction_tags)
+            |> Oas.Repo.preload(:credit)
         end
         |> Oas.Transactions.Transaction.changeset(args)
-        # |> doTransactionTags.()
         |> Oas.Transactions.TransactionTags.doTransactionTags(args)
+        |> Oas.Credits.Credit.doCredit(Map.get(args, :credit, nil))
 
         result = toSave
           |> (&(case &1 do
@@ -212,7 +248,7 @@ defmodule OasWeb.Schema.SchemaTransaction do
           |> OasWeb.Schema.SchemaUtils.handle_error
 
         # delete unused tags
-        removedTransactionTags = Ecto.Changeset.get_change(toSave, :transaction_tags, [])
+        _removedTransactionTags = Ecto.Changeset.get_change(toSave, :transaction_tags, [])
         |> Enum.filter(fn
           %{action: :replace} -> true
           _ -> false
@@ -231,7 +267,7 @@ defmodule OasWeb.Schema.SchemaTransaction do
           )) # and tt.id in ^removedTransactionTags
         ) |> Oas.Repo.delete_all
         # EO delete unused tags
-      
+
         case result do
           {:error, error} -> {:error, error}
           {:ok, result} ->
@@ -246,7 +282,7 @@ defmodule OasWeb.Schema.SchemaTransaction do
     end
     field :delete_transaction, type: :success do
       arg :transaction_id, non_null(:integer)
-      resolve fn _, %{transaction_id: transaction_id}, _ -> 
+      resolve fn _, %{transaction_id: transaction_id}, _ ->
         Oas.Repo.get!(Oas.Transactions.Transaction, transaction_id) |>
           Oas.Repo.delete!
 
@@ -263,6 +299,53 @@ defmodule OasWeb.Schema.SchemaTransaction do
           )) # and tt.id in ^removedTransactionTags
         ) |> Oas.Repo.delete_all
         # EO delete unused tags
+
+        {:ok, %{success: true}}
+      end
+    end
+
+    field :transaction_clear_warnings, type: :success do
+      arg :transaction_id, non_null(:integer)
+      resolve fn _, %{transaction_id: transaction_id}, _ ->
+        transaction = Oas.Repo.get!(Oas.Transactions.Transaction, transaction_id)
+        |> Oas.Repo.preload(:gocardless_transaction_iid)
+
+        Ecto.Changeset.change(transaction.gocardless_transaction_iid,
+          warnings: nil
+        )
+        |> Oas.Repo.update!()
+
+        {:ok, %{success: true}}
+      end
+    end
+
+    field :reprocess_transaction, :success do
+      arg :id, non_null(:integer)
+      arg :who_member_id, non_null(:integer)
+      resolve fn _, %{id: id, who_member_id: who_member_id}, _ ->
+        member = Oas.Repo.get!(Oas.Members.Member, who_member_id)
+        transaction = Oas.Repo.get!(Oas.Transactions.Transaction, id)
+        |> Oas.Repo.preload(:credit)
+        |> Oas.Repo.preload(:tokens)
+        |> Oas.Repo.preload(:membership)
+        |> Oas.Repo.preload(:transaction_tags)
+
+        if (transaction.credit != nil || transaction.credit != nil || transaction.tokens != []) do
+          raise "This transaciton already has credit or tokens or membership"
+        end
+
+        out_transaction = transaction
+        |> Ecto.Changeset.cast(%{
+          who: member.name,
+          who_member_id: who_member_id
+        }, [:who, :who_member_id])
+
+        out_transaction = out_transaction
+        |> Oas.Gocardless.TransactionsCredits.generate_transaction_credits_2(%{
+          transaction_tags: transaction.transaction_tags |> Enum.map(fn %{name: name} -> name end)
+        })
+
+        out_transaction |> Oas.Repo.update!()
 
         {:ok, %{success: true}}
       end

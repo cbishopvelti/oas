@@ -1,4 +1,4 @@
-import Ecto.Query, only: [from: 2, where: 3]
+import Ecto.Query, only: [from: 2]
 
 defmodule OasWeb.Schema.SchemaAttendance do
   use Absinthe.Schema.Notation
@@ -6,6 +6,7 @@ defmodule OasWeb.Schema.SchemaAttendance do
   object :attendance do
     field :id, :integer
     field :when, :string
+    field :training_id, :integer
   end
 
   object :member_attendance do
@@ -55,6 +56,7 @@ defmodule OasWeb.Schema.SchemaAttendance do
       end
     end
     field :token, :token
+    field :credit, :credit
     field :training, :training
     field :warnings, list_of(:string)
     field :inserted_at, :string
@@ -65,7 +67,7 @@ defmodule OasWeb.Schema.SchemaAttendance do
 
   # QUERIES
   object :attendance_queries do
-    field :attendance, list_of(:member_attendance_attendance) do 
+    field :attendance, list_of(:member_attendance_attendance) do
       arg :training_id, non_null(:integer)
       resolve fn _, %{training_id: training_id}, _ ->
         training = Oas.Repo.get!(Oas.Trainings.Training, training_id)
@@ -74,6 +76,7 @@ defmodule OasWeb.Schema.SchemaAttendance do
           inner_join: m in assoc(a, :member),
           preload: [
             :training,
+            :credit,
             member: [membership_periods: ^from(mp in Oas.Members.MembershipPeriod, where: mp.from <= ^training.when and mp.to >= ^training.when)]
           ],
           select: a,
@@ -92,7 +95,12 @@ defmodule OasWeb.Schema.SchemaAttendance do
           end
 
           case Oas.Attendance.check_membership(member) do
-            {%{warnings: warnings}, _} -> Map.put(record, :warnings, warnings)
+            {%{warnings: warnings}, _} -> Map.put(record, :warnings, warnings ++ Map.get(record, :warnings, []))
+            _ -> record
+          end
+
+          case Oas.Credits.Credit2.get_credit_amount(%{member_id: member.id}) do
+            {_, %Decimal{sign: -1}} -> Map.put(record, :warnings, ["No credits"] ++ Map.get(record, :warnings, []))
             _ -> record
           end
         end)
@@ -135,5 +143,5 @@ defmodule OasWeb.Schema.SchemaAttendance do
       end
     end
   end
-  
+
 end

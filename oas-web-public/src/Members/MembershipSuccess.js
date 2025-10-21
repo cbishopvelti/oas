@@ -25,16 +25,13 @@ export const MembershipSuccess = () => {
       Thank you for registering. You are now a temporary member, you can go to 3 jams before you must become a full member.
     </p>
     {has(data, 'public_bacs') && <>
-      <p>To buy tokens please transfer money to:</p>
+      <p>To buy credits please transfer money to:</p>
       <pre>
       {get(data, 'public_bacs').map((item) => <>{item}<br/></>)}
       </pre>
     </>}
-    <p>5 GBP for 1 token,<br/>
-    45 GBP for 10 tokens or<br/>
-    90 GBP for 20 tokens.<br/>
-    6 GBP to become a full member until 31st of October <br/>
-    Tokens are valid for one year from purchase and are non-refundable. Tokens can be transferred between members.<br/>
+    <p>
+    Credits are valid for one year from purchase and are non-refundable. Credits can be transferred between members.<br/>
     </p>
   </>
 }

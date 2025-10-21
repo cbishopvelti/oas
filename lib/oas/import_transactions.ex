@@ -6,8 +6,8 @@ defmodule Oas.ImportTransactions do
     rows
     |> Enum.map(fn (row = %{
       bank_account_name: bank_account_name
-    }) -> 
-      
+    }) ->
+
       csvDate = Map.get(row, :date)
 
       # bank_details = Map.get(row, :bank_account_name) <> "\n" <> Map.get(row, :account)
@@ -25,7 +25,6 @@ defmodule Oas.ImportTransactions do
       )
 
       # queryString = Oas.Repo.to_sql(:all, query)
-      # IO.inspect(queryString)
 
       dupliate = Oas.Repo.one(query)
 
@@ -58,7 +57,7 @@ defmodule Oas.ImportTransactions do
 
         case membershipPeriod do
           nil -> row
-          %{value: value} -> 
+          %{value: value} ->
             cond do
               Decimal.eq?(amount, value) ->
                 if (is_map_key(row, :who_member_id)) do
@@ -79,6 +78,67 @@ defmodule Oas.ImportTransactions do
     end)
   end
 
+  def processCredits(rows) do
+    # If there is token debt, pay that off first
+    rows |> Enum.map(fn
+      row when is_map_key(row, :state) -> row
+      row ->
+        if (is_map_key(row, :who_member_id)) do
+          # configToken = Oas.Tokens.Token.getPossibleTokenAmount()
+          # |> Enum.filter(fn %{quantity: no, value: value} ->
+          #   no * value <= Map.get(row, :amount)
+          # end)
+          # |> List.last()
+
+          configToken = case Oas.Attendance.get_token_amount(%{member_id: Map.get(row, :who_member_id)}) do
+            x when x < 0 ->
+              configToken = Oas.Tokens.Token.getPossibleTokenAmount()
+              |> Enum.sort_by(fn %{value: value} -> value |> Decimal.to_float() end, :asc)
+              |> Enum.filter(fn %{quantity: no, value: value} ->
+                (no * Decimal.to_float(value)) <= Map.get(row, :amount)
+              end)
+              |> List.first()
+              %{configToken | quantity: abs(x)}
+            _ -> nil
+          end
+
+          case configToken do
+            nil ->
+              Map.put(row, :state, :credits)
+              |> Map.put(:tags, ["Credits" | Map.get(row, :tags, [])])
+              |> (&(case row do
+                %{warnings: _} -> row
+                %{errors: _} -> row
+                _ -> Map.put(&1, :to_import, true)
+              end)).()
+            configToken ->
+              cond do
+                Decimal.to_float(configToken.value) * configToken.quantity == Map.get(row, :amount) ->
+                  Map.put(row, :state, :tokens)
+                  |> Map.put(:state_data, configToken)
+                  |> Map.put(:tags, ["Tokens" | Map.get(row, :tags, [])])
+                  |> (&(case row do
+                    %{warnings: _} -> row
+                    %{errors: _} -> row
+                    _ -> Map.put(&1, :to_import, true)
+                  end)).()
+                true ->
+                  Map.put(row, :state, :tokens_credits)
+                  |> Map.put(:state_data, configToken)
+                  |> Map.put(:tags, ["Tokens" , "Credits" | Map.get(row, :tags, [])])
+                  |> (&(case row do
+                    %{warnings: _} -> row
+                    %{errors: _} -> row
+                    _ -> Map.put(&1, :to_import, true)
+                  end)).()
+              end
+          end
+        else
+          Map.put(row, :warnings, ["Didn't find member (via bank_account_name), so not adding credits" | Map.get(row, :warnings, [])])
+        end
+    end)
+  end
+
   def processTokens(rows) do
     rows
     |> Enum.map(fn
@@ -91,7 +151,7 @@ defmodule Oas.ImportTransactions do
           end
         ) do
           nil -> row
-          configToken = %{quantity: no, value: value} ->
+          configToken = %{quantity: _no, value: _value} ->
             if (is_map_key(row, :who_member_id)) do
               Map.put(row, :state, :tokens)
                 |> Map.put(:state_data, configToken)
@@ -108,9 +168,11 @@ defmodule Oas.ImportTransactions do
     end)
   end
 
+
+
   def processWhoMemberId(rows) do
     rows
-    |> Enum.map(fn (row = %{bank_account_name: bank_account_name}) -> 
+    |> Enum.map(fn (row = %{bank_account_name: bank_account_name}) ->
       id = from(m in Oas.Members.Member,
         where: m.bank_account_name == ^bank_account_name
       )
@@ -135,18 +197,30 @@ defmodule Oas.ImportTransactions do
   end
 
   def process(rows) do
-    rows
-      |> processWhoMemberId
-      |> processDuplicates
-      |> processMembership
-      |> processTokens
-      |> processOther
+    config = from(c in Oas.Config.Config, limit: 1) |> Oas.Repo.one!()
+
+    case config.credits do
+      false ->
+        rows
+          |> processWhoMemberId
+          |> processDuplicates
+          |> processMembership
+          |> processTokens
+          # |> processCredits
+          |> processOther
+      true ->
+        rows
+          |> processWhoMemberId
+          |> processDuplicates
+          |> processCredits
+          |> processOther
+    end
   end
 
   # -----------------------------------
 
   defp doTokens(%{
-    who_member_id: who_member_id, 
+    who_member_id: who_member_id,
     quantity: quantity,
     value: value,
     when1: when1
@@ -160,26 +234,42 @@ defmodule Oas.ImportTransactions do
     })
   end
 
-  defp doMembership(%{
-    who_member_id: who_member_id,
-    when1: when1,
-    amount: amount
+  defp doCredits(%{
+    who_member_id: _who_member_id,
+    when1: _when1,
+    value: value
   }, result) do
-    # membershipPeriod = from(mp in Oas.Members.MembershipPeriod,
-    #   where: (mp.from <= ^when1 and mp.to > ^Date.add(when1, 31)) or
-    #     (mp.from <= ^Date.add(when1, 31) and mp.to > ^when1),
-    #   limit: 1
-    # )
-    # |> Oas.Repo.one
+    result = result |> Oas.Repo.preload(:credit)
 
-    membershipPeriod = Oas.Members.MembershipPeriod.getThisOrNextMembershipPeriod(when1, who_member_id, amount)
-
-    %Oas.Members.Membership{
-      transaction_id: result.id,
-      member_id: who_member_id,
-      membership_period_id: membershipPeriod.id
-    } |> Oas.Repo.insert
+    Oas.Credits.Credit.doCredit(
+      result |> Ecto.Changeset.change(),
+      %{
+        amount: value
+      }
+    )
+    |> Oas.Repo.update()
   end
+
+  # defp doMembership(%{
+  #   who_member_id: who_member_id,
+  #   when1: when1,
+  #   amount: amount
+  # }, result) do
+  #   # membershipPeriod = from(mp in Oas.Members.MembershipPeriod,
+  #   #   where: (mp.from <= ^when1 and mp.to > ^Date.add(when1, 31)) or
+  #   #     (mp.from <= ^Date.add(when1, 31) and mp.to > ^when1),
+  #   #   limit: 1
+  #   # )
+  #   # |> Oas.Repo.one
+
+  #   membershipPeriod = Oas.Members.MembershipPeriod.getThisOrNextMembershipPeriod(when1, who_member_id, amount)
+
+  #   %Oas.Members.Membership{
+  #     transaction_id: result.id,
+  #     member_id: who_member_id,
+  #     membership_period_id: membershipPeriod.id
+  #   } |> Oas.Repo.insert
+  # end
 
   def doImport(rows) do
     rows
@@ -188,11 +278,11 @@ defmodule Oas.ImportTransactions do
       amount: amount,
       bank_account_name: bank_account_name,
       date: date,
-      memo: memo,
+      memo: _memo,
       my_reference: my_reference,
       transaction_tags: transaction_tags
     }) ->
-      
+
       who = case Map.get(row, :who_member_id, nil) do
         nil -> bank_account_name
         id -> Oas.Repo.get!(Oas.Members.Member, id) |> Map.get(:name)
@@ -212,7 +302,7 @@ defmodule Oas.ImportTransactions do
       |> Oas.Transactions.TransactionTags.doTransactionTags(%{transaction_tags: transaction_tags})
       |> Oas.Repo.insert
 
-      if (Map.get(row, :state, nil) == :tokens) do
+      if (Map.get(row, :state, nil) == :tokens || Map.get(row, :state, nil) == :tokens_credits) do
         doTokens(%{
           when1: date,
           who_member_id: Map.get(row, :who_member_id, nil),
@@ -221,14 +311,21 @@ defmodule Oas.ImportTransactions do
         }, result)
       end
 
-      if (Map.get(row, :state, nil) == :membership) do
-        doMembership(%{
-          when1: date, 
+      if (Map.get(row, :state, nil) == :credits || Map.get(row, :state, nil) == :tokens_credits) do
+        doCredits(%{
+          when1: date,
           who_member_id: Map.get(row, :who_member_id, nil),
-          amount: amount
+          value: (amount - ((Map.get(row, :state_data, %{}) |> Map.get(:value, 0) |> Decimal.to_float()) * (Map.get(row, :state_data, %{}) |> Map.get(:quantity, 0))))
         }, result)
       end
 
+      # if (Map.get(row, :state, nil) == :membership) do
+      #   doMembership(%{
+      #     when1: date,
+      #     who_member_id: Map.get(row, :who_member_id, nil),
+      #     amount: amount
+      #   }, result)
+      # end
       :ok
     end)
 

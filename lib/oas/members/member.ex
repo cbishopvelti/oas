@@ -1,3 +1,5 @@
+import Ecto.Query, only: [from: 2]
+
 defmodule Oas.Members.Member do
   use Ecto.Schema
   import Ecto.Changeset
@@ -12,6 +14,8 @@ defmodule Oas.Members.Member do
     field :is_reviewer, :boolean
     field :is_active, :boolean
     field :bank_account_name, :string
+    field :gocardless_name, :string
+    field :honorary_member, :boolean
     has_many :attendance, Oas.Trainings.Attendance
 
     has_one :member_details, Oas.Members.MemberDetails, on_replace: :nilify
@@ -23,6 +27,24 @@ defmodule Oas.Members.Member do
     has_many :transactions, Oas.Transactions.Transaction, foreign_key: :who_member_id
 
     timestamps()
+  end
+
+  defp validate_name(changeset) do
+    name = changeset |> get_field(:name) |> String.downcase()
+    config = from(
+      c in Oas.Config.Config,
+      limit: 1
+    ) |> Oas.Repo.one!()
+
+    count = from(m in Oas.Members.Member,
+      where: fragment("lower(?)", m.name) ==  ^name,
+      select: count(m.id)
+    ) |> Oas.Repo.one!
+
+    case count do
+      0 -> changeset
+      _ -> changeset |> add_error(:name, "Name already exists, don't fill this form in again, please contact " <> (config.name || "support"))
+    end
   end
 
   @doc """
@@ -44,17 +66,20 @@ defmodule Oas.Members.Member do
   """
   def registration_changeset(member, attrs, opts \\ []) do
     member
-    |> cast(attrs, [:email, :password, :name, :is_active, :is_admin, :is_reviewer, :bank_account_name])
+    |> cast(attrs, [:email, :password, :name, :is_active, :is_admin, :is_reviewer, :bank_account_name, :gocardless_name])
     |> validate_required([:name])
+    |> validate_name()
     |> validate_email()
     |> validate_password(opts)
   end
 
-  def changeset(member, attrs, opts \\ []) do
+  def changeset(member, attrs, _opts \\ []) do
     member
-    |> cast(attrs, [:email, :name, :is_active, :is_admin, :is_reviewer, :bank_account_name])
+    |> cast(attrs, [:email, :name, :is_active, :is_admin, :is_reviewer, :honorary_member, :bank_account_name, :gocardless_name])
     |> validate_required([:name])
     |> validate_email()
+    |> unique_constraint(:gocardless_name)
+    |> unique_constraint(:bank_account_name)
   end
 
   def validate_email(changeset) do

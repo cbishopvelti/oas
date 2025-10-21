@@ -55,7 +55,6 @@ export const AnalysisAttendance = () => {
         return training_where.name;
       })
       .map((group, key) => {
-        console.log("002", group, key)
         return {
           name: key,
           data: map(group, (item) => ({
@@ -76,7 +75,7 @@ export const AnalysisAttendance = () => {
   }
 
   return <>
-    <TrainingsFilter 
+    <TrainingsFilter
       filterData={filterData}
       setFilterData={setFilterData}
     />

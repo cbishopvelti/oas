@@ -33,9 +33,11 @@ export const Member = () => {
         name,
         email,
         bank_account_name,
+        gocardless_name,
         is_active,
         is_admin,
         is_reviewer
+        honorary_member
         member_details {
           phone,
           address,
@@ -63,7 +65,7 @@ export const Member = () => {
     }
   }, [get(data, 'member.name', id)])
   useEffect(() => {
-    
+
     refetch()
     if (!id) {
       setFormData({is_active: true})
@@ -100,21 +102,27 @@ export const Member = () => {
     $is_active: Boolean,
     $is_admin: Boolean,
     $is_reviewer: Boolean,
+    $honorary_member: Boolean,
     $member_details: MemberDetailsArg,
-    $bank_account_name: String
+    $bank_account_name: String,
+    $gocardless_name: String
   ){
     member (
       id: $id, name: $name, email: $email,
       is_reviewer: $is_reviewer,
       is_active: $is_active,
       is_admin: $is_admin,
+      honorary_member: $honorary_member,
       member_details: $member_details,
-      bank_account_name: $bank_account_name
+      bank_account_name: $bank_account_name,
+      gocardless_name: $gocardless_name
     ) {
       id,
       password
     }
-  }`)
+  }`, {
+    onError: () => { }
+  })
   const errors = parseErrors(error?.graphQLErrors)
 
   const save = (formData) => async () => {
@@ -126,7 +134,9 @@ export const Member = () => {
       variables: omit(formData, 'member_details.__typename')
     })
 
-    navigate(`/member/${get(data, 'member.id')}`);
+    if (get(data, 'member.id')) {
+      navigate(`/member/${get(data, 'member.id')}`);
+    }
   }
 
   if (get(mutationData, 'member.password')) {
@@ -176,41 +186,61 @@ export const Member = () => {
           helperText={get(errors, "bank_account_name", []).join(" ")}
         />
       </FormControl>
+      <FormControl fullWidth sx={{m: 2}}>
+        <TextField
+          id="gocardless_name"
+          label="Gocardless Name"
+          value={get(formData, "gocardless_name", '') || ''}
+          onChange={onChange({formData, setFormData, key: 'gocardless_name'})}
+          error={has(errors, "gocardless_name")}
+          helperText={get(errors, "gocardless_name", []).join(" ")}
+        />
+      </FormControl>
       <FormControl fullWidth sx={{m:2}}>
         <FormControlLabel
             control={
-              <Switch 
+              <Switch
                 checked={get(formData, 'is_active', false) || false}
                 onChange={onChange({formData, setFormData, key: 'is_active', isCheckbox: true})}/>
             }
             label="Is active" />
         <FormControlLabel
             control={
-              <Switch 
+              <Switch
                 checked={get(formData, 'is_reviewer', false) || false}
                 onChange={onChange({formData, setFormData, key: 'is_reviewer', isCheckbox: true})}/>
             }
             label="Is reviewer" />
         <FormControlLabel
             control={
-              <Switch 
+              <Switch
                 checked={get(formData, 'is_admin', false) || false}
                 onChange={onChange({formData, setFormData, key: 'is_admin', isCheckbox: true})}/>
             }
             label="Is admin" />
+
+        <FormControlLabel
+            control={
+              <Switch
+                checked={get(formData, 'honorary_member', false) || false}
+                onChange={onChange({formData, setFormData, key: 'honorary_member', isCheckbox: true})}/>
+            }
+            label="Honorary member" />
       </FormControl>
+
+
 
       <FormControl fullWidth sx={{m:2}}>
         <FormControlLabel
           control={
-            <Switch 
+            <Switch
               checked={editMemberDetails}
               onChange={(event) => setEditMemberDetails(event.target.checked)}/>
           }
           label="Edit Member Details" />
       </FormControl>
 
-      
+
       {editMemberDetails && <MemberDetails
         errors={errors}
         setFormData={setFormData}

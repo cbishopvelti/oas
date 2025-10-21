@@ -2,7 +2,6 @@ import Ecto.Query, only: [from: 2]
 
 defmodule Oas.Tokens.Token do
   use Ecto.Schema
-  import Ecto.Changeset
 
   schema "tokens" do
     belongs_to :transaction, Oas.Transactions.Transaction
@@ -16,8 +15,9 @@ defmodule Oas.Tokens.Token do
   end
 
   def getPossibleTokenAmount do
-    
-    from(tk in Oas.Config.Tokens, select: tk)
+    from(tk in Oas.Config.Tokens, select: tk,
+      order_by: [desc: :value]
+    )
       |> Oas.Repo.all
 
     # [{1, 5}, {10, 4.5}, {20, 4.5}]

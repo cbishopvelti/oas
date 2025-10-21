@@ -1,7 +1,6 @@
 import Ecto.Query, only: [from: 2]
 defmodule Oas.Transactions.TransactionTags do
   use Ecto.Schema
-  import Ecto.Changeset
 
   schema "transaction_tags" do
     field :name, :string

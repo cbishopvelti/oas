@@ -1,0 +1,554 @@
+{
+  "target": [
+    "browserslist"
+  ],
+  "stats": "errors-warnings",
+  "mode": "development",
+  "bail": false,
+  "devtool": "cheap-module-source-map",
+  "entry": "/home/chris/playground/oas/oas-web/src/index.js",
+  "output": {
+    "path": "/home/chris/playground/oas/oas-web/build",
+    "pathinfo": true,
+    "filename": "static/js/bundle.js",
+    "chunkFilename": "static/js/[name].chunk.js",
+    "assetModuleFilename": "static/media/[name].[hash][ext]",
+    "publicPath": "/"
+  },
+  "cache": {
+    "type": "filesystem",
+    "version": "dc7f31297753b7f6108ee91a7bd3c732",
+    "cacheDirectory": "/home/chris/playground/oas/oas-web/node_modules/.cache",
+    "store": "pack",
+    "buildDependencies": {
+      "defaultWebpack": [
+        "webpack/lib/"
+      ],
+      "config": [
+        "/home/chris/playground/oas/oas-web/node_modules/react-scripts/config/webpack.config.js"
+      ],
+      "tsconfig": []
+    }
+  },
+  "infrastructureLogging": {
+    "level": "none"
+  },
+  "optimization": {
+    "minimize": false,
+    "minimizer": [
+      {
+        "options": {
+          "test": {},
+          "extractComments": true,
+          "parallel": true,
+          "minimizer": {
+            "options": {
+              "parse": {
+                "ecma": 8
+              },
+              "compress": {
+                "ecma": 5,
+                "warnings": false,
+                "comparisons": false,
+                "inline": 2
+              },
+              "mangle": {
+                "safari10": true
+              },
+              "keep_classnames": false,
+              "keep_fnames": false,
+              "output": {
+                "ecma": 5,
+                "comments": false,
+                "ascii_only": true
+              }
+            }
+          }
+        }
+      },
+      {
+        "options": {
+          "test": {},
+          "parallel": true,
+          "minimizer": {
+            "options": {}
+          }
+        }
+      }
+    ]
+  },
+  "resolve": {
+    "modules": [
+      "node_modules",
+      "/home/chris/playground/oas/oas-web/node_modules"
+    ],
+    "extensions": [
+      ".web.mjs",
+      ".mjs",
+      ".web.js",
+      ".js",
+      ".json",
+      ".web.jsx",
+      ".jsx"
+    ],
+    "alias": {
+      "react-native": "react-native-web"
+    },
+    "plugins": [
+      {
+        "appSrcs": [
+          "/home/chris/playground/oas/oas-web/src"
+        ],
+        "allowedFiles": {},
+        "allowedPaths": [
+          "/home/chris/playground/oas/oas-web/node_modules/react-refresh",
+          "/home/chris/playground/oas/oas-web/node_modules/@pmmmwh/react-refresh-webpack-plugin/lib",
+          "/home/chris/playground/oas/oas-web/node_modules/babel-preset-react-app",
+          "/home/chris/playground/oas/oas-web/node_modules/babel-preset-react-app/node_modules/@babel/runtime/helpers/esm",
+          "/home/chris/playground/oas/oas-web/node_modules/babel-preset-react-app/node_modules/@babel/runtime/regenerator"
+        ]
+      }
+    ]
+  },
+  "module": {
+    "strictExportPresence": true,
+    "rules": [
+      {
+        "enforce": "pre",
+        "exclude": {},
+        "test": {},
+        "loader": "/home/chris/playground/oas/oas-web/node_modules/source-map-loader/dist/cjs.js"
+      },
+      {
+        "oneOf": [
+          {
+            "test": [
+              {}
+            ],
+            "type": "asset",
+            "mimetype": "image/avif",
+            "parser": {
+              "dataUrlCondition": {
+                "maxSize": 10000
+              }
+            }
+          },
+          {
+            "test": [
+              {},
+              {},
+              {},
+              {}
+            ],
+            "type": "asset",
+            "parser": {
+              "dataUrlCondition": {
+                "maxSize": 10000
+              }
+            }
+          },
+          {
+            "test": {},
+            "use": [
+              {
+                "loader": "/home/chris/playground/oas/oas-web/node_modules/@svgr/webpack/lib/index.js",
+                "options": {
+                  "prettier": false,
+                  "svgo": false,
+                  "svgoConfig": {
+                    "plugins": [
+                      {
+                        "removeViewBox": false
+                      }
+                    ]
+                  },
+                  "titleProp": true,
+                  "ref": true
+                }
+              },
+              {
+                "loader": "/home/chris/playground/oas/oas-web/node_modules/file-loader/dist/cjs.js",
+                "options": {
+                  "name": "static/media/[name].[hash].[ext]"
+                }
+              }
+            ],
+            "issuer": {
+              "and": [
+                {}
+              ]
+            }
+          },
+          {
+            "test": {},
+            "include": "/home/chris/playground/oas/oas-web/src",
+            "loader": "/home/chris/playground/oas/oas-web/node_modules/babel-loader/lib/index.js",
+            "options": {
+              "customize": "/home/chris/playground/oas/oas-web/node_modules/babel-preset-react-app/webpack-overrides.js",
+              "presets": [
+                [
+                  "/home/chris/playground/oas/oas-web/node_modules/babel-preset-react-app/index.js",
+                  {
+                    "runtime": "automatic"
+                  }
+                ]
+              ],
+              "babelrc": false,
+              "configFile": false,
+              "cacheIdentifier": "development:babel-plugin-named-asset-import@0.3.8:babel-preset-react-app@10.0.1:react-dev-utils@12.0.1:react-scripts@5.0.1",
+              "plugins": [
+                "/home/chris/playground/oas/oas-web/node_modules/react-refresh/babel.js"
+              ],
+              "cacheDirectory": true,
+              "cacheCompression": false,
+              "compact": false
+            }
+          },
+          {
+            "test": {},
+            "exclude": {},
+            "loader": "/home/chris/playground/oas/oas-web/node_modules/babel-loader/lib/index.js",
+            "options": {
+              "babelrc": false,
+              "configFile": false,
+              "compact": false,
+              "presets": [
+                [
+                  "/home/chris/playground/oas/oas-web/node_modules/babel-preset-react-app/dependencies.js",
+                  {
+                    "helpers": true
+                  }
+                ]
+              ],
+              "cacheDirectory": true,
+              "cacheCompression": false,
+              "cacheIdentifier": "development:babel-plugin-named-asset-import@0.3.8:babel-preset-react-app@10.0.1:react-dev-utils@12.0.1:react-scripts@5.0.1",
+              "sourceMaps": true,
+              "inputSourceMap": true
+            }
+          },
+          {
+            "test": {},
+            "exclude": {},
+            "use": [
+              "/home/chris/playground/oas/oas-web/node_modules/style-loader/dist/cjs.js",
+              {
+                "loader": "/home/chris/playground/oas/oas-web/node_modules/css-loader/dist/cjs.js",
+                "options": {
+                  "importLoaders": 1,
+                  "sourceMap": true,
+                  "modules": {
+                    "mode": "icss"
+                  }
+                }
+              },
+              {
+                "loader": "/home/chris/playground/oas/oas-web/node_modules/postcss-loader/dist/cjs.js",
+                "options": {
+                  "postcssOptions": {
+                    "ident": "postcss",
+                    "config": false,
+                    "plugins": [
+                      "postcss-flexbugs-fixes",
+                      [
+                        "postcss-preset-env",
+                        {
+                          "autoprefixer": {
+                            "flexbox": "no-2009"
+                          },
+                          "stage": 3
+                        }
+                      ],
+                      "postcss-normalize"
+                    ]
+                  },
+                  "sourceMap": true
+                }
+              }
+            ],
+            "sideEffects": true
+          },
+          {
+            "test": {},
+            "use": [
+              "/home/chris/playground/oas/oas-web/node_modules/style-loader/dist/cjs.js",
+              {
+                "loader": "/home/chris/playground/oas/oas-web/node_modules/css-loader/dist/cjs.js",
+                "options": {
+                  "importLoaders": 1,
+                  "sourceMap": true,
+                  "modules": {
+                    "mode": "local"
+                  }
+                }
+              },
+              {
+                "loader": "/home/chris/playground/oas/oas-web/node_modules/postcss-loader/dist/cjs.js",
+                "options": {
+                  "postcssOptions": {
+                    "ident": "postcss",
+                    "config": false,
+                    "plugins": [
+                      "postcss-flexbugs-fixes",
+                      [
+                        "postcss-preset-env",
+                        {
+                          "autoprefixer": {
+                            "flexbox": "no-2009"
+                          },
+                          "stage": 3
+                        }
+                      ],
+                      "postcss-normalize"
+                    ]
+                  },
+                  "sourceMap": true
+                }
+              }
+            ]
+          },
+          {
+            "test": {},
+            "exclude": {},
+            "use": [
+              "/home/chris/playground/oas/oas-web/node_modules/style-loader/dist/cjs.js",
+              {
+                "loader": "/home/chris/playground/oas/oas-web/node_modules/css-loader/dist/cjs.js",
+                "options": {
+                  "importLoaders": 3,
+                  "sourceMap": true,
+                  "modules": {
+                    "mode": "icss"
+                  }
+                }
+              },
+              {
+                "loader": "/home/chris/playground/oas/oas-web/node_modules/postcss-loader/dist/cjs.js",
+                "options": {
+                  "postcssOptions": {
+                    "ident": "postcss",
+                    "config": false,
+                    "plugins": [
+                      "postcss-flexbugs-fixes",
+                      [
+                        "postcss-preset-env",
+                        {
+                          "autoprefixer": {
+                            "flexbox": "no-2009"
+                          },
+                          "stage": 3
+                        }
+                      ],
+                      "postcss-normalize"
+                    ]
+                  },
+                  "sourceMap": true
+                }
+              },
+              {
+                "loader": "/home/chris/playground/oas/oas-web/node_modules/resolve-url-loader/index.js",
+                "options": {
+                  "sourceMap": true,
+                  "root": "/home/chris/playground/oas/oas-web/src"
+                }
+              },
+              {
+                "loader": "/home/chris/playground/oas/oas-web/node_modules/sass-loader/dist/cjs.js",
+                "options": {
+                  "sourceMap": true
+                }
+              }
+            ],
+            "sideEffects": true
+          },
+          {
+            "test": {},
+            "use": [
+              "/home/chris/playground/oas/oas-web/node_modules/style-loader/dist/cjs.js",
+              {
+                "loader": "/home/chris/playground/oas/oas-web/node_modules/css-loader/dist/cjs.js",
+                "options": {
+                  "importLoaders": 3,
+                  "sourceMap": true,
+                  "modules": {
+                    "mode": "local"
+                  }
+                }
+              },
+              {
+                "loader": "/home/chris/playground/oas/oas-web/node_modules/postcss-loader/dist/cjs.js",
+                "options": {
+                  "postcssOptions": {
+                    "ident": "postcss",
+                    "config": false,
+                    "plugins": [
+                      "postcss-flexbugs-fixes",
+                      [
+                        "postcss-preset-env",
+                        {
+                          "autoprefixer": {
+                            "flexbox": "no-2009"
+                          },
+                          "stage": 3
+                        }
+                      ],
+                      "postcss-normalize"
+                    ]
+                  },
+                  "sourceMap": true
+                }
+              },
+              {
+                "loader": "/home/chris/playground/oas/oas-web/node_modules/resolve-url-loader/index.js",
+                "options": {
+                  "sourceMap": true,
+                  "root": "/home/chris/playground/oas/oas-web/src"
+                }
+              },
+              {
+                "loader": "/home/chris/playground/oas/oas-web/node_modules/sass-loader/dist/cjs.js",
+                "options": {
+                  "sourceMap": true
+                }
+              }
+            ]
+          },
+          {
+            "exclude": [
+              {},
+              {},
+              {},
+              {}
+            ],
+            "type": "asset/resource"
+          }
+        ]
+      },
+      {
+        "test": {},
+        "resolve": {
+          "fullySpecified": false
+        }
+      }
+    ]
+  },
+  "plugins": [
+    {
+      "userOptions": {
+        "inject": true,
+        "template": "/home/chris/playground/oas/oas-web/public/index.html"
+      },
+      "version": 5,
+      "options": {
+        "template": "/home/chris/playground/oas/oas-web/public/index.html",
+        "templateContent": false,
+        "filename": "index.html",
+        "publicPath": "auto",
+        "hash": false,
+        "inject": true,
+        "scriptLoading": "defer",
+        "compile": true,
+        "favicon": false,
+        "minify": "auto",
+        "cache": true,
+        "showErrors": true,
+        "chunks": "all",
+        "excludeChunks": [],
+        "chunksSortMode": "auto",
+        "meta": {},
+        "base": false,
+        "title": "Webpack App",
+        "xhtml": false
+      }
+    },
+    {
+      "replacements": {
+        "NODE_ENV": "development",
+        "PUBLIC_URL": "",
+        "FAST_REFRESH": true,
+        "REACT_APP_SERVER_URL": "http://localhost:4000",
+        "REACT_APP_ADMIN_URL": "http://localhost:3999"
+      }
+    },
+    {
+      "appPath": "/home/chris/playground/oas/oas-web"
+    },
+    {
+      "definitions": {
+        "process.env": {
+          "NODE_ENV": "\"development\"",
+          "PUBLIC_URL": "\"\"",
+          "FAST_REFRESH": "true",
+          "REACT_APP_SERVER_URL": "\"http://localhost:4000\"",
+          "REACT_APP_ADMIN_URL": "\"http://localhost:3999\""
+        }
+      }
+    },
+    {
+      "options": {
+        "overlay": false,
+        "exclude": {},
+        "include": {}
+      }
+    },
+    {
+      "options": {},
+      "logger": {},
+      "pathCache": {},
+      "fsOperations": 0,
+      "primed": false
+    },
+    {
+      "options": {
+        "assetHookStage": null,
+        "basePath": "",
+        "fileName": "asset-manifest.json",
+        "filter": null,
+        "map": null,
+        "publicPath": "/",
+        "removeKeyHash": {},
+        "sort": null,
+        "transformExtensions": {},
+        "useEntryKeys": false,
+        "useLegacyEmit": false,
+        "writeToFileEmit": false
+      }
+    },
+    {
+      "options": {
+        "resourceRegExp": {},
+        "contextRegExp": {}
+      }
+    },
+    {
+      "key": "ESLintWebpackPlugin",
+      "options": {
+        "extensions": [
+          "js",
+          "mjs",
+          "jsx",
+          "ts",
+          "tsx"
+        ],
+        "emitError": true,
+        "emitWarning": true,
+        "failOnError": true,
+        "resourceQueryExclude": [],
+        "formatter": "/home/chris/playground/oas/oas-web/node_modules/react-dev-utils/eslintFormatter.js",
+        "eslintPath": "/home/chris/playground/oas/oas-web/node_modules/eslint/lib/api.js",
+        "context": "/home/chris/playground/oas/oas-web/src",
+        "cache": true,
+        "cacheLocation": "/home/chris/playground/oas/oas-web/node_modules/.cache/.eslintcache",
+        "cwd": "/home/chris/playground/oas/oas-web",
+        "resolvePluginsRelativeTo": "/home/chris/playground/oas/oas-web/node_modules/react-scripts/config",
+        "baseConfig": {
+          "extends": [
+            "/home/chris/playground/oas/oas-web/node_modules/eslint-config-react-app/base.js"
+          ],
+          "rules": {}
+        }
+      }
+    }
+  ],
+  "performance": false
+}
