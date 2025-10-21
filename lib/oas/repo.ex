@@ -85,8 +85,8 @@ defmodule Oas.Repo do
         Swoosh.Attachment.new(
           {:data, data},
           filename: name,
-          content_type: "application/octet-stream",
-          type: :inline
+          content_type: "application/octet-stream"
+          # type: :inline
         )
       )
       Oas.Mailer.deliver(email)
