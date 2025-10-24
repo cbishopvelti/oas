@@ -12,6 +12,7 @@ import { MembershipSuccess } from './Members/MembershipSuccess';
 import { Tokens } from './Tokens/Tokens';
 import { Credits } from './Credits/Credits';
 import { Bookings } from './Bookings/Bookings';
+import { Llm } from './Llm/Llm';
 
 
 const router = createBrowserRouter([
@@ -43,6 +44,10 @@ const router = createBrowserRouter([
       {
         path: "bookings",
         element: <Bookings />
+      },
+      {
+        path: "llm",
+        element: <Llm />
       }
     ],
   },
