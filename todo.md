@@ -58,4 +58,8 @@ Removed outdated information from the success page ✅.
 Stop people registering with the same name
 Error if backup fails ✅
 Change text on Credits page ✅
+Magic auth link
+llm feature
+Auth through llm
+Book through llm
 Delete from go_cardless

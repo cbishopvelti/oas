@@ -169,6 +169,9 @@ function App() {
                   </a>
                 </MenuItem>}
               </>}
+              <MenuItem component={NavLink} to={"llm"}>
+                <ListItemText>Chat</ListItemText>
+              </MenuItem>
             </MenuList>
           </div>
         </Drawer>
