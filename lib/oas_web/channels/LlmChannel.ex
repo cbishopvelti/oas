@@ -23,7 +23,12 @@ defmodule OasWeb.Channels.LlmChannel do
 
     send(self(), :after_join)
 
-    {:ok, socket}
+
+
+    {
+      :ok,
+      Phoenix.Socket.assign(socket, %{who_id_str: get_who_id_str(socket)})
+    }
   end
 
   def handle_info(:after_join, socket) do
@@ -62,12 +67,15 @@ defmodule OasWeb.Channels.LlmChannel do
     # broadcast!(socket, "echo", %{
     #   echo: prompt
     # })
-    IO.puts("001")
     GenServer.cast(socket.assigns[:llm_gen_server], {:prompt, prompt, get_who_id_str(socket)})
-
-    IO.puts("002 ---------------")
-
     {:noreply, socket}
+  end
+  def handle_in("who_am_i", _, socket) do
+    IO.inspect(socket.assigns, label: "006 socket.assigns")
+    {:reply, {:ok, %{
+      current_member: socket.assigns[:current_member],
+      who_id_str: socket.assigns[:who_id_str]
+    }}, socket}
   end
 
   defp get_who_id_str(socket) do
