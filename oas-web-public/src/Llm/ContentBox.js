@@ -57,8 +57,7 @@ export const CodeBlock = ({ blockMatch }) => {
 };
 
 export const ContentBox = ({
-  message,
-  me
+  message
 }) => {
 
   const { blockMatches } = useLLMOutput({
@@ -84,9 +83,10 @@ export const ContentBox = ({
       windowLookBackMs: 0,
     })
   });
+  console.log("102", message.content, message.isMe);
   return <div style={{
-    paddingRight: me === true ? "" : "20px",
-    paddingLeft: me === true ? "20px": ""
+    paddingRight: message.isMe === true ? "" : "20%",
+    paddingLeft: message.isMe === true ? "20%": ""
   }}>
     {blockMatches.map((blockMatch, index) => {
       const Component = blockMatch.block.component;

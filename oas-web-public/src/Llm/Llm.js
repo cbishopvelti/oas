@@ -53,12 +53,18 @@ export const Llm = ({ blockMatch }) => {
   const [messages, setMessages] = useState([])
   const [output, setOutput] = useState("")
   const [isStreamFinished, setIsStreamFinished] = useState(true)
+  const [whoIdObj, setWhoIdObj] = useState({})
+
   const pushMessage = useCallback((message) => {
-    setMessages([...messages, message])
-  }, [messages])
+    console.log("006", message.content, whoIdObj, message.who_id_str === whoIdObj.who_id_str)
+    setMessages((messages ) => [...messages, {
+      ...message,
+      isMe: message.who_id_str && message.who_id_str === whoIdObj.who_id_str
+    }])
+  }, [setMessages, whoIdObj])
 
   useEffect(() => {
-    console.log("002", `${process.env["REACT_APP_SERVER_URL"].replace(/^http/, "ws")}/public_socket`)
+    // console.log("002", `${process.env["REACT_APP_SERVER_URL"].replace(/^http/, "ws")}/public_socket`)
     const phoenixSocket = new PhoenixSocket(`${process.env["REACT_APP_SERVER_URL"].replace(/^http/, "ws")}/public_socket`, {
       reconnectAfterMs: (() => 120_000),
      	rejoinAfterMs: (() => 120_000),
@@ -71,17 +77,17 @@ export const Llm = ({ blockMatch }) => {
       }
     });
     phoenixSocket.connect()
-    console.log("001 pheonixSocket", phoenixSocket);
+    // console.log("001 pheonixSocket", phoenixSocket);
 
     let channel = phoenixSocket.channel(`llm:${v4()}`, {})
 
-    channel.on("echo", (echo) => {
-      console.log("echo", echo)
-    })
+    // channel.on("echo", (echo) => {
+    //   console.log("echo", echo)
+    // })
     let messages = [];
     let accData = "";
     channel.on("data", (data) => {
-      console.log("001 data", data)
+      // console.log("001 data", data)
       accData = accData + data.message.content
       setIsStreamFinished(data.done)
       if (data.done) {
@@ -98,6 +104,18 @@ export const Llm = ({ blockMatch }) => {
       .join()
       .receive("ok", (resp) => {
         console.log("ok SHOULD HAPPEN", resp)
+        // Find out who I am
+        channel.push("who_am_i")
+          .receive("ok", (payload) => {
+            console.log("008 setWhoIdObj")
+            setWhoIdObj(payload)
+          })
+          .receive("error", (error) => {
+            console.error("error", error)
+          })
+          .receive("timeout", (timeout) => {
+            console.error("timeout", timeout)
+          })
       })
       .receive("error", (resp) => {
         console.error("error", resp)
@@ -138,19 +156,21 @@ export const Llm = ({ blockMatch }) => {
     })
   });
 
-  const user_prompt = (prompt) => {
+  const user_prompt = (prompt, whoIdObj) => {
     pushMessage({
       content: prompt,
-      role: "user"
+      role: "user",
+      who_id_str: whoIdObj.who_id_str
     })
     channel.push("prompt", prompt)
   }
 
+  console.log("010 whoIdObj", whoIdObj)
   return (
     <div>
       <div>
-        {messages.map((message) => {
-          return <ContentBox message={message} />
+        {messages.map((message, index) => {
+          return <ContentBox key={index} message={message} />
         })}
         <div>
           {blockMatches.map((blockMatch, index) => {
@@ -168,8 +188,9 @@ export const Llm = ({ blockMatch }) => {
             onChange={(event) => { setPrompt(event.target.value) }}
             onKeyUp={(event) => {
               if (event.key === 'Enter') {
+                console.log("011", whoIdObj)
                 // channel.push("prompt", prompt)
-                user_prompt(prompt)
+                user_prompt(prompt, whoIdObj)
               }
             }}
             error={false}
@@ -180,8 +201,8 @@ export const Llm = ({ blockMatch }) => {
           <Button
             disabled={!channel || channel.state !== "joined"}
             onClick={() => {
-              // channel.push("prompt", prompt)
-              user_prompt(prompt)
+              console.log("011", whoIdObj)
+              user_prompt(prompt, whoIdObj)
             }}>Submit</Button>
         </FormControl>
       </Box>
