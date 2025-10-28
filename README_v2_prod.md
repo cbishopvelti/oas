@@ -30,6 +30,7 @@ chrisjbishop155/oas:v2_prod
 
 ```
 docker exec -it oas /bin/bash
+cp /app/nginx/gcloud_pre_nginx.conf /etc/nginx/nginx.conf && nginx
 cp /app/nginx/v2_nginx.conf /etc/nginx/nginx.conf && certbot --nginx
 nginx -s stop
 nginx
