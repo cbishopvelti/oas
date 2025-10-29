@@ -6,9 +6,10 @@ defmodule OasWeb.Schema.SchemaUser do
     field :id, :integer
     field :name, :string
     field :email, :string
+    field :is_admin, :boolean
     field :logout_link, :string
   end
-  
+
   object :user_bookings do
     field :id, :integer
     field :where, :string
@@ -20,13 +21,14 @@ defmodule OasWeb.Schema.SchemaUser do
 
   object :user_queries do
     field :user, :user do
-      resolve fn _, _, conn -> 
+      resolve fn _, _, conn ->
         %{context: context} = conn
 
         {:ok, %{
           id: Map.get(context, :current_member, %{}) |> Map.get(:id),
           name: Map.get(context, :current_member, %{}) |> Map.get(:name),
           email: Map.get(context, :current_member, %{}) |> Map.get(:email),
+          is_admin: Map.get(context, :current_member, %{}) |> Map.get(:is_admin),
           logout_link: Map.get(context, :logout_link, %{})
         }}
       end
@@ -39,7 +41,7 @@ defmodule OasWeb.Schema.SchemaUser do
           left_join: atte in assoc(trai, :attendance), on: atte.training_id == trai.id and atte.member_id == ^id,
           left_join: memb in assoc(atte, :member),
           preload: [:training_where, attendance: {atte, [member: memb]}],
-          where: trai.when >= ^Date.utc_today() and 
+          where: trai.when >= ^Date.utc_today() and
           (memb.id == ^id or is_nil(memb.id)),
           order_by: [asc: trai.when, desc: trai.id]
         ) |> Oas.Repo.all
@@ -81,7 +83,7 @@ defmodule OasWeb.Schema.SchemaUser do
         config = from(c in Oas.Config.Config, select: c) |> Oas.Repo.one
 
         case config.enable_booking do
-          true -> 
+          true ->
             Oas.Attendance.add_attendance(
               %{training_id: training_id, member_id: member_id},
               %{inserted_by_member_id: member_id}
@@ -97,15 +99,15 @@ defmodule OasWeb.Schema.SchemaUser do
         config = from(c in Oas.Config.Config, select: c) |> Oas.Repo.one
 
         case config.enable_booking do
-          true -> 
-            result = from(atte in Oas.Trainings.Attendance, 
+          true ->
+            result = from(atte in Oas.Trainings.Attendance,
               join: trai in assoc(atte, :training),
               where: atte.id == ^attendance_id and
                 atte.inserted_by_member_id == ^member_id and atte.member_id == ^member_id
                 and ((trai.when > ^Date.utc_today) or
                 (trai.when == ^Date.utc_today and atte.inserted_at < ^DateTime.add(DateTime.utc_now(), 60)))
             ) |> Oas.Repo.one
-    
+
             case result do
               nil -> {:error, "Unable to undo"}
               %{id: id} -> Oas.Attendance.delete_attendance(%{attendance_id: id})

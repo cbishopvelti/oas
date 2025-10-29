@@ -5,7 +5,7 @@ defmodule OasWeb.MemberSessionController do
   alias OasWeb.MemberAuth
 
   def new(conn, _params) do
-    render(conn, "new.html", error_message: nil)
+    render(conn, "new.html", error_message: nil, public_url: Application.fetch_env!(:oas, :public_url))
   end
 
   def create(conn, %{"member" => member_params}) do

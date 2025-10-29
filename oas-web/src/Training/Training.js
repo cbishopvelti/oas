@@ -28,10 +28,14 @@ export const Training = () => {
 
   const {data, refetch} = useQuery(gql`
     query($id: Int!) {
+      config_config {
+        enable_booking
+      }
       training(id: $id) {
         id,
         when,
         notes,
+        commitment,
         training_where {
           id,
           name
