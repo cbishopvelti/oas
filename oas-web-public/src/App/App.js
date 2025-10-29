@@ -38,7 +38,8 @@ function App() {
       id,
       name,
       email,
-      logout_link
+      logout_link,
+      is_admin
     },
     public_config_config {
       enable_booking
@@ -74,6 +75,8 @@ function App() {
   }
 
   const drawerWidth = 244;
+
+
 
   return (
       <div className="App">
@@ -123,6 +126,26 @@ function App() {
               {enableBooking && get(data, 'user') && <MenuItem component={NavLink} to={'/bookings'}>
                 <ListItemText>My Bookings</ListItemText>
               </MenuItem>}
+            {enableBooking && !get(data, 'user') && <MenuItem onClick={onClick} sx={{padding: 0}}>
+              <a style={{
+                color: 'inherit',
+                textDecoration: 'none',
+                display: 'inline-block',
+                width: '100%',
+                padding: '6px 16px'
+              }}
+              href={`${process.env.REACT_APP_SERVER_URL}/members/log_in?callback_path=${encodeURIComponent("/bookings")}&callback_domain=public_url`}>My Bookings</a>
+            </MenuItem>}
+            {get(data, 'user.is_admin') && <MenuItem onClick={onClick} sx={{padding: 0}}>
+              <a style={{
+                color: 'inherit',
+                textDecoration: 'none',
+                display: 'inline-block',
+                width: '100%',
+                padding: '6px 16px'
+              }}
+              href={`${process.env.REACT_APP_ADMIN_URL}`}>Admin</a>
+            </MenuItem>}
 
               {enableBooking && /* Fixed on the branch v2-credits-booking */ <>
                 <Divider />

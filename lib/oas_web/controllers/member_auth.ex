@@ -28,13 +28,19 @@ defmodule OasWeb.MemberAuth do
   def log_in_member(conn, member, params \\ %{}) do
     token = Members.generate_member_session_token(member)
     member_return_to = get_session(conn, :member_return_to)
+    IO.inspect(member_return_to, label: "201 member_return_to")
 
-    conn
+    out = conn
     |> renew_session()
     |> put_session(:member_token, token)
     |> put_session(:live_socket_id, "members_sessions:#{Base.url_encode64(token)}")
     |> maybe_write_remember_me_cookie(token, params)
-    |> redirect(to: member_return_to || signed_in_path(conn))
+
+    case member_return_to || signed_in_path(conn) do
+      x when is_struct(x) ->
+        redirect(out, to: member_return_to || signed_in_path(conn))
+      x -> redirect(out, x)
+    end
   end
   def log_in_member_gql(conn, member, params \\ %{}) do
     token = Members.generate_member_session_token(member)
@@ -151,10 +157,29 @@ defmodule OasWeb.MemberAuth do
   end
 
   defp maybe_store_return_to(%{method: "GET"} = conn) do
+    IO.puts("maybe_store_return_to -----------")
+    Plug.Conn.fetch_cookies(conn) |> IO.inspect(label: "101")
+
     put_session(conn, :member_return_to, current_path(conn))
   end
 
   defp maybe_store_return_to(conn), do: conn
 
-  defp signed_in_path(_conn), do: "/"
+  defp signed_in_path(conn) do
+    # IO.puts("signed_in_path -----------")
+    # Plug.Conn.fetch_cookies(conn) |> Map.get(:cookies) |> Map.get(OasWeb.CallbackPathPlug.callback_path_cookie()) |> IO.inspect(label: "106")
+
+    Plug.Conn.fetch_cookies(conn, signed: OasWeb.CallbackPathPlug.callback_path_cookie()) |> IO.inspect(label: "007")
+
+    case Plug.Conn.fetch_cookies(conn, signed: OasWeb.CallbackPathPlug.callback_path_cookie())
+      |> Map.get(:cookies)
+      |> Map.get(OasWeb.CallbackPathPlug.callback_path_cookie())
+    do
+      nil -> "/"
+      %{
+        callback_path: callback_path,
+        callback_domain: callback_domain
+      } -> [external: Application.get_env(:oas, callback_domain |> String.to_atom()) <> callback_path]
+    end
+  end
 end

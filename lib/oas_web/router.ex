@@ -2,6 +2,7 @@ defmodule OasWeb.Router do
   use OasWeb, :router
 
   import OasWeb.MemberAuth
+  import OasWeb.CallbackPathPlug
 
   pipeline :browser do
     plug :accepts, ["html"]
@@ -11,6 +12,7 @@ defmodule OasWeb.Router do
     plug :protect_from_forgery
     plug :put_secure_browser_headers
     plug :fetch_current_member
+    plug :callback_path_plug
   end
 
   pipeline :api do

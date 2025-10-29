@@ -18,7 +18,7 @@
     <header>
       <section class="container">
         <nav>
-          <a href="/">Home</a>
+          <a href={Application.fetch_env!(:oas, :public_url)}>Home</a>
         </nav>
         <nav>
           <%= render "_member_menu.html", assigns %>
