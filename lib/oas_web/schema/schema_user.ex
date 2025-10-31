@@ -7,6 +7,7 @@ defmodule OasWeb.Schema.SchemaUser do
     field :name, :string
     field :email, :string
     field :is_admin, :boolean
+    field :is_reviewer, :boolean
     field :logout_link, :string
   end
 
@@ -29,6 +30,7 @@ defmodule OasWeb.Schema.SchemaUser do
           name: Map.get(context, :current_member, %{}) |> Map.get(:name),
           email: Map.get(context, :current_member, %{}) |> Map.get(:email),
           is_admin: Map.get(context, :current_member, %{}) |> Map.get(:is_admin),
+          is_reviewer: Map.get(context, :current_member, %{}) |> Map.get(:is_reviewer),
           logout_link: Map.get(context, :logout_link, %{})
         }}
       end

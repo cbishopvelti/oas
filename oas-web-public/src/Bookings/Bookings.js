@@ -8,6 +8,7 @@ import { has, get } from 'lodash';
 import moment from 'moment';
 import { useOutletContext } from 'react-router-dom';
 import { UndoButton } from './UndoButton';
+import { CreditWarning } from './CreditWarning';
 
 const canUndo = ({
   user
@@ -88,10 +89,13 @@ export const Bookings = () => {
     refetch();
   }
 
+
+
   return <Box>
     <h2>My Bookings</h2>
-    {!has(data, "user_bookings") || get(data, "user_bookings", []).length == 0 && <p>No upcoming events</p>}
-    {has(data, "user_bookings") && get(data, "user_bookings", []).length != 0 && <TableContainer><Table>
+    <CreditWarning watch={ get(data, "user_bookings") } />
+    {(!has(data, "user_bookings") || get(data, "user_bookings", []).length == 0) && <p>No upcoming events</p>}
+    {(has(data, "user_bookings") && get(data, "user_bookings", []).length != 0) && <TableContainer><Table>
       <TableHead>
         <TableRow>
           <TableCell>Where</TableCell>
@@ -101,11 +105,11 @@ export const Bookings = () => {
       </TableHead>
       <TableBody>
         {get(data, "user_bookings", []).map((training, i) => {
-          return <TableRow key={i}>
-            <TableCell>{training.where}</TableCell>
-            <TableCell>{training.when}</TableCell>
-            <TableCell>
-              {!training.attendance_id && <Button onClick={onAttend(training.id)} color="success" sx={{width: '100%'}}>Attend</Button>}
+          return <TableRow key={i} sx={{tableLayout: "fixed", width: "100%"}}>
+            <TableCell sx={{width: "33%"}}>{training.where}</TableCell>
+            <TableCell sx={{width: "33%"}}>{training.when}</TableCell>
+            <TableCell sx={{width: "34%"}}>
+              {!training.attendance_id && <Button onClick={onAttend(training.id)} color="success" sx={{width: "100%"}}>Attend</Button>}
               {user && canUndo({user})(training) && <UndoButton
                 refetch={refetch}
                 expires={canUndo({user})(training)}
@@ -113,7 +117,7 @@ export const Bookings = () => {
                 setState={setState}
                 onClick={undo(training.attendance_id)}
               >Undo</UndoButton>}
-              {training.attendance_id && user && !canUndo({user})(training) && <Button disabled={true} sx={{width: '100%'}} color="success">Attending</Button>}
+              {training.attendance_id && user && !canUndo({user})(training) && <Button disabled={true} sx={{width: "100%"}} color="success">Attending</Button>}
             </TableCell>
           </TableRow>
         })}
