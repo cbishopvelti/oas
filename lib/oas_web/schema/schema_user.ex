@@ -123,7 +123,8 @@ defmodule OasWeb.Schema.SchemaUser do
                 {:ok, %{
                   success: true,
                   attendance_id: id,
-                  training_id: result.training_id
+                  training_id: result.training_id,
+                  member_id: member_id
                 }}
             end
           _ -> {:error, "Booking feature is not enabled"}
@@ -143,9 +144,12 @@ defmodule OasWeb.Schema.SchemaUser do
         {:ok, topic: context |> Map.get(:context) |> Map.get(:current_member) |> Map.get(:id)}
       end
 
-      trigger [:user_add_attendance], topic: fn attendance ->
+      trigger [
+        :user_add_attendance, :user_undo_attendance,
+        :add_attendance, :delete_attendance
+      ], topic: fn attendance ->
         IO.inspect(attendance, label: "508")
-        "member_id"
+        attendance.member_id
       end
     end
   end
