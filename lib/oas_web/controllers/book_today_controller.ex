@@ -38,12 +38,37 @@ defmodule OasWeb.BookTodayController do
           |> Map.get(:current_member)
           |> Map.get(:id)
 
-        Oas.Attendance.add_attendance(
-          %{training_id: training.id, member_id: member_id},
-          %{inserted_by_member_id: member_id}
-        )
+        try do
+          {:ok, %{
+            member_id: member_id,
+            training_id: training_id
+          } } = Oas.Attendance.add_attendance(
+            %{training_id: training.id, member_id: member_id},
+            %{inserted_by_member_id: member_id}
+          )
 
-        conn |> redirect(external: Application.fetch_env!(:oas, :public_url) <> "/bookings")
+          Absinthe.Subscription.publish(OasWeb.Endpoint, %{
+            member_id: member_id,
+            training_id: training_id
+          },
+          [
+            user_attendance_attendance: member_id,
+            attendance_attendance: training_id
+          ])
+
+          # conn |> redirect(external: Application.fetch_env!(:oas, :public_url) <> "/bookings")
+          conn
+          |> put_flash(:error, "Debug only, remove")
+          |> render("index.html", %{
+            public_url: Application.fetch_env!(:oas, :public_url)
+          })
+        catch
+          {:error, errors} -> conn
+            |> put_flash(:error, errors |> Enum.map(fn (err) -> err.message end) |> Enum.join("<br/>\n"))
+            |> render("index.html", %{
+              public_url: Application.fetch_env!(:oas, :public_url)
+            })
+        end
     end
   end
 end
