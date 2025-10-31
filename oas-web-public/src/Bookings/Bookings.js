@@ -28,7 +28,7 @@ const canUndo = ({
   }
 
   if (
-    moment(booking.inserted_at).isSame(booking.when, 'day') &&
+    (moment(booking.inserted_at).isSame(booking.when, 'day') || booking.commitment) &&
     moment().isBefore(moment(booking.inserted_at).add(60, 'seconds'))
   ) {
     return moment(booking.inserted_at).add(60, 'seconds')

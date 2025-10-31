@@ -49,7 +49,8 @@ export const TrainingAttendance = ({trainingId, setAttendance}) => {
       inserted_at,
       inserted_by_member_id,
       training {
-        when
+        when,
+        commitment
       }
     },
     config_config {
