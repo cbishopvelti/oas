@@ -55,7 +55,11 @@ Trainings Where filter. ✅
 
 Email database backup ✅
 Removed outdated information from the success page ✅.
-Stop people registering with the same name
+Stop people registering with the same name ✅
 Error if backup fails ✅
 Change text on Credits page ✅
 Delete from go_cardless
+Commitment mode
+Show future events in filter
+Credit warning email error
+Live update attending

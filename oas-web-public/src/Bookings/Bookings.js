@@ -21,6 +21,7 @@ const canUndo = ({
   }
 
   if (
+    !booking.commitment &&
     moment().isBefore(booking.when)
   ) {
     return moment(booking.when)
@@ -52,7 +53,8 @@ export const Bookings = () => {
         when,
         attendance_id,
         inserted_by_member_id,
-        inserted_at
+        inserted_at,
+        commitment
       }
     }
   `);
