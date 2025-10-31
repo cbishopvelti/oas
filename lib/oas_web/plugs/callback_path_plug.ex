@@ -9,8 +9,6 @@ defmodule OasWeb.CallbackPathPlug do
 
   def callback_path_plug(conn, _opts) do
 
-    # IO.inspect(conn, label: "001")
-    # IO.inspect(_opts, label: "002")
     case Map.get(conn, :query_params) do
       %{"callback_path" => callback_path, "callback_domain" => callback_domain} ->
         Plug.Conn.put_resp_cookie(conn, @callback_path_cookie, %{
