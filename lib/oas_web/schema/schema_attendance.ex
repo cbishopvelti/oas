@@ -157,7 +157,6 @@ defmodule OasWeb.Schema.SchemaAttendance do
       end
 
       trigger [:user_add_attendance, :user_undo_attendance, :add_attendance, :delete_attendance], topic: fn attendance ->
-        IO.inspect(attendance, label: "301")
         attendance.training_id
       end
     end

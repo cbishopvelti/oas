@@ -59,7 +59,9 @@ Stop people registering with the same name ✅
 Error if backup fails ✅
 Change text on Credits page ✅
 Delete from go_cardless
-Commitment mode
-Show future events in filter
-Credit warning email error
-Live update attending
+Commitment mode [x]
+Show future events in filter [x]
+Credit warning email error [x]
+Live update attending [x]
+Live update today booking [x]
+Users adding themselfs twice shouldnt happen [x]
