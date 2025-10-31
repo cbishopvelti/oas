@@ -124,7 +124,8 @@ defmodule Oas.Attendance do
     {:ok, %{
       success: true,
       id: attendance.id,
-      training_id: training_id
+      training_id: training_id,
+      member_id: member_id
     }}
   end
 
@@ -169,7 +170,8 @@ defmodule Oas.Attendance do
 
     {:ok, %{
       success: true,
-      training_id: attendance.training_id
+      training_id: attendance.training_id,
+      member_id: attendance.member_id
     }}
   end
 

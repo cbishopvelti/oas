@@ -65,7 +65,10 @@ export const Bookings = () => {
         commitment
       }
     }
-  `);
+  `, {
+    nextFetchPolicy: "cache-and-network",
+    refetchWritePolicy: "merge"
+  });
 
   const {data: subData} = useSubscription(gql`subscription {
     user_attendance_attendance {
@@ -73,7 +76,7 @@ export const Bookings = () => {
     }
   }`, {
     onData({ data }) {
-      console.log("001 on data")
+      refetch()
     }
   })
 
