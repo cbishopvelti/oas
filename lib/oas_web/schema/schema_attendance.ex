@@ -9,6 +9,10 @@ defmodule OasWeb.Schema.SchemaAttendance do
     field :training_id, :integer
   end
 
+  object :attendance_attendance_sub do
+    field :id, :integer
+  end
+
   object :member_attendance do
     field :id, :integer
     field :attendance_id, :integer
@@ -140,6 +144,21 @@ defmodule OasWeb.Schema.SchemaAttendance do
       arg :attendance_id, non_null(:integer)
       resolve fn _, args, _ ->
         Oas.Attendance.delete_attendance(args)
+      end
+    end
+  end
+
+  object :attendance_subscriptions do
+    field :attendance_attendance, :attendance_attendance_sub do
+      arg :training_id, non_null(:integer)
+
+      config fn args, _ ->
+        { :ok, topic: args.training_id }
+      end
+
+      trigger [:user_add_attendance, :user_undo_attendance, :add_attendance, :delete_attendance], topic: fn attendance ->
+        IO.inspect(attendance, label: "301")
+        attendance.training_id
       end
     end
   end
