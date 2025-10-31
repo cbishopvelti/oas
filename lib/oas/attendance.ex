@@ -121,7 +121,11 @@ defmodule Oas.Attendance do
       Oas.TokenMailer.maybe_send_warnings_email(member)
     end)
 
-    {:ok, %{id: attendance.id}}
+    {:ok, %{
+      success: true,
+      id: attendance.id,
+      training_id: training_id
+    }}
   end
 
   def delete_attendance(%{attendance_id: attendance_id}) do
@@ -163,7 +167,10 @@ defmodule Oas.Attendance do
 
     Oas.Repo.delete!(attendance)
 
-    {:ok, %{success: true}}
+    {:ok, %{
+      success: true,
+      training_id: attendance.training_id
+    }}
   end
 
   def get_token_amount(%{member_id: member_id}) do

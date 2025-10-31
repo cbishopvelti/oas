@@ -7,7 +7,7 @@ import { Box, FormControl, Autocomplete, TextField, Button,   Table,
   TableBody,
   IconButton
 } from "@mui/material"
-import { useQuery, gql, useMutation } from '@apollo/client'
+import { useQuery, gql, useMutation, useSubscription } from '@apollo/client'
 import { differenceBy, get, chain } from 'lodash';
 import { Link } from 'react-router-dom'
 import { TrainingAttendanceRow } from './TrainingAttendanceRow';
@@ -59,8 +59,25 @@ export const TrainingAttendance = ({trainingId, setAttendance}) => {
   }`, {
     variables: {
       training_id: trainingId
-    }
+    },
+    nextFetchPolicy: "cache-and-network",
+    refetchWritePolicy: "merge"
   });
+
+  console.log("002", data)
+
+  let {data: subData } = useSubscription(gql`subscription attendance($training_id: Int!){
+    attendance_attendance(training_id: $training_id) {
+      id
+    }
+  }`, {
+    variables: {
+      training_id: trainingId
+    },
+    onData({ }) {
+      refetch()
+    }
+  })
 
   const attendance = get(data, 'attendance', []);
 

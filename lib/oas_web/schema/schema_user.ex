@@ -116,7 +116,15 @@ defmodule OasWeb.Schema.SchemaUser do
 
             case result do
               nil -> {:error, "Unable to undo"}
-              %{id: id} -> Oas.Attendance.delete_attendance(%{attendance_id: id})
+              %{id: id} ->
+                Oas.Attendance.delete_attendance(%{attendance_id: id})
+
+                IO.inspect(result, label: "109")
+                {:ok, %{
+                  success: true,
+                  attendance_id: id,
+                  training_id: result.training_id
+                }}
             end
           _ -> {:error, "Booking feature is not enabled"}
         end
@@ -124,4 +132,17 @@ defmodule OasWeb.Schema.SchemaUser do
       end
     end
   end
+
+  object :user_subscriptions do
+    field :user_attendance_attendance, :success do
+      config fn _args, context ->
+        IO.inspect(context, label: "509 context")
+      end
+
+      trigger [:user_add_attendance], topic: fn _ ->
+        "member_id"
+      end
+    end
+  end
+
 end
