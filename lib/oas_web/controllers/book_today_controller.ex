@@ -15,7 +15,7 @@ defmodule OasWeb.BookTodayController do
         where: t.when == ^now
       ) |> Oas.Repo.one()
     rescue
-      e in Ecto.MultipleResultsError -> IO.inspect(e, label: "005")
+      _e in Ecto.MultipleResultsError ->
         :tomany
     end
 
@@ -28,14 +28,22 @@ defmodule OasWeb.BookTodayController do
         })
       nil ->
         conn
-        |> put_flash(:error, "No events found today")
+        |> put_flash(:error, "No events found today.")
         |> render("index.html", %{
           public_url: Application.fetch_env!(:oas, :public_url)
         })
       training ->
-        session = get_session(conn)
+        member_id = OasWeb.MemberAuth.fetch_current_member(conn, [])
+          |> Map.get(:assigns)
+          |> Map.get(:current_member)
+          |> Map.get(:id)
 
-        conn |> Plug.Conn.send_resp(200, "Success")
+        Oas.Attendance.add_attendance(
+          %{training_id: training.id, member_id: member_id},
+          %{inserted_by_member_id: member_id}
+        )
+
+        conn |> redirect(external: Application.fetch_env!(:oas, :public_url) <> "/bookings")
     end
   end
 end
