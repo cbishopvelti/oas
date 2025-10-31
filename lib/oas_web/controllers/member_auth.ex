@@ -132,11 +132,18 @@ defmodule OasWeb.MemberAuth do
   def redirect_if_member_is_authenticated(conn, _opts) do
     if conn.assigns[:current_member] do
       conn
-      |> redirect(to: signed_in_path(conn))
+      |> maybe_external_redirect(signed_in_path(conn))
       |> halt()
     else
       conn
     end
+  end
+
+  defp maybe_external_redirect(conn, to) when is_bitstring(to) do
+    conn |> redirect(to: to)
+  end
+  defp maybe_external_redirect(conn, to) when is_list(to) do
+    conn |> redirect(to)
   end
 
   @doc """
@@ -152,7 +159,7 @@ defmodule OasWeb.MemberAuth do
       conn
       |> put_flash(:error, "You must log in to access this page.")
       |> maybe_store_return_to()
-      |> redirect(to: Routes.member_session_path(conn, :new))
+      |> maybe_external_redirect(Routes.member_session_path(conn, :new))
       |> halt()
     end
   end

@@ -13,8 +13,6 @@ export const CreditWarning = ({
 
   const member_email = get(outletContext, 'user.email')
 
-  console.log("001 member_email", member_email)
-
   const { data, error, refetch } = useQuery(gql`
     query($email: String!) {
       public_credits(email: $email) {
@@ -38,7 +36,6 @@ export const CreditWarning = ({
   }, [watch])
 
   const credits = get(data, 'public_credits', []);
-  console.log("002", credits)
   const errors = uniqBy(get(error, 'graphQLErrors', []), "message")
 
   const currentBalance = credits.length > 0 ?

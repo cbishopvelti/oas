@@ -59,7 +59,8 @@ function App() {
     setOutletContext({
       ...outletContext,
       user: get(data, 'user'),
-      enableBooking: enableBooking
+      enableBooking: enableBooking,
+      userLoading: loading
     })
   }, [data])
 

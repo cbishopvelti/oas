@@ -1,12 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box, TableContainer, Table, TableHead,
   TableBody, TableCell, TableRow, Button
 } from '@mui/material';
-import { useQuery, gql, useMutation } from '@apollo/client';
+import { useQuery, gql, useMutation, useSubscription } from '@apollo/client';
 import { has, get } from 'lodash';
 import moment from 'moment';
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, redirect, useNavigate } from 'react-router-dom';
 import { UndoButton } from './UndoButton';
 import { CreditWarning } from './CreditWarning';
 
@@ -42,7 +42,15 @@ export const Bookings = () => {
   const [state, setState] = useState({
     update: 0
   })
-  const [{user}] = useOutletContext();
+  const [{user, userLoading}] = useOutletContext();
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!user && userLoading === false) {
+      window.location.href=`${process.env.REACT_APP_SERVER_URL}/members/log_in`
+    }
+  } , [user, userLoading])
 
   // List of upcoming trainings
   const {data, refetch} = useQuery(gql`
@@ -58,6 +66,16 @@ export const Bookings = () => {
       }
     }
   `);
+
+  const {data: subData} = useSubscription(gql`subscription {
+    user_attendance_attendance {
+      success
+    }
+  }`, {
+    onData({ data }) {
+      console.log("001 on data")
+    }
+  })
 
   const [attendMutation] = useMutation(gql`
     mutation($training_id: Int!) {
