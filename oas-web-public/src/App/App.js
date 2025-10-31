@@ -39,7 +39,8 @@ function App() {
       name,
       email,
       logout_link,
-      is_admin
+      is_admin,
+      is_reviewer
     },
     public_config_config {
       enable_booking
@@ -136,7 +137,7 @@ function App() {
               }}
               href={`${process.env.REACT_APP_SERVER_URL}/members/log_in?callback_path=${encodeURIComponent("/bookings")}&callback_domain=public_url`}>My Bookings</a>
             </MenuItem>}
-            {get(data, 'user.is_admin') && <MenuItem onClick={onClick} sx={{padding: 0}}>
+            {(get(data, 'user.is_admin') || get(data, 'user.is_reviewer')) && <MenuItem onClick={onClick} sx={{padding: 0}}>
               <a style={{
                 color: 'inherit',
                 textDecoration: 'none',
@@ -147,7 +148,7 @@ function App() {
               href={`${process.env.REACT_APP_ADMIN_URL}`}>Admin</a>
             </MenuItem>}
 
-              {enableBooking && /* Fixed on the branch v2-credits-booking */ <>
+              {enableBooking && /* Fixed on the branch v2-credits-booking */ <MenuList>
                 <Divider />
 
                 {!!get(data, "user") && [<ListItem key="1">
@@ -191,7 +192,7 @@ function App() {
                     Login
                   </a>
                 </MenuItem>}
-              </>}
+              </MenuList>}
             </MenuList>
           </div>
         </Drawer>

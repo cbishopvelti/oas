@@ -23,6 +23,7 @@ defmodule OasWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :index
+    get "/book-today", BookTodayController, :index
   end
 
   # Other scopes may use custom stacks.

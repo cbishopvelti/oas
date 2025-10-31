@@ -37,9 +37,10 @@ defmodule OasWeb.MemberAuth do
     |> maybe_write_remember_me_cookie(token, params)
 
     case member_return_to || signed_in_path(conn) do
-      x when is_struct(x) ->
+      x when is_bitstring(x) ->
         redirect(out, to: member_return_to || signed_in_path(conn))
-      x -> redirect(out, x)
+      x ->
+        redirect(out, x)
     end
   end
   def log_in_member_gql(conn, member, params \\ %{}) do
@@ -157,18 +158,11 @@ defmodule OasWeb.MemberAuth do
   end
 
   defp maybe_store_return_to(%{method: "GET"} = conn) do
-    IO.puts("maybe_store_return_to -----------")
-    Plug.Conn.fetch_cookies(conn) |> IO.inspect(label: "101")
-
     put_session(conn, :member_return_to, current_path(conn))
   end
-
   defp maybe_store_return_to(conn), do: conn
 
   defp signed_in_path(conn) do
-    # IO.puts("signed_in_path -----------")
-    # Plug.Conn.fetch_cookies(conn) |> Map.get(:cookies) |> Map.get(OasWeb.CallbackPathPlug.callback_path_cookie()) |> IO.inspect(label: "106")
-
     Plug.Conn.fetch_cookies(conn, signed: OasWeb.CallbackPathPlug.callback_path_cookie()) |> IO.inspect(label: "007")
 
     case Plug.Conn.fetch_cookies(conn, signed: OasWeb.CallbackPathPlug.callback_path_cookie())
