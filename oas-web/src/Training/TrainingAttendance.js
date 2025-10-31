@@ -64,9 +64,7 @@ export const TrainingAttendance = ({trainingId, setAttendance}) => {
     refetchWritePolicy: "merge"
   });
 
-  console.log("002", data)
-
-  let {data: subData } = useSubscription(gql`subscription attendance($training_id: Int!){
+  useSubscription(gql`subscription attendance($training_id: Int!){
     attendance_attendance(training_id: $training_id) {
       id
     }
