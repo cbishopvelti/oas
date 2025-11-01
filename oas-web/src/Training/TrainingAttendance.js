@@ -163,13 +163,18 @@ export const TrainingAttendance = ({trainingId, setAttendance}) => {
               member_id: newValue.member_id,
               member_name: newValue.label
             })
+
+            addAttendanceClick({addAttendance: {
+              member_id: newValue.member_id,
+              member_name: newValue.label
+            }, trainingId})()
           }}
           />
       </FormControl>
 
-      <FormControl sx={{ml: 2, mb: 2}}>
+      {/* <FormControl sx={{ml: 2, mb: 2}}>
         <Button onClick={addAttendanceClick({addAttendance, trainingId})}>Add</Button>
-      </FormControl>
+      </FormControl>*/}
     </Box>
     <div>
       <TableContainer>
