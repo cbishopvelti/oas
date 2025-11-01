@@ -7,7 +7,7 @@ import { Box, FormControl, Autocomplete, TextField, Button,   Table,
   TableBody,
   IconButton
 } from "@mui/material"
-import { useQuery, gql, useMutation } from '@apollo/client'
+import { useQuery, gql, useMutation, useSubscription } from '@apollo/client'
 import { differenceBy, get, chain } from 'lodash';
 import { Link } from 'react-router-dom'
 import { TrainingAttendanceRow } from './TrainingAttendanceRow';
@@ -49,7 +49,8 @@ export const TrainingAttendance = ({trainingId, setAttendance}) => {
       inserted_at,
       inserted_by_member_id,
       training {
-        when
+        when,
+        commitment
       }
     },
     config_config {
@@ -58,8 +59,23 @@ export const TrainingAttendance = ({trainingId, setAttendance}) => {
   }`, {
     variables: {
       training_id: trainingId
-    }
+    },
+    nextFetchPolicy: "cache-and-network",
+    refetchWritePolicy: "merge"
   });
+
+  useSubscription(gql`subscription attendance($training_id: Int!){
+    attendance_attendance(training_id: $training_id) {
+      id
+    }
+  }`, {
+    variables: {
+      training_id: trainingId
+    },
+    onData({ }) {
+      refetch()
+    }
+  })
 
   const attendance = get(data, 'attendance', []);
 
@@ -147,13 +163,18 @@ export const TrainingAttendance = ({trainingId, setAttendance}) => {
               member_id: newValue.member_id,
               member_name: newValue.label
             })
+
+            addAttendanceClick({addAttendance: {
+              member_id: newValue.member_id,
+              member_name: newValue.label
+            }, trainingId})()
           }}
           />
       </FormControl>
 
-      <FormControl sx={{ml: 2, mb: 2}}>
+      {/* <FormControl sx={{ml: 2, mb: 2}}>
         <Button onClick={addAttendanceClick({addAttendance, trainingId})}>Add</Button>
-      </FormControl>
+      </FormControl>*/}
     </Box>
     <div>
       <TableContainer>

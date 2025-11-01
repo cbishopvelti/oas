@@ -106,6 +106,21 @@ export const AppMenu = ({ setOpen }) => {
       <ListItemText>Config</ListItemText>
     </MenuItem>
 
+    <MenuItem onClick={onClick} sx={{
+      padding: 0
+    }}>
+      <a
+        style={{
+          color: 'inherit', textDecoration: 'none',
+          display: 'inline-block',
+          width: '100%',
+          padding: '6px 16px'
+        }}
+        href={`${process.env.REACT_APP_PUBLIC_URL}`}
+        rel="nofollow"
+      >Public Site</a>
+    </MenuItem>
+
     {/* <MenuItem onClick={onClick} component={NavLink} end to="/membership-period">
       New Membership Period
     </MenuItem>
@@ -156,7 +171,7 @@ export const AppMenu = ({ setOpen }) => {
           width: '100%',
           padding: '6px 16px'
         }}
-        href={`${process.env.REACT_APP_SERVER_URL}/members/log_in`}>
+        href={`${process.env.REACT_APP_SERVER_URL}/members/log_in?callback_path=${encodeURIComponent("/")}&callback_domain=app_url`}>
         Login
       </a>
     </MenuItem>}

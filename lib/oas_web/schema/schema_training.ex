@@ -28,6 +28,7 @@ defmodule OasWeb.Schema.SchemaTraining do
     field :when, :string
     field :attendance, :integer
     field :notes, :string
+    field :commitment, :boolean
     field :training_tags, list_of(:training_tag)
   end
 
@@ -103,6 +104,7 @@ defmodule OasWeb.Schema.SchemaTraining do
     field :insert_training, type: :training do
       arg :training_where, non_null(:training_where_arg)
       arg :when, non_null(:string)
+      arg :commitment, :boolean
       arg :training_tags, non_null(list_of(:training_tag_arg))
       arg :notes, :string
       resolve fn _, args, _ ->
@@ -130,7 +132,7 @@ defmodule OasWeb.Schema.SchemaTraining do
         args = %{args | when: when1 }
 
         {:ok, result} = %Oas.Trainings.Training{}
-          |> Ecto.Changeset.cast(args, [:when, :notes])
+          |> Ecto.Changeset.cast(args, [:when, :notes, :commitment])
           |> Ecto.Changeset.put_assoc(
             :training_tags,
             training_tags
@@ -145,6 +147,7 @@ defmodule OasWeb.Schema.SchemaTraining do
       arg :id, non_null(:integer)
       arg :when, non_null(:string)
       arg :notes, :string
+      arg :commitment, :boolean
       arg :training_tags, non_null(list_of(:training_tag_arg))
       arg :training_where, non_null(:training_where_arg)
       resolve fn _, args, _ ->
@@ -166,7 +169,7 @@ defmodule OasWeb.Schema.SchemaTraining do
         end
 
         toSave = training
-          |> Ecto.Changeset.cast(args, [:when, :notes])
+          |> Ecto.Changeset.cast(args, [:when, :notes, :commitment])
           |> Ecto.Changeset.put_assoc(
             :training_tags,
             training_tags

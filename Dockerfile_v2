@@ -56,5 +56,5 @@ VOLUME [ "/dbs", "/dbs-backup" ]
 # CMD ["iex"]
 # CMD ["sleep", "86400"]
 # CMD ["iex", "-S", "mix"]
-ENTRYPOINT [ "./docker_gcloud.sh" ]
+ENTRYPOINT [ "./docker_v2.sh" ]
 # CMD /bin/bash tmux new-session -d -s server 'iex -S mix phx.server'
