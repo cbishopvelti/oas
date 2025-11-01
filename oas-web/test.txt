@@ -17,7 +17,7 @@
   },
   "cache": {
     "type": "filesystem",
-    "version": "dc7f31297753b7f6108ee91a7bd3c732",
+    "version": "40ab3fd37eb9740d53753bd85dce48ae",
     "cacheDirectory": "/home/chris/playground/oas/oas-web/node_modules/.cache",
     "store": "pack",
     "buildDependencies": {
@@ -467,7 +467,8 @@
         "PUBLIC_URL": "",
         "FAST_REFRESH": true,
         "REACT_APP_SERVER_URL": "http://localhost:4000",
-        "REACT_APP_ADMIN_URL": "http://localhost:3999"
+        "REACT_APP_ADMIN_URL": "http://localhost:3999",
+        "REACT_APP_PUBLIC_URL": "http://localhost:3998"
       }
     },
     {
@@ -480,7 +481,8 @@
           "PUBLIC_URL": "\"\"",
           "FAST_REFRESH": "true",
           "REACT_APP_SERVER_URL": "\"http://localhost:4000\"",
-          "REACT_APP_ADMIN_URL": "\"http://localhost:3999\""
+          "REACT_APP_ADMIN_URL": "\"http://localhost:3999\"",
+          "REACT_APP_PUBLIC_URL": "\"http://localhost:3998\""
         }
       }
     },

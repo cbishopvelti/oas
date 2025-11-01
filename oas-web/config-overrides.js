@@ -2,7 +2,6 @@ const fs = require('fs');
 
 module.exports = module.exports = {
   webpack: function(config, env) {
-
     config = {
       ...config,
       module: {

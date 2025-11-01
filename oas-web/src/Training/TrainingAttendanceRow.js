@@ -33,13 +33,14 @@ const canUndo = (attendance, {enable_booking}) => {
   }
 
   if (
+    !attendance.training.commitment &&
     moment().isBefore(attendance.training.when)
   ) {
     return moment(attendance.training.when)
   }
 
   if (
-    moment(attendance.inserted_at).isSame(attendance.training.when, 'day') &&
+    (moment(attendance.inserted_at).isSame(attendance.training.when, 'day') || attendance.training.commitment) &&
     moment().isBefore(moment(attendance.inserted_at).add(60, 'seconds'))
   ) {
     return moment(attendance.inserted_at).add(60, 'seconds')

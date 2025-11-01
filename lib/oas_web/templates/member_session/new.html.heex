@@ -22,6 +22,7 @@
 </.form>
 
 <p>
-  <%= link "Register", to: Routes.member_registration_path(@conn, :new) %> |
-  <%= link "Forgot your password?", to: Routes.member_reset_password_path(@conn, :new) %>
+  <%= link "Register", to: @public_url <> "/register" %> |
+  <b><%= link "Existing member without a password?", to: Routes.member_reset_password_path(@conn, :new) %></b> |
+  <%= link "Forgotten your password?", to: Routes.member_reset_password_path(@conn, :new) %>
 </p>

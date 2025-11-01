@@ -75,10 +75,11 @@ defmodule Oas.TokenMailer do
   def should_send_warning(last_transaction, credits) do
     last_debits = credits |> Enum.filter(fn %{amount: amount, when: when1} ->
       Decimal.lt?(amount, "0.0")
-        && (Enum.member?([:gt], Date.compare(when1, last_transaction)))
+        && (case last_transaction do
+          nil -> true
+          last_transaction -> Enum.member?([:gt], Date.compare(when1, last_transaction))
+        end)
     end)
-
-    # IO.inspect(last_debits, label: "006")
 
     case last_debits do
       [_a] -> true

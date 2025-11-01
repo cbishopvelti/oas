@@ -55,7 +55,7 @@ Trainings Where filter. ✅
 
 Email database backup ✅
 Removed outdated information from the success page ✅.
-Stop people registering with the same name
+Stop people registering with the same name ✅
 Error if backup fails ✅
 Change text on Credits page ✅
 Magic auth link
@@ -63,3 +63,9 @@ llm feature
 Auth through llm
 Book through llm
 Delete from go_cardless
+Commitment mode [x]
+Show future events in filter [x]
+Credit warning email error [x]
+Live update attending [x]
+Live update today booking [x]
+Users adding themselfs twice shouldnt happen [x]

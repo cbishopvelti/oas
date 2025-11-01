@@ -1,0 +1,50 @@
+import { get, uniqBy } from 'lodash'
+import { useQuery, useLazyQuery, gql} from '@apollo/client';
+import { useOutletContext, Link } from 'react-router-dom'
+import { Alert } from '@mui/material';
+import { useEffect } from 'react';
+
+
+
+export const CreditWarning = ({
+  watch
+}) => {
+  const [outletContext] = useOutletContext();
+
+  const member_email = get(outletContext, 'user.email')
+
+  const { data, error, refetch } = useQuery(gql`
+    query($email: String!) {
+      public_credits(email: $email) {
+        id,
+        what,
+        expires_on,
+        when,
+        amount,
+        after_amount
+      }
+      public_bacs(email: $email)
+    }
+    `, {
+    variables: {
+      email: member_email
+    },
+    skip: !member_email
+  })
+  useEffect(() => {
+    refetch()
+  }, [watch])
+
+  const credits = get(data, 'public_credits', []);
+  const errors = uniqBy(get(error, 'graphQLErrors', []), "message")
+
+  const currentBalance = credits.length > 0 ?
+     credits[0].after_amount :
+     0;
+
+  return <>
+    {currentBalance < 0 && <Alert severity="warning">
+      Your current balance is <b style={{ ...currentBalance < 0 ? { color: "red" } : { }}}>{ currentBalance }</b> please purchase more credits. Insturctions <Link to="/credits">here</Link>.
+    </Alert>}
+  </>
+}

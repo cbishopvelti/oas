@@ -74,6 +74,10 @@ defmodule OasWeb.Schema do
 
   subscription do
     import_fields :config_subscriptions
+
+    import_fields :attendance_subscriptions
+
+    import_fields :user_subscriptions
   end
 
 
