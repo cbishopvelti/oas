@@ -1,4 +1,9 @@
 defmodule OasWeb.Channels.LlmChannel do
+  alias LangChain.Utils.ChainResult
+  alias LangChain.Function
+  alias LangChain.Message
+  alias LangChain.ChatModels.ChatOpenAI
+  alias LangChain.Chains.LLMChain
   use Phoenix.Channel
 
   def join("llm:" <> _private_room_id, _params, socket) do
@@ -135,5 +140,41 @@ defmodule OasWeb.Channels.LlmChannel do
     config_provider: provider)
 
     IO.inspect(response)
+  end
+
+  # OasWeb.Channels.LlmChannel.test_langchain()
+  def test_langchain() do
+
+    auth_tool = Function.new!(%{
+      name: "Authentication tool",
+      description: "If the user asks for their details, or anything that requires authentication and they're not authenticated, run this.",
+      parameters_schema: %{
+        type: "object",
+        properties: %{
+          # thing: %{
+          #   type: "string",
+          #   description: "The thing whose location is being requested."
+          # }
+        },
+        # required: ["thing"]
+      },
+      function: fn _args, _context ->
+        IO.puts("This Happened")
+        {:ok, "You aren't authenticated to do that, try logging in: " <> "<a href=\"http://the_auth_server:4000/sign_in\">http://the_auth_server:4000/sign_in</a>"}
+      end
+    })
+
+    {:ok, chain} = LLMChain.new!(%{
+      llm: ChatOpenAI.new!(%{
+        endpoint: "http://localhost:1234/v1/chat/completions",
+        model: "qwen/qwen3-4b-2507"
+      })
+    })
+    |> LLMChain.add_tools(auth_tool)
+    |> LLMChain.add_message(Message.new_user!("Give me my user details."))
+    |> LLMChain.run(mode: :while_needs_response)
+
+    IO.inspect(chain, label: "001 chain")
+    IO.inspect(ChainResult.to_string!(chain), label: "102 to_string(chain)")
   end
 end
