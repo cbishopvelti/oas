@@ -46,9 +46,10 @@ defmodule OasWeb.Channels.LlmChannel do
 
     # register llm
     # name = {:via, Registry, {OasWeb.Channels.LlmRegistry, socket.topic}}
-    {:ok, pid} = OasWeb.Channels.LlmGenServer.start(socket.topic, self())
+    # {:ok, pid} = OasWeb.Channels.LlmGenServer.start(socket.topic, self())
+    {:ok, pid } = Oas.Llm.RoomLangChain.start(socket.topic, self())
 
-    push(socket, "presence_state", OasWeb.Channels.LlmChannelPresence.list(socket) |> IO.inspect(label: "101.2"))
+    push(socket, "presence_state", OasWeb.Channels.LlmChannelPresence.list(socket))
 
     Process.monitor(pid)
 
@@ -65,7 +66,7 @@ defmodule OasWeb.Channels.LlmChannel do
     push(socket, "data", data)
     {:noreply, socket}
   end
-  def handle_cast(stuff, socket) do
+  def handle_cast(_stuff, socket) do
     IO.inspect(socket, label: "008 WAT handle_cast SHOULDN'T HAPPEN")
     {:noreply, socket}
   end
@@ -128,41 +129,10 @@ defmodule OasWeb.Channels.LlmChannel do
     IO.inspect(result, label: "001 result")
   end
 
-  # OasWeb.Channels.LlmChannel.test_ex_llm()
-  def test_ex_llm() do
-
-    {:ok, provider} = ExLLM.Infrastructure.ConfigProvider.Static.start_link(Application.fetch_env!(:ex_llm, :config) |> IO.inspect(label: "009"))
-    {:ok, response} = ExLLM.chat(:lmstudio, [
-      %{role: "user", content: "Why is the sky blue?"}
-    ],
-    # model: "qwen/qwen3-4b-2507",
-    model: "qwen/qwen3-4b-2507",
-    config_provider: provider)
-
-    IO.inspect(response)
-  end
-
   # OasWeb.Channels.LlmChannel.test_langchain()
   def test_langchain() do
 
-    auth_tool = Function.new!(%{
-      name: "Authentication tool",
-      description: "If the user asks for their details, or anything that requires authentication and they're not authenticated, run this.",
-      parameters_schema: %{
-        type: "object",
-        properties: %{
-          # thing: %{
-          #   type: "string",
-          #   description: "The thing whose location is being requested."
-          # }
-        },
-        # required: ["thing"]
-      },
-      function: fn _args, _context ->
-        IO.puts("This Happened")
-        {:ok, "You aren't authenticated to do that, try logging in: " <> "<a href=\"http://the_auth_server:4000/sign_in\">http://the_auth_server:4000/sign_in</a>"}
-      end
-    })
+
 
     {:ok, chain} = LLMChain.new!(%{
       llm: ChatOpenAI.new!(%{
@@ -170,7 +140,6 @@ defmodule OasWeb.Channels.LlmChannel do
         model: "qwen/qwen3-4b-2507"
       })
     })
-    |> LLMChain.add_tools(auth_tool)
     |> LLMChain.add_message(Message.new_user!("Give me my user details."))
     |> LLMChain.run(mode: :while_needs_response)
 
