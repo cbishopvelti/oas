@@ -27,6 +27,15 @@ defmodule OasWeb.Channels.LlmGenServer do
 
     client =  Ollama.init()
 
+    # {:ok, chain} = LLMChain.new!(%{
+    #   llm: ChatOpenAI.new!(%{
+    #     endpoint: "http://localhost:1234/v1/chat/completions",
+    #     model: "qwen/qwen3-4b-2507"
+    #   })
+    # })
+    # |> LLMChain.add_tools(Oas.Llm.Tools.get_tools())
+
+
     {:ok,
     state
       |> Map.put(:client, client)
@@ -51,10 +60,9 @@ defmodule OasWeb.Channels.LlmGenServer do
 
     IO.puts("Monitor died: #{inspect(pid)}. Remaining: #{MapSet.size(new_parents)}")
 
-    # Crucial Logic: Check if all interested processes are gone.
+    # Shutdown the thing if there are no connected channels
     if MapSet.size(new_parents) === 0 do
       IO.puts("Last monitor is gone. Shutting down worker.")
-      # Stop the GenServer normally
       {:stop, :normal, %{state | parents: new_parents}}
     else
       # Continue running
