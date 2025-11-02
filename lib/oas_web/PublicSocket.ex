@@ -27,7 +27,10 @@ defmodule OasWeb.PublicSocket do
 
         member = member_token && Oas.Members.get_member_by_session_token(member_token)
 
+        IO.puts("001")
         out = Phoenix.Socket.assign(socket, :current_member, member)
+        IO.puts("002")
+        out
       false ->
         socket
     end

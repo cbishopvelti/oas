@@ -1,7 +1,6 @@
-
 import { bundledThemes } from "shiki/themes";
 import parseHtml from "html-react-parser";
-import { getHighlighterCore } from "shiki/core";
+import { getHighlighterCore, getSingletonHighlighterCore } from "shiki/core";
 import { bundledLanguagesInfo } from "shiki/langs";
 import getWasm from "shiki/wasm";
 import ReactMarkdown from "react-markdown";
@@ -20,13 +19,16 @@ import {
 } from "@llm-ui/code";
 import { useLLMOutput, useStreamExample, throttleBasic } from "@llm-ui/react";
 
-export const MarkdownComponent = ({ blockMatch }) => {
-  const markdown = blockMatch.output;
-  return <ReactMarkdown remarkPlugins={[remarkGfm]}>{markdown}</ReactMarkdown>;
-};
+console.time('highlighter');
+
+// export const MarkdownComponent = ({ blockMatch }) => {
+//   const markdown = blockMatch.output;
+//   return <ReactMarkdown remarkPlugins={[remarkGfm]}>{markdown}</ReactMarkdown>;
+// };
+
 
 export const highlighter = loadHighlighter(
-  getHighlighterCore({
+  getSingletonHighlighterCore({
     langs: allLangs(bundledLanguagesInfo),
     langAlias: allLangsAlias(bundledLanguagesInfo),
     themes: Object.values(bundledThemes),
@@ -34,63 +36,71 @@ export const highlighter = loadHighlighter(
   }),
 );
 
-export const codeToHtmlOptions = {
-  theme: "github-light",
-};
+
+// export const codeToHtmlOptions = {
+//   theme: "github-light",
+// };
+
+export const CodeBlock = () => {
+  return <div>Hello</div>
+}
 
 // Customize this component with your own styling
-export const CodeBlock = ({ blockMatch }) => {
-  const { html, code } = useCodeBlockToHtml({
-    markdownCodeBlock: blockMatch.output,
-    highlighter,
-    codeToHtmlOptions,
-  });
-  if (!html) {
-    // fallback to <pre> if Shiki is not loaded yet
-    return (
-      <pre className="shiki">
-        <code>{code}</code>
-      </pre>
-    );
-  }
-  return <>{parseHtml(html)}</>;
-};
+// export const CodeBlock = ({ blockMatch }) => {
+//   const { html, code } = useCodeBlockToHtml({
+//     markdownCodeBlock: blockMatch.output,
+//     highlighter,
+//     // highlighter: null,
+//     codeToHtmlOptions,
+//   });
+//   if (!html) {
+//     // fallback to <pre> if Shiki is not loaded yet
+//     return (
+//       <pre className="shiki">
+//         <code>{code}</code>
+//       </pre>
+//     );
+//   }
+//   return <>{parseHtml(html)}</>;
+// };
 
-export const ContentBox = ({
-  message
-}) => {
+// export const ContentBox = ({
+//   message
+// }) => {
 
-  const { blockMatches } = useLLMOutput({
-    llmOutput: message.content,
-    fallbackBlock: {
-      component: MarkdownComponent,
-      lookBack: markdownLookBack(),
-    },
-    blocks: [
-      {
-        component: CodeBlock,
-        findCompleteMatch: findCompleteCodeBlock(),
-        findPartialMatch: findPartialCodeBlock(),
-        lookBack: codeBlockLookBack(),
-      },
-    ],
-    isStreamFinished: true,
-    throttle: throttleBasic({
-      readAheadChars: 1,
-      targetBufferChars: 1,
-      adjustPercentage: 1,
-      frameLookBackMs: 20,
-      windowLookBackMs: 0,
-    })
-  });
-  console.log("102", message.content, message.isMe);
-  return <div style={{
-    paddingRight: message.isMe === true ? "" : "20%",
-    paddingLeft: message.isMe === true ? "20%": ""
-  }}>
-    {blockMatches.map((blockMatch, index) => {
-      const Component = blockMatch.block.component;
-      return <Component key={index} blockMatch={blockMatch} />;
-    })}
-  </div>
-}
+//   const { blockMatches } = useLLMOutput({
+//     llmOutput: message.content,
+//     fallbackBlock: {
+//       component: MarkdownComponent,
+//       lookBack: markdownLookBack(),
+//     },
+//     blocks: [
+//       {
+//         component: CodeBlock,
+//         findCompleteMatch: findCompleteCodeBlock(),
+//         findPartialMatch: findPartialCodeBlock(),
+//         lookBack: codeBlockLookBack(),
+//       },
+//     ],
+//     isStreamFinished: true,
+//     throttle: throttleBasic({
+//       readAheadChars: 1,
+//       targetBufferChars: 1,
+//       adjustPercentage: 1,
+//       frameLookBackMs: 20,
+//       windowLookBackMs: 0,
+//     })
+//   });
+//   console.log("102", message.content, message.isMe);
+//   return <div style={{
+//     paddingRight: message.isMe === true ? "" : "20%",
+//     paddingLeft: message.isMe === true ? "20%": ""
+//   }}>
+//     {blockMatches.map((blockMatch, index) => {
+//       const Component = blockMatch.block.component;
+//       return <Component key={index} blockMatch={blockMatch} />;
+//     })}
+//   </div>
+// }
+
+console.timeEnd('highlighter');
