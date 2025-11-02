@@ -96,7 +96,7 @@ defmodule OasWeb.Channels.LlmGenServer do
     ]
 
     {:ok, stream} = Ollama.chat(state.client,
-      model: "qwen3:0.6b",
+      model: "qwen3:14b",
       stream: true,
       messages: [
         %{role: "system", content: "You are a helpfull acrobat assistent."}

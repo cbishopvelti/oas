@@ -50,7 +50,13 @@ const router = createBrowserRouter([
         element: <Bookings />
       },
       {
+        id: "llm",
         path: "llm",
+        element: <Llm />
+      },
+      {
+        id: "llm-id",
+        path: "llm/:id",
         element: <Llm />
       }
     ],

@@ -2,28 +2,9 @@ defmodule OasWeb.Channels.LlmChannel do
   use Phoenix.Channel
 
   def join("llm:" <> _private_room_id, _params, socket) do
-
     IO.puts("001 LlmChannel pid: #{inspect(self())}")
-    # new_socket = if (!socket.assigns[:client]) do
-    #   client = Ollama.init()
-    #   # Map.put(socket.assigns, :client, client)
-    #   new_socket = Phoenix.Socket.assign(socket, client: client)
-    #   {:ok, response} = Ollama.chat(client,
-    #     model: "qwen3:0.6b",
-    #     stream: true,
-    #     messages: [
-    #       %{role: "system", content: "You are a helpfull acrobat assistent. Say hi."}
-    #     ]
-    #   )
-    #   new_socket = Phoenix
-    #   new_socket
-    # else
-    #   socket
-    # end
 
     send(self(), :after_join)
-
-
 
     {
       :ok,
@@ -37,18 +18,39 @@ defmodule OasWeb.Channels.LlmChannel do
 
     who_id_str = get_who_id_str(socket)
 
-    {:ok, _} = OasWeb.Channels.LlmChannelPresence.track(socket, who_id_str, %{
-      online_at: inspect(System.system_time(:second))
-    })
+    IO.inspect(who_id_str, label: "101.1 who_id_str")
+
+    metas = %{
+      online_at: System.system_time(:second),
+    } |> then(fn metas ->
+      if current_member = socket.assigns[:current_member] do
+        member_data =
+          current_member
+          |> Map.from_struct()
+          |> Map.take([:id, :email, :name, :is_admin, :is_reviewer])
+
+        Map.put(metas, :current_member, member_data)
+      else
+        metas
+      end
+    end)
+
+
+
+    {:ok, _} = OasWeb.Channels.LlmChannelPresence.track(socket, who_id_str, metas)
 
     # register llm
     # name = {:via, Registry, {OasWeb.Channels.LlmRegistry, socket.topic}}
     {:ok, pid} = OasWeb.Channels.LlmGenServer.start(socket.topic, self())
+
+    push(socket, "presence_state", OasWeb.Channels.LlmChannelPresence.list(socket) |> IO.inspect(label: "101.2"))
+
     Process.monitor(pid)
 
     {:noreply, Phoenix.Socket.assign(socket, llm_gen_server: pid)}
   end
   def handle_info({:DOWN, _ref, :process, pid, reason}, %{assigns: %{llm_gen_server: pid}} = state) do
+    IO.puts("LlmChannel :DOWN #{_ref}, #{pid}, #{reason}")
     {:stop, reason, state}
   end
 
@@ -64,18 +66,26 @@ defmodule OasWeb.Channels.LlmChannel do
   end
 
   def handle_in("prompt", prompt, socket) do
-    # broadcast!(socket, "echo", %{
-    #   echo: prompt
-    # })
     GenServer.cast(socket.assigns[:llm_gen_server], {:prompt, prompt, get_who_id_str(socket)})
     {:noreply, socket}
   end
   def handle_in("who_am_i", _, socket) do
-    IO.inspect(socket.assigns, label: "006 socket.assigns")
-    {:reply, {:ok, %{
-      current_member: socket.assigns[:current_member],
-      who_id_str: socket.assigns[:who_id_str]
-    }}, socket}
+    # IO.inspect(socket.assigns, label: "006 socket.assigns")
+    metas = %{
+      who_id_str: get_who_id_str(socket),
+    } |> then(fn metas ->
+      if current_member = socket.assigns[:current_member] do
+        member_data =
+          current_member
+          |> Map.from_struct()
+          |> Map.take([:id, :email, :name, :is_admin, :is_reviewer])
+        Map.put(metas, :current_member, member_data)
+      else
+        metas
+      end
+    end)
+
+    {:reply, {:ok, metas}, socket}
   end
 
   defp get_who_id_str(socket) do
@@ -91,13 +101,39 @@ defmodule OasWeb.Channels.LlmChannel do
 
   # OasWeb.Channels.LlmChannel.test_ollama_query()
   def test_ollama_query do
-    client =  Ollama.init()
+    # client =  Ollama.init(base_url: "http://localhost:1234/v1")
+    client =  Ollama.init(base_url: "http://localhost:11434")
+
     result = Ollama.completion(client, [
-      model: "qwen3:0.6b",
+      # model: "qwen3:0.6b",
+      model: "qwen/qwen3-4b-2507",
       prompt: "Why is the sky blue?"
     ])
 
-    IO.inspect(result, label: "001 result")
+    # result = Ollama.chat(
+    #   client,
+    #   [
+    #     model: "qwen/qwen3-4b-2507",
+    #     messages: [
+    #       %{role: "user", content: "Why is the sky blue?"}
+    #     ]
+    #   ]
+    # )
 
+    IO.inspect(result, label: "001 result")
+  end
+
+  # OasWeb.Channels.LlmChannel.test_ex_llm()
+  def test_ex_llm() do
+
+    {:ok, provider} = ExLLM.Infrastructure.ConfigProvider.Static.start_link(Application.fetch_env!(:ex_llm, :config) |> IO.inspect(label: "009"))
+    {:ok, response} = ExLLM.chat(:lmstudio, [
+      %{role: "user", content: "Why is the sky blue?"}
+    ],
+    # model: "qwen/qwen3-4b-2507",
+    model: "qwen/qwen3-4b-2507",
+    config_provider: provider)
+
+    IO.inspect(response)
   end
 end
