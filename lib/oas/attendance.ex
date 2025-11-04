@@ -87,7 +87,7 @@ defmodule Oas.Attendance do
         training_id: training_id,
         inserted_by_member_id: inserted_by_member_id,
       }, [:member_id, :training_id, :inserted_by_member_id])
-      |> Ecto.Changeset.unique_constraint([:training_id, :member_id])
+      |> Ecto.Changeset.unique_constraint([:training_id, :member_id, :dedub_training_member])
       |> Oas.Repo.insert()
     do
       {:ok, attendance} -> attendance

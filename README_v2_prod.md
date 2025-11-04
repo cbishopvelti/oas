@@ -13,6 +13,7 @@ docker pull chrisjbishop155/oas:v2_prod;
 
 docker stop oas; docker rm oas; \
 docker run -it -d \
+--restart unless-stopped \
 --name=oas \
 -e DANGEROUSLY_DISABLE_HOST_CHECK=true \
 -e REACT_APP_ADMIN_URL="https://admin.oxfordshireacrosociety.co.uk" \
@@ -30,7 +31,6 @@ chrisjbishop155/oas:v2_prod
 
 ```
 docker exec -it oas /bin/bash
-cp /app/nginx/gcloud_pre_nginx.conf /etc/nginx/nginx.conf && nginx
 cp /app/nginx/v2_nginx.conf /etc/nginx/nginx.conf && certbot --nginx
 nginx -s stop
 nginx
