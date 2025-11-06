@@ -74,32 +74,18 @@ defmodule Oas.Llm.RoomLangChain do
     }
   end
 
-  defp message_to_js(message) do
-    %{
-      content: message.content
-      |> Enum.filter(fn %ContentPart{type: :text} ->
-        true
-      _x ->
-        false
-      end)
-      |> Enum.map(fn %ContentPart{type: :text, content: content} ->
-        content
-      end)
-      |> List.first(),
-      who_id_str: (message.metadata || %{}) |> Map.get(:who_id_str, nil),
-      role: message.role
-    }
-  end
-
   @impl true
   def handle_info({:add_parent, {pid, id_str}}, state) do
     Process.monitor(pid)
     # TODO: Send state of chain to new client.
-    state_for_js = state.chain.messages |> Enum.map(fn message ->
-      message_to_js(message)
-    end)
+    # state_for_js = state.chain.messages |> Enum.map(fn message ->
+    #   message_to_js(message)
+    # end)
 
-    GenServer.cast(pid, {:state, state_for_js})
+    messages_for_js = GenServer.call(state.chain_pid, :get_messages)
+
+
+    GenServer.cast(pid, {:state, messages_for_js})
 
     # IO.inspect(state.chain, label: "001 handle_info :add_parent")
     {:noreply, %{state | parents: Map.put(state.parents, pid, id_str)}}
@@ -132,7 +118,7 @@ defmodule Oas.Llm.RoomLangChain do
       who_id_str: who_id_str
     })
 
-    GenServer.cast(self(), {:broadcast, {:prompt, message_to_js(message)}, pid})
+    GenServer.cast(self(), {:broadcast, {:prompt, Oas.Llm.LangChainLlm.message_to_js(message)}, pid})
 
     # {:ok, chain} = state.chain
     # |> LLMChain.add_message(

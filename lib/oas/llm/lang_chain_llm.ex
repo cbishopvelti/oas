@@ -55,6 +55,22 @@ defmodule Oas.Llm.LangChainLlm do
     }
   end # init
 
+  def message_to_js(message) do
+    %{
+      content: message.content
+      |> Enum.filter(fn %ContentPart{type: :text} ->
+        true
+      _x ->
+        false
+      end)
+      |> Enum.map(fn %ContentPart{type: :text, content: content} ->
+        content
+      end)
+      |> List.first(),
+      who_id_str: (message.metadata || %{}) |> Map.get(:who_id_str, nil),
+      role: message.role
+    }
+  end
 
   @impl true
   def handle_cast({:prompt, message}, state) do
@@ -67,4 +83,10 @@ defmodule Oas.Llm.LangChainLlm do
     {:noreply, %{ state | chain: chain }}
   end
 
+  def handle_call(:get_messages, _from, state) do
+    messages_for_js = state.chain.messages |> Enum.map(fn message ->
+      message_to_js(message)
+    end)
+    {:reply, messages_for_js, state}
+  end
 end
