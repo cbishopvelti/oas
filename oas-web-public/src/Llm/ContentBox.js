@@ -18,7 +18,7 @@ import {
   findPartialCodeBlock,
 } from "@llm-ui/code";
 import { useLLMOutput, useStreamExample, throttleBasic } from "@llm-ui/react";
-import { memoize } from 'lodash'
+import { memoize, startsWith, find, last } from 'lodash'
 
 export const MarkdownComponent = ({ blockMatch }) => {
   const markdown = blockMatch.output;
@@ -60,43 +60,62 @@ export const CodeBlock = ({ blockMatch }) => {
   return <>{parseHtml(html)}</>;
 };
 
+export const LLMOutputOpitons = {
+  fallbackBlock: {
+    component: MarkdownComponent,
+    lookBack: markdownLookBack(),
+  },
+  blocks: [
+    {
+      component: CodeBlock,
+      findCompleteMatch: findCompleteCodeBlock(),
+      findPartialMatch: findPartialCodeBlock(),
+      lookBack: codeBlockLookBack(),
+    },
+  ],
+  isStreamFinished: true,
+  throttle: throttleBasic({
+    readAheadChars: 1,
+    targetBufferChars: 1,
+    adjustPercentage: 1,
+    frameLookBackMs: 20,
+    windowLookBackMs: 0,
+  })
+}
+
+const maybeGetName = (who_id_str, presenceState) => {
+  if (!who_id_str || startsWith("annonomous", who_id_str)) {
+    return who_id_str
+  }
+  const presence = find(presenceState, (item) => {
+    return item.id === who_id_str
+  })
+
+  return last(presence.metas)?.current_member?.name
+}
+
 export const ContentBox = ({
-  message
+  message,
+  presenceState
 }) => {
 
   const { blockMatches } = useLLMOutput({
     llmOutput: message.content,
-    fallbackBlock: {
-      component: MarkdownComponent,
-      lookBack: markdownLookBack(),
-    },
-    blocks: [
-      {
-        component: CodeBlock,
-        findCompleteMatch: findCompleteCodeBlock(),
-        findPartialMatch: findPartialCodeBlock(),
-        lookBack: codeBlockLookBack(),
-      },
-    ],
-    isStreamFinished: true,
-    throttle: throttleBasic({
-      readAheadChars: 1,
-      targetBufferChars: 1,
-      adjustPercentage: 1,
-      frameLookBackMs: 20,
-      windowLookBackMs: 0,
-    })
+    ...LLMOutputOpitons
   });
 
-  // console.log("102", message.content, message.isMe);
+  const name = maybeGetName(message.who_id_str, presenceState)
 
   return <div style={{
-    paddingRight: message.isMe === true ? "" : "20%",
-    paddingLeft: message.isMe === true ? "20%": ""
-  }}>
-    {blockMatches.map((blockMatch, index) => {
-      const Component = blockMatch.block.component;
-      return <Component key={index} blockMatch={blockMatch} />;
-    })}
+    marginRight: message.isMe === true ? "" : "20%",
+    marginLeft: message.isMe === true ? "20%": ""
+  }} >
+    <div className="llm-content">
+      {blockMatches.map((blockMatch, index) => {
+        const Component = blockMatch.block.component;
+        return <Component key={index} blockMatch={blockMatch} />;
+      })}
+    </div>
+    <div style={{ textAlign: "right" }}>{ name || message.role}</div>
   </div>
 }

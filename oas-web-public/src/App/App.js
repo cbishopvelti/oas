@@ -138,6 +138,9 @@ function App() {
               }}
               href={`${process.env.REACT_APP_SERVER_URL}/members/log_in?callback_path=${encodeURIComponent("/bookings")}&callback_domain=public_url`}>My Bookings</a>
             </MenuItem>}
+            <MenuItem component={NavLink} to={"llm"}>
+              <ListItemText>Chat</ListItemText>
+            </MenuItem>
             {(get(data, 'user.is_admin') || get(data, 'user.is_reviewer')) && <MenuItem onClick={onClick} sx={{padding: 0}}>
               <a style={{
                 color: 'inherit',
@@ -193,10 +196,6 @@ function App() {
                     Login
                   </a>
                 </MenuItem>}
-
-                <MenuItem component={NavLink} to={"llm"}>
-                  <ListItemText>Chat</ListItemText>
-                </MenuItem>
 
               </MenuList>}
             </MenuList>

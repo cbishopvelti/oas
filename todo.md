@@ -69,3 +69,4 @@ Credit warning email error [x]
 Live update attending [x]
 Live update today booking [x]
 Users adding themselfs twice shouldnt happen [x]
+Redirect after registration form
