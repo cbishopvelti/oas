@@ -1,4 +1,5 @@
 defmodule Oas.Llm.Tools do
+alias LangChain.Function
 
   defp get_authentication_tool do
     auth_tool = Function.new!(%{
@@ -16,7 +17,8 @@ defmodule Oas.Llm.Tools do
       },
       function: fn _args, _context ->
         IO.puts("This Happened")
-        {:ok, "You aren't authenticated to do that, try logging in: " <> "<a href=\"http://the_auth_server:4000/sign_in\">http://the_auth_server:4000/sign_in</a>"}
+        # {:ok, "Login in here: " <> "<a href=\"http://the_auth_server:4000/sign_in\">http://the_auth_server:4000/sign_in</a>"}
+        {:ok, "Login " <> "[here](http://the_auth_server:4000/sign_in)"}
       end
     })
     auth_tool

@@ -7,7 +7,7 @@ defmodule OasWeb.Channels.LlmChannel do
   use Phoenix.Channel
 
   def join("llm:" <> _private_room_id, _params, socket) do
-    IO.puts("001 LlmChannel pid: #{inspect(self())}")
+    # IO.puts("001 LlmChannel pid: #{inspect(self())}")
 
     send(self(), :after_join)
 
@@ -19,11 +19,11 @@ defmodule OasWeb.Channels.LlmChannel do
 
   def handle_info(:after_join, socket) do
     # Register genserver
-    IO.inspect(socket.assigns, label: "101 member")
+    # IO.inspect(socket.assigns, label: "101 member")
 
     who_id_str = get_who_id_str(socket)
 
-    IO.inspect(who_id_str, label: "101.1 who_id_str")
+    # IO.inspect(who_id_str, label: "101.1 who_id_str")
 
     metas = %{
       online_at: System.system_time(:second),
@@ -47,7 +47,7 @@ defmodule OasWeb.Channels.LlmChannel do
     # register llm
     # name = {:via, Registry, {OasWeb.Channels.LlmRegistry, socket.topic}}
     # {:ok, pid} = OasWeb.Channels.LlmGenServer.start(socket.topic, self())
-    {:ok, pid } = Oas.Llm.RoomLangChain.start(socket.topic, self())
+    {:ok, pid } = Oas.Llm.RoomLangChain.start(socket.topic, {self(), who_id_str})
 
     push(socket, "presence_state", OasWeb.Channels.LlmChannelPresence.list(socket))
 
@@ -56,23 +56,50 @@ defmodule OasWeb.Channels.LlmChannel do
     {:noreply, Phoenix.Socket.assign(socket, llm_gen_server: pid)}
   end
   def handle_info({:DOWN, _ref, :process, pid, reason}, %{assigns: %{llm_gen_server: pid}} = state) do
-    IO.puts("LlmChannel :DOWN #{_ref}, #{pid}, #{reason}")
+    # IO.puts("LlmChannel :DOWN #{_ref}, #{pid}, #{reason}")
     {:stop, reason, state}
   end
 
   # Data from the llm
   def handle_cast({:data, data}, socket) do
-    IO.inspect(data, label: "007 handle_cast SHOULD HAPPEN")
+    IO.inspect(data, label: "007 handle_cast :data")
     push(socket, "data", data)
     {:noreply, socket}
   end
+  def handle_cast({:delta, message}, socket) do
+    IO.puts("007.2 handle_cast :delta")
+    push(
+      socket,
+      Atom.to_string(:delta),
+      message
+    )
+    {:noreply, socket}
+  end
+  def handle_cast({:state, messages}, socket) do
+    push(
+      socket,
+      Atom.to_string(:state),
+      %{messages: messages}
+    )
+    {:noreply, socket}
+  end
+  def handle_cast({:prompt, message}, socket) do
+    IO.puts("handle_cast :prompt")
+    push(
+      socket,
+      Atom.to_string(:prompt),
+      message
+    )
+    {:noreply, socket}
+  end
   def handle_cast(_stuff, socket) do
-    IO.inspect(socket, label: "008 WAT handle_cast SHOULDN'T HAPPEN")
+    IO.inspect(_stuff, label: "008 WAT handle_cast SHOULDN'T HAPPEN")
     {:noreply, socket}
   end
 
   def handle_in("prompt", prompt, socket) do
-    GenServer.cast(socket.assigns[:llm_gen_server], {:prompt, prompt, get_who_id_str(socket)})
+    IO.puts("handle_in prompt")
+    GenServer.cast(socket.assigns[:llm_gen_server], {:prompt, prompt, {self(), get_who_id_str(socket)}})
     {:noreply, socket}
   end
   def handle_in("who_am_i", _, socket) do
@@ -126,7 +153,7 @@ defmodule OasWeb.Channels.LlmChannel do
     #   ]
     # )
 
-    IO.inspect(result, label: "001 result")
+    # IO.inspect(result, label: "001 result")
   end
 
   # OasWeb.Channels.LlmChannel.test_langchain()
@@ -143,7 +170,7 @@ defmodule OasWeb.Channels.LlmChannel do
     |> LLMChain.add_message(Message.new_user!("Give me my user details."))
     |> LLMChain.run(mode: :while_needs_response)
 
-    IO.inspect(chain, label: "001 chain")
+    # IO.inspect(chain, label: "001 chain")
     IO.inspect(ChainResult.to_string!(chain), label: "102 to_string(chain)")
   end
 end
