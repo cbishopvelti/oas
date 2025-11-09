@@ -55,7 +55,7 @@ defmodule OasWeb.Channels.LlmChannel do
     {:ok, pid } = Oas.Llm.RoomLangChain.start(socket.topic, {self(), member})
     Process.monitor(pid)
     messages = GenServer.call(pid, :messages)
-    IO.inspect(messages, label: "401 messages")
+    # IO.inspect(messages, label: "401 messages")
     push(socket, "messages", %{
       messages: Enum.reverse(messages) |> Enum.map(fn (message) ->
         Oas.Llm.LangChainLlm.message_to_js(message)

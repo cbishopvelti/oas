@@ -7,7 +7,6 @@ defmodule OasWeb.PublicSocket do
   # @session_options Module.get_attribute(OasWeb.Endpoint, :session_options)
 
   def connect(params, socket) do
-    IO.puts("001")
     secret_key_base = Application.get_env(:oas, OasWeb.Endpoint)[:secret_key_base]
     signing_salt = OasWeb.Endpoint.signing_salt()
 
@@ -17,7 +16,11 @@ defmodule OasWeb.PublicSocket do
         signing_salt: signing_salt
       ])
 
-    out = case Map.has_key?(params, "cookie") do
+    out = case Map.has_key?(params, "cookie") and
+      Plug.Session.COOKIE.get(%{
+        secret_key_base: secret_key_base
+      }, params["cookie"], opts) |> elem(1) |> Map.has_key?("member_token")
+    do
       true ->
         {:term, %{
           "member_token" => member_token
@@ -27,9 +30,7 @@ defmodule OasWeb.PublicSocket do
 
         member = member_token && Oas.Members.get_member_by_session_token(member_token)
 
-        IO.puts("001")
         out = Phoenix.Socket.assign(socket, :current_member, member)
-        IO.puts("002")
         out
       false ->
         socket
