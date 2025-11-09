@@ -56,12 +56,12 @@ defmodule OasWeb.BookTodayController do
             attendance_attendance: training_id
           ])
 
-          # conn |> redirect(external: Application.fetch_env!(:oas, :public_url) <> "/bookings")
-          conn
-          |> put_flash(:error, "Debug only, remove")
-          |> render("index.html", %{
-            public_url: Application.fetch_env!(:oas, :public_url)
-          })
+          conn |> redirect(external: Application.fetch_env!(:oas, :public_url) <> "/bookings")
+          # conn
+          # |> put_flash(:error, "Debug only, remove")
+          # |> render("index.html", %{
+          #   public_url: Application.fetch_env!(:oas, :public_url)
+          # })
         catch
           {:error, errors} -> conn
             |> put_flash(:error, errors |> Enum.map(fn (err) -> err.message end) |> Enum.join("<br/>\n"))
