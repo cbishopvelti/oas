@@ -49,14 +49,13 @@ export const PreLlm = () => {
   </>
 }
 
-export const Llm = () => {
-  // const { isStreamFinished, output } = useStreamExample(example, {
-  //   autoStart: true,
-  //   autoStartDelayMs: 0,
-  //   startIndex: 0,
-  //   delayMultiplier: 0
-  // });
+const isMe = (message, who_am_i) => {
+  return message.metadata?.member?.id !== undefined &&
+    message.metadata?.member?.id === who_am_i.id
+    && message.role === "user"
+}
 
+export const Llm = () => {
 
   const [channel, setChannel] = useState(undefined);
   const [prompt, setPrompt] = useState("")
@@ -127,7 +126,7 @@ export const Llm = () => {
         messages.map((message) => {
           return {
             ...message,
-            ...(message.metadata?.member?.id === who_am_i.id ? { isMe: true } : {})
+            ...(isMe(message, who_am_i) ? { isMe: true } : {})
           }
         })
       )

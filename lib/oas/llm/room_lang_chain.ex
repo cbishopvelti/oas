@@ -36,6 +36,14 @@ defmodule Oas.Llm.RoomLangChain do
     out
   end
 
+  defp get_active_llm_user_for_init([], parents) do
+    nil
+  end
+  defp get_active_llm_user_for_init(ecto_members, parents) do
+    member = ecto_members |> Map.to_list() |> List.first() |> Map.from_struct()
+    member
+  end
+
   @impl true
   def init(state) do
     # State is typically any Elixir term, here it's an integer (the count).
@@ -51,9 +59,10 @@ defmodule Oas.Llm.RoomLangChain do
     |> Enum.filter(fn {_pid, member} -> # Don't add anonnomous users
       member |> Map.has_key?(:id)
     end)
-    |> Enum.map(fn ({_pid, member}) ->
+    |> Enum.map(fn ({pid, member}) ->
       Oas.Repo.get!(Oas.Members.Member, member.id)
     end)
+    IO.inspect(members_ecto, label: "707.2 members_ecto")
 
     result = %Oas.Llm.Chat{}
     |> Ecto.Changeset.cast(%{
@@ -93,7 +102,7 @@ defmodule Oas.Llm.RoomLangChain do
     {:ok, chain_pid} = Oas.Llm.LangChainLlm.start_link(
       self(),
       messages,
-      members_ecto |> List.first() |> Map.from_struct() # TODO: Make more advanced.
+      get_active_llm_user_for_init(members_ecto, state.parents)
     )
 
     {

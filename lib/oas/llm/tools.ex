@@ -1,5 +1,7 @@
+import Ecto.Query, only: [from: 2]
+
 defmodule Oas.Llm.Tools do
-alias LangChain.Function
+  alias LangChain.Function
 
   defp get_authentication_tool do
     auth_tool = Function.new!(%{
@@ -41,6 +43,26 @@ alias LangChain.Function
       function: fn params, context ->
         IO.inspect(params, label: "501.1 params")
         IO.inspect(context, label: "501.2 context")
+        case context.member |> Map.get(:id) do
+          nil ->
+            {:error, "Unauthorized, login " <> "[here](http://the_auth_server:4000/sign_in)"}
+          member_id ->
+            case from(t in Oas.Trainings.Training,
+                preload: [:training_where],
+                where: t.when == ^params["when"]
+              ) |> Oas.Repo.one()
+            do
+              nil -> {:error, "Error finding event/traning/jam to add you to."}
+              event ->
+                Oas.Attendance.add_attendance(
+                  %{member_id: member_id, training_id: event.id},
+                  %{inserted_by_member_id: member_id}
+                )
+                IO.inspect(event, label: "event")
+                {:ok, "Added to event"}
+            end
+        end
+
         {:ok, "Thank the user for booking"}
       end
     })
@@ -49,7 +71,7 @@ alias LangChain.Function
 
   def get_tools() do
     [
-      get_authentication_tool(),
+      # get_authentication_tool(),
       book_upcoming_event_tool()
     ]
   end
