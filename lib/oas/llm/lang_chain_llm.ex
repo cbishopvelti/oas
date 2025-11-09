@@ -7,86 +7,128 @@ defmodule Oas.Llm.LangChainLlm do
 
   use GenServer
 
-  def start_link(parent_pid) do
+  def start_link(parent_pid, messages, member) do
     GenServer.start_link(__MODULE__, %{
-      parent_pid: parent_pid
+      parent_pid: parent_pid,
+      messages: messages,
+      member: member
     })
   end
 
   @impl true
-  def init(state) do
+  def init(init_args) do
     callbacks = %{
-      on_llm_new_delta: fn _model, deltas ->
-        # IO.inspect("001", label: "305 deltas")
+      on_llm_new_delta: fn chain, deltas ->
+        # IO.inspect(deltas, label: "305 on_llm_new_delta")
         Enum.each(deltas, fn delta ->
-          IO.write(delta.content)
-          GenServer.cast(state.parent_pid, {:broadcast, {:delta, %{
-            content: delta.content,
-            role: delta.role,
-            status: delta.status
-          }}})
+          # IO.write(delta.content)
+          GenServer.cast(
+            init_args.parent_pid,
+            {:broadcast,
+             {:delta,
+              %{
+                content: delta.content,
+                role: delta.role,
+                status: delta.status,
+                message_index: chain.messages |> length()
+              }}}
+          )
         end)
-
       end,
-      on_message_processed: fn _chain, %Message{} = data ->
-        IO.inspect(data, label: "306 data")
-
-        # GenServer.cast(self(), {:broadcast, message: %{
-        #   content: data.content.content,
-        #   role: data.role,
-        #   status: data.status
-        # }})
+      on_message_processed: fn chain, %Message{} = message ->
+        # IO.inspect(message, label: "306 on_message_processed")
+        # IO.inspect(chain, label: "306.1 chain")
+        GenServer.cast(
+          init_args.parent_pid,
+          {:message,
+            %{
+              message: message,
+              message_index: (chain.messages |> length()) - 1
+            }
+          }
+        )
+        nil
       end
     }
 
-    chain = LLMChain.new!(%{
-      llm: ChatOpenAI.new!(%{
-        endpoint: "http://localhost:1234/v1/chat/completions",
-        # model: "qwen/qwen3-4b-2507",
-        model: "qwen/qwen3-8b",
-        stream: true
+    chain =
+      LLMChain.new!(%{
+        llm:
+          ChatOpenAI.new!(%{
+            endpoint: "http://localhost:1234/v1/chat/completions",
+            # model: "qwen/qwen3-4b-2507",
+            model: "qwen/qwen3-8b",
+            stream: true
+          }),
+        custom_context: %{
+          member: init_args.member
+        }
       })
-    })
-    |> LLMChain.add_callback(callbacks)
-    |> LLMChain.add_tools(Oas.Llm.Tools.get_tools())
+      |> LLMChain.add_callback(callbacks)
+      |> LLMChain.add_tools(Oas.Llm.Tools.get_tools())
 
-    {:ok,
-      state |> Map.put(:chain, chain)
-    }
-  end # init
+    chain = chain |> LLMChain.add_messages(init_args.messages |> Enum.reverse())
+
+    {:ok, %{
+      parent_pid: init_args.parent_pid,
+      chain: chain
+    }}
+  end
+
+  # init
 
   def message_to_js(message) do
     %{
-      content: message.content
-      |> Enum.filter(fn %ContentPart{type: :text} ->
-        true
-      _x ->
-        false
-      end)
-      |> Enum.map(fn %ContentPart{type: :text, content: content} ->
-        content
-      end)
-      |> List.first(),
-      who_id_str: (message.metadata || %{}) |> Map.get(:who_id_str, nil),
-      role: message.role
+      content:
+        case message.content do
+          nil -> nil
+          content -> content |> Enum.map(fn item ->
+            %{
+              content: item.content,
+              type: item.type
+            }
+          end)
+        end,
+        # message.content
+        # |> Enum.filter(fn
+        #   %ContentPart{type: :text} ->
+        #     true
+
+        #   _x ->
+        #     false
+        # end)
+        # |> Enum.map(fn %ContentPart{type: :text, content: content} ->
+        #   content
+        # end)
+        # |> List.first(),
+      # presence_id: (message.metadata || %{}) |> Map.get(:presence_id, nil),
+      role: message.role,
+      metadata: message.metadata
     }
   end
 
   @impl true
   def handle_cast({:prompt, message}, state) do
-    {:ok, chain} = state.chain
-    |> LLMChain.add_message(
-      message
-    )
-    |> LLMChain.run(mode: :while_needs_response)
+    {:ok, chain} =
+      state.chain
+      |> LLMChain.add_message(message)
+      |> LLMChain.run(mode: :while_needs_response)
 
-    {:noreply, %{ state | chain: chain }}
+    {:noreply, %{state | chain: chain}}
   end
 
+  @impl true
   def handle_call(:get_messages, _from, state) do
-    messages_for_js = state.chain.messages |> Enum.map(fn message ->
-      message_to_js(message)
-    end)
+    messages_for_js =
+      state.chain.messages
+      |> Enum.map(fn message ->
+        message_to_js(message)
+      end)
+
     {:reply, messages_for_js, state}
+  end
+
+  def handle_call(:get_chain, _from, state) do
+    {:reply, state.chain, state}
   end
 end

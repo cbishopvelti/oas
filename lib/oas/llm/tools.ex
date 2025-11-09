@@ -24,10 +24,33 @@ alias LangChain.Function
     auth_tool
   end
 
-  def get_tools() do
+  def book_upcoming_event_tool do
+    book_upcoming_event_tool = Function.new!(%{
+      name: "Book event/jam/training",
+      description: "Booking for upcoming event",
+      parameters_schema: %{
+        type: "object",
+        properties: %{
+          when: %{
+            type: "string",
+            description: "The date of the event to book the member onto. Format: YYYY-MM-dd"
+          }
+        },
+        required: ["when"]
+      },
+      function: fn params, context ->
+        IO.inspect(params, label: "501.1 params")
+        IO.inspect(context, label: "501.2 context")
+        {:ok, "Thank the user for booking"}
+      end
+    })
+    book_upcoming_event_tool
+  end
 
+  def get_tools() do
     [
-      get_authentication_tool()
+      get_authentication_tool(),
+      book_upcoming_event_tool()
     ]
   end
 end
