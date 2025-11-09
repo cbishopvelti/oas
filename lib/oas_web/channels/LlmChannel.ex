@@ -13,45 +13,55 @@ defmodule OasWeb.Channels.LlmChannel do
 
     {
       :ok,
-      Phoenix.Socket.assign(socket, %{who_id_str: get_who_id_str(socket)})
+      Phoenix.Socket.assign(socket, %{
+        presence_id: get_presence_id(socket)
+      })
     }
   end
 
+  defp socket_to_member_map(socket) do
+    presence_id = get_presence_id(socket)
+
+    member = if current_member = socket.assigns[:current_member] do
+      member_data =
+        current_member
+        |> Map.from_struct()
+        |> Map.take([:id, :email, :name, :is_admin, :is_reviewer])
+      member_data = member_data |> Map.put(:presence_id, presence_id)
+
+      member_data
+    else
+      %{
+        presence_id: presence_id
+      }
+    end
+
+    member
+  end
+
   def handle_info(:after_join, socket) do
-    # Register genserver
-    # IO.inspect(socket.assigns, label: "101 member")
+    member = socket_to_member_map(socket)
 
-    who_id_str = get_who_id_str(socket)
-
-    # IO.inspect(who_id_str, label: "101.1 who_id_str")
-
+    # Presence
     metas = %{
       online_at: System.system_time(:second),
     } |> then(fn metas ->
-      if current_member = socket.assigns[:current_member] do
-        member_data =
-          current_member
-          |> Map.from_struct()
-          |> Map.take([:id, :email, :name, :is_admin, :is_reviewer])
-
-        Map.put(metas, :current_member, member_data)
-      else
-        metas
-      end
+      Map.put(metas, :member, member)
     end)
-
-
-
-    {:ok, _} = OasWeb.Channels.LlmChannelPresence.track(socket, who_id_str, metas)
-
-    # register llm
-    # name = {:via, Registry, {OasWeb.Channels.LlmRegistry, socket.topic}}
-    # {:ok, pid} = OasWeb.Channels.LlmGenServer.start(socket.topic, self())
-    {:ok, pid } = Oas.Llm.RoomLangChain.start(socket.topic, {self(), who_id_str})
-
+    {:ok, _} = OasWeb.Channels.LlmChannelPresence.track(socket, member.presence_id, metas)
     push(socket, "presence_state", OasWeb.Channels.LlmChannelPresence.list(socket))
 
+    # Room pid
+    {:ok, pid } = Oas.Llm.RoomLangChain.start(socket.topic, {self(), member})
     Process.monitor(pid)
+    messages = GenServer.call(pid, :messages)
+    IO.inspect(messages, label: "401 messages")
+    push(socket, "messages", %{
+      messages: Enum.reverse(messages) |> Enum.map(fn (message) ->
+        Oas.Llm.LangChainLlm.message_to_js(message)
+      end),
+      who_am_i: socket_to_member_map(socket)
+    } |> IO.inspect(label: "201 push messages"))
 
     {:noreply, Phoenix.Socket.assign(socket, llm_gen_server: pid)}
   end
@@ -67,10 +77,18 @@ defmodule OasWeb.Channels.LlmChannel do
     {:noreply, socket}
   end
   def handle_cast({:delta, message}, socket) do
-    IO.puts("007.2 handle_cast :delta")
+    # IO.puts("007.2 handle_cast :delta")
     push(
       socket,
       Atom.to_string(:delta),
+      message
+    )
+    {:noreply, socket}
+  end
+  def handle_cast({:message, message}, socket) do
+    push(
+      socket,
+      Atom.to_string(:message),
       message
     )
     {:noreply, socket}
@@ -83,6 +101,7 @@ defmodule OasWeb.Channels.LlmChannel do
     )
     {:noreply, socket}
   end
+  # Client -> Client, for sending prompts from other users
   def handle_cast({:prompt, message}, socket) do
     IO.puts("handle_cast :prompt")
     push(
@@ -99,29 +118,22 @@ defmodule OasWeb.Channels.LlmChannel do
 
   def handle_in("prompt", prompt, socket) do
     IO.puts("handle_in prompt")
-    GenServer.cast(socket.assigns[:llm_gen_server], {:prompt, prompt, {self(), get_who_id_str(socket)}})
+    member = socket_to_member_map(socket)
+    GenServer.cast(socket.assigns[:llm_gen_server], {:prompt, prompt, {self(), member}})
     {:noreply, socket}
   end
   def handle_in("who_am_i", _, socket) do
     # IO.inspect(socket.assigns, label: "006 socket.assigns")
-    metas = %{
-      who_id_str: get_who_id_str(socket),
-    } |> then(fn metas ->
-      if current_member = socket.assigns[:current_member] do
-        member_data =
-          current_member
-          |> Map.from_struct()
-          |> Map.take([:id, :email, :name, :is_admin, :is_reviewer])
-        Map.put(metas, :current_member, member_data)
-      else
-        metas
-      end
-    end)
+    member = socket_to_member_map(socket)
 
-    {:reply, {:ok, metas}, socket}
+    {:reply, {:ok, member}, socket}
+  end
+  def handle_in("messages", _, socket) do
+    messages = GenServer.call(socket.assigns[:llm_gen_server], :messages)
+    {:reply, {:ok, }, socket}
   end
 
-  defp get_who_id_str(socket) do
+  defp get_presence_id(socket) do
     who_id = with current_member when is_map(current_member) <- Map.get(socket.assigns, :current_member),
       id when id != nil <- Map.get(current_member, :id)
     do

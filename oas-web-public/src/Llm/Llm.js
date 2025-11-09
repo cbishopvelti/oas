@@ -31,9 +31,25 @@ import { Socket as PhoenixSocket, Presence } from "phoenix";
 import { v4 } from 'uuid'
 import { MarkdownComponent, CodeBlock, ContentBox, LLMOutputOpitons } from "./ContentBox";
 
+export const PreLlm = () => {
+  const navigate = useNavigate()
+  const { id } = useParams()
+
+  useEffect(() => {
+    if (!id) {
+      navigate(`/llm/${v4()}`)
+      return
+    }
+  }, [])
 
 
-export const Llm = ({ blockMatch }) => {
+  return <>
+    {id && < Llm />}
+    {!id && <div>Id required</div>}
+  </>
+}
+
+export const Llm = () => {
   // const { isStreamFinished, output } = useStreamExample(example, {
   //   autoStart: true,
   //   autoStartDelayMs: 0,
@@ -50,16 +66,18 @@ export const Llm = ({ blockMatch }) => {
   const [whoIdObj, setWhoIdObj] = useState({})
   const [presenceState, setPresenceState] = useState([])
 
-  const navigate = useNavigate()
-
   const { id } = useParams()
 
 
   const pushMessage = useCallback((message) => {
-    // console.log("006", message.content, whoIdObj, message.who_id_str === whoIdObj.who_id_str)
     setMessages((messages ) => [...messages, {
-      ...message,
-      isMe: message.who_id_str && message.who_id_str === whoIdObj.who_id_str
+      content: [ {
+        type: "text",
+        content: message.content
+      } ],
+      role: message.role,
+      metadata: message.metadata,
+      isMe: message.metadata?.member?.presence_id && message.metadata.member.presence_id === whoIdObj.presence_id
     }])
   }, [setMessages, whoIdObj])
 
@@ -98,11 +116,28 @@ export const Llm = ({ blockMatch }) => {
       }
       setOutput(accData)
     })
+    channel.on("message", (message) => {
+      setMessages((messages) => {
+        return messages.toSpliced(message.message_index, 1, message)
+      })
+    })
+    channel.on("messages", ({messages, who_am_i}) => {
+      setWhoIdObj(who_am_i)
+      setMessages(
+        messages.map((message) => {
+          return {
+            ...message,
+            ...(message.metadata?.member?.id === who_am_i.id ? { isMe: true } : {})
+          }
+        })
+      )
+    })
     channel.on("state", (state) => {
     })
     // from other clients
     channel.on("prompt", (prompt) => {
-      pushMessage(prompt)
+      setMessages((messages ) => [...messages, prompt])
+      // pushMessage(prompt)
     })
 
     presence.onSync(() => {
@@ -113,16 +148,17 @@ export const Llm = ({ blockMatch }) => {
       .join()
       .receive("ok", (resp) => {
         // Find out who I am
-        channel.push("who_am_i")
-          .receive("ok", (payload) => {
-            setWhoIdObj(payload)
-          })
-          .receive("error", (error) => {
-            console.error("error", error)
-          })
-          .receive("timeout", (timeout) => {
-            console.error("timeout", timeout)
-          })
+        // channel.push("who_am_i")
+        //   .receive("ok", (payload) => {
+        //     console.log("001 set_who_am_i")
+        //     setWhoIdObj(payload)
+        //   })
+        //   .receive("error", (error) => {
+        //     console.error("error", error)
+        //   })
+        //   .receive("timeout", (timeout) => {
+        //     console.error("timeout", timeout)
+        //   })
       })
       .receive("error", (resp) => {
         console.error("error", resp)
@@ -144,21 +180,18 @@ export const Llm = ({ blockMatch }) => {
     ...LLMOutputOpitons
   });
 
-  if (!id) {
-    navigate(`/llm/${v4()}`)
-    return
-  }
-
-  const user_prompt = (prompt, whoIdObj) => {
+  const user_prompt = (prompt, member) => {
     pushMessage({
       content: prompt,
       role: "user",
-      who_id_str: whoIdObj.who_id_str,
-      metas: [
-        {
-          current_member: whoIdObj.current_member
-        }
-      ]
+      metadata: {
+        member: member
+      }
+      // metas: [
+      //   {
+      //     member: whoIdObj
+      //   }
+      // ]
     })
     channel.push("prompt", prompt)
     setPrompt("")
@@ -169,7 +202,7 @@ export const Llm = ({ blockMatch }) => {
       <div>
         {(presenceState).map((who, i) => {
           return <span key={i}>
-            <span >{ last(who.metas)?.current_member?.name || who.id }</span>
+            <span >{ last(who.metas)?.member?.name || who.id }</span>
             {(i < (presenceState).length - 1) && <span>, &nbsp;</span>}
           </span>
         })}

@@ -1,4 +1,7 @@
+import Ecto.Query, only: [from: 2]
+
 defmodule Oas.Llm.RoomLangChain do
+  alias LangChain.Utils
   alias LangChain.Message.ContentPart
   alias LangChain.Message
   alias LangChain.ChatModels.ChatOpenAI
@@ -6,19 +9,29 @@ defmodule Oas.Llm.RoomLangChain do
   alias LangChain.Chains.LLMChain
   use GenServer
 
-  def start(topic, {pid, id_str}) do
+  def start(topic, {pid, member}) do
     name = {:via, Registry, {OasWeb.Channels.LlmRegistry, topic}}
-    out = case GenServer.start(__MODULE__, %{
-      parents: Map.new([{pid, id_str}])
-    }, name: name) do
-      {:ok, pid} ->
-        {:ok, pid}
-      {:error, {:already_started, pid_of_existing_process}} ->
-        send(pid_of_existing_process, {:add_parent, {pid, id_str}})
-        # Process.monitor(pid_of_existing_process)
-        {:ok, pid_of_existing_process}
-      other -> other
-    end
+
+    out =
+      case GenServer.start(
+             __MODULE__,
+             %{
+               parents: Map.new([{pid, member}]),
+               topic: topic
+             },
+             name: name
+           ) do
+        {:ok, pid} ->
+          {:ok, pid}
+
+        {:error, {:already_started, pid_of_existing_process}} ->
+          send(pid_of_existing_process, {:add_parent, {pid, member}})
+          # Process.monitor(pid_of_existing_process)
+          {:ok, pid_of_existing_process}
+
+        other ->
+          other
+      end
 
     out
   end
@@ -26,69 +39,98 @@ defmodule Oas.Llm.RoomLangChain do
   @impl true
   def init(state) do
     # State is typically any Elixir term, here it's an integer (the count).
-    state.parents |> Enum.map(fn {pid, _} ->
+    state.parents
+    |> Enum.map(fn {pid, _} ->
       Process.monitor(pid)
     end)
 
-    # callbacks = %{
-    #   on_llm_new_delta: fn _model, deltas ->
-    #     # IO.inspect("001", label: "305 deltas")
-    #     Enum.each(deltas, fn delta ->
-    #       IO.write(delta.content)
-    #       GenServer.cast(self(), {:broadcast, {:delta, %{
-    #         content: delta.content,
-    #         role: delta.role,
-    #         status: delta.status
-    #       }}})
-    #     end)
+    IO.inspect(state, label: "707.1 state")
 
-    #   end,
-    #   on_message_processed: fn _chain, %Message{} = data ->
-    #     IO.inspect(data, label: "306 data")
+    members_ecto = state.parents
+    |> Map.to_list()
+    |> Enum.filter(fn {_pid, member} -> # Don't add anonnomous users
+      member |> Map.has_key?(:id)
+    end)
+    |> Enum.map(fn ({_pid, member}) ->
+      Oas.Repo.get!(Oas.Members.Member, member.id)
+    end)
 
-    #     # GenServer.cast(self(), {:broadcast, message: %{
-    #     #   content: data.content.content,
-    #     #   role: data.role,
-    #     #   status: data.status
-    #     # }})
-    #   end
-    # }
+    result = %Oas.Llm.Chat{}
+    |> Ecto.Changeset.cast(%{
+      topic: state.topic
+    }, [:topic])
+    |> Ecto.Changeset.unique_constraint(:topic)
+    |> Ecto.Changeset.put_assoc(:members,
+      members_ecto
+    )
+    |> Oas.Repo.insert(returning: true)
 
-    # chain = LLMChain.new!(%{
-    #   llm: ChatOpenAI.new!(%{
-    #     endpoint: "http://localhost:1234/v1/chat/completions",
-    #     # model: "qwen/qwen3-4b-2507",
-    #     model: "qwen/qwen3-8b",
-    #     stream: true
-    #   })
-    # })
-    # |> LLMChain.add_callback(callbacks)
-    # |> LLMChain.add_tools(Oas.Llm.Tools.get_tools())
-    {:ok, chain_pid} = Oas.Llm.LangChainLlm.start_link(self())
+    {:ok, chat } = case result do
+      {:ok, chat} ->
+        {:ok, chat}
+      {:error, %{errors: [topic: _]}} -> # Constraint error, already exists
+        chat = from(c in Oas.Llm.Chat,
+          preload: [:members],
+          where: c.topic == ^state.topic
+        ) |> Oas.Repo.one!() # |> (&({:ok, &1})).()
+        out = chat
+        |> Ecto.Changeset.change()
+        |> Ecto.Changeset.put_assoc(
+          :members,
+          (members_ecto ++ chat.members) |> Enum.dedup_by(fn %{id: id} -> id end)
+        )
+        |> Oas.Repo.update!(returning: true)
+
+        {:ok, out}
+    end
+
+    messages = Oas.Llm.Utils.restore(chat)
+
+    # from(c in Oas.Llm.Chat,
+    #   where c.topic == ^state.topic
+    # ) |> Oas.Repo.
+
+    {:ok, chain_pid} = Oas.Llm.LangChainLlm.start_link(
+      self(),
+      messages,
+      members_ecto |> List.first() |> Map.from_struct() # TODO: Make more advanced.
+    )
 
     {
       :ok,
-    # state
-    #   |> Map.put(:chain, chain)
-      state |> Map.put(:chain_pid, chain_pid)
+      state
+      |> Map.put(:chain_pid, chain_pid)
+      |> Map.put(:messages, messages)
+      |> Map.put(:chat, chat)
     }
   end
 
   @impl true
-  def handle_info({:add_parent, {pid, id_str}}, state) do
+  def handle_info({:add_parent, {pid, member}}, state) do
     Process.monitor(pid)
     # TODO: Send state of chain to new client.
     # state_for_js = state.chain.messages |> Enum.map(fn message ->
     #   message_to_js(message)
     # end)
 
-    messages_for_js = GenServer.call(state.chain_pid, :get_messages)
+    new_chat = if (member |> Map.has_key?(:id)) do # Only if they're not annonomous
+      state.chat
+      |> Ecto.Changeset.change()
+      |> Ecto.Changeset.put_assoc(:members,
+        [struct(Oas.Members.Member, member) | state.chat.members]
+        |> Enum.dedup_by(fn (%{id: id}) -> id end)
+      )
+      |> Oas.Repo.update!(returning: true)
+    else
+      state.chat
+    end
 
+    messages_for_js = GenServer.call(state.chain_pid, :get_messages)
 
     GenServer.cast(pid, {:state, messages_for_js})
 
     # IO.inspect(state.chain, label: "001 handle_info :add_parent")
-    {:noreply, %{state | parents: Map.put(state.parents, pid, id_str)}}
+    {:noreply, %{state | parents: Map.put(state.parents, pid, member), chat: new_chat}}
   end
   def handle_info({:DOWN, _ref, :process, pid, _reason}, state) do
     new_parents = Map.delete(state.parents, pid)
@@ -103,39 +145,70 @@ defmodule Oas.Llm.RoomLangChain do
     end
   end
   def handle_info(msg, state) do
-    IO.inspect(msg, label: "205 handle_info msg")
+    IO.inspect(msg, label: "205 SHOULD NOT HAPPEN handle_info msg")
     {:noreply, state}
   end
 
-
-  @impl true
   # client -> llm
-  def handle_cast({:prompt, prompt, {pid, who_id_str}}, state) do
+  @impl true
+  def handle_cast({:prompt, prompt, {pid, member}}, state) do
     IO.puts("handle_cast :prompt")
 
-    message = Message.new_user!(prompt)
-    |> Map.put(:metadata, %{
-      who_id_str: who_id_str
-    })
+    message =
+      Message.new_user!(prompt)
+      |> Map.put(:metadata, %{
+        member: member
+      })
 
-    GenServer.cast(self(), {:broadcast, {:prompt, Oas.Llm.LangChainLlm.message_to_js(message)}, pid})
 
-    # {:ok, chain} = state.chain
-    # |> LLMChain.add_message(
-    #   message
-    # )
-    # |> LLMChain.run(mode: :while_needs_response)
+
+    GenServer.cast(
+      self(),
+      {:broadcast, {:prompt, Oas.Llm.LangChainLlm.message_to_js(message)}, pid}
+    )
+
     GenServer.cast(state.chain_pid, {:prompt, message})
 
-    # {:noreply, ChainResult.to_string!(chain)}
-    {:noreply, state}
+    new_state = state |> Map.put(:messages, [ message | state.messages])
+    new_state = Map.put(new_state, :chat, Oas.Llm.Utils.save(new_state))
+
+    {:noreply,
+      new_state
+    }
   end
+
   # llm -> client
+  @impl true
+  def handle_cast({:message, %{message: message, message_index: message_index}}, state) do
+
+    GenServer.cast(
+      self(),
+      {:broadcast,
+       {:message,
+        %{
+          content: (message.content || [])
+            |> Enum.map(fn (item) -> %{
+              content: item.content,
+              type: item.type
+            } end),
+          role: message.role,
+          status: message.status,
+          message_index: message_index
+        }}}
+    )
+
+    new_state = state |> Map.put(:messages, [message | state.messages])
+    Oas.Llm.Utils.save(new_state)
+
+    {:noreply, new_state}
+  end
   def handle_cast({:broadcast, message, not_pid}, state) do
     parents = state.parents |> Map.delete(not_pid)
+
     Enum.each(parents, fn {pid, _id_str} ->
       GenServer.cast(pid, message)
     end)
+
     {:noreply, state}
   end
   def handle_cast({:broadcast, message}, state) do
@@ -145,4 +218,10 @@ defmodule Oas.Llm.RoomLangChain do
 
     {:noreply, state}
   end
+
+  @impl true
+  def handle_call(:messages, _pid, state) do
+    {:reply, state.messages, state}
+  end
+
 end

@@ -70,3 +70,8 @@ Live update attending [x]
 Live update today booking [x]
 Users adding themselfs twice shouldnt happen [x]
 Redirect after registration form
+Llm enabled for me; if only/first person in channel, then enable, else disable by default. Add whole channel disable option for admin. Maybe pass llm control for admins.
+Saving history.
+Surface chat list for admins.
+Context admin.
+Handling if LLM isn't available.

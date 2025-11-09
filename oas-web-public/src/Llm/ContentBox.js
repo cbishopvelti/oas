@@ -83,15 +83,12 @@ export const LLMOutputOpitons = {
   })
 }
 
-const maybeGetName = (who_id_str, presenceState) => {
-  if (!who_id_str || startsWith("annonomous", who_id_str)) {
-    return who_id_str
+const maybeGetName = (message) => {
+  if (startsWith(message.metadata?.member?.presence_id, "annonomous")) {
+    return message.metadata.member.presence_id
   }
-  const presence = find(presenceState, (item) => {
-    return item.id === who_id_str
-  })
 
-  return last(presence.metas)?.current_member?.name
+  return message.metadata?.member?.name
 }
 
 export const ContentBox = ({
@@ -99,12 +96,21 @@ export const ContentBox = ({
   presenceState
 }) => {
 
+
+  const contentItem = find(message.content || [], (item) => item.type === undefined || item.type === "text")
+  console.log("202 contentItem", contentItem)
+
+  // console.log("201 message", message)
   const { blockMatches } = useLLMOutput({
-    llmOutput: message.content,
+    llmOutput: (contentItem || {}).content || "",
     ...LLMOutputOpitons
   });
 
-  const name = maybeGetName(message.who_id_str, presenceState)
+  if (!contentItem) {
+    return <></>
+  }
+
+  const name = maybeGetName(message)
 
   return <div style={{
     marginRight: message.isMe === true ? "" : "20%",
