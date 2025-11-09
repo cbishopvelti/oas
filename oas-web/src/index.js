@@ -258,7 +258,7 @@ const client = new ApolloClient({
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <LocalizationProvider dateAdapter={AdapterMoment}>
+    <LocalizationProvider dateAdapter={AdapterMoment} adapterLocale={ "en-gb" }>
       <ApolloProvider client={client}>
         <RouterProvider router={router}>
           <App />
