@@ -132,6 +132,7 @@ export const MembershipPeriodMembers = () => {
             name,
             email,
             token_count,
+            credit_amount,
             inserted_at,
             member_status
           }
