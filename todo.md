@@ -65,4 +65,4 @@ Credit warning email error [x]
 Live update attending [x]
 Live update today booking [x]
 Users adding themselfs twice shouldnt happen [x]
-Style auth service for mobile
+Style auth service for mobile [x]
