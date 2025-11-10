@@ -52,16 +52,15 @@ defmodule OasWeb.Channels.LlmChannel do
     push(socket, "presence_state", OasWeb.Channels.LlmChannelPresence.list(socket))
 
     # Room pid
-    {:ok, pid } = Oas.Llm.RoomLangChain.start(socket.topic, {self(), member})
+    {:ok, pid } = Oas.Llm.RoomLangChain.start(socket.topic, {self(), %{member: socket.assigns[:current_member]}})
     Process.monitor(pid)
     messages = GenServer.call(pid, :messages)
-    # IO.inspect(messages, label: "401 messages")
     push(socket, "messages", %{
       messages: Enum.reverse(messages) |> Enum.map(fn (message) ->
         Oas.Llm.LangChainLlm.message_to_js(message)
       end),
       who_am_i: socket_to_member_map(socket)
-    } |> IO.inspect(label: "201 push messages"))
+    })
 
     {:noreply, Phoenix.Socket.assign(socket, llm_gen_server: pid)}
   end
