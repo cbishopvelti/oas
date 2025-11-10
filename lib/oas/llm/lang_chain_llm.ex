@@ -64,6 +64,7 @@ defmodule Oas.Llm.LangChainLlm do
           member: init_args.member
         }
       })
+      |> LLMChain.add_message(Message.new_system!("Todays date: #{Date.utc_today()}"))
       |> LLMChain.add_callback(callbacks)
       |> LLMChain.add_tools(Oas.Llm.Tools.get_tools())
 
