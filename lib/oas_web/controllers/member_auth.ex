@@ -28,7 +28,6 @@ defmodule OasWeb.MemberAuth do
   def log_in_member(conn, member, params \\ %{}) do
     token = Members.generate_member_session_token(member)
     member_return_to = get_session(conn, :member_return_to)
-    IO.inspect(member_return_to, label: "201 member_return_to")
 
     out = conn
     |> renew_session()
@@ -170,7 +169,7 @@ defmodule OasWeb.MemberAuth do
   defp maybe_store_return_to(conn), do: conn
 
   defp signed_in_path(conn) do
-    Plug.Conn.fetch_cookies(conn, signed: OasWeb.CallbackPathPlug.callback_path_cookie()) |> IO.inspect(label: "007")
+    Plug.Conn.fetch_cookies(conn, signed: OasWeb.CallbackPathPlug.callback_path_cookie())
 
     case Plug.Conn.fetch_cookies(conn, signed: OasWeb.CallbackPathPlug.callback_path_cookie())
       |> Map.get(:cookies)
