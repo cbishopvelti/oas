@@ -9,23 +9,23 @@ defmodule Oas.Llm.RoomLangChain do
   alias LangChain.Chains.LLMChain
   use GenServer
 
-  def start(topic, {pid, member}) do
+  def start(topic, {pid, channel_context}) do
     name = {:via, Registry, {OasWeb.Channels.LlmRegistry, topic}}
 
     out =
       case GenServer.start(
-             __MODULE__,
-             %{
-               parents: Map.new([{pid, member}]),
-               topic: topic
-             },
-             name: name
-           ) do
+        __MODULE__,
+        %{
+          parents: Map.new([{pid, channel_context}]),
+          topic: topic
+        },
+        name: name
+      ) do
         {:ok, pid} ->
           {:ok, pid}
 
         {:error, {:already_started, pid_of_existing_process}} ->
-          send(pid_of_existing_process, {:add_parent, {pid, member}})
+          send(pid_of_existing_process, {:add_parent, {pid, channel_context}})
           # Process.monitor(pid_of_existing_process)
           {:ok, pid_of_existing_process}
 
@@ -36,37 +36,29 @@ defmodule Oas.Llm.RoomLangChain do
     out
   end
 
-  defp get_active_llm_user_for_init([], parents) do
-    nil
-  end
-  defp get_active_llm_user_for_init(ecto_members, parents) do
-    member = ecto_members |> Map.to_list() |> List.first() |> Map.from_struct()
-    member
-  end
-
   @impl true
-  def init(state) do
+  def init(init_args) do
     # State is typically any Elixir term, here it's an integer (the count).
-    state.parents
+    init_args.parents
     |> Enum.map(fn {pid, _} ->
       Process.monitor(pid)
     end)
 
-    IO.inspect(state, label: "707.1 state")
+    IO.inspect(init_args, label: "707.1 state")
 
-    members_ecto = state.parents
+    members_ecto = init_args.parents
     |> Map.to_list()
-    |> Enum.filter(fn {_pid, member} -> # Don't add anonnomous users
+    |> Enum.filter(fn {_pid, %{member: member}} -> # Don't add anonnomous users
       member |> Map.has_key?(:id)
     end)
-    |> Enum.map(fn ({pid, member}) ->
-      Oas.Repo.get!(Oas.Members.Member, member.id)
+    |> Enum.map(fn ({pid, %{member: member}}) ->
+      member
     end)
     IO.inspect(members_ecto, label: "707.2 members_ecto")
 
     result = %Oas.Llm.Chat{}
     |> Ecto.Changeset.cast(%{
-      topic: state.topic
+      topic: init_args.topic
     }, [:topic])
     |> Ecto.Changeset.unique_constraint(:topic)
     |> Ecto.Changeset.put_assoc(:members,
@@ -80,7 +72,7 @@ defmodule Oas.Llm.RoomLangChain do
       {:error, %{errors: [topic: _]}} -> # Constraint error, already exists
         chat = from(c in Oas.Llm.Chat,
           preload: [:members],
-          where: c.topic == ^state.topic
+          where: c.topic == ^init_args.topic
         ) |> Oas.Repo.one!() # |> (&({:ok, &1})).()
         out = chat
         |> Ecto.Changeset.change()
@@ -99,15 +91,21 @@ defmodule Oas.Llm.RoomLangChain do
     #   where c.topic == ^state.topic
     # ) |> Oas.Repo.
 
+    IO.inspect(init_args)
     {:ok, chain_pid} = Oas.Llm.LangChainLlm.start_link(
       self(),
       messages,
-      get_active_llm_user_for_init(members_ecto, state.parents)
+      init_args.parents
+      |> IO.inspect(label: "705")
+      |> Map.to_list()
+      |> List.last()
+      |> (&(&1 |> elem(1) |> Map.get(:member))).() # The member for the llm state
     )
 
     {
       :ok,
-      state
+      %{}
+      |> Map.put(:parents, init_args.parents)
       |> Map.put(:chain_pid, chain_pid)
       |> Map.put(:messages, messages)
       |> Map.put(:chat, chat)

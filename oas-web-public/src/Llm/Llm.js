@@ -136,7 +136,6 @@ export const Llm = () => {
     // from other clients
     channel.on("prompt", (prompt) => {
       setMessages((messages ) => [...messages, prompt])
-      // pushMessage(prompt)
     })
 
     presence.onSync(() => {
