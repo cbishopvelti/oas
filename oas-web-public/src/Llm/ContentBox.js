@@ -19,6 +19,7 @@ import {
 } from "@llm-ui/code";
 import { useLLMOutput, useStreamExample, throttleBasic } from "@llm-ui/react";
 import { memoize, startsWith, find, last } from 'lodash'
+import { memo } from 'react';
 
 export const MarkdownComponent = ({ blockMatch }) => {
   const markdown = blockMatch.output;
@@ -91,16 +92,11 @@ const maybeGetName = (message) => {
   return message.metadata?.member?.name
 }
 
-export const ContentBox = ({
-  message,
-  presenceState
+export const ContentBox = memo(({
+  message
 }) => {
-
-
   const contentItem = find(message.content || [], (item) => item.type === undefined || item.type === "text")
-  console.log("202 contentItem", contentItem)
 
-  // console.log("201 message", message)
   const { blockMatches } = useLLMOutput({
     llmOutput: (contentItem || {}).content || "",
     ...LLMOutputOpitons
@@ -124,4 +120,4 @@ export const ContentBox = ({
     </div>
     <div style={{ textAlign: "right" }}>{ name || message.role}</div>
   </div>
-}
+})

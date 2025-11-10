@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, memo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
@@ -40,7 +40,7 @@ export const PreLlm = () => {
       navigate(`/llm/${v4()}`)
       return
     }
-  }, [])
+  }, [id])
 
 
   return <>
@@ -127,7 +127,10 @@ export const Llm = () => {
     })
     channel.on("message", (message) => {
       setMessages((messages) => {
-        return messages.toSpliced(message.message_index, 1, message)
+        return messages.toSpliced(
+          messages.length - message.message_index,
+          1,
+          message)
       })
     })
     channel.on("messages", ({messages, who_am_i}) => {
@@ -174,6 +177,7 @@ export const Llm = () => {
 
   const { blockMatches } = useLLMOutput({
     llmOutput: output,
+    // llmOutput: "Test content",
     ...LLMOutputOpitons
   });
 
@@ -216,7 +220,7 @@ export const Llm = () => {
         </div>}
         { messages.map((message, index) => {
           return <ContentBox key={index} message={message} presenceState={presenceState} />
-        })}
+        }))}
       </div>
       <Box className="chat-input" sx={{display: 'flex', alignItems: 'center'}}>
         <FormControl sx={{flexGrow: 5}}>
