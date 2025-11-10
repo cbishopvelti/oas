@@ -212,13 +212,18 @@ export const Llm = () => {
         })}
       </ul>
       <div className="messages">
-        {(blockMatches.length > 0) && <div className="llm-content">
-          {blockMatches.map((blockMatch, index) => {
-            const Component = blockMatch.block.component;
-            return <Component key={index} blockMatch={blockMatch} />;
-          })}
-        </div>}
-        { messages.map((message, index) => {
+        <div>
+          {(blockMatches.length > 0 /* || true /* DEBUG ONLY */) && <div style={{marginRight: "20%"}}>
+            <div className="llm-content">
+              {blockMatches.map((blockMatch, index) => {
+                const Component = blockMatch.block.component;
+                return <Component key={index} blockMatch={blockMatch} />;
+              })}
+            </div>
+            <div style={{ textAlign: "right" }}>assistant</div>
+          </div>}
+        </div>
+        { messages.map(((message, index) => {
           return <ContentBox key={index} message={message} presenceState={presenceState} />
         }))}
       </div>
