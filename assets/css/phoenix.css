@@ -68,7 +68,7 @@ header section {
   flex-direction: column;
   justify-content: space-between;
   background-color: mediumpurple;
-  height: 36px;
+  min-height: 36px;
 }
 header section a, header section a:hover {
     color: black;
@@ -85,7 +85,7 @@ header nav li {
   margin: 0;
   padding: 0;
   display: block;
-  text-align: right;
+  text-align: center;
   white-space: nowrap;
 }
 header nav ul {
