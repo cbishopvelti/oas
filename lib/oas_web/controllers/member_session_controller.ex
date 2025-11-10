@@ -15,7 +15,7 @@ defmodule OasWeb.MemberSessionController do
       MemberAuth.log_in_member(conn, member, member_params)
     else
       # In order to prevent user enumeration attacks, don't disclose whether the email is registered.
-      render(conn, "new.html", error_message: "Invalid email or password")
+      render(conn, "new.html", error_message: "Invalid email or password", public_url: Application.fetch_env!(:oas, :public_url))
     end
   end
 

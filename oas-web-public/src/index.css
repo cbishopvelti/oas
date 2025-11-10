@@ -18,3 +18,55 @@ code {
     margin-bottom: 8px;
     padding: 4px;
 }
+
+span.online {
+    display: inline-block;
+    height: 8px;
+    width: 8px;
+    background-color: green;
+    border-radius: 50%;
+    margin-bottom: 2px;
+}
+span.offline {
+    display: inline-block;
+    height: 8px;
+    width: 8px;
+    background-color: gray;
+    border-radius: 50%;
+    margin-bottom: 2px;
+}
+
+ul.presence-participants {
+    display: flex;
+    margin: 0;
+    padding: 0;
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+    justify-content: space-around;
+    column-gap: 8px;
+}
+ul.presence-participants li {
+    list-style: none;
+    border: 1px solid gray;
+    border-radius: 4px;
+    padding: 4px;
+}
+
+div.chat-content {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 32px);
+}
+
+div.chat-content .messages {
+    flex-grow: 20;
+    flex-shrink: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column-reverse;
+}
+
+/*div.chat-content .chat-input {
+    display: flex;
+    flex-direction: column;
+}*/
