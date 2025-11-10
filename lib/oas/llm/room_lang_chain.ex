@@ -44,17 +44,17 @@ defmodule Oas.Llm.RoomLangChain do
       Process.monitor(pid)
     end)
 
-    IO.inspect(init_args, label: "707.1 state")
-
     members_ecto = init_args.parents
     |> Map.to_list()
-    |> Enum.filter(fn {_pid, %{member: member}} -> # Don't add anonnomous users
-      member |> Map.has_key?(:id)
+    |> Enum.filter(fn
+      {_pid, %{member: nil}} ->
+        false
+      {_pid, %{member: member}} -> # Don't add anonnomous users
+        member |> Map.has_key?(:id)
     end)
-    |> Enum.map(fn ({pid, %{member: member}}) ->
+    |> Enum.map(fn ({_pid, %{member: member}}) ->
       member
     end)
-    IO.inspect(members_ecto, label: "707.2 members_ecto")
 
     result = %Oas.Llm.Chat{}
     |> Ecto.Changeset.cast(%{
@@ -87,6 +87,13 @@ defmodule Oas.Llm.RoomLangChain do
 
     messages = Oas.Llm.Utils.restore(chat)
 
+    GenServer.cast(self(), {:broadcast, { # could be a new participant
+      :participants,
+      %{ participants: chat.members
+        |> Enum.map(fn member -> member |> Map.from_struct() |> Map.take([:id, :name]) end)
+      }
+    }})
+
     # from(c in Oas.Llm.Chat,
     #   where c.topic == ^state.topic
     # ) |> Oas.Repo.
@@ -96,7 +103,6 @@ defmodule Oas.Llm.RoomLangChain do
       self(),
       messages,
       init_args.parents
-      |> IO.inspect(label: "705")
       |> Map.to_list()
       |> List.last()
       |> (&(&1 |> elem(1) |> Map.get(:member))).() # The member for the llm state
@@ -113,18 +119,22 @@ defmodule Oas.Llm.RoomLangChain do
   end
 
   @impl true
-  def handle_info({:add_parent, {pid, member}}, state) do
+  def handle_info({:add_parent, {pid, channel_context}}, state) do
     Process.monitor(pid)
     # TODO: Send state of chain to new client.
     # state_for_js = state.chain.messages |> Enum.map(fn message ->
     #   message_to_js(message)
     # end)
 
-    new_chat = if (member |> Map.has_key?(:id)) do # Only if they're not annonomous
+    new_chat = if (
+      channel_context |> Map.has_key?(:member) && channel_context |> Map.get(:member) |> is_map() &&
+      channel_context.member |> Map.has_key?(:id)
+    ) do # Only if they're not annonomous
       state.chat
       |> Ecto.Changeset.change()
       |> Ecto.Changeset.put_assoc(:members,
-        [struct(Oas.Members.Member, member) | state.chat.members]
+        [channel_context.member | state.chat.members]
+        |> Enum.sort_by(fn (%{id: id}) -> id end)
         |> Enum.dedup_by(fn (%{id: id}) -> id end)
       )
       |> Oas.Repo.update!(returning: true)
@@ -134,10 +144,17 @@ defmodule Oas.Llm.RoomLangChain do
 
     messages_for_js = GenServer.call(state.chain_pid, :get_messages)
 
-    GenServer.cast(pid, {:state, messages_for_js})
+    GenServer.cast(pid, {:state, messages_for_js}) # Send the channel current message history
+    GenServer.cast(self(), {:broadcast, {
+      :participants,
+      %{
+        participants: new_chat.members
+        |> Enum.map(fn member -> member |> Map.from_struct() |> Map.take([:id, :name]) end)
+      }
+    }})
 
     # IO.inspect(state.chain, label: "001 handle_info :add_parent")
-    {:noreply, %{state | parents: Map.put(state.parents, pid, member), chat: new_chat}}
+    {:noreply, %{state | parents: Map.put(state.parents, pid, channel_context), chat: new_chat}}
   end
   def handle_info({:DOWN, _ref, :process, pid, _reason}, state) do
     new_parents = Map.delete(state.parents, pid)

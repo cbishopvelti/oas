@@ -56,10 +56,10 @@ defmodule OasWeb.Channels.LlmChannel do
     Process.monitor(pid)
     messages = GenServer.call(pid, :messages)
     push(socket, "messages", %{
-      messages: Enum.reverse(messages) |> Enum.map(fn (message) ->
+      messages: messages |> Enum.map(fn (message) ->
         Oas.Llm.LangChainLlm.message_to_js(message)
       end),
-      who_am_i: socket_to_member_map(socket)
+      who_am_i: socket_to_member_map(socket),
     })
 
     {:noreply, Phoenix.Socket.assign(socket, llm_gen_server: pid)}
@@ -107,6 +107,14 @@ defmodule OasWeb.Channels.LlmChannel do
       socket,
       Atom.to_string(:prompt),
       message
+    )
+    {:noreply, socket}
+  end
+  def handle_cast({:participants, participants}, socket) do
+    push(
+      socket,
+      Atom.to_string(:participants),
+      participants
     )
     {:noreply, socket}
   end

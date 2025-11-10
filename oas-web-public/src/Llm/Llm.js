@@ -13,7 +13,7 @@ import {
 import parseHtml from "html-react-parser";
 import { getHighlighterCore } from "shiki/core";
 import { bundledLanguagesInfo } from "shiki/langs";
-import { map, last } from "lodash"
+import { map, last, first, union, unionBy, reverse } from "lodash"
 
 // import getWasm from "shiki/wasm";
 
@@ -55,6 +55,16 @@ const isMe = (message, who_am_i) => {
     && message.role === "user"
 }
 
+const mergePresenceParticipants = (presence, participants) => {
+  const presenceMembers = presence.map((pres) => {
+    return {
+      ...first(pres.metas).member,
+      online: true
+    }
+  })
+  return unionBy(presenceMembers, participants, ({ id }) => id)
+}
+
 export const Llm = () => {
 
   const [channel, setChannel] = useState(undefined);
@@ -64,12 +74,13 @@ export const Llm = () => {
   const [isStreamFinished, setIsStreamFinished] = useState(true)
   const [whoIdObj, setWhoIdObj] = useState({})
   const [presenceState, setPresenceState] = useState([])
+  const [participants, setParticipants] = useState([])
 
   const { id } = useParams()
 
 
   const pushMessage = useCallback((message) => {
-    setMessages((messages ) => [...messages, {
+    setMessages((messages ) => [{
       content: [ {
         type: "text",
         content: message.content
@@ -77,7 +88,7 @@ export const Llm = () => {
       role: message.role,
       metadata: message.metadata,
       isMe: message.metadata?.member?.presence_id && message.metadata.member.presence_id === whoIdObj.presence_id
-    }])
+    }, ...messages])
   }, [setMessages, whoIdObj])
 
   useEffect(() => {
@@ -101,7 +112,6 @@ export const Llm = () => {
     let messages = [];
     let accData = "";
     channel.on("delta", (data) => {
-      // console.log("001 delta", data)
       if (data.content) {
         accData = accData + data.content
       }
@@ -131,7 +141,8 @@ export const Llm = () => {
         })
       )
     })
-    channel.on("state", (state) => {
+    channel.on("participants", ({participants}) => {
+      setParticipants(participants)
     })
     // from other clients
     channel.on("prompt", (prompt) => {
@@ -145,18 +156,6 @@ export const Llm = () => {
     channel
       .join()
       .receive("ok", (resp) => {
-        // Find out who I am
-        // channel.push("who_am_i")
-        //   .receive("ok", (payload) => {
-        //     console.log("001 set_who_am_i")
-        //     setWhoIdObj(payload)
-        //   })
-        //   .receive("error", (error) => {
-        //     console.error("error", error)
-        //   })
-        //   .receive("timeout", (timeout) => {
-        //     console.error("timeout", timeout)
-        //   })
       })
       .receive("error", (resp) => {
         console.error("error", resp)
@@ -195,28 +194,31 @@ export const Llm = () => {
     setPrompt("")
   }
 
+  const presenceParticipants = mergePresenceParticipants(presenceState, participants);
+
   return (
-    <div>
-      <div>
-        {(presenceState).map((who, i) => {
-          return <span key={i}>
-            <span >{ last(who.metas)?.member?.name || who.id }</span>
-            {(i < (presenceState).length - 1) && <span>, &nbsp;</span>}
-          </span>
+    <div className="chat-content">
+      <ul className="presence-participants">
+        {(presenceParticipants).map((who, i) => {
+          return <li key={i}>
+            <span >{ who.name || who.id || "annonomous" }</span>&nbsp;
+            {who.online ? <span className="online"></span> : <span className="offline"></span>}
+            {/* {(i < (presenceParticipants).length - 1) && <span>, &nbsp;</span>}*/}
+          </li>
         })}
-      </div>
-      <div>
-        {messages.map((message, index) => {
-          return <ContentBox key={index} message={message} presenceState={presenceState} />
-        })}
+      </ul>
+      <div className="messages">
         {(blockMatches.length > 0) && <div className="llm-content">
           {blockMatches.map((blockMatch, index) => {
             const Component = blockMatch.block.component;
             return <Component key={index} blockMatch={blockMatch} />;
           })}
         </div>}
+        { messages.map((message, index) => {
+          return <ContentBox key={index} message={message} presenceState={presenceState} />
+        })}
       </div>
-      <Box sx={{display: 'flex', alignItems: 'center'}}>
+      <Box className="chat-input" sx={{display: 'flex', alignItems: 'center'}}>
         <FormControl sx={{flexGrow: 5}}>
           <TextField
             id="prompt"
