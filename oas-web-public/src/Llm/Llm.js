@@ -13,7 +13,7 @@ import {
 import parseHtml from "html-react-parser";
 import { getHighlighterCore } from "shiki/core";
 import { bundledLanguagesInfo } from "shiki/langs";
-import { map, last, first, union, unionBy, reverse } from "lodash"
+import { map, last, first, union, unionBy, reverse, some } from "lodash"
 
 // import getWasm from "shiki/wasm";
 
@@ -25,7 +25,7 @@ import {
 import { markdownLookBack } from "@llm-ui/markdown";
 import { useLLMOutput, useStreamExample, throttleBasic } from "@llm-ui/react";
 import { Form, useNavigate, useParams } from "react-router-dom";
-import { FormControl, TextField, Button, Box } from "@mui/material";
+import { FormControl, TextField, Button, Box, Switch } from "@mui/material";
 import Cookies from "js-cookie";
 import { Socket as PhoenixSocket, Presence } from "phoenix";
 import { v4 } from 'uuid'
@@ -59,6 +59,7 @@ const mergePresenceParticipants = (presence, participants) => {
   const presenceMembers = presence.map((pres) => {
     return {
       ...first(pres.metas).member,
+      llm: some(pres.metas, ({llm}) => llm),
       online: true
     }
   })
@@ -127,9 +128,15 @@ export const Llm = () => {
     })
     channel.on("message", (message) => {
       setMessages((messages) => {
+        let index = messages.length - message.message_index - 1;
+        let step = 1;
+        if (index < 0) {
+          index = 0;
+          step = 1;
+        }
         return messages.toSpliced(
-          messages.length - message.message_index,
-          1,
+          index,
+          step,
           message)
       })
     })
@@ -149,10 +156,11 @@ export const Llm = () => {
     })
     // from other clients
     channel.on("prompt", (prompt) => {
-      setMessages((messages ) => [...messages, prompt])
+      setMessages((messages ) => [prompt, ...messages])
     })
 
     presence.onSync(() => {
+      console.log("onSync SHOULD HAPPEN")
       setPresenceState(Object.entries(presence.state).map(([k, v]) => { return {id: k, metas: v.metas} }))
     })
 
@@ -200,6 +208,10 @@ export const Llm = () => {
 
   const presenceParticipants = mergePresenceParticipants(presenceState, participants);
 
+  console.log("000", presenceState)
+  console.log("001", presenceParticipants)
+  console.log("002", whoIdObj)
+
   return (
     <div className="chat-content">
       <ul className="presence-participants">
@@ -207,6 +219,15 @@ export const Llm = () => {
           return <li key={i}>
             <span >{ who.name || who.id || "annonomous" }</span>&nbsp;
             {who.online ? <span className="online"></span> : <span className="offline"></span>}
+            {<Switch
+              checked={who.llm || false}
+              disabled={!(who.presence_id === whoIdObj.presence_id || whoIdObj.is_admin)}
+              onChange={ (event) => {
+                channel.push("toggle_llm", {
+                  presence_id: who.presence_id,
+                  value: event.target.checked
+                })
+              } } />}
             {/* {(i < (presenceParticipants).length - 1) && <span>, &nbsp;</span>}*/}
           </li>
         })}

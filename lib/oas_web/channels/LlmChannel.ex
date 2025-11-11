@@ -43,8 +43,16 @@ defmodule OasWeb.Channels.LlmChannel do
     member = socket_to_member_map(socket)
 
     # Presence
+    IO.inspect(OasWeb.Channels.LlmChannelPresence.list(socket), label: "206")
     metas = %{
+      pid: self(),
       online_at: System.system_time(:second),
+      llm: (if OasWeb.Channels.LlmChannelPresence.list(socket)
+        |> Map.to_list()
+        |> Enum.filter(fn ({_key, val}) ->
+          val.metas |> Enum.filter(fn (%{llm: llm}) -> llm end) |> length() != 0
+        end)
+        |> length() == 0, do: true, else: false)
     } |> then(fn metas ->
       Map.put(metas, :member, member)
     end)
@@ -52,7 +60,10 @@ defmodule OasWeb.Channels.LlmChannel do
     push(socket, "presence_state", OasWeb.Channels.LlmChannelPresence.list(socket))
 
     # Room pid
-    {:ok, pid } = Oas.Llm.RoomLangChain.start(socket.topic, {self(), %{member: socket.assigns[:current_member]}})
+    {:ok, pid } = Oas.Llm.RoomLangChain.start(socket.topic, {self(), %{
+      member: socket.assigns[:current_member],
+      presence_member_id: member.presence_id
+    }})
     Process.monitor(pid)
     messages = GenServer.call(pid, :messages)
     push(socket, "messages", %{
@@ -135,9 +146,47 @@ defmodule OasWeb.Channels.LlmChannel do
 
     {:reply, {:ok, member}, socket}
   end
-  def handle_in("messages", _, socket) do
-    messages = GenServer.call(socket.assigns[:llm_gen_server], :messages)
-    {:reply, {:ok, }, socket}
+  # def handle_in("messages", _, socket) do
+  #   messages = GenServer.call(socket.assigns[:llm_gen_server], :messages)
+  #   {:reply, {:ok, }, socket}
+  # end
+
+  def handle_in("toggle_llm", %{"presence_id" => presence_id, "value" => value}, socket) when is_bitstring(presence_id) do
+    IO.inspect(value, label: "205 value")
+
+    case (socket.assigns |> Map.get(:current_member, %{is_admin: false }) |> IO.inspect(label: "205.1")).is_admin
+      or presence_id == socket.assigns |> Map.get(:presence_id)
+    do
+      true ->
+        OasWeb.Channels.LlmChannelPresence.list(socket)
+        |> Map.to_list()
+        |> Enum.each(fn ({k, presence}) ->
+          presence.metas |> Enum.each(fn (meta) ->
+            # Unset previous llms
+            if meta.llm and
+              k != presence_id
+            do
+              OasWeb.Channels.LlmChannelPresence.update(meta.pid, socket.topic, k, fn (curr_pres) ->
+                %{curr_pres | llm: false }
+              end)
+            end
+
+            # Set the new value
+            if (k == presence_id) do
+              OasWeb.Channels.LlmChannelPresence.update(meta.pid, socket.topic, k, fn (curr_pres) ->
+                %{curr_pres | llm: value }
+              end)
+            end
+          end)
+        end)
+        # Update presence meta
+        OasWeb.Channels.LlmChannelPresence.update(socket, presence_id, fn (curr_pres) ->
+          %{curr_pres | llm: value}
+        end)
+        {:noreply, socket}
+      false -> # Do nothing, not authorized
+        {:noreply, socket}
+    end
   end
 
   defp get_presence_id(socket) do

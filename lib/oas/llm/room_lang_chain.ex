@@ -94,27 +94,31 @@ defmodule Oas.Llm.RoomLangChain do
       }
     }})
 
-    # from(c in Oas.Llm.Chat,
-    #   where c.topic == ^state.topic
-    # ) |> Oas.Repo.
+    state = %{}
+    |> Map.put(:parents, init_args.parents)
+    |> Map.put(:messages, messages)
+    |> Map.put(:chat, chat)
+    |> Map.put(:topic, init_args.topic)
 
-    IO.inspect(init_args)
-    {:ok, chain_pid} = Oas.Llm.LangChainLlm.start_link(
-      self(),
-      messages,
-      init_args.parents
-      |> Map.to_list()
-      |> List.last()
-      |> (&(&1 |> elem(1) |> Map.get(:member))).() # The member for the llm state
-    )
+    # IO.inspect(OasWeb.Channels.LlmChannelPresence.list(init_args.topic) |> Map.to_list(), label: "200")
+
+    state = if OasWeb.Channels.LlmChannelPresence.list(init_args.topic) |> Map.to_list() |> length == 1 do
+      {:ok, chain_pid} = Oas.Llm.LangChainLlm.start_link(
+        self(),
+        messages,
+        init_args.parents
+        |> Map.to_list()
+        |> List.last()
+        |> (&(&1 |> elem(1) |> Map.get(:member))).() # The member for the llm state
+      )
+      state |> Map.put(:chain_pid, chain_pid)
+    else
+      state
+    end
 
     {
       :ok,
-      %{}
-      |> Map.put(:parents, init_args.parents)
-      |> Map.put(:chain_pid, chain_pid)
-      |> Map.put(:messages, messages)
-      |> Map.put(:chat, chat)
+      state
     }
   end
 
@@ -191,7 +195,15 @@ defmodule Oas.Llm.RoomLangChain do
       {:broadcast, {:prompt, Oas.Llm.LangChainLlm.message_to_js(message)}, pid}
     )
 
-    GenServer.cast(state.chain_pid, {:prompt, message})
+    # Only send to llm if it on for us
+    IO.inspect(OasWeb.Channels.LlmChannelPresence.get_by_key(state.topic, member.presence_id).metas, label: "201")
+    if (
+      !!(OasWeb.Channels.LlmChannelPresence.get_by_key(state.topic, member.presence_id)
+      .metas |> Enum.find(fn (%{llm: llm}) -> llm end))
+    ) do
+      GenServer.cast(state.chain_pid, {:prompt, message})
+    end
+
 
     new_state = state |> Map.put(:messages, [ message | state.messages])
     new_state = Map.put(new_state, :chat, Oas.Llm.Utils.save(new_state))
