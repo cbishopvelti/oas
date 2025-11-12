@@ -1,4 +1,6 @@
 defmodule Oas.Llm.Utils do
+  alias LangChain.Message.ToolCall
+  alias LangChain.Message.ToolResult
   alias LangChain.Utils
   alias LangChain.Message.ContentPart
   alias LangChain.Message
@@ -22,8 +24,9 @@ defmodule Oas.Llm.Utils do
     Enum.map(item, fn ({k, v}) ->
       key = String.to_atom(k)
       case key do
-        :content ->
-          {key, decode(v, struct: ContentPart)}
+        :content -> {key, decode(v, struct: ContentPart)}
+        :tool_calls -> {key, decode(v, struct: ToolCall)}
+        :tool_results -> {key, decode(v, struct: ToolResult)}
         :status -> {key , decode(v) |> String.to_atom()}
         :role -> {key, decode(v) |> String.to_atom()}
         :type -> {key, decode(v) |> String.to_atom()}
@@ -41,8 +44,11 @@ defmodule Oas.Llm.Utils do
     []
   end
   def restore(%{chat: chat}) do
+
     Jason.decode!(chat)["messages"]
+    |> IO.inspect(label: "406 tool call")
     |> decode(struct: Message)
+    |> IO.inspect(label: "407")
   end
 
   def save(state) do

@@ -1,3 +1,5 @@
+import Ecto.Query, only: [from: 2]
+
 defmodule Oas.Llm.LangChainLlm do
   alias LangChain.Message.ContentPart
   alias LangChain.Message
@@ -14,6 +16,16 @@ defmodule Oas.Llm.LangChainLlm do
       member: member
     })
   end
+
+
+  defp day_name(1), do: "Monday"
+  defp day_name(2), do: "Tuesday"
+  defp day_name(3), do: "Wednesday"
+  defp day_name(4), do: "Thursday"
+  defp day_name(5), do: "Friday"
+  defp day_name(6), do: "Saturday"
+  defp day_name(7), do: "Sunday"
+
 
   @impl true
   def init(init_args) do
@@ -51,6 +63,8 @@ defmodule Oas.Llm.LangChainLlm do
       end
     }
 
+    IO.inspect(Date.day_of_week(Date.utc_today()) |> day_name(), label: "401")
+
     chain =
       LLMChain.new!(%{
         llm:
@@ -64,9 +78,18 @@ defmodule Oas.Llm.LangChainLlm do
           member: init_args.member
         }
       })
-      |> LLMChain.add_message(Message.new_system!("Todays date: #{Date.utc_today()}"))
+      |> LLMChain.add_message(Message.new_system!("Todays date: #{Date.utc_today()} and today is #{Date.day_of_week(Date.utc_today()) |> day_name}"))
+      |> LLMChain.add_message(Message.new_system!(
+        (from(cl in Oas.Config.ConfigLlm, select: cl) |> Oas.Repo.one!()).context
+      ))
       |> LLMChain.add_callback(callbacks)
       |> LLMChain.add_tools(Oas.Llm.Tools.get_tools())
+
+    chain = if (init_args.member |> Map.has_key?(:name)) do
+      LLMChain.add_message(chain, Message.new_system!("The users name is: " <> init_args.member.name))
+    else
+      LLMChain.add_message(chain, Message.new_system!("The user is annonomous"))
+    end
 
     chain = chain |> LLMChain.add_messages(init_args.messages |> Enum.reverse())
 

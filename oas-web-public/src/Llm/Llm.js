@@ -13,7 +13,7 @@ import {
 import parseHtml from "html-react-parser";
 import { getHighlighterCore } from "shiki/core";
 import { bundledLanguagesInfo } from "shiki/langs";
-import { map, last, first, union, unionBy, reverse, some } from "lodash"
+import { map, last, first, union, unionBy, reverse, some, find } from "lodash"
 
 // import getWasm from "shiki/wasm";
 
@@ -127,17 +127,27 @@ export const Llm = () => {
       setOutput(accData)
     })
     channel.on("message", (message) => {
+      if (message.content.length === 0) {
+        // Probably a tool call
+        return;
+      }
       setMessages((messages) => {
+        // console.log("===============================")
+        // console.log("on message ----", message.message_index)
+        // console.log("001 messages length", messages.length)
+        // console.log("002 message", message)
+
         let index = messages.length - message.message_index - 1;
         let step = 1;
         if (index < 0) {
           index = 0;
           step = 1;
         }
-        return messages.toSpliced(
+        const out = messages.toSpliced(
           index,
           step,
           message)
+        return out
       })
     })
     channel.on("messages", ({messages, who_am_i}) => {
@@ -160,7 +170,6 @@ export const Llm = () => {
     })
 
     presence.onSync(() => {
-      console.log("onSync SHOULD HAPPEN")
       setPresenceState(Object.entries(presence.state).map(([k, v]) => { return {id: k, metas: v.metas} }))
     })
 
@@ -208,13 +217,27 @@ export const Llm = () => {
 
   const presenceParticipants = mergePresenceParticipants(presenceState, participants);
 
-  console.log("000", presenceState)
-  console.log("001", presenceParticipants)
-  console.log("002", whoIdObj)
+  // console.log("000", presenceState)
+  // console.log("001", presenceParticipants)
+  // console.log("002", whoIdObj)
 
   return (
     <div className="chat-content">
       <ul className="presence-participants">
+        {some(presenceParticipants, ({llm}) => llm) && <li>
+          <span >assistent</span>&nbsp;
+          <span className="online"></span>
+          {<Switch
+            checked={true}
+            disabled={!(find(presenceParticipants, ({llm}) => llm).presence_id === whoIdObj.presence_id || whoIdObj.is_admin)}
+            onChange={ (event) => {
+              channel.push("toggle_llm", {
+                presence_id: find(presenceParticipants, ({llm}) => llm).presence_id,
+                value: false
+              })
+            } } />}
+          {/* {(i < (presenceParticipants).length - 1) && <span>, &nbsp;</span>}*/}
+        </li>}
         {(presenceParticipants).map((who, i) => {
           return <li key={i}>
             <span >{ who.name || who.id || "annonomous" }</span>&nbsp;

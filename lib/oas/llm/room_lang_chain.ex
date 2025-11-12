@@ -100,26 +100,42 @@ defmodule Oas.Llm.RoomLangChain do
     |> Map.put(:chat, chat)
     |> Map.put(:topic, init_args.topic)
 
-    # IO.inspect(OasWeb.Channels.LlmChannelPresence.list(init_args.topic) |> Map.to_list(), label: "200")
-
-    state = if OasWeb.Channels.LlmChannelPresence.list(init_args.topic) |> Map.to_list() |> length == 1 do
-      {:ok, chain_pid} = Oas.Llm.LangChainLlm.start_link(
-        self(),
-        messages,
-        init_args.parents
-        |> Map.to_list()
-        |> List.last()
-        |> (&(&1 |> elem(1) |> Map.get(:member))).() # The member for the llm state
-      )
-      state |> Map.put(:chain_pid, chain_pid)
-    else
-      state
-    end
+    state = refresh_llm(state)
 
     {
       :ok,
       state
     }
+  end
+
+  defp refresh_llm(state) do
+    # Shut the old llm
+    if state |> Map.has_key?(:chain_pid) do
+      Process.unlink(state.chain_pid)
+      Process.exit(state.chain_pid, :normal)
+    end
+
+    presence_meta = OasWeb.Channels.LlmChannelPresence.list(state.topic)
+    |> Map.to_list()
+    |> Enum.find_value(fn ({pres_id, presence}) ->
+      presence.metas |> Enum.find(fn %{llm: llm} ->
+        llm
+      end)
+    end)
+
+    state = if presence_meta do
+      {:ok, chain_pid} = Oas.Llm.LangChainLlm.start_link(
+        self(),
+        state.messages,
+        presence_meta.member
+      )
+
+      state |> Map.put(:chain_pid, chain_pid)
+    else
+      state
+    end
+
+    state
   end
 
   @impl true
@@ -196,7 +212,6 @@ defmodule Oas.Llm.RoomLangChain do
     )
 
     # Only send to llm if it on for us
-    IO.inspect(OasWeb.Channels.LlmChannelPresence.get_by_key(state.topic, member.presence_id).metas, label: "201")
     if (
       !!(OasWeb.Channels.LlmChannelPresence.get_by_key(state.topic, member.presence_id)
       .metas |> Enum.find(fn (%{llm: llm}) -> llm end))
@@ -211,6 +226,10 @@ defmodule Oas.Llm.RoomLangChain do
     {:noreply,
       new_state
     }
+  end
+  def handle_cast(:refresh_llm, state) do
+    state = refresh_llm(state)
+    {:noreply, state}
   end
 
   # llm -> client

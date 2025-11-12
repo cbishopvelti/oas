@@ -23,6 +23,10 @@ defmodule OasWeb.Schema.SchemaConfig do
     field :backup_recipient, :string
   end
 
+  object :config_llm do
+    field :context, :string
+  end
+
   object :public_config_config do
     field :enable_booking, :boolean
     field :content, :string
@@ -59,6 +63,15 @@ defmodule OasWeb.Schema.SchemaConfig do
         result = from(cc in Oas.Config.Config, select: cc)
           |> Oas.Repo.one
 
+        {:ok, result}
+      end
+    end
+    field :config_llm, :config_llm do
+      resolve fn _, _, _ ->
+        result = from(cl in Oas.Config.ConfigLlm,
+          select: cl
+        )
+        |> Oas.Repo.one()
         {:ok, result}
       end
     end
@@ -129,6 +142,20 @@ defmodule OasWeb.Schema.SchemaConfig do
         end)
 
         {:ok, items}
+      end
+    end
+    field :save_config_llm, :config_llm do
+      arg :context, non_null(:string)
+      resolve fn _, %{context: context}, _ ->
+        result = from(cl in Oas.Config.ConfigLlm, select: cl)
+        |> Oas.Repo.one()
+        |> Ecto.Changeset.cast(%{
+          context: context
+        }, [:context])
+        |> Oas.Repo.update
+        |> OasWeb.Schema.SchemaUtils.handle_error()
+
+        result
       end
     end
   end
