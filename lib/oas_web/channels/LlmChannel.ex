@@ -43,7 +43,7 @@ defmodule OasWeb.Channels.LlmChannel do
     member = socket_to_member_map(socket)
 
     # Presence
-    IO.inspect(OasWeb.Channels.LlmChannelPresence.list(socket), label: "206")
+    # IO.inspect(OasWeb.Channels.LlmChannelPresence.list(socket), label: "206")
     metas = %{
       pid: self(),
       online_at: System.system_time(:second),
@@ -82,7 +82,7 @@ defmodule OasWeb.Channels.LlmChannel do
 
   # Data from the llm
   def handle_cast({:data, data}, socket) do
-    IO.inspect(data, label: "007 handle_cast :data")
+    # IO.inspect(data, label: "007 handle_cast :data")
     push(socket, "data", data)
     {:noreply, socket}
   end
@@ -152,7 +152,7 @@ defmodule OasWeb.Channels.LlmChannel do
   # end
 
   def handle_in("toggle_llm", %{"presence_id" => presence_id, "value" => value}, socket) when is_bitstring(presence_id) do
-    IO.inspect(value, label: "205 value")
+    # IO.inspect(value, label: "205 value")
 
     case (socket.assigns |> Map.get(:current_member, %{is_admin: false }) |> IO.inspect(label: "205.1")).is_admin
       or presence_id == socket.assigns |> Map.get(:presence_id)
@@ -179,10 +179,9 @@ defmodule OasWeb.Channels.LlmChannel do
             end
           end)
         end)
-        # Update presence meta
-        OasWeb.Channels.LlmChannelPresence.update(socket, presence_id, fn (curr_pres) ->
-          %{curr_pres | llm: value}
-        end)
+
+        GenServer.cast(socket.assigns.llm_gen_server, :refresh_llm)
+
         {:noreply, socket}
       false -> # Do nothing, not authorized
         {:noreply, socket}
@@ -239,6 +238,6 @@ defmodule OasWeb.Channels.LlmChannel do
     |> LLMChain.run(mode: :while_needs_response)
 
     # IO.inspect(chain, label: "001 chain")
-    IO.inspect(ChainResult.to_string!(chain), label: "102 to_string(chain)")
+    # IO.inspect(ChainResult.to_string!(chain), label: "102 to_string(chain)")
   end
 end
