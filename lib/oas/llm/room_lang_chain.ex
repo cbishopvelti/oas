@@ -102,6 +102,8 @@ defmodule Oas.Llm.RoomLangChain do
 
     state = refresh_llm(state)
 
+    OasWeb.Endpoint.broadcast!("history", "new_history", chat)
+
     {
       :ok,
       state
@@ -149,7 +151,7 @@ defmodule Oas.Llm.RoomLangChain do
     new_chat = if (
       channel_context |> Map.has_key?(:member) && channel_context |> Map.get(:member) |> is_map() &&
       channel_context.member |> Map.has_key?(:id)
-    ) do # Only if they're not annonomous
+    ) do # Only if they're not anonymous
       state.chat
       |> Ecto.Changeset.change()
       |> Ecto.Changeset.put_assoc(:members,
@@ -172,6 +174,8 @@ defmodule Oas.Llm.RoomLangChain do
         |> Enum.map(fn member -> member |> Map.from_struct() |> Map.take([:id, :name]) end)
       }
     }})
+
+    # OasWeb.Endpoint.broadcast!("history", "new_history", new_chat)
 
     # IO.inspect(state.chain, label: "001 handle_info :add_parent")
     {:noreply, %{state | parents: Map.put(state.parents, pid, channel_context), chat: new_chat}}

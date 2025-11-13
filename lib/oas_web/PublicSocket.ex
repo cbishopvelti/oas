@@ -3,6 +3,7 @@ defmodule OasWeb.PublicSocket do
   use Phoenix.Socket
 
   channel "llm:*", OasWeb.Channels.LlmChannel
+  channel "history", OasWeb.Channels.LlmHistoryChannel
 
   # @session_options Module.get_attribute(OasWeb.Endpoint, :session_options)
 

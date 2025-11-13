@@ -7,21 +7,32 @@ defmodule OasWeb.Channels.LlmChannelPresence do
     {:ok, %{}}
   end
 
-  # def handle_metas(topic, %{joins: joins, leaves: leaves}, presences, state) do
+  def handle_info(msg, socket) do
+    # IO.inspect(msg, label: "305")
+    {:noreply, socket}
+  end
 
-  #   IO.puts("001 handle_metas, topic: #{topic}")
-  #   IO.inspect(joins, label: "001.1 joins")
-  #   IO.inspect(leaves, label: "001.2 leaves")
-  #   IO.inspect(presences, label: "001.3 presences")
-  #   IO.inspect(state, label: "001.4 state")
+  def add_topic(presences, topic) do
+    presences
+    |> Enum.map(fn ({k, v}) ->
+      {
+        topic <> ":" <> k,
+        v
+        |> Map.put(:topic, topic)
+        |> Map.put(:presence_id, k)
+      }
+    end)
+    |> Map.new()
+  end
 
-  #   messages = (get_in(joins, ["messages", :metas]) || [])
-  #   |> Enum.map(fn %{who: who, message: message} -> %{role: "user", content: "message"} end)
+  def handle_metas(topic, %{joins: joins, leaves: leaves} = msg, presences, state) do
 
-  #   IO.inspect(state, label: "001.5 messages")
-
-  #   {:ok, %{
-  #     messages: messages
-  #   }}
-  # end
+    # IO.puts("301 handle_metas")
+    # Phoenix.PubSub.local_broadcast(.PubSub, "proxy:#{topic}", msg)
+    OasWeb.Endpoint.broadcast("history", "llm_presence_diff", %{
+      joins: joins |> add_topic(topic),
+      leaves: leaves |> add_topic(topic)
+    })
+    {:ok, state}
+  end
 end

@@ -18,6 +18,7 @@ import { Socket as PhoenixSocket } from "phoenix";
 import Cookies from "js-cookie";
 import * as AbsintheSocket from "@absinthe/socket";
 import { createAbsintheSocketLink } from "@absinthe/socket-apollo-link";
+import { LlmHistory } from './Llm/LlmHistory';
 
 const router = createBrowserRouter([
   {
@@ -58,6 +59,11 @@ const router = createBrowserRouter([
         id: "llm-id",
         path: "llm/:id",
         element: <PreLlm />
+      },
+      {
+        id: "llm-history",
+        path: "llm-history",
+        element: <LlmHistory />
       }
     ],
   },

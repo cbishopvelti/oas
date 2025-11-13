@@ -63,8 +63,6 @@ defmodule Oas.Llm.LangChainLlm do
       end
     }
 
-    IO.inspect(Date.day_of_week(Date.utc_today()) |> day_name(), label: "401")
-
     chain =
       LLMChain.new!(%{
         llm:
@@ -88,7 +86,7 @@ defmodule Oas.Llm.LangChainLlm do
     chain = if (init_args.member |> Map.has_key?(:name)) do
       LLMChain.add_message(chain, Message.new_system!("The users name is: " <> init_args.member.name))
     else
-      LLMChain.add_message(chain, Message.new_system!("The user is annonomous"))
+      LLMChain.add_message(chain, Message.new_system!("The user is anonymous"))
     end
 
     chain = chain |> LLMChain.add_messages(init_args.messages |> Enum.reverse())

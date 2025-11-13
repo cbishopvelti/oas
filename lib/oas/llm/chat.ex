@@ -3,6 +3,8 @@ import Ecto.Query, only: [from: 2]
 defmodule Oas.Llm.Chat do
   use Ecto.Schema
 
+  @derive {Jason.Encoder, only: [:id, :topic, :chat, :members, :inserted_at, :updated_at]}
+
   schema "chats" do
     field :topic, :string
     field :chat, :string

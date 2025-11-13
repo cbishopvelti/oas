@@ -194,7 +194,7 @@ defmodule OasWeb.Channels.LlmChannel do
     do
       id |> to_string()
     else
-      _ -> "annonomous" <> "#{inspect(socket.channel_pid)}"
+      _ -> "anonymous" <> "#{inspect(socket.channel_pid)}"
     end
     who_id
   end

@@ -85,7 +85,7 @@ export const LLMOutputOpitons = {
 }
 
 const maybeGetName = (message) => {
-  if (startsWith(message.metadata?.member?.presence_id, "annonomous")) {
+  if (startsWith(message.metadata?.member?.presence_id, "anonymous")) {
     return message.metadata.member.presence_id
   }
 
