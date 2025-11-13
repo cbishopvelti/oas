@@ -66,14 +66,14 @@ defmodule Oas.Members.Membership do
       |> Oas.Repo.all
 
       # If there are other trainings in that membership period, don't delete the membership
+      total_attendance = total_attendance - 1 # This is called before this attendance has been deleted.
       if (
-        other_trainings_in_period |> length() > 0 and
-        total_attendance > config.temporary_trainings # Not a temporary member
+        other_trainings_in_period |> length() > 0 and # true
+        total_attendance > config.temporary_trainings # false Not a temporary member
       ) do
         nil
       else
         [membership] = membership_period.memberships
-        Oas.Repo.delete(membership)
         nil
       end
     end)
