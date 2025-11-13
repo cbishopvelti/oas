@@ -16,7 +16,8 @@ config :oas, Oas.Repo,
   # database: "./dbs/dev.db",
   # database: "./dbs/prod-backup-2025-11-03T19:35:33.875200Z.db",
   database: "/home/chris/oas-dev-dbs/prod-backup-2025-11-03T19:35:33.875200Z.db",
-  backup_database: "./dbs/sqlite-backup"
+  backup_database: "./dbs/sqlite-backup",
+  log: false
 
 config :oas, Oas.Repo.Replica1,
   database: System.get_env("DB_FILE_REPLICA_1") || "./dbs/sqlite-dev-replica-1.db"

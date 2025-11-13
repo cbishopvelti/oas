@@ -15,6 +15,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import { useQuery, gql } from '@apollo/client'
 import { get } from 'lodash'
+import { MenuChat } from './MenuChat';
 
 
 const DrawerHeader = styled('div')(({ theme }) => ({
@@ -138,9 +139,12 @@ function App() {
               }}
               href={`${process.env.REACT_APP_SERVER_URL}/members/log_in?callback_path=${encodeURIComponent("/bookings")}&callback_domain=public_url`}>My Bookings</a>
             </MenuItem>}
-            <MenuItem component={NavLink} to={"llm"}>
+
+            {/* <MenuItem component={NavLink} to={"llm"}>
               <ListItemText>Chat</ListItemText>
-            </MenuItem>
+            </MenuItem>*/}
+            <MenuChat />
+
             {(get(data, 'user.is_admin') || get(data, 'user.is_reviewer')) && <MenuItem onClick={onClick} sx={{padding: 0}}>
               <a style={{
                 color: 'inherit',

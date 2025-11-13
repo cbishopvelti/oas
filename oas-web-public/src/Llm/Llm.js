@@ -55,7 +55,7 @@ const isMe = (message, who_am_i) => {
     && message.role === "user"
 }
 
-const mergePresenceParticipants = (presence, participants) => {
+export const mergePresenceParticipants = (presence, participants) => {
   const presenceMembers = presence.map((pres) => {
     return {
       ...first(pres.metas).member,
@@ -93,7 +93,6 @@ export const Llm = () => {
   }, [setMessages, whoIdObj])
 
   useEffect(() => {
-    // console.log("002", `${process.env["REACT_APP_SERVER_URL"].replace(/^http/, "ws")}/public_socket`)
     const phoenixSocket = new PhoenixSocket(`${process.env["REACT_APP_SERVER_URL"].replace(/^http/, "ws")}/public_socket`, {
       reconnectAfterMs: (() => 120_000),
      	rejoinAfterMs: (() => 120_000),
@@ -240,7 +239,7 @@ export const Llm = () => {
         </li>}
         {(presenceParticipants).map((who, i) => {
           return <li key={i}>
-            <span >{ who.name || who.id || "annonomous" }</span>&nbsp;
+            <span >{ who.name || who.id || "anonymous" }</span>&nbsp;
             {who.online ? <span className="online"></span> : <span className="offline"></span>}
             {<Switch
               checked={who.llm || false}

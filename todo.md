@@ -80,3 +80,5 @@ Credits tool.
 Handling if LLM isn't available.
 disable messaging if llm is processing.
 Fix delta/message syncing
+Fix not coming online when clicking Chat
+css sub menu and history list online

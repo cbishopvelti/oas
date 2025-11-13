@@ -33,6 +33,7 @@ span.offline {
     width: 10px;
     background-color: gray;
     border-radius: 50%;
+    margin-left: 4px;
 }
 
 ul.presence-participants {
@@ -50,6 +51,23 @@ ul.presence-participants li {
     border-radius: 4px;
     padding: 4px 16px;
     padding-right: 8px;
+}
+
+ul.history-participants {
+    /*display: flex;*/
+    display: inline-block;
+    margin: 0;
+    padding: 0;
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+    justify-content: space-around;
+    column-gap: 8px;
+}
+ul.history-participants li {
+    list-style: none;
+    border: 1px solid gray;
+    border-radius: 4px;
+    padding: 4px 16px;
 }
 
 div.chat-content {
