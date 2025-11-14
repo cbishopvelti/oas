@@ -53,10 +53,14 @@ defmodule Oas.Llm.Tools do
               nil -> {:error, "Error finding event/traning/jam to add you to."}
               event -> # Oas.Attendance.add_attendance(%{member_id: 1, training_id: 267},%{inserted_by_member_id: 1})
                 try do
-                  Oas.Attendance.add_attendance(
+                  {:ok, _attendance} = Oas.Attendance.add_attendance(
                     %{member_id: member_id, training_id: event.id},
                     %{inserted_by_member_id: member_id}
                   )
+                  # Absinthe.Subscription.publish(OasWeb.Endpoint, %{success: true}, user_attendance_attendance: 139)
+                  Absinthe.Subscription.publish(OasWeb.Endpoint, %{success: true}, user_attendance_attendance: member_id)
+                  Absinthe.Subscription.publish(OasWeb.Endpoint, %{id: event.id}, attendance_attendance: event.id)
+
                   {:ok, "Added to event"}
                 catch
                   {:error, [%{message: "training_id: has already been taken"} | _]} ->

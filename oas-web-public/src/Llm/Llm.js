@@ -118,7 +118,6 @@ export const Llm = () => {
     let messages = [];
     let accData = "";
     channel.on("delta", (data) => {
-      console.log("101 delta delta delta", data)
       if (data.content) {
         accData = accData + data.content
       }
@@ -139,7 +138,6 @@ export const Llm = () => {
     })
     channel.on("message", (message) => {
       setDisableInput(false)
-      console.log("102 message", message)
       if (message.content.length === 0) {
         // Probably a tool call
         return;
@@ -275,7 +273,6 @@ export const Llm = () => {
           {(blockMatches.length > 0 /* || true /* DEBUG ONLY */) && <div className="delta-message" style={{marginRight: "20%"}}>
             <div className="llm-content">
               {blockMatches.map((blockMatch, index) => {
-                console.log("106 should be rendering?")
                 const Component = blockMatch.block.component;
                 return <Component key={`${index}-${blockMatches.length}-m`} blockMatch={blockMatch} />;
               })}
