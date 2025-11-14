@@ -169,7 +169,7 @@ defmodule OasWeb.MemberAuth do
   defp maybe_store_return_to(conn), do: conn
 
   defp signed_in_path(conn) do
-    Plug.Conn.fetch_cookies(conn, signed: OasWeb.CallbackPathPlug.callback_path_cookie()) |> IO.inspect(label: "007")
+    Plug.Conn.fetch_cookies(conn, signed: OasWeb.CallbackPathPlug.callback_path_cookie())
 
     case Plug.Conn.fetch_cookies(conn, signed: OasWeb.CallbackPathPlug.callback_path_cookie())
       |> Map.get(:cookies)
