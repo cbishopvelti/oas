@@ -52,16 +52,14 @@ ul.presence-participants li {
     padding: 4px 16px;
     padding-right: 8px;
 }
-
 ul.history-participants {
-    /*display: flex;*/
-    display: inline-block;
+    display: flex;
     margin: 0;
     padding: 0;
     padding-bottom: 8px;
     margin-bottom: 8px;
-    justify-content: space-around;
-    column-gap: 8px;
+    /*justify-content: space-between;*/
+    column-gap: 16px;
 }
 ul.history-participants li {
     list-style: none;

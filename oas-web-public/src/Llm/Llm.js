@@ -13,7 +13,7 @@ import {
 import parseHtml from "html-react-parser";
 import { getHighlighterCore } from "shiki/core";
 import { bundledLanguagesInfo } from "shiki/langs";
-import { map, last, first, union, unionBy, reverse, some, find } from "lodash"
+import { map, last, first, union, unionBy, reverse, some, find, findIndex, throttle } from "lodash"
 
 // import getWasm from "shiki/wasm";
 
@@ -76,6 +76,7 @@ export const Llm = () => {
   const [whoIdObj, setWhoIdObj] = useState({})
   const [presenceState, setPresenceState] = useState([])
   const [participants, setParticipants] = useState([])
+  const [disableInput, setDisableInput] = useState(false)
 
   const { id } = useParams()
 
@@ -109,9 +110,15 @@ export const Llm = () => {
     let channel = phoenixSocket.channel(`llm:${id}`, {})
     let presence = new Presence(channel)
 
+    // const throttledSetOutput = setOutput;
+    const throttledSetOutput = throttle(setOutput, 100, {
+      leading: true
+    })
+
     let messages = [];
     let accData = "";
     channel.on("delta", (data) => {
+      console.log("101 delta delta delta", data)
       if (data.content) {
         accData = accData + data.content
       }
@@ -119,13 +126,20 @@ export const Llm = () => {
       if (data.status === "complete") {
         pushMessage({
           role: "assistent",
-          content: accData
+          content: accData,
+          metadata: {
+            index: data.metadata.index
+          }
         })
+        setDisableInput(false);
         accData = ""
       }
-      setOutput(accData)
+      // setOutput(accData)
+      throttledSetOutput(accData)
     })
     channel.on("message", (message) => {
+      setDisableInput(false)
+      console.log("102 message", message)
       if (message.content.length === 0) {
         // Probably a tool call
         return;
@@ -136,16 +150,15 @@ export const Llm = () => {
         // console.log("001 messages length", messages.length)
         // console.log("002 message", message)
 
-        let index = messages.length - message.message_index - 1;
-        let step = 1;
-        if (index < 0) {
-          index = 0;
-          step = 1;
+        const index = findIndex(messages, (mess) => mess.metadata.index === message.metadata.index)
+        let out;
+        if (index === -1) {
+
+          out = [message, ...messages]
+        } else {
+          out = messages
         }
-        const out = messages.toSpliced(
-          index,
-          step,
-          message)
+
         return out
       })
     })
@@ -191,6 +204,7 @@ export const Llm = () => {
     }
   }, [])
 
+
   const { blockMatches } = useLLMOutput({
     llmOutput: output,
     // llmOutput: "Test content",
@@ -198,18 +212,19 @@ export const Llm = () => {
   });
 
   const user_prompt = (prompt, member) => {
+    if (disableInput) {
+      return;
+    }
     pushMessage({
       content: prompt,
       role: "user",
       metadata: {
         member: member
       }
-      // metas: [
-      //   {
-      //     member: whoIdObj
-      //   }
-      // ]
     })
+    if (find(presenceParticipants, ({presence_id, llm}) =>  presence_id === whoIdObj.presence_id && llm)) {
+      setDisableInput(true);
+    }
     channel.push("prompt", prompt)
     setPrompt("")
   }
@@ -219,6 +234,7 @@ export const Llm = () => {
   // console.log("000", presenceState)
   // console.log("001", presenceParticipants)
   // console.log("002", whoIdObj)
+  // console.log("003", messages)
 
   return (
     <div className="chat-content">
@@ -256,18 +272,19 @@ export const Llm = () => {
       </ul>
       <div className="messages">
         <div>
-          {(blockMatches.length > 0 /* || true /* DEBUG ONLY */) && <div style={{marginRight: "20%"}}>
+          {(blockMatches.length > 0 /* || true /* DEBUG ONLY */) && <div className="delta-message" style={{marginRight: "20%"}}>
             <div className="llm-content">
               {blockMatches.map((blockMatch, index) => {
+                console.log("106 should be rendering?")
                 const Component = blockMatch.block.component;
-                return <Component key={index} blockMatch={blockMatch} />;
+                return <Component key={`${index}-${blockMatches.length}-m`} blockMatch={blockMatch} />;
               })}
             </div>
             <div style={{ textAlign: "right" }}>assistant</div>
           </div>}
         </div>
         { messages.map(((message, index) => {
-          return <ContentBox key={index} message={message} presenceState={presenceState} />
+          return <ContentBox key={`${index}-${messages.length}-ms`} message={message} presenceState={presenceState} />
         }))}
       </div>
       <Box className="chat-input" sx={{display: 'flex', alignItems: 'center'}}>
@@ -289,7 +306,7 @@ export const Llm = () => {
         </FormControl>
         <FormControl>
           <Button
-            disabled={!channel || channel.state !== "joined"}
+            disabled={!channel || channel.state !== "joined" || disableInput}
             onClick={() => {
               user_prompt(prompt, whoIdObj)
             }}>Submit</Button>

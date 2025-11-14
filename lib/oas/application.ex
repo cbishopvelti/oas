@@ -22,6 +22,7 @@ defmodule Oas.Application do
       Oas.BackupJob,
       # Oas.Gocardless.AuthServer,
       Oas.Gocardless.Supervisor,
+      {Task.Supervisor, name: Oas.TaskSupervisor},
       # Start the Endpoint (http/https)
       OasWeb.Endpoint,
       {Absinthe.Subscription, OasWeb.Endpoint}

@@ -56,8 +56,9 @@ defmodule OasWeb.Channels.LlmChannel do
     } |> then(fn metas ->
       Map.put(metas, :member, member)
     end)
+
+    # Presence
     {:ok, _} = OasWeb.Channels.LlmChannelPresence.track(socket, member.presence_id, metas)
-    push(socket, "presence_state", OasWeb.Channels.LlmChannelPresence.list(socket))
 
     # Room pid
     {:ok, pid } = Oas.Llm.RoomLangChain.start(socket.topic, {self(), %{
@@ -72,6 +73,9 @@ defmodule OasWeb.Channels.LlmChannel do
       end),
       who_am_i: socket_to_member_map(socket),
     })
+
+    # Send presence after room initialization
+    push(socket, "presence_state", OasWeb.Channels.LlmChannelPresence.list(socket))
 
     {:noreply, Phoenix.Socket.assign(socket, llm_gen_server: pid)}
   end
