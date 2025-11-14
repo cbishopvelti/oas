@@ -126,7 +126,7 @@ defmodule Oas.TokenMailer do
     Thanks
 
     #{config.name}
-    """) |> IO.inspect(label: "301 Sending credit email")
+    """)
   end
   # EO CREDITS
 end
