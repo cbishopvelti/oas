@@ -119,7 +119,6 @@ defmodule OasWeb.Schema.SchemaUser do
               %{id: id} ->
                 Oas.Attendance.delete_attendance(%{attendance_id: id})
 
-                IO.inspect(result, label: "109")
                 {:ok, %{
                   success: true,
                   attendance_id: id,
