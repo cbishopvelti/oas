@@ -23,9 +23,9 @@ docker run -it -d \
 -e DB_FILE=/dbs/sqlite-prod.db \
 -e MIX_ENV=v2_prod \
 -p 80:80 -p 443:443 \
--v /media/chris/fedora/root/oas-dbs:/dbs \
+-v /media/chris/fedora1/root/oas-dbs:/dbs \
 -v /oas-dbs-backup:/oas-dbs-backup \
--v /media/chris/fedora/root/gocardless_backup:/gocardless_backup \
+-v /media/chris/fedora1/root/gocardless_backup:/gocardless_backup \
 chrisjbishop155/oas:v2_prod
 ```
 
