@@ -119,6 +119,9 @@ defmodule OasWeb.Schema do
   def myMiddleware(middleware, %Absinthe.Type.Field{identifier: :user_undo_attendance}, %Absinthe.Type.Object{identifier: :mutation}) do
     [OasWeb.Schema.MiddlewareUser | middleware]
   end
+  def myMiddleware(middleware, %Absinthe.Type.Field{identifier: :user_attendance_attendance}, %Absinthe.Type.Object{identifier: :subscription}) do
+    [OasWeb.Schema.MiddlewareUser | middleware]
+  end
 
   # isAdmin and isReviewer can read data
   def myMiddleware(middleware, _field, %Absinthe.Type.Object{identifier: identifier}) when identifier in [:query, :subscription] do

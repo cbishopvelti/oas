@@ -2,7 +2,8 @@ import { gql, useQuery, useMutation } from "@apollo/client"
 import { MembersDisplay } from "../Member/MembersDisplay"
 import {
   IconButton, Dialog, DialogTitle, FormControl,
-  Autocomplete, TextField, Button
+  Autocomplete, TextField, Button, DialogContent,
+  DialogContentText, DialogActions
  } from "@mui/material";
 import { differenceBy, differenceWith, get, reduce } from 'lodash';
 import { useParams, useOutletContext, Link } from "react-router-dom";
@@ -20,28 +21,65 @@ export const DeleteMembership = ({membership_period_id, membership_period_name, 
       }
     }
   `);
+  const [deleteOpen, setDeleteOpen] = useState(null)
 
   if (!membership_period_id) {
     return <></>
   }
 
+  const handleDeleteClose = (doDelete) => async () => {
+    const { membership_period_id, member_id } = deleteOpen;
+    setDeleteOpen(null)
+    if (!doDelete) {
+      return;
+    }
+
+    await mutation({
+      variables: {
+        membership_period_id,
+        member_id
+      }
+    })
+    refetch()
+  }
+
   return ({member_id, data}) => {
+
+
     return <>
       {data.transaction && <IconButton title={`Go to ${membership_period_name}'s transaction`} component={Link} to={`/transaction/${data.transaction.id}`}>
         <PaidIcon />
       </IconButton>}
       <IconButton title={`Delete ${data.member.name}'s membership`} onClick={async () => {
-        await mutation({
-          variables: {
-            membership_period_id,
-            member_id
-          }
+
+        setDeleteOpen({
+          membership_period_id,
+          member_id
         })
-        refetch()
       }}>
         <DeleteIcon sx={{color: 'red'}} />
       </IconButton>
-
+      <Dialog
+        open={deleteOpen != null}
+        onClose={handleDeleteClose(false)}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">
+          {`Delete Membership`}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            Are you sure you want to delete {data.member.name}'s membership
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button color="error" onClick={handleDeleteClose(false)}>No</Button>
+          <Button onClick={handleDeleteClose(true)}>
+            Yes
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   }
 }
