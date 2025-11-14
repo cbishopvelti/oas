@@ -42,7 +42,9 @@ defmodule Oas.Llm.LangChainLlm do
                 content: delta.content,
                 role: delta.role,
                 status: delta.status,
-                message_index: chain.messages |> length()
+                metadata: %{
+                  index: chain.messages |> length()
+                }
               }}}
           )
         end)
@@ -50,13 +52,14 @@ defmodule Oas.Llm.LangChainLlm do
       on_message_processed: fn chain, %Message{} = message ->
         # IO.inspect(message, label: "306 on_message_processed")
         # IO.inspect(chain, label: "306.1 chain")
+        message = message |> Map.put(
+          :metadata,
+          (message.metadata || %{}) |> Map.put(:index, (chain.messages |> length) - 1)
+        )
         GenServer.cast(
           init_args.parent_pid,
           {:message,
-            %{
-              message: message,
-              message_index: (chain.messages |> length()) - 1
-            }
+            message
           }
         )
         nil

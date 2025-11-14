@@ -200,10 +200,13 @@ defmodule Oas.Credits.Credit do
       who_member_id: member.id
     })
 
-    Task.async(fn ->
-      Process.sleep(60_000)
-      Oas.TokenMailer.maybe_send_credits_warning(member)
-    end)
+    Task.Supervisor.start_child(
+      Oas.TaskSupervisor,
+      fn ->
+        Process.sleep(120_000)
+        Oas.TokenMailer.maybe_send_credits_warning(member)
+      end
+    )
 
     if (opts |> Map.get(:changeset, false)) do
       out_changeset

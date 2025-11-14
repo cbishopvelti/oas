@@ -66,12 +66,6 @@ defmodule OasWeb.Channels.LlmHistoryChannel do
 
     {:noreply, socket |> assign(:history, history)}
   end
-  # doesn't work
-  def handle_info(%{event: "llm_presence_diff"} = msg, socket) do
-    IO.inspect(msg, label: "event: llm_presence_diff")
-    push(socket, "presence_diff", msg)
-    {:noreply, socket}
-  end
   def handle_info(msg, socket) do
     IO.inspect(msg, label: "101 handle_info")
     {:noreply, socket}
@@ -86,6 +80,7 @@ defmodule OasWeb.Channels.LlmHistoryChannel do
   # OasWeb.Endpoint.broadcast!("history", "new_message", %{wat: "wat"})
   intercept ["new_history", "llm_presence_diff"]
   def handle_out("new_history", new_history_item, socket) do
+    IO.puts("105 new_history")
     case !is_nil(socket.assigns.current_member.is_admin) and socket.assigns.current_member.is_admin do
       true ->
         push(socket, "new_history", new_history_item)
@@ -128,7 +123,7 @@ defmodule OasWeb.Channels.LlmHistoryChannel do
     end
   end
   def handle_out("llm_presence_diff", %{joins: joins, leaves: leaves}, socket) do
-    # IO.puts("106 presence_diff")
+    IO.puts("106 presence_diff")
     topics = socket.assigns.history |> Enum.map(fn (%{topic: topic}) -> topic end) |> MapSet.new()
 
     push(socket, "presence_diff", %{

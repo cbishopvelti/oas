@@ -46,9 +46,9 @@ defmodule Oas.Llm.Utils do
   def restore(%{chat: chat}) do
 
     Jason.decode!(chat)["messages"]
-    |> IO.inspect(label: "406 tool call")
+    # |> IO.inspect(label: "406 tool call")
     |> decode(struct: Message)
-    |> IO.inspect(label: "407")
+    # |> IO.inspect(label: "407")
   end
 
   def save(state) do

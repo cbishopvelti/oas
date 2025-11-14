@@ -56,10 +56,11 @@ defmodule Oas.Llm.Tools do
                   Oas.Attendance.add_attendance(
                     %{member_id: member_id, training_id: event.id},
                     %{inserted_by_member_id: member_id}
-                  ) |> IO.inspect(label: "402")
+                  )
                   {:ok, "Added to event"}
                 catch
-                  {:error, [%{message: "training_id: has already been taken"} | _]} -> {:error, "You are already booked in to the jam/training."}
+                  {:error, [%{message: "training_id: has already been taken"} | _]} ->
+                    {:error, "The user is already booked in to the jam/training. Tell the user they're already booked in."}
                   {:error, _} -> {:error, "An error occurred"}
                 end
             end
@@ -112,8 +113,8 @@ defmodule Oas.Llm.Tools do
         |> Enum.map(fn booking ->
           attending = Map.get(booking, :attendance, [])
             |> case do
-              [x | _] -> "Attending"
-              _ -> "Not attending"
+              [x | _] -> "User is attending this event"
+              _ -> "User is not attending this event"
             end
 
           "#{Map.get(booking, :when)}, #{Map.get(booking, :training_where) |> Map.get(:name)}, #{attending}"
