@@ -2,10 +2,8 @@ import Ecto.Query, only: [from: 2]
 
 defmodule Oas.Llm.LangChainLlm do
   alias LangChain.MessageDelta
-  alias LangChain.Message.ContentPart
   alias LangChain.Message
   alias LangChain.ChatModels.ChatOpenAI
-  alias LangChain.Utils.ChainResult
   alias LangChain.Chains.LLMChain
 
   use GenServer
