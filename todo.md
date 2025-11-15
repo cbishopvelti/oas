@@ -78,7 +78,9 @@ Context admin. [x]
 Add llm presence. [x]
 Credits tool. [x]
 Handling if LLM isn't available.
-disable messaging if llm is processing.
+disable messaging if llm is processing. [x]
 Fix delta/message syncing. [x]
 Fix not coming online when clicking Chat [x]
 css history list online [x]
+Add warning email for not booking in.
+Throttel streaming output. [x]

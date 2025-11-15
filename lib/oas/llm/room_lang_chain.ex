@@ -273,6 +273,13 @@ defmodule Oas.Llm.RoomLangChain do
 
     {:noreply, state}
   end
+  def handle_cast({:boardcast, {:delta, message}}, state) do
+    Enum.each(state.parents, fn {pid, _id_str} ->
+      GenServer.cast(pid, {:delta, message})
+    end)
+
+    {:noreply, state}
+  end
   def handle_cast({:broadcast, message}, state) do
     Enum.each(state.parents, fn {pid, _id_str} ->
       GenServer.cast(pid, message)

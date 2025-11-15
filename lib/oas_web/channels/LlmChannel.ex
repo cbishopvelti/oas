@@ -1,4 +1,5 @@
 defmodule OasWeb.Channels.LlmChannel do
+  alias LangChain.MessageDelta
   alias LangChain.Utils.ChainResult
   alias LangChain.Function
   alias LangChain.Message
@@ -79,9 +80,93 @@ defmodule OasWeb.Channels.LlmChannel do
 
     {:noreply, Phoenix.Socket.assign(socket, llm_gen_server: pid)}
   end
+  def handle_info(:delta, socket) when is_nil(socket.assigns.delta) do
+    {:noreply, socket}
+  end
+  def handle_info(:delta, socket) do
+    push(socket, Atom.to_string(:delta), socket.assigns.delta |> delta_to_out())
+
+    {:noreply,
+      socket
+      |> assign(:delta, nil)
+      |> assign(:delta_debounce, Process.send_after(self(), :delta, 500))
+    }
+  end
   def handle_info({:DOWN, _ref, :process, pid, reason}, %{assigns: %{llm_gen_server: pid}} = state) do
     # IO.puts("LlmChannel :DOWN #{_ref}, #{pid}, #{reason}")
     {:stop, reason, state}
+  end
+
+  defp delta_to_out(delta) do
+    IO.inspect(delta, label: "----- 103 delta_to_out -----")
+    %{
+      content: LangChain.MessageDelta.content_to_string(delta),
+      role: delta.role,
+      status: delta.status,
+      metadata: delta.metadata
+    }
+  end
+
+  # OasWeb.Channels.LlmChannel.test_merge()
+  def test_merge() do
+    MessageDelta.merge_delta(
+      %LangChain.MessageDelta{
+        # content: "test0",
+        merged_content: [
+          %LangChain.Message.ContentPart{type: :text, content: "<think>", options: []}
+        ],
+        status: :incomplete,
+        index: 0,
+        role: :assistant,
+        tool_calls: nil,
+        metadata: %{index: 14}
+      },
+      %LangChain.MessageDelta{
+        content: "test1",
+        # merged_content: [
+        #   %LangChain.Message.ContentPart{type: :text, content: "THINK2", options: []}
+        # ],
+        status: :incomplete,
+        index: 0,
+        role: :assistant,
+        tool_calls: nil,
+        metadata: %{index: 14}
+      }
+    )
+  end
+
+  defp debounce_data({:delta, message}, socket) do
+    # IO.inspect(message, label: "101 deltas message")
+    new_delta = if (socket.assigns |> Map.has_key?(:delta)) && !(socket.assigns |> Map.get(:delta) |> is_nil()) do
+      MessageDelta.merge_delta(
+        socket.assigns |> Map.get(:delta),
+        message
+      )
+    else
+      message
+    end
+    IO.inspect(message, label: "101 start")
+    IO.inspect(new_delta, label: "101.2 new_delta")
+
+    if (message.status == :complete) do
+
+      # IO.inspect(message, label: "102 end")
+      push(socket, Atom.to_string(:delta), new_delta |> delta_to_out())
+
+      Process.cancel_timer(socket.assigns.delta_debounce)
+      socket |> assign(:delta, nil) |> assign(:delta_debounce, nil)
+    else
+      if ( is_nil(socket.assigns |> Map.get(:delta_debounce, nil)) || !(socket.assigns |> Map.get(:delta_debounce, nil) |> Process.read_timer())) do
+        IO.puts("vvvvv START START START vvvvv")
+        push(socket, Atom.to_string(:delta), new_delta |> delta_to_out())
+
+        Phoenix.Socket.assign(socket, :delta_debounce,
+          Process.send_after(self(), :delta, 20)
+        ) |> assign(:delta, nil)
+      else
+        Phoenix.Socket.assign(socket, :delta, new_delta)
+      end
+    end
   end
 
   # Data from the llm
@@ -91,12 +176,13 @@ defmodule OasWeb.Channels.LlmChannel do
     {:noreply, socket}
   end
   def handle_cast({:delta, message}, socket) do
-    # IO.puts("007.2 handle_cast :delta")
-    push(
-      socket,
-      Atom.to_string(:delta),
-      message
-    )
+
+    # push(
+    #   socket,
+    #   Atom.to_string(:delta),
+    #   message
+    # )
+    socket = debounce_data({:delta, message}, socket)
     {:noreply, socket}
   end
   def handle_cast({:message, message}, socket) do
