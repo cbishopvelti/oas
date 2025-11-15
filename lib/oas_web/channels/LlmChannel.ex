@@ -1,7 +1,5 @@
 defmodule OasWeb.Channels.LlmChannel do
   alias LangChain.MessageDelta
-  alias LangChain.Utils.ChainResult
-  alias LangChain.Function
   alias LangChain.Message
   alias LangChain.ChatModels.ChatOpenAI
   alias LangChain.Chains.LLMChain
@@ -62,7 +60,7 @@ defmodule OasWeb.Channels.LlmChannel do
     {:ok, _} = OasWeb.Channels.LlmChannelPresence.track(socket, member.presence_id, metas)
 
     # Room pid
-    {:ok, pid } = Oas.Llm.RoomLangChain.start(socket.topic, {self(), %{
+    {:ok, pid } = Oas.Llm.Room.start(socket.topic, {self(), %{
       member: socket.assigns[:current_member],
       presence_member_id: member.presence_id
     }})
@@ -219,8 +217,8 @@ defmodule OasWeb.Channels.LlmChannel do
     )
     {:noreply, socket}
   end
-  def handle_cast(_stuff, socket) do
-    IO.inspect(_stuff, label: "008 WAT handle_cast SHOULDN'T HAPPEN")
+  def handle_cast(stuff, socket) do
+    IO.inspect(stuff, label: "008 WAT handle_cast SHOULDN'T HAPPEN")
     {:noreply, socket}
   end
 
@@ -294,7 +292,7 @@ defmodule OasWeb.Channels.LlmChannel do
     # client =  Ollama.init(base_url: "http://localhost:1234/v1")
     client =  Ollama.init(base_url: "http://localhost:11434")
 
-    result = Ollama.completion(client, [
+    _result = Ollama.completion(client, [
       # model: "qwen3:0.6b",
       model: "qwen/qwen3-4b-2507",
       prompt: "Why is the sky blue?"
@@ -315,10 +313,7 @@ defmodule OasWeb.Channels.LlmChannel do
 
   # OasWeb.Channels.LlmChannel.test_langchain()
   def test_langchain() do
-
-
-
-    {:ok, chain} = LLMChain.new!(%{
+    {:ok, _chain} = LLMChain.new!(%{
       llm: ChatOpenAI.new!(%{
         endpoint: "http://localhost:1234/v1/chat/completions",
         model: "qwen/qwen3-4b-2507"

@@ -3,28 +3,28 @@ import Ecto.Query, only: [from: 2]
 defmodule Oas.Llm.Tools do
   alias LangChain.Function
 
-  defp get_authentication_tool do
-    auth_tool = Function.new!(%{
-      name: "Authentication tool",
-      description: "If the user asks for their details, or anything that requires authentication and they're not authenticated, run this.",
-      parameters_schema: %{
-        type: "object",
-        properties: %{
-          # thing: %{
-          #   type: "string",
-          #   description: "The thing whose location is being requested."
-          # }
-        },
-        # required: ["thing"]
-      },
-      function: fn _args, _context ->
-        IO.puts("This Happened")
-        # {:ok, "Login in here: " <> "<a href=\"http://the_auth_server:4000/sign_in\">http://the_auth_server:4000/sign_in</a>"}
-        {:ok, "Login " <> "[here](http://the_auth_server:4000/sign_in)"}
-      end
-    })
-    auth_tool
-  end
+  # defp get_authentication_tool do
+  #   auth_tool = Function.new!(%{
+  #     name: "Authentication tool",
+  #     description: "If the user asks for their details, or anything that requires authentication and they're not authenticated, run this.",
+  #     parameters_schema: %{
+  #       type: "object",
+  #       properties: %{
+  #         # thing: %{
+  #         #   type: "string",
+  #         #   description: "The thing whose location is being requested."
+  #         # }
+  #       },
+  #       # required: ["thing"]
+  #     },
+  #     function: fn _args, _context ->
+  #       IO.puts("This Happened")
+  #       # {:ok, "Login in here: " <> "<a href=\"http://the_auth_server:4000/sign_in\">http://the_auth_server:4000/sign_in</a>"}
+  #       {:ok, "Login " <> "[here](http://the_auth_server:4000/sign_in)"}
+  #     end
+  #   })
+  #   auth_tool
+  # end
 
   def book_upcoming_event_tool do
     book_upcoming_event_tool = Function.new!(%{
@@ -117,7 +117,7 @@ defmodule Oas.Llm.Tools do
         |> Enum.map(fn booking ->
           attending = Map.get(booking, :attendance, [])
             |> case do
-              [x | _] -> "User is attending this event"
+              [_x | _] -> "User is attending this event"
               _ -> "User is not attending this event"
             end
 

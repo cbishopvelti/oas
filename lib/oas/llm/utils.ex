@@ -20,7 +20,7 @@ defmodule Oas.Llm.Utils do
         end)
     end
   end
-  defp decode(item, opts) when is_map(item) do
+  defp decode(item, _opts) when is_map(item) do
     Enum.map(item, fn ({k, v}) ->
       key = String.to_atom(k)
       case key do

@@ -1,12 +1,8 @@
 import Ecto.Query, only: [from: 2]
 
-defmodule Oas.Llm.RoomLangChain do
-  alias LangChain.Utils
-  alias LangChain.Message.ContentPart
+# defmodule Oas.Llm.RoomLangChain do
+defmodule Oas.Llm.Room do
   alias LangChain.Message
-  alias LangChain.ChatModels.ChatOpenAI
-  alias LangChain.Utils.ChainResult
-  alias LangChain.Chains.LLMChain
   use GenServer
 
   def start(topic, {pid, channel_context}) do
@@ -119,7 +115,7 @@ defmodule Oas.Llm.RoomLangChain do
 
     presence_meta = OasWeb.Channels.LlmChannelPresence.list(state.topic)
     |> Map.to_list()
-    |> Enum.find_value(fn ({pres_id, presence}) ->
+    |> Enum.find_value(fn ({_pres_id, presence}) ->
       presence.metas |> Enum.find(fn %{llm: llm} ->
         llm
       end)
@@ -184,7 +180,7 @@ defmodule Oas.Llm.RoomLangChain do
     new_parents = Map.delete(state.parents, pid)
 
     # Shutdown the thing if there are no connected channels
-    if Map.size(new_parents) === 0 do
+    if map_size(new_parents) === 0 do
       IO.puts("Last monitor is gone. Shutting down worker.")
       {:stop, :normal, %{state | parents: new_parents}}
     else
