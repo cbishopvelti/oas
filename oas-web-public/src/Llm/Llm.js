@@ -72,6 +72,7 @@ export const Llm = () => {
   const [prompt, setPrompt] = useState("")
   const [messages, setMessages] = useState([])
   const [output, setOutput] = useState("")
+  const [outputKey, setOutputKey] = useState(v4())
   const [isStreamFinished, setIsStreamFinished] = useState(true)
   const [whoIdObj, setWhoIdObj] = useState({})
   const [presenceState, setPresenceState] = useState([])
@@ -110,10 +111,6 @@ export const Llm = () => {
     let channel = phoenixSocket.channel(`llm:${id}`, {})
     let presence = new Presence(channel)
 
-    // const throttledSetOutput = setOutput;
-    const throttledSetOutput = throttle(setOutput, 100, {
-      leading: true
-    })
 
     let messages = [];
     let accData = "";
@@ -133,9 +130,10 @@ export const Llm = () => {
         setDisableInput(false);
         accData = ""
       }
-      // setOutput(accData)
-      throttledSetOutput(accData)
+      // setOutputKey(v4())
+      setOutput(accData)
     })
+
     channel.on("message", (message) => {
       setDisableInput(false)
       if (message.content.length === 0) {
@@ -143,11 +141,6 @@ export const Llm = () => {
         return;
       }
       setMessages((messages) => {
-        // console.log("===============================")
-        // console.log("on message ----", message.message_index)
-        // console.log("001 messages length", messages.length)
-        // console.log("002 message", message)
-
         const index = findIndex(messages, (mess) => mess.metadata.index === message.metadata.index)
         let out;
         if (index === -1) {
@@ -229,11 +222,6 @@ export const Llm = () => {
 
   const presenceParticipants = mergePresenceParticipants(presenceState, participants);
 
-  // console.log("000", presenceState)
-  // console.log("001", presenceParticipants)
-  // console.log("002", whoIdObj)
-  // console.log("003", messages)
-
   return (
     <div className="chat-content">
       <ul className="presence-participants">
@@ -274,7 +262,7 @@ export const Llm = () => {
             <div className="llm-content">
               {blockMatches.map((blockMatch, index) => {
                 const Component = blockMatch.block.component;
-                return <Component key={`${index}-${blockMatches.length}-m`} blockMatch={blockMatch} />;
+                return <Component key={`${index}-${blockMatches.length}-${outputKey}`} blockMatch={blockMatch} />;
               })}
             </div>
             <div style={{ textAlign: "right" }}>assistant</div>
