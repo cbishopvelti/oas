@@ -10,7 +10,12 @@ defmodule OasWeb.MemberAuth do
   # the token expiry itself in MemberToken.
   @max_age 60 * 60 * 24 * 180
   @remember_me_cookie "_oas_web_member_remember_me"
-  @remember_me_options [sign: true, max_age: @max_age, same_site: "Lax"]
+  @remember_me_options [
+    sign: true,
+    max_age: @max_age,
+    same_site: "Lax",
+    domain: Application.compile_env(:oas, OasWeb.Endpoint)[:domain]
+  ]
   # @remember_me_options [sign: true, max_age: @max_age, same_site: "None"]
 
   @doc """
