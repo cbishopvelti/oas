@@ -20,6 +20,7 @@ defmodule OasWeb.Endpoint do
   socket "/public_socket", OasWeb.PublicSocket, longpoll: false
     # websocket: [connect_info: [session: @session_options]]
 
+
   plug Corsica, max_age: 600, origins: "*", expose_headers: ~w(X-Foo), allow_headers: ["content-type"]
 
   # Serve at "/" the static files from "priv/static" directory.

@@ -6,7 +6,7 @@ defmodule OasWeb.Channels.LlmChannel do
   use Phoenix.Channel
 
   def join("llm:" <> _private_room_id, _params, socket) do
-    # IO.puts("001 LlmChannel pid: #{inspect(self())}")
+    IO.puts("001 OasWeb.Channels.LlmChannel.join pid: #{inspect(self())}")
 
     send(self(), :after_join)
 
@@ -45,13 +45,7 @@ defmodule OasWeb.Channels.LlmChannel do
     # IO.inspect(OasWeb.Channels.LlmChannelPresence.list(socket), label: "206")
     metas = %{
       pid: self(),
-      online_at: System.system_time(:second),
-      llm: (if OasWeb.Channels.LlmChannelPresence.list(socket)
-        |> Map.to_list()
-        |> Enum.filter(fn ({_key, val}) ->
-          val.metas |> Enum.filter(fn (%{llm: llm}) -> llm end) |> length() != 0
-        end)
-        |> length() == 0, do: true, else: false)
+      online_at: System.system_time(:second)
     } |> then(fn metas ->
       Map.put(metas, :member, member)
     end)
@@ -66,6 +60,7 @@ defmodule OasWeb.Channels.LlmChannel do
     }})
     Process.monitor(pid)
     messages = GenServer.call(pid, :messages)
+    IO.inspect(socket, label: "204 LlmChannel socket")
     push(socket, "messages", %{
       messages: messages |> Enum.map(fn (message) ->
         Oas.Llm.LangChainLlm.message_to_js(message)
@@ -241,39 +236,24 @@ defmodule OasWeb.Channels.LlmChannel do
 
   def handle_in("toggle_llm", %{"presence_id" => presence_id, "value" => value}, socket) when is_bitstring(presence_id) do
     # IO.inspect(value, label: "205 value")
+    IO.puts("201")
+    Oas.Llm.LlmClient.my_start(socket.topic) |>IO.inspect(label: "201.1")
+    IO.puts("202")
 
-    case (socket.assigns |> Map.get(:current_member, %{is_admin: false }) |> IO.inspect(label: "205.1")).is_admin
+    case (socket.assigns |> Map.get(:current_member, %{is_admin: false })).is_admin
       or presence_id == socket.assigns |> Map.get(:presence_id)
     do
       true ->
-        OasWeb.Channels.LlmChannelPresence.list(socket)
-        |> Map.to_list()
-        |> Enum.each(fn ({k, presence}) ->
-          presence.metas |> Enum.each(fn (meta) ->
-            # Unset previous llms
-            if meta.llm and
-              k != presence_id
-            do
-              OasWeb.Channels.LlmChannelPresence.update(meta.pid, socket.topic, k, fn (curr_pres) ->
-                %{curr_pres | llm: false }
-              end)
-            end
-
-            # Set the new value
-            if (k == presence_id) do
-              OasWeb.Channels.LlmChannelPresence.update(meta.pid, socket.topic, k, fn (curr_pres) ->
-                %{curr_pres | llm: value }
-              end)
-            end
-          end)
-        end)
-
-        GenServer.cast(socket.assigns.llm_gen_server, :refresh_llm)
+        # Oas.Llm.LlmClient.start(socket.topic)
 
         {:noreply, socket}
       false -> # Do nothing, not authorized
         {:noreply, socket}
     end
+  end
+  def handle_in("test_in", _, socket) do
+    IO.puts("PLEASE HAPPEN test_in")
+    {:noreply, socket}
   end
 
   defp get_presence_id(socket) do
