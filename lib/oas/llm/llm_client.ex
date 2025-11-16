@@ -1,56 +1,33 @@
 defmodule Oas.Llm.LlmClient do
   use GenServer
 
-  def my_start(topic) do
-    # socket = %Phoenix.Socket{
-    #   transport: :internal,
-    #   endpoint: OasWeb.Endpoint,
-    #   handler: Oas.Llm.InternalSocket,
-    #   serializer: Phoenix.Socket.V2.JSONSerializer,
-    #   transport_pid: nil,
-    #   pubsub_server: Oas.PubSub,
-    #   assigns: %{
-    #   }
-    # }
-    # Oas.Llm.InternalSocket.connect()
-
-    # # OasWeb.Channels.LlmChannel.start_link({socket, OasWeb.Channels.LlmChannel, topic})
-    # result = Phoenix.Channel.Server.join(
-    #   socket,
-    #   OasWeb.Channels.LlmChannel,
-    #   %{
-    #     topic: topic,
-    #     payload: %{},
-    #     ref: make_ref(),
-    #     join_ref: make_ref()
-    #   },
-    #   [
-    #     assigns: %{},
-    #     starter: fn (socket, from, child_spec) ->
-    #       IO.inspect(child_spec, label: "103 child_spec")
-    #       OasWeb.Channels.LlmChannel.start_link(
-    #         child_spec.start |> elem(2) |> List.first()
-    #       ) |> IO.inspect(label: "104")
-
-    #     end
-    #   ]
-    # )
-
-    ### ----------------
-
-    GenServer.start(
+  def start(topic, {from_channel_pid, channel_context}) do
+    {:ok, pid} = GenServer.start(
       __MODULE__,
       %{
-        topic: topic
+        topic: topic,
+        from_channel_pid: from_channel_pid,
+        from_channel_context: channel_context
       }
     )
 
-    :ok
+    {:ok, pid}
+  end
+
+  def push_to_in({event, payload}, socket) do
+    send(socket.channel_pid,
+    %Phoenix.Socket.Message{
+      topic: socket.topic,
+      event: event,
+      ref: nil,
+      payload: payload
+    })
   end
 
   @impl true
   def init(init_args) do
-    IO.puts("400 -------------------- SHOULD HAPPEN")
+    Process.monitor(init_args.from_channel_pid)
+    # SO setting up channel
     socket = %Phoenix.Socket{
       transport: :internal,
       endpoint: OasWeb.Endpoint,
@@ -61,7 +38,9 @@ defmodule Oas.Llm.LlmClient do
         llm: %{
           pid: self(),
           name: "assistent"
-        }
+        },
+        from_channel_pid: init_args.from_channel_pid,
+        from_channel_context: init_args.from_channel_context
       },
       channel: OasWeb.Channels.LlmChannel,
       topic: init_args.topic,
@@ -74,6 +53,7 @@ defmodule Oas.Llm.LlmClient do
     ref = make_ref()
     from = {self(), ref}
     {:ok, pid} = OasWeb.Channels.LlmChannel.start_link({OasWeb.Endpoint, from})
+
 
     send(
       pid,
@@ -98,15 +78,37 @@ defmodule Oas.Llm.LlmClient do
         Logger.error(fn -> Exception.format_exit(reason) end)
         {:error, %{reason: "join crashed"}}
     end
-    socket = GenServer.call(pid, :socket) # Adds joined: true
+    socket = GenServer.call(pid, :socket) # Added joined: true
+
+    # EO Setting up channel
+
+    # Task.async(fn () ->
+    #   Process.sleep(6000)
+    #   # GenServer.cast(pid, {:send_prompt, {}})
+    #   push_to_in({"test_in", %{"test1" => "test2"}}, socket)
+    #   {:ok, :wat}
+    # end)
+
+
+
+
     {:ok, socket}
   end
 
   def handle_info({:socket_push, opcode, msg}, socket) do
     msg |> socket.serializer.decode!([opcode: :text])
-    # |> IO.inspect(label: "705.2")
     {:noreply, socket}
   end
+  # If our owner dies, shutdown
+  def handle_info({:DOWN, _ref, :process, pid, reason}, %{assigns: %{from_channel_pid: pid}} = state) do
+    IO.puts("Creating channel ended")
+    {:stop, reason, state}
+  end
+  # def handle_info({:DOWN, _ref, :process, pid, reason}, ) do
+  #   IO.inspect(pid, label: "306")
+  #   IO.inspect(socket, label: "307 ----------")
+  #   {:stop, reason, socket}
+  # end
 
 
 end

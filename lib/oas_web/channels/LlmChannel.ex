@@ -13,63 +13,71 @@ defmodule OasWeb.Channels.LlmChannel do
     {
       :ok,
       Phoenix.Socket.assign(socket, %{
-        presence_id: get_presence_id(socket)
+        presence_id: get_presence_id(socket),
+        presence_name: get_presence_name(socket)
       })
     }
   end
 
   defp socket_to_member_map(socket) do
-    presence_id = get_presence_id(socket)
 
     member = if current_member = socket.assigns[:current_member] do
       member_data =
         current_member
         |> Map.from_struct()
         |> Map.take([:id, :email, :name, :is_admin, :is_reviewer])
-      member_data = member_data |> Map.put(:presence_id, presence_id)
 
       member_data
     else
-      %{
-        presence_id: presence_id
-      }
+      nil
     end
 
     member
   end
 
   def handle_info(:after_join, socket) do
+    # IO.puts("205 LlmChannel :after_join #{inspect(self())}")
     member = socket_to_member_map(socket)
 
     # Presence
     # IO.inspect(OasWeb.Channels.LlmChannelPresence.list(socket), label: "206")
     metas = %{
-      pid: self(),
-      online_at: System.system_time(:second)
+      channel_pid: inspect(self()),
+      online_at: System.system_time(:second),
+      from_channel_pid: socket.assigns[:from_channel_pid]
     } |> then(fn metas ->
       Map.put(metas, :member, member)
+      |> Map.put(:presence_name, get_presence_name(socket))
     end)
 
     # Presence
-    {:ok, _} = OasWeb.Channels.LlmChannelPresence.track(socket, member.presence_id, metas)
+    {:ok, _} = OasWeb.Channels.LlmChannelPresence.track(socket, get_presence_id(socket), metas)
 
     # Room pid
     {:ok, pid } = Oas.Llm.Room.start(socket.topic, {self(), %{
       member: socket.assigns[:current_member],
-      presence_member_id: member.presence_id
+      presence_member_id: get_presence_id(socket)
     }})
     Process.monitor(pid)
     messages = GenServer.call(pid, :messages)
-    IO.inspect(socket, label: "204 LlmChannel socket")
     push(socket, "messages", %{
       messages: messages |> Enum.map(fn (message) ->
         Oas.Llm.LangChainLlm.message_to_js(message)
       end),
-      who_am_i: socket_to_member_map(socket),
+      who_am_i: %{
+        presence_id: get_presence_id(socket),
+        presence_name: get_presence_name(socket),
+        channel_pid: inspect(self())
+      } |> (&(if !is_nil(socket_to_member_map(socket)), do: Map.put(&1, :member, socket_to_member_map(socket)), else: &1 )).(),
     })
 
     # Send presence after room initialization
-    push(socket, "presence_state", OasWeb.Channels.LlmChannelPresence.list(socket))
+    push(
+      socket,
+      "presence_state",
+      OasWeb.Channels.LlmChannelPresence.list(socket)
+      # |> IO.inspect(label: "206 presence list")
+    )
 
     {:noreply, Phoenix.Socket.assign(socket, llm_gen_server: pid)}
   end
@@ -91,7 +99,7 @@ defmodule OasWeb.Channels.LlmChannel do
   end
 
   defp delta_to_out(delta) do
-    IO.inspect(delta, label: "----- 103 delta_to_out -----")
+    # IO.inspect(delta, label: "----- 103 delta_to_out -----")
     %{
       content: LangChain.MessageDelta.content_to_string(delta),
       role: delta.role,
@@ -235,16 +243,39 @@ defmodule OasWeb.Channels.LlmChannel do
   # end
 
   def handle_in("toggle_llm", %{"presence_id" => presence_id, "value" => value}, socket) when is_bitstring(presence_id) do
-    # IO.inspect(value, label: "205 value")
-    IO.puts("201")
-    Oas.Llm.LlmClient.my_start(socket.topic) |>IO.inspect(label: "201.1")
-    IO.puts("202")
 
     case (socket.assigns |> Map.get(:current_member, %{is_admin: false })).is_admin
       or presence_id == socket.assigns |> Map.get(:presence_id)
     do
-      true ->
+      true -> # is authed to do this
         # Oas.Llm.LlmClient.start(socket.topic)
+        case value do
+          true ->
+            Oas.Llm.LlmClient.start(
+              socket.topic,
+              {self(), socket.assigns}
+            )
+          false ->
+            my_pids = OasWeb.Channels.LlmChannelPresence.list(socket)[presence_id]
+            |> Map.get(:metas)
+            |> Enum.map(fn %{channel_pid: channel_pid} -> IEx.Helpers.pid(channel_pid) end)
+
+
+            OasWeb.Channels.LlmChannelPresence.list(socket)
+            |> Map.to_list()
+            |> Enum.filter(fn ({_k, %{metas: metas}}) ->
+              Enum.any?(metas, fn (%{from_channel_pid: from_channel_pid}) ->
+                from_channel_pid in my_pids
+              end)
+            end)
+            |> Enum.each(fn {_k, %{metas: metas}} ->
+              metas |> Enum.each(fn %{channel_pid: channel_pid} ->
+                GenServer.stop(IEx.Helpers.pid(channel_pid))
+              end)
+
+            end)
+        end
+
 
         {:noreply, socket}
       false -> # Do nothing, not authorized
@@ -257,14 +288,27 @@ defmodule OasWeb.Channels.LlmChannel do
   end
 
   defp get_presence_id(socket) do
-    who_id = with current_member when is_map(current_member) <- Map.get(socket.assigns, :current_member),
-      id when id != nil <- Map.get(current_member, :id)
-    do
-      id |> to_string()
-    else
-      _ -> "anonymous" <> "#{inspect(socket.channel_pid)}"
+    # who_id = with current_member when is_map(current_member) <- Map.get(socket.assigns, :current_member),
+    #   id when id != nil <- Map.get(current_member, :id)
+    # do
+    #   id |> to_string()
+    # else
+    #   _ -> "anonymous" <> "#{inspect(socket.channel_pid)}"
+    # end
+    # who_id
+    case socket do
+      %{assigns: %{current_member: current_member}} -> current_member.id
+      %{assigns: %{llm: llm}} -> "#{llm.name}#{inspect(llm.pid)}"
+      _ -> "anonymous#{inspect(socket.channel_pid)}"
     end
-    who_id
+  end
+  defp get_presence_name(socket) do
+    case socket do
+      %{assigns: %{current_member: current_member}} -> current_member.name
+      %{assigns: %{llm: llm, from_channel_context: %{current_member: current_member}}} -> "#{llm.name} for #{current_member.name}"
+      %{assigns: %{llm: llm}} -> "#{llm.name} for anonymous"
+      _ -> "anonymous"
+    end
   end
 
   # OasWeb.Channels.LlmChannel.test_ollama_query()

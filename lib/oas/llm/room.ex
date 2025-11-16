@@ -9,9 +9,9 @@ defmodule Oas.Llm.Room do
   def start(topic, {pid, channel_context}) do
     name = {:via, Registry, {OasWeb.Channels.LlmRegistry, topic}}
 
-    IO.inspect(topic, label: "201")
-    IO.inspect(pid, label: "202")
-    IO.inspect(channel_context, label: "203")
+    # IO.inspect(topic, label: "201")
+    # IO.inspect(pid, label: "202")
+    # IO.inspect(channel_context, label: "203")
 
     out =
       case GenServer.start(
@@ -204,7 +204,7 @@ defmodule Oas.Llm.Room do
     end
   end
   def handle_info(msg, state) do
-    IO.inspect(msg, label: "205 SHOULD NOT HAPPEN handle_info msg")
+    IO.inspect(msg, label: "204 SHOULD NOT HAPPEN handle_info msg")
     {:noreply, state}
   end
 
