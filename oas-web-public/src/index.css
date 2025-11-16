@@ -50,7 +50,13 @@ ul.presence-participants li {
     border: 1px solid gray;
     border-radius: 4px;
     padding: 4px 16px;
-    padding-right: 8px;
+    /*padding-right: 8px;*/
+    align-content: center;
+}
+ul.presence-participants li span:last-child {
+    /*background-color: green;*/
+    /*padding-right: 0px;*/
+    margin-right: -8px;
 }
 ul.history-participants {
     display: flex;

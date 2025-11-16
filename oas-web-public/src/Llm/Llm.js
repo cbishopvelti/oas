@@ -13,7 +13,7 @@ import {
 import parseHtml from "html-react-parser";
 import { getHighlighterCore } from "shiki/core";
 import { bundledLanguagesInfo } from "shiki/langs";
-import { map, last, first, union, unionBy, reverse, some, find, findIndex, throttle } from "lodash"
+import { map, last, first, union, unionBy, reverse, some, find, findIndex, throttle, startsWith } from "lodash"
 
 // import getWasm from "shiki/wasm";
 
@@ -56,14 +56,20 @@ const isMe = (message, who_am_i) => {
 }
 
 export const mergePresenceParticipants = (presence, participants) => {
+  // TODO: change first to find the actuall relevent meta.
   const presenceMembers = presence.map((pres) => {
     return {
-      ...first(pres.metas).member,
-      llm: some(pres.metas, ({llm}) => llm),
-      online: true
+      presence_id: pres.presence_id,
+      member: first(pres.metas).member,
+      // llm: some(pres.metas, ({llm}) => llm),
+      presence_name: first(pres.metas).presence_name,
+      online: true,
+      channel_pid: first(pres.metas).channel_pid,
+      from_channel_pid: first(pres.metas).from_channel_pid
     }
   })
-  return unionBy(presenceMembers, participants, ({ id }) => id)
+  const out = unionBy(presenceMembers, participants, ({ presence_id }) => presence_id)
+  return out;
 }
 
 export const Llm = () => {
@@ -154,6 +160,7 @@ export const Llm = () => {
       })
     })
     channel.on("messages", ({messages, who_am_i}) => {
+      console.log("002", who_am_i)
       setWhoIdObj(who_am_i)
       setMessages(
         messages.map((message) => {
@@ -173,7 +180,8 @@ export const Llm = () => {
     })
 
     presence.onSync(() => {
-      setPresenceState(Object.entries(presence.state).map(([k, v]) => { return {id: k, metas: v.metas} }))
+      console.log("001 onSync", presence.state)
+      setPresenceState(Object.entries(presence.state).map(([k, v]) => { return {presence_id: k, metas: v.metas} }))
     })
 
     channel
@@ -225,27 +233,18 @@ export const Llm = () => {
   return (
     <div className="chat-content">
       <ul className="presence-participants">
-        {some(presenceParticipants, ({llm}) => llm) && <li>
-          <span >assistent</span>&nbsp;
-          <span className="online"></span>
-          {<Switch
-            checked={true}
-            disabled={!(find(presenceParticipants, ({llm}) => llm).presence_id === whoIdObj.presence_id || whoIdObj.is_admin)}
-            onChange={ (event) => {
-              channel.push("toggle_llm", {
-                presence_id: find(presenceParticipants, ({llm}) => llm).presence_id,
-                value: false
-              })
-            } } />}
-          {/* {(i < (presenceParticipants).length - 1) && <span>, &nbsp;</span>}*/}
-        </li>}
         {(presenceParticipants).map((who, i) => {
+          console.log("103 who", who)
+          console.log("104 whoIdObj", whoIdObj)
           return <li key={i}>
-            <span >{ who.name || who.id || "anonymous" }</span>&nbsp;
+            <span >{ who.presence_name || who.presence_id || "unknown" }</span>&nbsp;
             {who.online ? <span className="online"></span> : <span className="offline"></span>}
-            {<Switch
-              checked={who.llm || false}
-              disabled={!(who.presence_id === whoIdObj.presence_id || whoIdObj.is_admin)}
+            {!startsWith(who.presence_id, "assistent") && <Switch
+              checked={some(presenceState, ({metas}) => {
+                const out = some(metas, ({from_channel_pid}) => from_channel_pid === who.channel_pid)
+                return out
+              }) || false}
+              disabled={!(who.presence_id === whoIdObj.presence_id || who.from_channel_pid === whoIdObj.channel_pid || whoIdObj.is_admin)}
               onChange={ (event) => {
                 channel.push("toggle_llm", {
                   presence_id: who.presence_id,
