@@ -2,11 +2,16 @@ import Ecto.Query, only: [from: 2]
 
 # defmodule Oas.Llm.RoomLangChain do
 defmodule Oas.Llm.Room do
+  alias Oas.Llm.LlmClient
   alias LangChain.Message
   use GenServer
 
   def start(topic, {pid, channel_context}) do
     name = {:via, Registry, {OasWeb.Channels.LlmRegistry, topic}}
+
+    IO.inspect(topic, label: "201")
+    IO.inspect(pid, label: "202")
+    IO.inspect(channel_context, label: "203")
 
     out =
       case GenServer.start(
@@ -39,6 +44,7 @@ defmodule Oas.Llm.Room do
     |> Enum.map(fn {pid, _} ->
       Process.monitor(pid)
     end)
+
 
     members_ecto = init_args.parents
     |> Map.to_list()
@@ -96,7 +102,9 @@ defmodule Oas.Llm.Room do
     |> Map.put(:chat, chat)
     |> Map.put(:topic, init_args.topic)
 
-    state = refresh_llm(state)
+    # state = refresh_llm(state)
+    # maybe_start_llm(state)
+
 
     OasWeb.Endpoint.broadcast!("history", "new_history", chat)
 
@@ -106,6 +114,12 @@ defmodule Oas.Llm.Room do
     }
   end
 
+  def maybe_start_llm(state) do
+    # state.parents()
+    LlmClient.join(state.topic)
+  end
+
+  @deprecated "No longer used"
   defp refresh_llm(state) do
     # Shut the old llm
     if state |> Map.has_key?(:chain_pid) do
@@ -160,9 +174,9 @@ defmodule Oas.Llm.Room do
       state.chat
     end
 
-    messages_for_js = GenServer.call(state.chain_pid, :get_messages)
+    # messages_for_js = GenServer.call(state.chain_pid, :get_messages)
 
-    GenServer.cast(pid, {:state, messages_for_js}) # Send the channel current message history
+    # GenServer.cast(pid, {:state, messages_for_js}) # Send the channel current message history
     GenServer.cast(self(), {:broadcast, {
       :participants,
       %{
@@ -182,6 +196,7 @@ defmodule Oas.Llm.Room do
     # Shutdown the thing if there are no connected channels
     if map_size(new_parents) === 0 do
       IO.puts("Last monitor is gone. Shutting down worker.")
+      IO.inspect(_reason)
       {:stop, :normal, %{state | parents: new_parents}}
     else
       # Continue running
