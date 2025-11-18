@@ -52,11 +52,11 @@ defmodule Oas.Llm.LlmClient do
     # result = OasWeb.Channels.LlmChannel.start_link({OasWeb.Channels.LlmChannel, :start_link, [{OasWeb.Endpoint, {self(), make_ref()}}]})
     ref = make_ref()
     from = {self(), ref}
-    {:ok, pid} = OasWeb.Channels.LlmChannel.start_link({OasWeb.Endpoint, from})
+    {:ok, channel_pid} = OasWeb.Channels.LlmChannel.start_link({OasWeb.Endpoint, from})
 
 
     send(
-      pid,
+      channel_pid,
       {
         Phoenix.Channel,
         %{},
@@ -64,11 +64,11 @@ defmodule Oas.Llm.LlmClient do
         socket # Socket needs a __channel__
       }
     )
-    mon_ref = Process.monitor(pid)
+    mon_ref = Process.monitor(channel_pid)
     receive do
       {^ref, {:ok, reply}} ->
         Process.demonitor(mon_ref, [:flush])
-        {:ok, reply, pid}
+        {:ok, reply, channel_pid}
 
       {^ref, {:error, reply}} ->
         Process.demonitor(mon_ref, [:flush])
@@ -78,7 +78,8 @@ defmodule Oas.Llm.LlmClient do
         Logger.error(fn -> Exception.format_exit(reason) end)
         {:error, %{reason: "join crashed"}}
     end
-    socket = GenServer.call(pid, :socket) # Added joined: true
+    socket = GenServer.call(channel_pid, :socket) # Added joined: true
+    socket = Phoenix.Socket.assign(socket, :channel_pid, channel_pid)
 
     # EO Setting up channel
 
@@ -89,14 +90,61 @@ defmodule Oas.Llm.LlmClient do
     #   {:ok, :wat}
     # end)
 
+    # SO setting up the llm
+    {:ok, chain_pid} = Oas.Llm.LangChainLlm.start_link(
+      self(),
+      init_args.from_channel_context.room_pid |> GenServer.call(:messages), # Get the messages from the room
+      init_args.from_channel_context.current_member
+    )
+    socket = Phoenix.Socket.assign(socket, :chain_pid, chain_pid)
+    # EO setting up the llm
 
 
 
     {:ok, socket}
   end
 
+  defp handle_in("prompt", message, socket) do
+    IO.inspect(message, label: "406 LlmClient prompt")
+    IO.inspect(socket.assigns, label: "407 LlmClient prompt")
+    # Is this prompt for us?
+    GenServer.cast(socket.assigns.chain_pid, {
+      :prompt,
+        LangChain.Message.new!(Oas.Llm.Utils.decode(message))
+    })
+
+    {:noreply, socket}
+  end
+  defp handle_in("messages", _messages, socket) do
+    # TODO, nothing for now as messages are set at startup.
+    {:noreply, socket}
+  end
+  defp handle_in("presence_diff", _messages, socket) do
+    # if our owner dies, we should also die, but we're also linked to our owner, so we'd probably die anyway.
+    {:noreply, socket}
+  end
+  defp handle_in("presence_state", _message, socket) do
+    {:noreply, socket}
+  end
+  defp handle_in("participants", _message, socket) do
+    {:noreply, socket}
+  end
+  defp handle_in("delta", _message, socket) do
+    # We don't care about delta
+    {:noreply, socket}
+  end
+  defp handle_in("message", _message, socket) do
+    # message from other llms, maybe we want to add that to our state? idk
+    {:noreply, socket}
+  end
+
+  @impl true
   def handle_info({:socket_push, opcode, msg}, socket) do
-    msg |> socket.serializer.decode!([opcode: :text])
+    message = msg |> socket.serializer.decode!([opcode: :text])
+    IO.inspect(message, label: "LlmClient handle_info :socket_push")
+
+    {:noreply, socket} = handle_in(message.event, message.payload, socket)
+
     {:noreply, socket}
   end
   # If our owner dies, shutdown
@@ -110,5 +158,49 @@ defmodule Oas.Llm.LlmClient do
   #   {:stop, reason, socket}
   # end
 
+  @impl true
+  # llm -> room
+  def handle_cast({:broadcast, {:message, message}}, socket) do
+    IO.puts("307 LlmClient {:broadcast, {:message")
+    GenServer.cast(socket.assigns.room_pid, {
+      :broadcast,
+      {:message, message},
+      socket.assigns.channel_pid # Don't send back to ourselfs
+    })
+    {:noreply, socket}
+  end
+  def handle_cast({:broadcast, {:delta, message}}, socket) do
+    GenServer.cast(socket.assigns.room_pid, {
+      :broadcast,
+      {:delta, message},
+      socket.assigns.channel_pid # Don't send back to ourselfs
+    })
+    {:noreply, socket}
+  end
+
+  # llm -> room
+  def handle_cast({:broadcast, message}, socket) do
+    GenServer.cast(socket.assigns.room_pid, {
+      :broadcast,
+      {:message, message},
+      socket.assigns.channel_pid # Don't send back to ourselfs
+    })
+    {:noreply, socket}
+  end
+  # channels -> llm
+  # def handle_cast({:prompt, message}, socket) do
+  #   # Don't think this is called
+  #   IO.inspect(message, label: "LlmClient.handle_cast :prompt 401.1")
+  #   IO.inspect(socket.assigns, label: "LlmClient.handle_cast :prompt 402")
+
+  #   {:noreply, socket}
+  # end
+
+
+  @impl true
+  def handle_call(:channel_pid, _from_pid, socket) do
+
+    {:reply, {socket.assigns.channel_pid, %{}}, socket}
+  end
 
 end

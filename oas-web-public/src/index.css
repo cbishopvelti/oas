@@ -53,7 +53,7 @@ ul.presence-participants li {
     /*padding-right: 8px;*/
     align-content: center;
 }
-ul.presence-participants li span:last-child {
+ul.presence-participants li span.MuiSwitch-root {
     /*background-color: green;*/
     /*padding-right: 0px;*/
     margin-right: -8px;

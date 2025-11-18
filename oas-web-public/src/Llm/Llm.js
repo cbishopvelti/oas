@@ -51,7 +51,7 @@ export const PreLlm = () => {
 
 const isMe = (message, who_am_i) => {
   return message.metadata?.member?.id !== undefined &&
-    message.metadata?.member?.id === who_am_i.id
+    message.metadata?.member?.id === who_am_i.member?.id
     && message.role === "user"
 }
 
@@ -59,6 +59,7 @@ export const mergePresenceParticipants = (presence, participants) => {
   // TODO: change first to find the actuall relevent meta.
   const presenceMembers = presence.map((pres) => {
     return {
+      ...(first(pres.metas).member ? {id : first(pres.metas).member.id} : {}), // For the merge
       presence_id: pres.presence_id,
       member: first(pres.metas).member,
       // llm: some(pres.metas, ({llm}) => llm),
@@ -68,7 +69,7 @@ export const mergePresenceParticipants = (presence, participants) => {
       from_channel_pid: first(pres.metas).from_channel_pid
     }
   })
-  const out = unionBy(presenceMembers, participants, ({ presence_id }) => presence_id)
+  const out = unionBy(presenceMembers, participants, ({ id }) => id)
   return out;
 }
 
@@ -160,7 +161,7 @@ export const Llm = () => {
       })
     })
     channel.on("messages", ({messages, who_am_i}) => {
-      console.log("002", who_am_i)
+      // console.log("002", who_am_i)
       setWhoIdObj(who_am_i)
       setMessages(
         messages.map((message) => {
@@ -229,22 +230,22 @@ export const Llm = () => {
   }
 
   const presenceParticipants = mergePresenceParticipants(presenceState, participants);
+  // console.log("101, presenceState", presenceState)
+  // console.log("102, presenecParticipants", presenceParticipants)
 
   return (
     <div className="chat-content">
       <ul className="presence-participants">
         {(presenceParticipants).map((who, i) => {
-          console.log("103 who", who)
-          console.log("104 whoIdObj", whoIdObj)
           return <li key={i}>
-            <span >{ who.presence_name || who.presence_id || "unknown" }</span>&nbsp;
+            <span >{ who.presence_name ||who.name || who.presence_id || "unknown" }</span>&nbsp;
             {who.online ? <span className="online"></span> : <span className="offline"></span>}
             {!startsWith(who.presence_id, "assistent") && <Switch
               checked={some(presenceState, ({metas}) => {
                 const out = some(metas, ({from_channel_pid}) => from_channel_pid === who.channel_pid)
                 return out
               }) || false}
-              disabled={!(who.presence_id === whoIdObj.presence_id || who.from_channel_pid === whoIdObj.channel_pid || whoIdObj.is_admin)}
+              disabled={!(who.presence_id === whoIdObj.presence_id || who.from_channel_pid === whoIdObj.channel_pid || whoIdObj.member?.is_admin)}
               onChange={ (event) => {
                 channel.push("toggle_llm", {
                   presence_id: who.presence_id,
