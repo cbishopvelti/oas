@@ -1,3 +1,8 @@
+require Protocol
+Protocol.derive(Jason.Encoder, LangChain.Message)
+Protocol.derive(Jason.Encoder, LangChain.Message.ContentPart)
+
+
 defmodule OasWeb.Channels.LlmChannel do
   alias LangChain.MessageDelta
   alias LangChain.Message
@@ -19,13 +24,14 @@ defmodule OasWeb.Channels.LlmChannel do
     }
   end
 
+  # Safe to push to client
   defp socket_to_member_map(socket) do
 
     member = if current_member = socket.assigns[:current_member] do
       member_data =
         current_member
         |> Map.from_struct()
-        |> Map.take([:id, :email, :name, :is_admin, :is_reviewer])
+        |> Map.take([:id, :name, :is_admin, :is_reviewer])
 
       member_data
     else
@@ -37,6 +43,7 @@ defmodule OasWeb.Channels.LlmChannel do
 
   def handle_info(:after_join, socket) do
     # IO.puts("205 LlmChannel :after_join #{inspect(self())}")
+    # IO.inspect(socket.assigns.current_member, label: "506 current_member")
     member = socket_to_member_map(socket)
 
     # Presence
@@ -50,16 +57,16 @@ defmodule OasWeb.Channels.LlmChannel do
       |> Map.put(:presence_name, get_presence_name(socket))
     end)
 
+    # Room pid
+    {:ok, pid } = Oas.Llm.Room.start(socket.topic, {self(), %{
+    }})
+    Process.monitor(pid)
+
     # Presence
     {:ok, _} = OasWeb.Channels.LlmChannelPresence.track(socket, get_presence_id(socket), metas)
 
-    # Room pid
-    {:ok, pid } = Oas.Llm.Room.start(socket.topic, {self(), %{
-      member: socket.assigns[:current_member],
-      presence_member_id: get_presence_id(socket)
-    }})
-    Process.monitor(pid)
     messages = GenServer.call(pid, :messages)
+    # IO.inspect(messages, label: "501 messages")
     push(socket, "messages", %{
       messages: messages |> Enum.map(fn (message) ->
         Oas.Llm.LangChainLlm.message_to_js(message)
@@ -228,9 +235,25 @@ defmodule OasWeb.Channels.LlmChannel do
   end
 
   def handle_in("prompt", prompt, socket) do
-    IO.puts("handle_in prompt")
-    member = socket_to_member_map(socket)
-    GenServer.cast(socket.assigns[:room_pid], {:prompt, prompt, {self(), member}})
+
+    broadcast_from!(socket, "message",
+      LangChain.Message.new_user!(prompt)
+      |> Map.put(:metadata, %{
+        presence_id: socket.assigns.presence_id,
+        presence_name: socket.assigns.presence_name
+      } |> then(fn meta ->
+        case socket.assigns do
+          %{current_member: current_member} ->
+            meta |> Map.put(:member, current_member |> Map.take([:id]))
+          _ -> meta
+        end
+      end)
+      )
+    )
+
+
+    # member = socket_to_member_map(socket)
+    # GenServer.cast(socket.assigns[:room_pid], {:prompt, prompt, {self(), member}})
     {:noreply, socket}
   end
   def handle_in("who_am_i", _, socket) do
@@ -273,8 +296,8 @@ defmodule OasWeb.Channels.LlmChannel do
               end)
             end)
             |> Enum.each(fn {_k, %{metas: metas}} ->
-              metas |> Enum.each(fn %{channel_pid: channel_pid} ->
-                GenServer.stop(IEx.Helpers.pid(channel_pid))
+              metas |> Enum.each(fn %{pid: pid} ->
+                GenServer.stop(IEx.Helpers.pid(pid))
               end)
 
             end)
@@ -291,7 +314,7 @@ defmodule OasWeb.Channels.LlmChannel do
     {:noreply, socket}
   end
 
-  defp get_presence_id(socket) do
+  def get_presence_id(socket) do
     # who_id = with current_member when is_map(current_member) <- Map.get(socket.assigns, :current_member),
     #   id when id != nil <- Map.get(current_member, :id)
     # do
@@ -306,7 +329,7 @@ defmodule OasWeb.Channels.LlmChannel do
       _ -> "anonymous#{inspect(socket.channel_pid)}"
     end
   end
-  defp get_presence_name(socket) do
+  def get_presence_name(socket) do
     case socket do
       %{assigns: %{current_member: current_member}} -> current_member.name
       %{assigns: %{llm: llm, from_channel_context: %{current_member: current_member}}} -> "#{llm.name} for #{current_member.name}"

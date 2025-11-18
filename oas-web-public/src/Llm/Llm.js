@@ -142,6 +142,7 @@ export const Llm = () => {
     })
 
     channel.on("message", (message) => {
+      console.log("001 message", message)
       setDisableInput(false)
       if (message.content.length === 0) {
         // Probably a tool call
@@ -149,8 +150,9 @@ export const Llm = () => {
       }
       setMessages((messages) => {
         const index = findIndex(messages, (mess) => mess.metadata.index === message.metadata.index)
+        console.log("002 index", index)
         let out;
-        if (index === -1) {
+        if (message.metadata.index === undefined || index === -1) {
 
           out = [message, ...messages]
         } else {
@@ -161,7 +163,8 @@ export const Llm = () => {
       })
     })
     channel.on("messages", ({messages, who_am_i}) => {
-      // console.log("002", who_am_i)
+      console.log("002.1 messages", messages)
+      console.log("002.2 who_am_i", who_am_i)
       setWhoIdObj(who_am_i)
       setMessages(
         messages.map((message) => {
@@ -219,7 +222,8 @@ export const Llm = () => {
       content: prompt,
       role: "user",
       metadata: {
-        member: member
+        member: member,
+        presence_name: whoIdObj.presence_name
       }
     })
     if (find(presenceParticipants, ({presence_id, llm}) =>  presence_id === whoIdObj.presence_id && llm)) {

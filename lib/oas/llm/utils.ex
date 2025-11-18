@@ -52,9 +52,16 @@ defmodule Oas.Llm.Utils do
   end
 
   def save(state) do
+    # remove pid
+    new_state = %{state | messages: state.messages |>
+      Enum.map(fn (message) ->
+        %{message | metadata: (message.metadata |> Map.drop([:from_channel_pid]))}
+      end)
+    }
+
     json_chat = JSON.encode!(
       Utils.to_serializable_map(
-        struct(LLMChain, state |> Map.take([:messages])),
+        struct(LLMChain, new_state |> Map.take([:messages])),
         [:messages]
       )
     )
