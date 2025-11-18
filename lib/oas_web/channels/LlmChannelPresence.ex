@@ -25,7 +25,11 @@ defmodule OasWeb.Channels.LlmChannelPresence do
     |> Map.new()
   end
 
-  def handle_metas(topic, %{joins: joins, leaves: leaves}, _presences, state) do
+  def handle_metas(topic, %{joins: joins, leaves: leaves}, presences, state) do
+
+    if presences |> Enum.empty?() do
+      OasWeb.Endpoint.broadcast!(topic, "presence_empty", nil)
+    end
 
     # IO.puts("301 handle_metas")
     # Phoenix.PubSub.local_broadcast(.PubSub, "proxy:#{topic}", msg)

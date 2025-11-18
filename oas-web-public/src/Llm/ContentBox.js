@@ -94,7 +94,7 @@ const maybeGetName = (message) => {
     return message.metadata.member.presence_id
   }
 
-  return message.metadata?.member?.name
+  return message.metadata?.presence_name || message.metadata?.member?.name
 }
 
 export const ContentBox = memo(({

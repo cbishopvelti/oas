@@ -26,6 +26,36 @@ defmodule Oas.Llm.LlmClient do
 
   @impl true
   def init(init_args) do
+    IO.inspect(init_args.from_channel_pid, label: "406")
+    Process.monitor(init_args.from_channel_pid)
+
+    state = %{
+      topic: init_args.topic,
+      llm: %{
+        pid: self(),
+        name: "assistent"
+      },
+      from_channel_pid: init_args.from_channel_pid,
+      from_channel_context: init_args.from_channel_context
+    }
+    state = state |> Map.put(:presence_id, OasWeb.Channels.LlmChannel.get_presence_id(%{assigns: state}))
+    state = state |> Map.put(:presence_name, OasWeb.Channels.LlmChannel.get_presence_name(%{assigns: state}))
+
+    OasWeb.Endpoint.subscribe(init_args.topic)
+
+    OasWeb.Channels.LlmChannelPresence.track(self(), init_args.topic, state.presence_id, %{
+      pid: inspect(self()),
+      online_at: System.system_time(:second),
+      from_channel_pid: state.from_channel_pid,
+      presence_name: state.presence_name
+    })
+
+    {:ok, state}
+  end
+
+
+
+  def init_old(init_args) do
     Process.monitor(init_args.from_channel_pid)
     # SO setting up channel
     socket = %Phoenix.Socket{
@@ -148,9 +178,13 @@ defmodule Oas.Llm.LlmClient do
     {:noreply, socket}
   end
   # If our owner dies, shutdown
-  def handle_info({:DOWN, _ref, :process, pid, reason}, %{assigns: %{from_channel_pid: pid}} = state) do
+  def handle_info({:DOWN, _ref, :process, pid, reason}, %{from_channel_pid: pid} = state) do
     IO.puts("Creating channel ended")
     {:stop, reason, state}
+  end
+  def handle_info(stuff, state) do
+    IO.inspect(stuff, label: "405 Llmclient handle_info")
+    {:noreply, state}
   end
   # def handle_info({:DOWN, _ref, :process, pid, reason}, ) do
   #   IO.inspect(pid, label: "306")
@@ -159,6 +193,11 @@ defmodule Oas.Llm.LlmClient do
   # end
 
   @impl true
+
+  def handle_cast({:participants, _}, state) do
+    {:noreply, state}
+  end
+  # OS old
   # llm -> room
   def handle_cast({:broadcast, {:message, message}}, socket) do
     IO.puts("307 LlmClient {:broadcast, {:message")
@@ -187,20 +226,13 @@ defmodule Oas.Llm.LlmClient do
     })
     {:noreply, socket}
   end
-  # channels -> llm
-  # def handle_cast({:prompt, message}, socket) do
-  #   # Don't think this is called
-  #   IO.inspect(message, label: "LlmClient.handle_cast :prompt 401.1")
-  #   IO.inspect(socket.assigns, label: "LlmClient.handle_cast :prompt 402")
-
-  #   {:noreply, socket}
-  # end
+  # OE old
 
 
   @impl true
-  def handle_call(:channel_pid, _from_pid, socket) do
+  def handle_call(:channel_pid, _from_pid, state) do
 
-    {:reply, {socket.assigns.channel_pid, %{}}, socket}
+    {:reply, {self(), %{}}, state}
   end
 
 end

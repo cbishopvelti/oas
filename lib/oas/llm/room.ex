@@ -26,7 +26,7 @@ defmodule Oas.Llm.Room do
           {:ok, pid}
 
         {:error, {:already_started, pid_of_existing_process}} ->
-          send(pid_of_existing_process, {:add_parent, {pid, channel_context}})
+          # send(pid_of_existing_process, {:add_parent, {pid, channel_context}})
           # Process.monitor(pid_of_existing_process)
           {:ok, pid_of_existing_process}
 
@@ -37,8 +37,93 @@ defmodule Oas.Llm.Room do
     out
   end
 
+
   @impl true
   def init(init_args) do
+    OasWeb.Endpoint.subscribe(init_args.topic)
+
+    result = %Oas.Llm.Chat{}
+    |> Ecto.Changeset.cast(%{
+      topic: init_args.topic
+    }, [:topic])
+    |> Ecto.Changeset.unique_constraint(:topic)
+    |> Oas.Repo.insert(returning: true)
+
+    {:ok, chat } = case result do
+      {:ok, chat} ->
+        {:ok, %{chat | members: [] } } # Manually mark members as loaded and empty.
+      {:error, %{errors: [topic: _]}} -> # Constraint error, already exists
+        chat = from(c in Oas.Llm.Chat,
+          preload: [:members],
+          where: c.topic == ^init_args.topic
+        ) |> Oas.Repo.one!() # |> (&({:ok, &1})).()
+        out = chat
+        |> Ecto.Changeset.change()
+        |> Oas.Repo.update!(returning: true)
+
+        {:ok, out}
+    end
+
+    state = %{
+      messages: Oas.Llm.Utils.restore(chat),
+      chat: chat
+    }
+    {:ok, state}
+  end
+
+  @impl true
+  def handle_info(%{event: "presence_empty"}, state) do
+    IO.puts("Shutting down room")
+    {:stop, :normal, state}
+  end
+  def handle_info(%{event: "presence_diff", payload: %{joins: joins}}, state) do
+    # IO.inspect(joins, label: "604 presence_diff")
+
+    new_members = joins |> Enum.flat_map(fn {_k, join} ->
+      join.metas
+      |> Enum.filter(fn
+        %{member: member} when not(is_nil(member)) -> true
+        _ -> false
+      end)
+      |> Enum.map(fn %{member: member} ->
+        struct(Oas.Members.Member, member)
+        |> Map.put(:__meta__, %Ecto.Schema.Metadata{
+          state: :loaded,
+          source: "members"
+        })
+      end)
+    end)
+
+    chat = if (new_members |> length > 0) do
+      # IO.inspect(new_members, label: "607 new_members")
+      # IO.inspect(state.chat.members, label: "670.2 old_members")
+      state.chat
+      |> Ecto.Changeset.change()
+      |> Ecto.Changeset.put_assoc(
+        :members,
+        (new_members ++ state.chat.members) |> Enum.dedup_by(fn %{id: id} -> id end)
+      )
+      |> Oas.Repo.update!(returning: true)
+    else
+      state.chat
+    end
+
+    {:noreply, %{state | chat: chat}}
+  end
+  def handle_info(%{event: "message", payload: message}, state) do
+    new_state = state |> Map.put(:messages, [message | state.messages])
+    Oas.Llm.Utils.save(new_state)
+
+    {:noreply, state}
+  end
+  def handle_info(message, state) do
+    IO.inspect(message, label: "601 Room.handle_info UNHANDLED MESSAGE")
+    {:noreply, state}
+  end
+
+  # ----- OLD -----
+
+  def init_old(init_args) do
     # State is typically any Elixir term, here it's an integer (the count).
     init_args.parents
     |> Enum.map(fn {pid, _} ->
