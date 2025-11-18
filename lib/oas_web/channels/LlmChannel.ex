@@ -5,7 +5,7 @@ defmodule OasWeb.Channels.LlmChannel do
   alias LangChain.Chains.LLMChain
   use Phoenix.Channel
 
-  def join("llm:" <> _private_room_id, _params, socket) do
+  def join("llm:" <> _room_uuid, _params, socket) do
     IO.puts("001 OasWeb.Channels.LlmChannel.join pid: #{inspect(self())}")
 
     send(self(), :after_join)
@@ -79,7 +79,7 @@ defmodule OasWeb.Channels.LlmChannel do
       # |> IO.inspect(label: "206 presence list")
     )
 
-    {:noreply, Phoenix.Socket.assign(socket, llm_gen_server: pid)}
+    {:noreply, Phoenix.Socket.assign(socket, room_pid: pid)}
   end
   def handle_info(:delta, socket) when is_nil(socket.assigns.delta) do
     {:noreply, socket}
@@ -93,7 +93,7 @@ defmodule OasWeb.Channels.LlmChannel do
       |> assign(:delta_debounce, Process.send_after(self(), :delta, 500))
     }
   end
-  def handle_info({:DOWN, _ref, :process, pid, reason}, %{assigns: %{llm_gen_server: pid}} = state) do
+  def handle_info({:DOWN, _ref, :process, pid, reason}, %{assigns: %{room_pid: pid}} = state) do
     # IO.puts("LlmChannel :DOWN #{_ref}, #{pid}, #{reason}")
     {:stop, reason, state}
   end
@@ -146,8 +146,8 @@ defmodule OasWeb.Channels.LlmChannel do
     else
       message
     end
-    IO.inspect(message, label: "101 start")
-    IO.inspect(new_delta, label: "101.2 new_delta")
+    # IO.inspect(message, label: "101 start")
+    # IO.inspect(new_delta, label: "101.2 new_delta")
 
     if (message.status == :complete) do
 
@@ -186,7 +186,9 @@ defmodule OasWeb.Channels.LlmChannel do
     socket = debounce_data({:delta, message}, socket)
     {:noreply, socket}
   end
+  # room -> client
   def handle_cast({:message, message}, socket) do
+
     push(
       socket,
       Atom.to_string(:message),
@@ -202,9 +204,9 @@ defmodule OasWeb.Channels.LlmChannel do
     )
     {:noreply, socket}
   end
-  # Client -> Client, for sending prompts from other users
+  # Other Clients -> Client, for sending prompts from other users
   def handle_cast({:prompt, message}, socket) do
-    IO.puts("handle_cast :prompt")
+    IO.inspect(socket, label: "LlmChannel handle_cast :prompt")
     push(
       socket,
       Atom.to_string(:prompt),
@@ -228,7 +230,7 @@ defmodule OasWeb.Channels.LlmChannel do
   def handle_in("prompt", prompt, socket) do
     IO.puts("handle_in prompt")
     member = socket_to_member_map(socket)
-    GenServer.cast(socket.assigns[:llm_gen_server], {:prompt, prompt, {self(), member}})
+    GenServer.cast(socket.assigns[:room_pid], {:prompt, prompt, {self(), member}})
     {:noreply, socket}
   end
   def handle_in("who_am_i", _, socket) do
@@ -238,7 +240,7 @@ defmodule OasWeb.Channels.LlmChannel do
     {:reply, {:ok, member}, socket}
   end
   # def handle_in("messages", _, socket) do
-  #   messages = GenServer.call(socket.assigns[:llm_gen_server], :messages)
+  #   messages = GenServer.call(socket.assigns[:room_pid], :messages)
   #   {:reply, {:ok, }, socket}
   # end
 
@@ -248,13 +250,15 @@ defmodule OasWeb.Channels.LlmChannel do
       or presence_id == socket.assigns |> Map.get(:presence_id)
     do
       true -> # is authed to do this
-        # Oas.Llm.LlmClient.start(socket.topic)
         case value do
           true ->
-            Oas.Llm.LlmClient.start(
+            IO.inspect(socket.assigns, label: "301 socket.assigns")
+            {:ok, pid} = Oas.Llm.LlmClient.start(
               socket.topic,
               {self(), socket.assigns}
             )
+            {channel_pid, context} = GenServer.call(pid, :channel_pid)
+            send(socket.assigns.room_pid, {:add_parent, {channel_pid, context}})
           false ->
             my_pids = OasWeb.Channels.LlmChannelPresence.list(socket)[presence_id]
             |> Map.get(:metas)
@@ -297,7 +301,7 @@ defmodule OasWeb.Channels.LlmChannel do
     # end
     # who_id
     case socket do
-      %{assigns: %{current_member: current_member}} -> current_member.id
+      %{assigns: %{current_member: current_member}} -> "#{current_member.id}"
       %{assigns: %{llm: llm}} -> "#{llm.name}#{inspect(llm.pid)}"
       _ -> "anonymous#{inspect(socket.channel_pid)}"
     end

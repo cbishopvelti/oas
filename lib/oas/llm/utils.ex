@@ -6,8 +6,8 @@ defmodule Oas.Llm.Utils do
   alias LangChain.Message
   alias LangChain.Chains.LLMChain
 
-  defp decode(item, opts \\ [])
-  defp decode(item, opts) when is_list(item) do
+  def decode(item, opts \\ [])
+  def decode(item, opts) when is_list(item) do
     struct = Keyword.get(opts, :struct)
     case struct do
       nil ->
@@ -20,7 +20,7 @@ defmodule Oas.Llm.Utils do
         end)
     end
   end
-  defp decode(item, _opts) when is_map(item) do
+  def decode(item, _opts) when is_map(item) do
     Enum.map(item, fn ({k, v}) ->
       key = String.to_atom(k)
       case key do
@@ -37,7 +37,7 @@ defmodule Oas.Llm.Utils do
     |> Map.new()
 
   end
-  defp decode(item, _opts) do
+  def decode(item, _opts) do
     item
   end
   def restore(%{chat: nil}) do

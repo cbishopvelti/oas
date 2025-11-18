@@ -68,16 +68,17 @@ defmodule Oas.Llm.LangChainLlm do
       end,
       on_message_processed: fn chain, %Message{} = message ->
         # IO.inspect(message, label: "306 on_message_processed")
-        # IO.inspect(chain, label: "306.1 chain")
+        IO.inspect(1, label: "306.1 on_message_processed")
         message = message |> Map.put(
           :metadata,
           (message.metadata || %{}) |> Map.put(:index, (chain.messages |> length) - 1)
         )
         GenServer.cast(
           init_args.parent_pid,
-          {:message,
+          {:broadcast, {
+            :message,
             message
-          }
+          }}
         )
         nil
       end

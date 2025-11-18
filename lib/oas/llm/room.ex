@@ -211,27 +211,32 @@ defmodule Oas.Llm.Room do
   # client -> llm
   @impl true
   def handle_cast({:prompt, prompt, {pid, member}}, state) do
-    IO.puts("handle_cast :prompt")
+    IO.puts("Room handle_cast :prompt")
 
     message =
       Message.new_user!(prompt)
       |> Map.put(:metadata, %{
         member: member,
-        index: state.messages |> length
+        index: state.messages |> length,
+        from_channel_pid: pid
       })
 
     GenServer.cast(
       self(),
-      {:broadcast, {:prompt, Oas.Llm.LangChainLlm.message_to_js(message)}, pid}
+      {:broadcast, {
+        :prompt,
+        Oas.Llm.LangChainLlm.message_to_js(message)
+        # message
+      }, pid}
     )
 
     # Only send to llm if it on for us
-    if (
-      !!(OasWeb.Channels.LlmChannelPresence.get_by_key(state.topic, member.presence_id)
-      .metas |> Enum.find(fn (%{llm: llm}) -> llm end))
-    ) do
-      GenServer.cast(state.chain_pid, {:prompt, message})
-    end
+    # if (
+    #   !!(OasWeb.Channels.LlmChannelPresence.get_by_key(state.topic, member.presence_id)
+    #   .metas |> Enum.find(fn (%{llm: llm}) -> llm end))
+    # ) do
+    #   GenServer.cast(state.chain_pid, {:prompt, message})
+    # end
 
 
     new_state = state |> Map.put(:messages, [ message | state.messages])
@@ -246,28 +251,36 @@ defmodule Oas.Llm.Room do
     {:noreply, state}
   end
 
-  # llm -> client
-  @impl true
-  def handle_cast({:message, message}, state) do
 
-    GenServer.cast(
-      self(),
-      {:broadcast,
-       {:message,
-        %{
-          content: (message.content || [])
-            |> Enum.map(fn (item) -> %{
-              content: item.content,
-              type: item.type
-            } end),
-          role: message.role,
-          status: message.status,
-          # message_index: message_index
-          metadata: %{
-            index: message.metadata.index
+  def handle_cast({:boardcast, {:delta, message}, not_pid}, state) do
+    parents = state.parents |> Map.delete(not_pid)
+    Enum.each(parents, fn {pid, _id_str} ->
+      GenServer.cast(pid, {:delta, message})
+    end)
+
+    {:noreply, state}
+  end
+  def handle_cast({:broadcast, {:message, message}, not_pid}, state) do
+    IO.puts("Room {:broadcast, {:message")
+    parents = state.parents |> Map.delete(not_pid)
+
+    Enum.each(parents, fn ({pid, _id_str}) ->
+      GenServer.cast(
+        pid,
+         {:message,
+          %{
+            content: (message.content || [])
+              |> Enum.map(fn (item) -> %{
+                content: item.content,
+                type: item.type
+              } end),
+            role: message.role,
+            status: message.status,
+            metadata: message.metadata
           }
-        }}}
-    )
+        }
+      )
+    end)
 
     new_state = state |> Map.put(:messages, [message | state.messages])
     Oas.Llm.Utils.save(new_state)
@@ -280,13 +293,6 @@ defmodule Oas.Llm.Room do
 
     Enum.each(parents, fn {pid, _id_str} ->
       GenServer.cast(pid, message)
-    end)
-
-    {:noreply, state}
-  end
-  def handle_cast({:boardcast, {:delta, message}}, state) do
-    Enum.each(state.parents, fn {pid, _id_str} ->
-      GenServer.cast(pid, {:delta, message})
     end)
 
     {:noreply, state}
