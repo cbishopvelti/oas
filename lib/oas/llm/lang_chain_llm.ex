@@ -50,9 +50,9 @@ defmodule Oas.Llm.LangChainLlm do
         if ((deltas |> length) > 0) do
           GenServer.cast(
             init_args.parent_pid,
-            {:broadcast,
+            {:broadcast_from,
               {
-                :delta,
+                "delta",
                 deltas
                 # |> IO.inspect(label: "301 deltas")
                 |> MessageDelta.merge_deltas()
@@ -75,8 +75,8 @@ defmodule Oas.Llm.LangChainLlm do
         )
         GenServer.cast(
           init_args.parent_pid,
-          {:broadcast, {
-            :message,
+          {:broadcast_from, {
+            "message",
             message
           }}
         )
@@ -104,7 +104,7 @@ defmodule Oas.Llm.LangChainLlm do
       |> LLMChain.add_callback(callbacks)
       |> LLMChain.add_tools(Oas.Llm.Tools.get_tools())
 
-    chain = if (init_args.member |> Map.has_key?(:name)) do
+    chain = if (!is_nil(init_args.member) && init_args.member |> Map.has_key?(:name)) do
       LLMChain.add_message(chain, Message.new_system!("The users name is: " <> init_args.member.name))
     else
       LLMChain.add_message(chain, Message.new_system!("The user is anonymous"))
@@ -157,6 +157,11 @@ defmodule Oas.Llm.LangChainLlm do
       |> LLMChain.add_message(message)
       |> LLMChain.run(mode: :while_needs_response)
 
+    {:noreply, %{state | chain: chain}}
+  end
+  def handle_cast({:message, message}, state) do
+    chain = state.chain
+    |> LLMChain.add_message(message)
     {:noreply, %{state | chain: chain}}
   end
 

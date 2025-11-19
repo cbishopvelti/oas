@@ -56,10 +56,13 @@ const isMe = (message, who_am_i) => {
 }
 
 export const mergePresenceParticipants = (presence, participants) => {
+  console.log("005", participants)
   // TODO: change first to find the actuall relevent meta.
   const presenceMembers = presence.map((pres) => {
     return {
-      ...(first(pres.metas).member ? {id : first(pres.metas).member.id} : {}), // For the merge
+      ...(first(pres.metas).member ?
+        {id : first(pres.metas).member.id} : {id: pres.presence_id}
+      ), // For the merge
       presence_id: pres.presence_id,
       member: first(pres.metas).member,
       // llm: some(pres.metas, ({llm}) => llm),
@@ -130,9 +133,7 @@ export const Llm = () => {
         pushMessage({
           role: "assistent",
           content: accData,
-          metadata: {
-            index: data.metadata.index
-          }
+          metadata: data.metadata
         })
         setDisableInput(false);
         accData = ""
@@ -142,15 +143,13 @@ export const Llm = () => {
     })
 
     channel.on("message", (message) => {
-      console.log("001 message", message)
       setDisableInput(false)
-      if (message.content.length === 0) {
+      if (message.content?.length === 0) {
         // Probably a tool call
         return;
       }
       setMessages((messages) => {
         const index = findIndex(messages, (mess) => mess.metadata.index === message.metadata.index)
-        console.log("002 index", index)
         let out;
         if (message.metadata.index === undefined || index === -1) {
 
@@ -162,10 +161,12 @@ export const Llm = () => {
         return out
       })
     })
-    channel.on("messages", ({messages, who_am_i}) => {
-      console.log("002.1 messages", messages)
-      console.log("002.2 who_am_i", who_am_i)
+    channel.on("messages", ({messages, who_am_i, participants}) => {
+      // console.log("002.1 messages", messages)
+      // console.log("002.2 who_am_i", who_am_i)
+      console.log("002.3 participants", participants)
       setWhoIdObj(who_am_i)
+      setParticipants(participants)
       setMessages(
         messages.map((message) => {
           return {
@@ -176,6 +177,7 @@ export const Llm = () => {
       )
     })
     channel.on("participants", ({participants}) => {
+      console.log("003 new participants", participants)
       setParticipants(participants)
     })
     // from other clients

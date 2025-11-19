@@ -75,4 +75,21 @@ defmodule Oas.Llm.Utils do
 
     out
   end
+
+  def get_presence_id(socket) do
+    case socket do
+      %{assigns: %{current_member: current_member}} -> "#{current_member.id}"
+      %{assigns: %{llm: llm}} -> "#{llm.name}#{inspect(llm.pid)}"
+      _ -> "anonymous#{inspect(socket.channel_pid)}"
+    end
+  end
+
+  def get_presence_name(socket) do
+    case socket do
+      %{assigns: %{current_member: current_member}} -> current_member.name
+      %{assigns: %{llm: llm, from_channel_context: %{member: member}}} -> "#{llm.name} for #{member.name}"
+      %{assigns: %{llm: llm}} -> "#{llm.name} for anonymous"
+      _ -> "anonymous"
+    end
+  end
 end
