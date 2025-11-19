@@ -12,8 +12,8 @@ defmodule OasWeb.Channels.LlmHistoryChannel do
   end
 
   def handle_info(:after_join, socket) do
-    history = case !is_nil(socket.assigns.current_member.is_admin) && socket.assigns.current_member.is_admin do
-      true ->
+    history = case socket.assigns do
+      %{current_member: %{is_admin: true}} ->
 
         members = from(m in Oas.Members.Member,
           select: [:id, :name]
@@ -28,11 +28,9 @@ defmodule OasWeb.Channels.LlmHistoryChannel do
         push(socket, "history", %{
           history: history
         })
-
         # IO.inspect(OasWeb.Channels.LlmChannelPresence.list(history |> List.first() |> Map.get(:topic)), label: "103.1 presence list")
-
         history
-      false ->
+      %{current_member: current_member} ->
         members = from(m in Oas.Members.Member,
           select: [:id, :name]
         )
@@ -40,7 +38,7 @@ defmodule OasWeb.Channels.LlmHistoryChannel do
           preload: [members: ^members],
           join: m2 in assoc(c, :members),
           select: c,
-          where: m2.id == ^socket.assigns.current_member.id,
+          where: m2.id == ^current_member.id,
           order_by: [desc: :updated_at],
           limit: 1256
           # limit: 2  # DEBUG ONLY, set higher
@@ -49,20 +47,26 @@ defmodule OasWeb.Channels.LlmHistoryChannel do
           history: history
         })
         history
+      %{} -> # No history for anonymous
+        []
     end
 
-    presence = history |> Enum.map(fn history ->
-      topic = history |> Map.get(:topic)
-      OasWeb.Channels.LlmChannelPresence.list(topic)
-      |> OasWeb.Channels.LlmChannelPresence.add_topic(topic)
-    end)
-    |> Enum.reduce(&Map.merge/2)
+    case history do
+      [] -> nil
+      history ->
+        presence = history |> Enum.map(fn history ->
+          topic = history |> Map.get(:topic)
+          OasWeb.Channels.LlmChannelPresence.list(topic)
+          |> OasWeb.Channels.LlmChannelPresence.add_topic(topic)
+        end)
+        |> Enum.reduce(&Map.merge/2)
 
-    push(
-      socket,
-      "presence_state",
-      presence
-    )
+        push(
+          socket,
+          "presence_state",
+          presence
+        )
+    end
 
     {:noreply, socket |> assign(:history, history)}
   end

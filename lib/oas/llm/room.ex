@@ -66,8 +66,10 @@ defmodule Oas.Llm.Room do
 
     state = %{
       messages: Oas.Llm.Utils.restore(chat),
-      chat: chat
+      chat: chat,
+      topic: init_args.topic
     }
+
     {:ok, state}
   end
 
@@ -77,7 +79,6 @@ defmodule Oas.Llm.Room do
     {:stop, :normal, state}
   end
   def handle_info(%{event: "presence_diff", payload: %{joins: joins}}, state) do
-    # IO.inspect(joins, label: "604 presence_diff")
 
     new_members = joins |> Enum.flat_map(fn {_k, join} ->
       join.metas
@@ -97,13 +98,27 @@ defmodule Oas.Llm.Room do
     chat = if (new_members |> length > 0) do
       # IO.inspect(new_members, label: "607 new_members")
       # IO.inspect(state.chat.members, label: "670.2 old_members")
-      state.chat
+      new_chat = state.chat
       |> Ecto.Changeset.change()
       |> Ecto.Changeset.put_assoc(
         :members,
         (new_members ++ state.chat.members) |> Enum.dedup_by(fn %{id: id} -> id end)
       )
       |> Oas.Repo.update!(returning: true)
+
+      # Tell the client channels about our new participants
+      OasWeb.Endpoint.broadcast_from!(
+        self(),
+        state.topic,
+        "participants",
+        %{
+          participants: new_chat.members |> Enum.map(fn member ->
+            member |> Map.take([:id, :name])
+          end)
+        }
+      )
+
+      new_chat
     else
       state.chat
     end
@@ -114,12 +129,27 @@ defmodule Oas.Llm.Room do
     new_state = state |> Map.put(:messages, [message | state.messages])
     Oas.Llm.Utils.save(new_state)
 
+    {:noreply, new_state}
+  end
+
+  # Don't do anything on llm delta's
+  def handle_info(%{event: "delta"}, state) do
     {:noreply, state}
   end
   def handle_info(message, state) do
     IO.inspect(message, label: "601 Room.handle_info UNHANDLED MESSAGE")
     {:noreply, state}
   end
+
+  @impl true
+  def handle_call(:messages, _pid, state) do
+    {:reply, state.messages, state}
+  end
+  @impl true
+  def handle_call(:participants, _pid, state) do
+    {:reply, state.chat.members, state}
+  end
+
 
   # ----- OLD -----
 
@@ -388,11 +418,6 @@ defmodule Oas.Llm.Room do
     end)
 
     {:noreply, state}
-  end
-
-  @impl true
-  def handle_call(:messages, _pid, state) do
-    {:reply, state.messages, state}
   end
 
 end

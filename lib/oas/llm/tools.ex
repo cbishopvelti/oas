@@ -1,5 +1,9 @@
 import Ecto.Query, only: [from: 2]
 
+require Protocol
+Protocol.derive(Jason.Encoder, LangChain.Message.ToolCall)
+Protocol.derive(Jason.Encoder, LangChain.Message.ToolResult)
+
 defmodule Oas.Llm.Tools do
   alias LangChain.Function
 
