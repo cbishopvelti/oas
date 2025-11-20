@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback, memo } from "react";
 import Cookies from "js-cookie";
 import { Socket as PhoenixSocket, Presence } from "phoenix";
-import { Table, TableContainer, Box, TableHead, TableRow, TableCell, TableBody, Alert } from "@mui/material";
+import { Table, TableContainer, Box, TableHead, TableRow, TableCell, TableBody, Alert, Button } from "@mui/material";
 import { Link } from "react-router-dom";
 import { findIndex, map, pickBy, get } from 'lodash';
 import { mergePresenceParticipants } from "./Llm";
@@ -28,7 +28,7 @@ const LlmHistoryRow = ({
   const presenceParticipants = mergePresenceParticipants(
     presenceArray,
     (history?.members || []).map((member) => {
-      return { member }
+      return member
     })
   )
 
@@ -37,12 +37,18 @@ const LlmHistoryRow = ({
     <TableCell>{ history.topic }</TableCell>
     <TableCell><ul className="history-participants">{presenceParticipants.map((member, i) => {
       return <li key={i}>
-        <span>{ member.presence_name || member.member.name }</span>
+        <span>{ member.presence_name || member.name }</span>
         {member.online ? <span className="online"></span> : <span className="offline"></span>}
       </li>
     }) }</ul></TableCell>
     <TableCell>
-      <Link to={ `/llm/${history.topic.replace("llm:", "")}` } >Join</Link>
+      {/* <Link styleName={`btn`} style={{width: '100%'}} to={ `/llm/${history.topic.replace("llm:", "")}` } >Join</Link>*/}
+      <Button
+        to={`/llm/${history.topic.replace("llm:", "")}`}
+        component={Link}
+        color="success"
+        sx={{width: '100%'}}
+        >Join</Button>
     </TableCell>
   </TableRow>
 }
@@ -113,9 +119,9 @@ export const LlmHistory = () => {
   }, [])
 
   const mergeHistoryAndPresence = (history, presence) => {
-    console.log("601 mergeHistoryAndPresence")
-    console.log("601.1 history", history)
-    console.log("601.2 presence", presence)
+    // console.log("601 mergeHistoryAndPresence")
+    // console.log("601.1 history", history)
+    // console.log("601.2 presence", presence)
     return map(history, (histor) => {
       const presenceForHistory = pickBy(presence, (presenc) => {
         return presenc.topic === histor.topic
@@ -127,6 +133,7 @@ export const LlmHistory = () => {
     })
   }
 
+  // console.log("----------------------------")
   const historyAndPresence = mergeHistoryAndPresence(history, presence)
 
   return <Box>
