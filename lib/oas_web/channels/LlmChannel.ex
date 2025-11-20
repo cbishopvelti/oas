@@ -245,7 +245,6 @@ defmodule OasWeb.Channels.LlmChannel do
 
     {:noreply, socket}
   end
-
   def handle_in("toggle_llm", %{"presence_id" => presence_id, "value" => value}, socket) when is_bitstring(presence_id) do
 
     case (socket.assigns |> Map.get(:current_member, %{is_admin: false })).is_admin

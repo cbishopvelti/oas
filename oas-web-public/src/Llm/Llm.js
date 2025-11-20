@@ -56,7 +56,7 @@ const isMe = (message, who_am_i) => {
 }
 
 export const mergePresenceParticipants = (presence, participants) => {
-  console.log("005", participants)
+  // console.log("005", participants)
   // TODO: change first to find the actuall relevent meta.
   const presenceMembers = presence.map((pres) => {
     return {
@@ -73,6 +73,7 @@ export const mergePresenceParticipants = (presence, participants) => {
     }
   })
   const out = unionBy(presenceMembers, participants, ({ id }) => id)
+  // console.log("006", out)
   return out;
 }
 
@@ -235,6 +236,7 @@ export const Llm = () => {
     setPrompt("")
   }
 
+
   const presenceParticipants = mergePresenceParticipants(presenceState, participants);
   // console.log("101, presenceState", presenceState)
   // console.log("102, presenecParticipants", presenceParticipants)
@@ -251,7 +253,10 @@ export const Llm = () => {
                 const out = some(metas, ({from_channel_pid}) => from_channel_pid === who.channel_pid)
                 return out
               }) || false}
-              disabled={!(who.presence_id === whoIdObj.presence_id || who.from_channel_pid === whoIdObj.channel_pid || whoIdObj.member?.is_admin)}
+              disabled={
+                who.presence_id === undefined || // They're not in the room
+                !(who.presence_id === whoIdObj.presence_id || who.from_channel_pid === whoIdObj.channel_pid || whoIdObj.member?.is_admin)
+              }
               onChange={ (event) => {
                 channel.push("toggle_llm", {
                   presence_id: who.presence_id,
