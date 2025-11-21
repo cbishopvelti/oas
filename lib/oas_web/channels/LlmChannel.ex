@@ -5,9 +5,6 @@ Protocol.derive(Jason.Encoder, LangChain.Message.ContentPart)
 
 defmodule OasWeb.Channels.LlmChannel do
   alias LangChain.MessageDelta
-  alias LangChain.Message
-  alias LangChain.ChatModels.ChatOpenAI
-  alias LangChain.Chains.LLMChain
   use Phoenix.Channel
 
   def join("llm:" <> _room_uuid, _params, socket) do
@@ -120,7 +117,7 @@ defmodule OasWeb.Channels.LlmChannel do
 
   # OasWeb.Channels.LlmChannel.test_merge()
   def test_merge() do
-    MessageDelta.merge_delta(
+    LangChain.MessageDelta.merge_delta(
       %LangChain.MessageDelta{
         # content: "test0",
         merged_content: [
@@ -248,7 +245,7 @@ defmodule OasWeb.Channels.LlmChannel do
   def handle_in("toggle_llm", %{"presence_id" => presence_id, "value" => value}, socket) when is_bitstring(presence_id) do
 
     case (socket.assigns |> Map.get(:current_member, %{is_admin: false })).is_admin
-      or presence_id == socket.assigns |> Map.get(:presence_id)
+      || presence_id == socket.assigns |> Map.get(:presence_id)
     do
       true -> # is authed to do this
         case value do
@@ -259,7 +256,7 @@ defmodule OasWeb.Channels.LlmChannel do
             |> List.first() # TODO
             channel_pid = channel_meta |> Map.get(:channel_pid)
 
-            {:ok, pid} = Oas.Llm.LlmClient.start(
+            {:ok, _pid} = Oas.Llm.LlmClient.start(
               socket.topic,
               {
                 channel_pid,

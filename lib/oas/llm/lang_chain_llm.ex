@@ -67,8 +67,8 @@ defmodule Oas.Llm.LangChainLlm do
 
       end,
       on_message_processed: fn chain, %Message{} = message ->
-        # IO.inspect(message, label: "306 on_message_processed")
-        IO.inspect(1, label: "306.1 on_message_processed")
+        IO.inspect(message, label: "306 on_message_processed")
+        # IO.inspect(1, label: "306.1 on_message_processed")
         message = message |> Map.put(
           :metadata,
           (message.metadata || %{}) |> Map.put(:index, (chain.messages |> length) - 1)
