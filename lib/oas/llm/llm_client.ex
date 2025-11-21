@@ -30,7 +30,7 @@ defmodule Oas.Llm.LlmClient do
 
   @impl true
   def init(init_args) do
-    IO.inspect(init_args.from_channel_pid, label: "406")
+    # IO.inspect(init_args.from_channel_pid, label: "406")
     Process.monitor(init_args.from_channel_pid)
 
     state = %{
@@ -70,7 +70,7 @@ defmodule Oas.Llm.LlmClient do
     %{event: "message", payload: %{metadata: %{presence_id: presence_id}} = message},
     %{from_channel_context: %{presence_id: presence_id}} = state)
   do
-    IO.puts("406 Ask the llm")
+    # IO.puts("406 Ask the llm")
     GenServer.cast(state.lang_chain_llm_pid, {:prompt, message})
 
     {:noreply, state}
@@ -82,8 +82,22 @@ defmodule Oas.Llm.LlmClient do
     GenServer.cast(state.lang_chain_llm_pid, {:message, message})
     {:noreply, state}
   end
+
+  def handle_info(:delta, %{delta: delta} = state) do
+    delta = pre_delta_send(delta, state)
+
+    OasWeb.Endpoint.broadcast_from!(self(), state.topic, "delta", delta)
+
+    {:noreply, state
+      |> Map.delete(:delta)
+      |> Map.put(:delta_debounce, Process.send_after(self(), :delta, 334))
+    }
+  end
+  def handle_info(:delta, state) do # Nothing to send
+    {:noreply, state}
+  end
   def handle_info({:DOWN, _ref, :process, pid, reason}, %{from_channel_pid: pid} = state) do
-    IO.puts("Creating channel ended")
+    IO.puts("LlmClient :DOWN from_channel_pid")
     {:stop, reason, state}
   end
   def handle_info(%{event: "presence_diff"}, state) do
@@ -94,9 +108,22 @@ defmodule Oas.Llm.LlmClient do
     {:noreply, state}
   end
 
-
   @impl true
   # llm -> other channels
+  def handle_cast({:broadcast_from, {"delta", message}}, state) do
+    presence_id = Oas.Llm.Utils.get_presence_id(%{assigns: state})
+    presence_name = Oas.Llm.Utils.get_presence_name(%{assigns: state})
+    message = %{message | metadata: message.metadata |> Map.put(:presence_name, presence_name) |> Map.put(:presence_id, presence_id)}
+    # OasWeb.Endpoint.broadcast_from!(
+    #   self(),
+    #   state.topic,
+    #   "delta",
+    #   message
+    # )
+    state = debounce_data({:delta, message}, state)
+
+    {:noreply, state}
+  end
   def handle_cast({:broadcast_from, {event, message}}, state) do
     presence_id = Oas.Llm.Utils.get_presence_id(%{assigns: state})
     presence_name = Oas.Llm.Utils.get_presence_name(%{assigns: state})
@@ -111,10 +138,48 @@ defmodule Oas.Llm.LlmClient do
   end
 
 
+
   @impl true
   def handle_call(:channel_pid, _from_pid, state) do
 
     {:reply, {self(), %{}}, state}
   end
 
+  defp pre_delta_send(delta, state) do
+    presence_id = Oas.Llm.Utils.get_presence_id(%{assigns: state})
+    presence_name = Oas.Llm.Utils.get_presence_name(%{assigns: state})
+    delta = %{ delta | metadata: delta.metadata |> Map.put(:presence_name, presence_name) |> Map.put(:presence_id, presence_id),
+      content: LangChain.Message.ContentPart.content_to_string(delta.merged_content)
+    }
+    delta
+  end
+
+  defp debounce_data({:delta, message}, state) do
+    new_delta = if (state |> Map.has_key?(:delta)) && !(state |> Map.get(:delta) |> is_nil()) do
+      LangChain.MessageDelta.merge_delta(
+        state |> Map.get(:delta),
+        message
+      )
+    else
+      message
+    end
+
+    cond do
+      message.status == :complete -> # Last delta, so send immediatly
+        OasWeb.Endpoint.broadcast_from!(
+          self(),
+          state.topic,
+          "delta",
+          pre_delta_send(new_delta, state)
+        )
+        Process.cancel_timer(state.delta_debounce)
+        state |> Map.delete(:delta) |> Map.delete(:delta_debounce)
+      is_nil(state |> Map.get(:delta_debounce)) || is_nil(state.delta_debounce |> Process.read_timer()) -> # First delta, so send immediatly
+        state |> Map.put(:delta_debounce,
+          Process.send_after(self(), :delta, 60)
+        ) |> Map.put(:delta, new_delta)
+      true -> # it will be set later
+        state |> Map.put(:delta, new_delta)
+    end
+  end
 end
