@@ -4,7 +4,7 @@ import { useQuery, useMutation, gql } from "@apollo/client";
 import moment from "moment";
 import { get, omit, has } from 'lodash';
 import { Box, Stack, Alert, FormControl,
-  TextField, Button } from '@mui/material'
+  TextField, Button, FormControlLabel, Switch } from '@mui/material'
 import { TrainingTags } from "./TrainingTags";
 import { TrainingWhere } from "./TrainingWhere";
 import {useNavigate} from 'react-router-dom'
@@ -46,7 +46,7 @@ export const TrainingForm = ({id, data, refetch}) => {
   const [formData, setFormData] = useState(defaultData);
 
   useEffect(() => {
-    
+
     if (!id) {
       setFormData(defaultData)
     }
@@ -63,27 +63,35 @@ export const TrainingForm = ({id, data, refetch}) => {
     )
   }, [data])
 
-  const onChange = ({formData, setFormData, key, direct}) => (event) => {
+  const onChange = ({formData, setFormData, key, isCheckbox}) => (event) => {
+    if (isCheckbox) {
+      setFormData({
+        ...formData,
+        [key]: event.target.checked
+      })
+      return;
+    }
     setFormData({
       ...formData,
       [key]: !event.target.value ? undefined : event.target.value
     })
   }
   const [ insertMutation, {error: error1} ] = useMutation(gql`
-    mutation ($when: String!, $training_tags: [TrainingTagArg]!, $training_where: TrainingWhereArg!, $notes: String) {
-      insert_training (when: $when, training_tags: $training_tags, training_where: $training_where, notes: $notes) {
+    mutation ($when: String!, $training_tags: [TrainingTagArg]!, $training_where: TrainingWhereArg!, $notes: String, $commitment: Boolean) {
+      insert_training (when: $when, training_tags: $training_tags, training_where: $training_where, notes: $notes, commitment: $commitment) {
         id
       }
     }
   `);
   const [updateMutation, {error: error2}] = useMutation(gql`
-    mutation ($id: Int!, $when: String!, $training_tags: [TrainingTagArg]!, $training_where: TrainingWhereArg!, $notes: String){
+    mutation ($id: Int!, $when: String!, $training_tags: [TrainingTagArg]!, $training_where: TrainingWhereArg!, $notes: String, $commitment: Boolean){
       update_training (
         when: $when,
         id: $id,
         training_tags: $training_tags,
         training_where: $training_where,
         notes: $notes
+        commitment: $commitment
       ) {
         id
       }
@@ -134,7 +142,7 @@ export const TrainingForm = ({id, data, refetch}) => {
           />
       </FormControl>
       {/* <FormControl fullWidth sx={{mt: 2, mb: 2}}>
-        <TrainingTags 
+        <TrainingTags
           formData={formData}
           setFormData={setFormData}
         />
@@ -170,6 +178,18 @@ export const TrainingForm = ({id, data, refetch}) => {
           helperText={get(errors, "notes", []).join(" ")}
           />
       </FormControl>
+
+      {get(data, "config_config.enable_booking") && <FormControl fullWidth sx={{ mt: 2, mb: 2 }}>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={get(formData, 'commitment', false) || false}
+              onChange={onChange({ formData, setFormData, key: 'commitment', isCheckbox: true })} />
+          }
+          label="Commitment mode"
+          title="The user only gets a minute to cancel their booking."
+        />
+      </FormControl>}
 
       <FormControl fullWidth sx={{mt: 2, mb: 2}}>
         <Button onClick={save(formData)}>Save</Button>

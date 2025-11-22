@@ -6,7 +6,7 @@ defmodule OasWeb.Schema.MiddlewareQuery do
       %{current_member: %{is_reviewer: is_reviewer, is_admin: is_admin}} when (is_reviewer == true or is_admin == true) ->
         resolution
       _ ->
-        IO.puts("should not happen")
+        IO.puts("OasWeb.Schema.MiddlewareQuery unauthorized")
         resolution
         |> Absinthe.Resolution.put_result({:error, "403 Forbidden, get lost"})
     end

@@ -10,7 +10,12 @@ defmodule OasWeb.MemberAuth do
   # the token expiry itself in MemberToken.
   @max_age 60 * 60 * 24 * 180
   @remember_me_cookie "_oas_web_member_remember_me"
-  @remember_me_options [sign: true, max_age: @max_age, same_site: "Lax"]
+  @remember_me_options [
+    sign: true,
+    max_age: @max_age,
+    same_site: "Lax",
+    domain: Application.compile_env(:oas, OasWeb.Endpoint)[:domain]
+  ]
   # @remember_me_options [sign: true, max_age: @max_age, same_site: "None"]
 
   @doc """
@@ -29,12 +34,18 @@ defmodule OasWeb.MemberAuth do
     token = Members.generate_member_session_token(member)
     member_return_to = get_session(conn, :member_return_to)
 
-    conn
+    out = conn
     |> renew_session()
     |> put_session(:member_token, token)
     |> put_session(:live_socket_id, "members_sessions:#{Base.url_encode64(token)}")
     |> maybe_write_remember_me_cookie(token, params)
-    |> redirect(to: member_return_to || signed_in_path(conn))
+
+    case member_return_to || signed_in_path(conn) do
+      x when is_bitstring(x) ->
+        redirect(out, to: member_return_to || signed_in_path(conn))
+      x ->
+        redirect(out, x)
+    end
   end
   def log_in_member_gql(conn, member, params \\ %{}) do
     token = Members.generate_member_session_token(member)
@@ -125,11 +136,18 @@ defmodule OasWeb.MemberAuth do
   def redirect_if_member_is_authenticated(conn, _opts) do
     if conn.assigns[:current_member] do
       conn
-      |> redirect(to: signed_in_path(conn))
+      |> maybe_external_redirect(signed_in_path(conn))
       |> halt()
     else
       conn
     end
+  end
+
+  defp maybe_external_redirect(conn, to) when is_bitstring(to) do
+    conn |> redirect(to: to)
+  end
+  defp maybe_external_redirect(conn, to) when is_list(to) do
+    conn |> redirect(to)
   end
 
   @doc """
@@ -145,7 +163,7 @@ defmodule OasWeb.MemberAuth do
       conn
       |> put_flash(:error, "You must log in to access this page.")
       |> maybe_store_return_to()
-      |> redirect(to: Routes.member_session_path(conn, :new))
+      |> maybe_external_redirect(Routes.member_session_path(conn, :new))
       |> halt()
     end
   end
@@ -153,8 +171,20 @@ defmodule OasWeb.MemberAuth do
   defp maybe_store_return_to(%{method: "GET"} = conn) do
     put_session(conn, :member_return_to, current_path(conn))
   end
-
   defp maybe_store_return_to(conn), do: conn
 
-  defp signed_in_path(_conn), do: "/"
+  defp signed_in_path(conn) do
+    Plug.Conn.fetch_cookies(conn, signed: OasWeb.CallbackPathPlug.callback_path_cookie())
+
+    case Plug.Conn.fetch_cookies(conn, signed: OasWeb.CallbackPathPlug.callback_path_cookie())
+      |> Map.get(:cookies)
+      |> Map.get(OasWeb.CallbackPathPlug.callback_path_cookie())
+    do
+      nil -> "/"
+      %{
+        callback_path: callback_path,
+        callback_domain: callback_domain
+      } -> [external: Application.get_env(:oas, callback_domain |> String.to_atom()) <> callback_path]
+    end
+  end
 end

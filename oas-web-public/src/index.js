@@ -7,11 +7,16 @@ import { RouterProvider, createBrowserRouter } from 'react-router-dom';
 import { Home } from './Home/Home';
 import { MembershipInfo } from './Members/Info'
 import { MembershipForm } from './Members/MembershipForm';
-import { ApolloClient, InMemoryCache, ApolloProvider, gql } from '@apollo/client';
+import { ApolloClient, InMemoryCache, ApolloProvider, gql, split, HttpLink } from '@apollo/client';
+import { getMainDefinition } from "@apollo/client/utilities";
 import { MembershipSuccess } from './Members/MembershipSuccess';
 import { Tokens } from './Tokens/Tokens';
 import { Credits } from './Credits/Credits';
 import { Bookings } from './Bookings/Bookings';
+import { Socket as PhoenixSocket } from "phoenix";
+import Cookies from "js-cookie";
+import * as AbsintheSocket from "@absinthe/socket";
+import { createAbsintheSocketLink } from "@absinthe/socket-apollo-link";
 
 
 const router = createBrowserRouter([
@@ -48,10 +53,42 @@ const router = createBrowserRouter([
   },
 ]);
 
+const httpLink = new HttpLink({
+  uri: `${process.env["REACT_APP_PUBLIC_URL"]}/api/graphql`
+});
+const phoenixSocket = new PhoenixSocket(`${process.env["REACT_APP_SERVER_URL"].replace(/^http/, "ws")}/socket`, {
+  reconnectAfterMs: (() => 120_000),
+	rejoinAfterMs: (() => 120_000),
+  params: () => {
+    if (Cookies.get("oas_key")) {
+      return { cookie: Cookies.get("oas_key") };
+    } else {
+      return {};
+    }
+  }
+});
+const absintheSocket = AbsintheSocket.create(phoenixSocket);
+const subscriptionLink = createAbsintheSocketLink(absintheSocket);
+
+const theLink = split(
+  ({ query }) => {
+    const definition = getMainDefinition(query);
+
+    const out = !(
+      definition.kind === "OperationDefinition" &&
+      definition.operation === "subscription"
+    );
+
+    return out;
+  },
+  httpLink,
+  subscriptionLink
+)
+
 const client = new ApolloClient({
-  // uri: 'http://localhost:3998/',
-  uri: `${process.env["REACT_APP_PUBLIC_URL"]}/api/graphql`,
+  // uri: `${process.env["REACT_APP_PUBLIC_URL"]}/api/graphql`,
   cache: new InMemoryCache(),
+  link: theLink
 });
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
