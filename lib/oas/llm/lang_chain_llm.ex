@@ -70,7 +70,8 @@ defmodule Oas.Llm.LangChainLlm do
       LLMChain.new!(%{
         llm:
           ChatOpenAI.new!(%{
-            endpoint: "http://localhost:1234/v1/chat/completions",
+            # endpoint: "http://localhost:1234/v1/chat/completions",
+            endpoint: Application.fetch_env!(:oas, :llm_sudio_url),
             # model: "qwen/qwen3-4b-2507",
             # model: "qwen/qwen3-8b",
             model: "qwen/qwen3-14b",
