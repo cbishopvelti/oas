@@ -30,8 +30,9 @@ defmodule Oas.Llm.LlmClient do
 
   @impl true
   def init(init_args) do
-    # IO.inspect(init_args.from_channel_pid, label: "406.1")
-    Process.monitor(init_args.from_channel_pid)
+    Process.flag(:trap_exit, true)
+    IO.inspect(self(), label: "401 LlmClient init self")
+    # Process.monitor(init_args.from_channel_pid)
 
     state = %{
       topic: init_args.topic,
@@ -45,13 +46,12 @@ defmodule Oas.Llm.LlmClient do
     state = state |> Map.put(:presence_id, Oas.Llm.Utils.get_presence_id(%{assigns: state}))
     state = state |> Map.put(:presence_name, Oas.Llm.Utils.get_presence_name(%{assigns: state}))
 
-    init_args.from_channel_context.room_pid |> GenServer.call(:messages)
-
     {:ok, lang_chain_llm_pid} = LangChainLlm.start_link(
       self(),
       init_args.from_channel_context.room_pid |> GenServer.call(:messages), # Get messages from the room
       init_args.from_channel_context.member
     )
+    # Process.monitor(lang_chain_llm_pid)
     state = state |> Map.put(:lang_chain_llm_pid, lang_chain_llm_pid)
 
     OasWeb.Endpoint.subscribe(init_args.topic)
@@ -72,9 +72,7 @@ defmodule Oas.Llm.LlmClient do
     %{event: "message", payload: %{metadata: %{presence_id: presence_id}} = message},
     %{from_channel_context: %{presence_id: presence_id}} = state)
   do
-    # IO.puts("406 Ask the llm")
     GenServer.cast(state.lang_chain_llm_pid, {:prompt, message})
-
     {:noreply, state}
   end
   def handle_info(%{event: "message", payload: message} = _broadcast, state) do
@@ -101,6 +99,22 @@ defmodule Oas.Llm.LlmClient do
   end
   def handle_info(%{event: "presence_diff"}, state) do
     {:noreply, state}
+  end
+  def handle_info({:EXIT, pid, reason}, %{lang_chain_llm_pid: pid} = state) do
+    # IO.inspect(reason, label: "407 LlmClient :EXIT lang_chain_llm_pid SHOULD HAPPEN")
+
+    OasWeb.Endpoint.broadcast_from!(
+      self(),
+      state.topic,
+      "message",
+      LangChain.Message.new_assistant!("I have errored with: #{reason |> elem(1)}. Shutting down.")
+        |> Map.put(:metadata, %{
+          presence_id: Oas.Llm.Utils.get_presence_id(%{assigns: state}),
+          presence_name: Oas.Llm.Utils.get_presence_name(%{assigns: state})
+        })
+    )
+
+    {:stop, :normal, state}
   end
   def handle_info(stuff, state) do
     IO.inspect(stuff, label: "405 LlmClient handle_info UNHANDLED")
@@ -133,6 +147,10 @@ defmodule Oas.Llm.LlmClient do
       event,
       message
     )
+    {:noreply, state}
+  end
+  def handle_cast(message, state) do
+    IO.inspect(message, label: "409 unhandled message")
     {:noreply, state}
   end
 
@@ -181,4 +199,5 @@ defmodule Oas.Llm.LlmClient do
         state |> Map.put(:delta, new_delta)
     end
   end
+
 end

@@ -140,7 +140,6 @@ defmodule Oas.Llm.Room do
       state.chat
     end
 
-    IO.puts("608.4 :noreply")
     {:noreply, %{state | chat: chat}}
   end
   def handle_info(%{event: "message", payload: message}, state) do
@@ -161,7 +160,7 @@ defmodule Oas.Llm.Room do
 
   @impl true
   def handle_call(:messages, _pid, state) do
-    IO.puts("609 handle_call :messages")
+    # IO.puts("609 handle_call :messages")
     {:reply, state.messages, state}
   end
   @impl true
