@@ -75,7 +75,7 @@ defmodule Oas.Llm.Room do
     IO.puts("Shutting down room")
     {:stop, :normal, state}
   end
-  def handle_info(%{event: "presence_diff", payload: %{joins: joins} = payload}, state) do
+  def handle_info(%{event: "presence_diff", payload: %{joins: joins}}, state) do
 
     new_members = joins |> Enum.flat_map(fn {_k, join} ->
       join.metas
