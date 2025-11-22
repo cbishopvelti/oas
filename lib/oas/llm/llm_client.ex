@@ -77,7 +77,7 @@ defmodule Oas.Llm.LlmClient do
 
     {:noreply, state}
   end
-  def handle_info(%{event: "message", payload: message} = broadcast, state) do
+  def handle_info(%{event: "message", payload: message} = _broadcast, state) do
     GenServer.cast(state.lang_chain_llm_pid, {:message, message})
     {:noreply, state}
   end
