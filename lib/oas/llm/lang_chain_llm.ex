@@ -28,25 +28,10 @@ defmodule Oas.Llm.LangChainLlm do
 
   @impl true
   def init(init_args) do
+    IO.inspect(self(), label: "301 LangChainLlm init")
+    # Process.flag(:trap_exit, true)
     callbacks = %{
       on_llm_new_delta: fn chain, deltas ->
-        # IO.inspect(deltas, label: "305 on_llm_new_delta")
-        # Enum.each(deltas, fn delta ->
-        #   # IO.write(delta.content)
-        #   GenServer.cast(
-        #     init_args.parent_pid,
-        #     {:broadcast,
-        #      {:delta,
-        #       %{
-        #         content: delta.content,
-        #         role: delta.role,
-        #         status: delta.status,
-        #         metadata: %{
-        #           index: chain.messages |> length()
-        #         }
-        #       }}}
-        #   )
-        # end)
         if ((deltas |> length) > 0) do
           GenServer.cast(
             init_args.parent_pid,
@@ -54,9 +39,7 @@ defmodule Oas.Llm.LangChainLlm do
               {
                 "delta",
                 deltas
-                # |> IO.inspect(label: "301 deltas")
                 |> MessageDelta.merge_deltas()
-                # |> IO.inspect(label: "302")
                 |> (&(Map.put(&1, :content, MessageDelta.content_to_string(&1)))).()
                 |> Map.put(:metadata, %{
                   index: chain.messages |> length()
@@ -103,6 +86,8 @@ defmodule Oas.Llm.LangChainLlm do
       ))
       |> LLMChain.add_callback(callbacks)
       |> LLMChain.add_tools(Oas.Llm.Tools.get_tools())
+
+
 
     chain = if (!is_nil(init_args.member) && init_args.member |> Map.has_key?(:name)) do
       LLMChain.add_message(chain, Message.new_system!("The users name is: " <> init_args.member.name))
@@ -152,17 +137,27 @@ defmodule Oas.Llm.LangChainLlm do
 
   @impl true
   def handle_cast({:prompt, message}, state) do
-    {:ok, chain} =
-      state.chain
+
+    case state.chain
       |> LLMChain.add_message(message)
       |> LLMChain.run(mode: :while_needs_response)
-
-    {:noreply, %{state | chain: chain}}
+    do
+      {:ok, chain} ->
+        {:noreply, %{state | chain: chain}}
+      {:error, _chain, %{message: message, type: type} = error} ->
+        {:stop, {:llm_error, message}, state}
+      other ->
+        {:stop, :normal, state}
+    end
   end
   def handle_cast({:message, message}, state) do
     chain = state.chain
     |> LLMChain.add_message(message)
     {:noreply, %{state | chain: chain}}
+  end
+  def handle_cast(message, state) do
+    IO.inspect(message, label: "307 UNKNOWN handle_cast, message")
+    {:noreply, state}
   end
 
   @impl true
