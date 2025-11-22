@@ -111,14 +111,16 @@ defmodule Oas.Llm.Room do
         meta = OasWeb.Channels.LlmChannelPresence.list(state.topic) |> Map.to_list() |> List.first() |> elem(1) |> Map.get(:metas) |> List.first()
         |> Map.put(:room_pid, self())
         Task.Supervisor.async_nolink(Oas.TaskSupervisor, fn () ->
+          # IO.inspect(self(), label: "209 Room async_nolink")
           # Start the llm
-          {:ok, _pid} = Oas.Llm.LlmClient.start(
+          {:ok, pid} = Oas.Llm.LlmClient.start(
             state.topic,
             {
               meta.channel_pid,
               meta
             }
           )
+          {:llm_client_async_start, pid}
         end)
       end
 
@@ -151,6 +153,15 @@ defmodule Oas.Llm.Room do
 
   # Don't do anything on llm delta's
   def handle_info(%{event: "delta"}, state) do
+    {:noreply, state}
+  end
+
+  # async_nolink
+  def handle_info({:DOWN, _ref, :process, _pid, :normal}, state) do
+    {:noreply, state}
+  end
+  # async_nolink
+  def handle_info({_ref, {:llm_client_async_start, _pid}}, state) do
     {:noreply, state}
   end
   def handle_info(message, state) do

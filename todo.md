@@ -77,7 +77,7 @@ Surface chat list for admins. [x]
 Context admin. [x]
 Add llm presence. [x]
 Credits tool. [x]
-Handling if LLM isn't available.
+Handling if LLM isn't available. [x]
 disable messaging if llm is processing. [x]
 Fix delta/message syncing. [x]
 Fix not coming online when clicking Chat [x]

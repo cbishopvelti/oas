@@ -127,7 +127,6 @@ defmodule OasWeb.Channels.LlmHistoryChannel do
     end
   end
   def handle_out("llm_presence_diff", %{joins: joins, leaves: leaves}, socket) do
-    IO.puts("106 presence_diff")
     topics = socket.assigns.history |> Enum.map(fn (%{topic: topic}) -> topic end) |> MapSet.new()
 
     push(socket, "presence_diff", %{
