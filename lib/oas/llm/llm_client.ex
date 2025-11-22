@@ -30,7 +30,7 @@ defmodule Oas.Llm.LlmClient do
 
   @impl true
   def init(init_args) do
-    # IO.inspect(init_args.from_channel_pid, label: "406")
+    # IO.inspect(init_args.from_channel_pid, label: "406.1")
     Process.monitor(init_args.from_channel_pid)
 
     state = %{
@@ -44,6 +44,8 @@ defmodule Oas.Llm.LlmClient do
     }
     state = state |> Map.put(:presence_id, Oas.Llm.Utils.get_presence_id(%{assigns: state}))
     state = state |> Map.put(:presence_name, Oas.Llm.Utils.get_presence_name(%{assigns: state}))
+
+    init_args.from_channel_context.room_pid |> GenServer.call(:messages)
 
     {:ok, lang_chain_llm_pid} = LangChainLlm.start_link(
       self(),
@@ -76,9 +78,6 @@ defmodule Oas.Llm.LlmClient do
     {:noreply, state}
   end
   def handle_info(%{event: "message", payload: message} = broadcast, state) do
-    # IO.inspect(message, label: "407 message")
-    # IO.inspect(state, label: "408 state")
-
     GenServer.cast(state.lang_chain_llm_pid, {:message, message})
     {:noreply, state}
   end
@@ -174,7 +173,7 @@ defmodule Oas.Llm.LlmClient do
         )
         Process.cancel_timer(state.delta_debounce)
         state |> Map.delete(:delta) |> Map.delete(:delta_debounce)
-      is_nil(state |> Map.get(:delta_debounce)) || is_nil(state.delta_debounce |> Process.read_timer()) -> # First delta, so send immediatly
+      is_nil(state |> Map.get(:delta_debounce)) || state.delta_debounce |> Process.read_timer() -> # First delta, so send immediatly
         state |> Map.put(:delta_debounce,
           Process.send_after(self(), :delta, 60)
         ) |> Map.put(:delta, new_delta)

@@ -18,14 +18,14 @@ module.exports = module.exports = {
       }
     }
 
-    fs.writeFile("./test.txt", JSON.stringify(config, null, 2), function(err) {
-        if(err) {
-            return console.log(err);
-        }
-        console.log("001 config", config)
+    // fs.writeFile("./test.txt", JSON.stringify(config, null, 2), function(err) {
+    //     if(err) {
+    //         return console.log(err);
+    //     }
+    //     console.log("001 config", config)
 
-        console.log("The file was saved!");
-    });
+    //     console.log("The file was saved!");
+    // });
 
     return config;
   },
