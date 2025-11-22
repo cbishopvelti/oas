@@ -15,7 +15,8 @@ config :oas, Oas.Repo,
   # database: "./dbs/prod-backup-2025-10-03T20:39:52.215384Z.db",
   # database: "./dbs/dev.db",
   # database: "./dbs/prod-backup-2025-11-03T19:35:33.875200Z.db",
-  database: "/home/chris/oas-dev-dbs/prod-backup-2025-11-03T19:35:33.875200Z.db",
+  # database: "/home/chris/oas-dev-dbs/prod-backup-2025-11-03T19:35:33.875200Z.db",
+  database: "./dbs/dev-mac.db",
   backup_database: "./dbs/sqlite-backup"
 
 config :oas, Oas.Repo.Replica1,
@@ -31,7 +32,7 @@ config :oas, OasWeb.Endpoint,
   # Binding to loopback ipv4 address prevents access from other machines.
   # Change to `ip: {0, 0, 0, 0}` to allow access from other machines.
   http: [ip: {0, 0, 0, 0}, port: 4000],
-  url: [host: "localhost", port: "443", scheme: "https"],
+  url: [host: "localhost", port: 4000, scheme: "http"],
   pubsub_server: Oas.PubSub,
   check_origin: false,
   code_reloader: true,

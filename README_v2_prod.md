@@ -8,11 +8,35 @@ docker build . \
 docker push chrisjbishop155/oas:v2_prod
 ```
 
+### Ubuntu
+
+```
+--restart unless-stopped \
+
+docker stop oas; docker rm oas; \
+docker run -it -d \
+--name=oas \
+-e DANGEROUSLY_DISABLE_HOST_CHECK=true \
+-e REACT_APP_ADMIN_URL="https://admin.oxfordshireacrosociety.co.uk" \
+-e REACT_APP_SERVER_URL="https://server.oxfordshireacrosociety.co.uk" \
+-e REACT_APP_PUBLIC_URL="https://www.oxfordshireacrosociety.co.uk" \
+-e DOMAIN=".oxfordshireacrosociety.co.uk" \
+-e DB_FILE=/dbs/sqlite-prod.db \
+-e MIX_ENV=v2_prod \
+-p 80:80 -p 443:443 \
+-v /media/chris/fedora2/root/oas-dbs:/dbs \
+-v /oas-dbs-backup:/oas-dbs-backup \
+-v /media/chris/fedora2/root/gocardless_backup:/gocardless_backup \
+chrisjbishop155/oas:v2_prod
+```
+
+### Fedora
 ```
 docker pull chrisjbishop155/oas:v2_prod;
 
 docker stop oas; docker rm oas; \
 docker run -it -d \
+--restart unless-stopped \
 --name=oas \
 -e DANGEROUSLY_DISABLE_HOST_CHECK=true \
 -e REACT_APP_ADMIN_URL="https://admin.oxfordshireacrosociety.co.uk" \
@@ -30,7 +54,6 @@ chrisjbishop155/oas:v2_prod
 
 ```
 docker exec -it oas /bin/bash
-cp /app/nginx/gcloud_pre_nginx.conf /etc/nginx/nginx.conf && nginx
 cp /app/nginx/v2_nginx.conf /etc/nginx/nginx.conf && certbot --nginx
 nginx -s stop
 nginx
@@ -74,23 +97,3 @@ google app password jday chpj zfpx pikz
 
 ##### Works:
 :gen_smtp_client.open([port: 587, relay: "smtp.gmail.com", username: "chrisjbishop155@gmail.com", password: "jdaychpjzfpxpikz", auth: :always, sls: :always, ssl: false, tls: :always, tls_options: [verify: :verify_none]])
-
-### Ubuntu
-
-```
-docker run -it -d \
---restart unless-stopped \
---name=oas \
--e DANGEROUSLY_DISABLE_HOST_CHECK=true \
--e REACT_APP_ADMIN_URL="https://admin.oxfordshireacrosociety.co.uk" \
--e REACT_APP_SERVER_URL="https://server.oxfordshireacrosociety.co.uk" \
--e REACT_APP_PUBLIC_URL="https://www.oxfordshireacrosociety.co.uk" \
--e DOMAIN=".oxfordshireacrosociety.co.uk" \
--e DB_FILE=/dbs/sqlite-prod.db \
--e MIX_ENV=v2_prod \
--p 80:80 -p 443:443 \
--v /media/chris/fedora/root/oas-dbs:/dbs \
--v /oas-dbs-backup:/oas-dbs-backup \
--v /media/chris/fedora/root/gocardless_backup:/gocardless_backup \
-chrisjbishop155/oas:v2_prod
-```

@@ -25,7 +25,7 @@ export const Trainings = () => {
   const { setTitle } = useOutletContext();
   const [filterData, setFilterData ] = useState({
     from: moment().subtract(1, 'year').format("YYYY-MM-DD"),
-    to: moment().format("YYYY-MM-DD")
+    to: moment().add(1, 'month').format("YYYY-MM-DD")
   }, {id: "Trainings"});
 
   const {data, refetch} = useQuery(gql`
@@ -72,7 +72,7 @@ export const Trainings = () => {
   }
 
   return <>
-    <TrainingsFilter 
+    <TrainingsFilter
       parentData={data}
       filterData={filterData}
       setFilterData={setFilterData} />

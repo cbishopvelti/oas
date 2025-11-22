@@ -110,6 +110,20 @@ defmodule OasWeb.Schema.SchemaMembershipPeriod do
         {:ok, %{success: true}}
       end
     end
+
+    field :add_membership, type: :success do
+      arg :membership_period_id, non_null(:integer)
+      arg :member_id, non_null(:integer)
+      resolve fn _, %{membership_period_id: membership_period_id, member_id: member_id}, _ ->
+        Oas.Members.Membership.add_membership(
+          Oas.Repo.get!(Oas.Members.MembershipPeriod, membership_period_id), # membership_period,
+          Oas.Repo.get!(Oas.Members.Member, member_id), # member,
+          %{now: Date.utc_today()}
+        )
+        {:ok, %{success: true}}
+      end
+    end
+
     field :delete_membership_period, type: :success do
       arg :membership_period_id, non_null(:integer)
       resolve fn _, %{membership_period_id: membership_period_id}, _ ->

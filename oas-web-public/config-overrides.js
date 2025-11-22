@@ -1,5 +1,22 @@
 module.exports = module.exports = {
   webpack: function(config, env) {
+
+    config = {
+      ...config,
+      module: {
+        ...config.module,
+        rules: [
+          ...config.module.rules,
+          {
+            test: /\.m?js/,
+            resolve: {
+              fullySpecified: false
+            }
+          }
+        ]
+      }
+    }
+
     return config;
   },
   jest: function(config) {

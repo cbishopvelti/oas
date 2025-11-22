@@ -74,6 +74,10 @@ defmodule OasWeb.Schema do
 
   subscription do
     import_fields :config_subscriptions
+
+    import_fields :attendance_subscriptions
+
+    import_fields :user_subscriptions
   end
 
 
@@ -113,6 +117,9 @@ defmodule OasWeb.Schema do
     [OasWeb.Schema.MiddlewareUser | middleware]
   end
   def myMiddleware(middleware, %Absinthe.Type.Field{identifier: :user_undo_attendance}, %Absinthe.Type.Object{identifier: :mutation}) do
+    [OasWeb.Schema.MiddlewareUser | middleware]
+  end
+  def myMiddleware(middleware, %Absinthe.Type.Field{identifier: :user_attendance_attendance}, %Absinthe.Type.Object{identifier: :subscription}) do
     [OasWeb.Schema.MiddlewareUser | middleware]
   end
 
