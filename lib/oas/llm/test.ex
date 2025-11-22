@@ -25,7 +25,7 @@ defmodule Oas.Llm.TestA do
     IO.inspect(message, label: "THIS SHOULD HAPPEN")
     {:noreply, state}
   end
-  def terminate(reason, state) do
+  def terminate(reason, _state) do
     IO.inspect(reason, label: "maybe should happen")
   end
 end

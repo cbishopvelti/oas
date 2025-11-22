@@ -24,6 +24,7 @@ defmodule OasWeb.Schema.SchemaConfig do
   end
 
   object :config_llm do
+    field :chat_enabled, :boolean
     field :context, :string
   end
 
@@ -31,6 +32,10 @@ defmodule OasWeb.Schema.SchemaConfig do
     field :enable_booking, :boolean
     field :content, :string
     field :credits, :boolean
+  end
+
+  object :public_config_llm do
+    field :chat_enabled, :boolean
   end
 
   object :config_queries do
@@ -61,6 +66,14 @@ defmodule OasWeb.Schema.SchemaConfig do
     field :public_config_config, :public_config_config do
       resolve fn _, _, _ ->
         result = from(cc in Oas.Config.Config, select: cc)
+          |> Oas.Repo.one
+
+        {:ok, result}
+      end
+    end
+    field :public_config_llm, :public_config_llm do
+      resolve fn _, _, _ ->
+        result = from(cc in Oas.Config.ConfigLlm, select: cc)
           |> Oas.Repo.one
 
         {:ok, result}
@@ -145,13 +158,16 @@ defmodule OasWeb.Schema.SchemaConfig do
       end
     end
     field :save_config_llm, :config_llm do
+      arg :chat_enabled, non_null(:boolean)
       arg :context, non_null(:string)
-      resolve fn _, %{context: context}, _ ->
+      resolve fn _, %{context: context, chat_enabled: chat_enabled}, _ ->
+        IO.inspect(context, label: "001 context")
         result = from(cl in Oas.Config.ConfigLlm, select: cl)
         |> Oas.Repo.one()
         |> Ecto.Changeset.cast(%{
-          context: context
-        }, [:context])
+          context: context,
+          chat_enabled: chat_enabled
+        }, [:context, :chat_enabled], empty_values: [])
         |> Oas.Repo.update
         |> OasWeb.Schema.SchemaUtils.handle_error()
 

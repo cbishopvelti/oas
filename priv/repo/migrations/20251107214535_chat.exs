@@ -18,6 +18,7 @@ defmodule Oas.Repo.Migrations.Chat do
     create unique_index(:chats_members, [:member_id, :chat_id])
 
     create table(:config_llm) do
+      add :chat_enabled, :boolean, default: false
       add :context, :string, null: true
       timestamps()
     end
@@ -25,8 +26,8 @@ defmodule Oas.Repo.Migrations.Chat do
     # flush()
 
     execute("""
-    INSERT INTO config_llm (id, context, inserted_at, updated_at)
-    VALUES (1, '', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+    INSERT INTO config_llm (id, chat_enabled, context, inserted_at, updated_at)
+    VALUES (1, false, '', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
     """, "SELECT true")
   end
 end

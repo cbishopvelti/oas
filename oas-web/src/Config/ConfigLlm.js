@@ -35,6 +35,7 @@ export const ConfigLlm = () => {
   const { data: gqlData, refetech } = useQuery(gql`
     query {
       config_llm {
+        chat_enabled
         context
       }
     }
@@ -45,8 +46,9 @@ export const ConfigLlm = () => {
   }, [gqlData])
 
   const [saveConfig, {error}] = useMutation(gql`
-    mutation($context: String!) {
-      save_config_llm(context: $context) {
+    mutation($context: String!, $chat_enabled: Boolean!) {
+      save_config_llm(context: $context, chat_enabled: $chat_enabled) {
+        chat_enabled
         context
       }
     }
@@ -73,6 +75,15 @@ export const ConfigLlm = () => {
           <Alert key={i} sx={{m:2}} severity="error">{message}</Alert>
         ))}
       </Stack>
+      <FormControl sx={{mb: 2}}>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={get(data, 'chat_enabled', false) || false}
+              onChange={onChange({formData: data, setFormData: setData, key: 'chat_enabled', isCheckbox: true})}/>
+          }
+          label="Enable booking functionality" />
+      </FormControl>
       <FormControl fullWidth sx={{mb: 2}}>
         <TextField
             label="Llm context"

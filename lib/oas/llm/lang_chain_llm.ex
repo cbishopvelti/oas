@@ -28,8 +28,7 @@ defmodule Oas.Llm.LangChainLlm do
 
   @impl true
   def init(init_args) do
-    IO.inspect(self(), label: "301 LangChainLlm init")
-    # Process.flag(:trap_exit, true)
+    # IO.inspect(self(), label: "301 LangChainLlm init")
     callbacks = %{
       on_llm_new_delta: fn chain, deltas ->
         if ((deltas |> length) > 0) do
@@ -50,7 +49,7 @@ defmodule Oas.Llm.LangChainLlm do
 
       end,
       on_message_processed: fn chain, %Message{} = message ->
-        IO.inspect(message, label: "306 on_message_processed")
+        # IO.inspect(message, label: "306 on_message_processed")
         # IO.inspect(1, label: "306.1 on_message_processed")
         message = message |> Map.put(
           :metadata,
@@ -73,7 +72,8 @@ defmodule Oas.Llm.LangChainLlm do
           ChatOpenAI.new!(%{
             endpoint: "http://localhost:1234/v1/chat/completions",
             # model: "qwen/qwen3-4b-2507",
-            model: "qwen/qwen3-8b",
+            # model: "qwen/qwen3-8b",
+            model: "qwen/qwen3-14b",
             stream: true
           }),
         custom_context: %{
@@ -144,9 +144,9 @@ defmodule Oas.Llm.LangChainLlm do
     do
       {:ok, chain} ->
         {:noreply, %{state | chain: chain}}
-      {:error, _chain, %{message: message, type: type} = error} ->
+      {:error, _chain, %{message: message, type: _type} = _error} ->
         {:stop, {:llm_error, message}, state}
-      other ->
+      _other ->
         {:stop, :normal, state}
     end
   end

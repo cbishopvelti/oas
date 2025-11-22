@@ -31,8 +31,7 @@ defmodule Oas.Llm.LlmClient do
   @impl true
   def init(init_args) do
     Process.flag(:trap_exit, true)
-    IO.inspect(self(), label: "401 LlmClient init self")
-    # Process.monitor(init_args.from_channel_pid)
+    Process.monitor(init_args.from_channel_pid)
 
     state = %{
       topic: init_args.topic,
@@ -51,7 +50,7 @@ defmodule Oas.Llm.LlmClient do
       init_args.from_channel_context.room_pid |> GenServer.call(:messages), # Get messages from the room
       init_args.from_channel_context.member
     )
-    # Process.monitor(lang_chain_llm_pid)
+
     state = state |> Map.put(:lang_chain_llm_pid, lang_chain_llm_pid)
 
     OasWeb.Endpoint.subscribe(init_args.topic)
@@ -191,7 +190,7 @@ defmodule Oas.Llm.LlmClient do
         )
         Process.cancel_timer(state.delta_debounce)
         state |> Map.delete(:delta) |> Map.delete(:delta_debounce)
-      is_nil(state |> Map.get(:delta_debounce)) || state.delta_debounce |> Process.read_timer() -> # First delta, so send immediatly
+      is_nil(state |> Map.get(:delta_debounce)) || !(state.delta_debounce |> Process.read_timer()) -> # First delta, so send immediatly
         state |> Map.put(:delta_debounce,
           Process.send_after(self(), :delta, 60)
         ) |> Map.put(:delta, new_delta)
