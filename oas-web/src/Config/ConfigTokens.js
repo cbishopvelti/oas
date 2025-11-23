@@ -88,8 +88,6 @@ export const ConfigTokens = () => {
     mutation(
       $token_expiry_days: Int,
       $temporary_trainings: Int,
-      $bacs: String,
-      $content: String,
       $enable_booking: Boolean,
       $name: String
       $gocardless_id: String
@@ -101,8 +99,6 @@ export const ConfigTokens = () => {
       save_config_config(
         token_expiry_days: $token_expiry_days,
         temporary_trainings: $temporary_trainings,
-        bacs: $bacs,
-        content: $content,
         enable_booking: $enable_booking,
         name: $name,
         gocardless_id: $gocardless_id,
@@ -140,8 +136,6 @@ export const ConfigTokens = () => {
         quantity: parseInt(formData.quantity)
       }
     })
-
-    setFormData({})
 
     refetch();
   }
@@ -195,31 +189,6 @@ export const ConfigTokens = () => {
             helperText={get(errors, 'temporary_trainings', []). join(" ")}
             />
       </FormControl>
-      <FormControl fullWidth sx={{mb: 2}}>
-        <TextField
-            label="Bacs details"
-            value={get(globalFormData, "bacs", '') || ''}
-            type="text"
-            multiline
-            minRows={3}
-            onChange={onChange({formData: globalFormData, setFormData: setGlobalFormData, key: "bacs"})}
-            error={has(errors, "bacs")}
-            helperText={get(errors, 'bacs', []). join(" ")}
-            />
-      </FormControl>
-
-      <FormControl fullWidth sx={{mb: 2}}>
-        <TextField
-            label="Content"
-            value={get(globalFormData, "content", '') || ''}
-            type="text"
-            multiline
-            minRows={3}
-            onChange={onChange({formData: globalFormData, setFormData: setGlobalFormData, key: "content"})}
-            error={has(errors, "content")}
-            helperText={get(errors, 'content', []). join(" ")}
-            />
-      </FormControl>
 
       <FormControl fullWidth sx={{mb: 2}}>
         <TextField
@@ -237,7 +206,10 @@ export const ConfigTokens = () => {
             id="gocardless-key"
             label="Go cardless key"
             value={get(globalFormData, "gocardless_key", '') || ''}
-            type={showGocardlessKey ? "text" : "password"}
+            type="text"
+            sx={showGocardlessKey ? {} : {textSecurity: "disc", "-webkit-text-security":"disc"}}
+
+            autocomplete="off"
             onChange={onChange({formData: globalFormData, setFormData: setGlobalFormData, key: "gocardless_key"})}
             error={has(errors, "gocardless_key")}
             helperText={get(errors, 'gocardless_key', []). join(" ")}

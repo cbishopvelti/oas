@@ -1,11 +1,10 @@
 import { parseErrors } from "../utils/util"
-import { Table, TableContainer, Box, Button,
-  TableHead, TableRow, Stack,
-  TableCell, TextField, Alert,
-  TableBody, IconButton, FormControl,
-  Switch, FormControlLabel, InputLabel,
-  MenuItem, Select,
-  InputAdornment, OutlinedInput
+import {
+  Box, Button,
+  Stack,
+  TextField, Alert,
+  FormControl,
+  Switch, FormControlLabel
 } from '@mui/material';
 import {useQuery, gql, useMutation} from '@apollo/client'
 import { get, has } from 'lodash'
@@ -54,7 +53,7 @@ export const ConfigLlm = () => {
     }
   `)
 
-  const errors = parseErrors([])
+  const errors = parseErrors(get(error, 'graphQLErrors', []))
 
   const save = async () => {
     try {
@@ -63,6 +62,7 @@ export const ConfigLlm = () => {
           ...data
         }
       })
+      refetech()
     } catch (err) {
       console.error(err)
     }
@@ -82,7 +82,7 @@ export const ConfigLlm = () => {
               checked={get(data, 'chat_enabled', false) || false}
               onChange={onChange({formData: data, setFormData: setData, key: 'chat_enabled', isCheckbox: true})}/>
           }
-          label="Enable booking functionality" />
+          label="Enable Llm" />
       </FormControl>
       <FormControl fullWidth sx={{mb: 2}}>
         <TextField

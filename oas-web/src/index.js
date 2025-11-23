@@ -44,7 +44,7 @@ import { Venue } from './Venue/Venue';
 import { Venues } from './Venue/Venues';
 import { Thing } from './Things/Thing';
 import { Things } from './Things/Things';
-
+import { ConfigContent } from './Config/ConfigContent'
 
 const router = createBrowserRouter([
   {
@@ -164,6 +164,11 @@ const router = createBrowserRouter([
         id: "config",
         path: "config",
         element: <ConfigTokens />
+      },
+      {
+        id: "config-content",
+        path: "/config/content",
+        element: <ConfigContent />
       },
       {
         id: "config-llm",
