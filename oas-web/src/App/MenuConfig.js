@@ -14,7 +14,7 @@ export const MenuConfig = () => {
   const matches = useMatches();
 
   const menuIds = ["config"];
-  const subMenuIds = ['config-llm'];
+  const subMenuIds = ['config-llm', 'config-content'];
   const allIds = [...menuIds, ...subMenuIds];
   const forceIds = [...subMenuIds];
 
@@ -54,6 +54,14 @@ export const MenuConfig = () => {
       </IconButton>
     </MenuItem>
     <Collapse in={open} timeout="auto">
+      <MenuItem
+        sx={{ml:2}}
+        component={NavLink}
+        to={`/config/content`}
+        end
+        >
+        <ListItemText>Content</ListItemText>
+      </MenuItem>
       <MenuItem
         sx={{ml:2}}
         component={NavLink}

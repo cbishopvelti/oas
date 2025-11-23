@@ -128,15 +128,30 @@ defmodule OasWeb.Schema.SchemaConfig do
         |> Oas.Repo.one
         |> Ecto.Changeset.cast(args, [
           :token_expiry_days, :temporary_trainings,
-          :bacs, :enable_booking, :name,
+          :enable_booking, :name,
           :gocardless_id, :gocardless_key, :gocardless_account_id,
-          :credits, :content, :backup_recipient
+          :credits, :backup_recipient
         ], empty_values: [[], ""])
         |> Ecto.Changeset.validate_format(:backup_recipient, ~r/@/)
         |> Oas.Repo.update
         |> OasWeb.Schema.SchemaUtils.handle_error
 
         Oas.Gocardless.Supervisor.restart()
+
+        result
+      end
+    end
+    field :save_config_content, :success do
+      arg :bacs, non_null(:string)
+      arg :content, non_null(:string)
+      resolve fn _, args, _ ->
+        result = from(cc in Oas.Config.Config, select: cc)
+        |> Oas.Repo.one
+        |> Ecto.Changeset.cast(args, [
+          :bacs, :content
+        ], empty_values: [[], ""])
+        |> Oas.Repo.update
+        |> OasWeb.Schema.SchemaUtils.handle_error
 
         result
       end
