@@ -45,6 +45,7 @@ import { Venues } from './Venue/Venues';
 import { Thing } from './Things/Thing';
 import { Things } from './Things/Things';
 import { ConfigContent } from './Config/ConfigContent'
+import { ConfigGocardless } from './Config/ConfigGocardless';
 
 const router = createBrowserRouter([
   {
@@ -174,6 +175,11 @@ const router = createBrowserRouter([
         id: "config-llm",
         path: "config/llm",
         element: <ConfigLlm />
+      },
+      {
+        id: 'config-gocardless',
+        path: 'config/config-gocardless',
+        element: <ConfigGocardless />
       },
       {
         id: "gocardless",

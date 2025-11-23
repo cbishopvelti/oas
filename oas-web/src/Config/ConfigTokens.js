@@ -10,8 +10,6 @@ import { Table, TableContainer, Box, Button,
   InputAdornment, OutlinedInput
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import Visibility from '@mui/icons-material/Visibility';
-import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { get, has } from 'lodash'
 import SaveIcon from '@mui/icons-material/Save';
 import { parseErrors } from "../utils/util";
@@ -57,20 +55,13 @@ export const ConfigTokens = () => {
         content,
         enable_booking,
         name,
-        gocardless_id,
-        gocardless_key,
-        gocardless_account_id,
         credits,
         backup_recipient
-      },
-      gocardless_accounts {
-        id
       }
     }
   `);
   const config_tokens = get(data, 'config_tokens', []) || [];
   const config_config = get(data, 'config_config', []) || [];
-  const gocardless_accounts = get(data, 'gocardless_accounts', []) || []
 
   useEffect(() => {
     setGlobalFormData(config_config)
@@ -90,9 +81,6 @@ export const ConfigTokens = () => {
       $temporary_trainings: Int,
       $enable_booking: Boolean,
       $name: String
-      $gocardless_id: String
-      $gocardless_key: String
-      $gocardless_account_id: String
       $credits: Boolean
       $backup_recipient: String
     ) {
@@ -101,9 +89,6 @@ export const ConfigTokens = () => {
         temporary_trainings: $temporary_trainings,
         enable_booking: $enable_booking,
         name: $name,
-        gocardless_id: $gocardless_id,
-        gocardless_key: $gocardless_key,
-        gocardless_account_id: $gocardless_account_id
         credits: $credits
         backup_recipient: $backup_recipient
       ) {
@@ -189,67 +174,6 @@ export const ConfigTokens = () => {
             helperText={get(errors, 'temporary_trainings', []). join(" ")}
             />
       </FormControl>
-
-      <FormControl fullWidth sx={{mb: 2}}>
-        <TextField
-            label="Go cardless id"
-            value={get(globalFormData, "gocardless_id", '') || ''}
-            type="text"
-            onChange={onChange({formData: globalFormData, setFormData: setGlobalFormData, key: "gocardless_id"})}
-            error={has(errors, "gocardless_id")}
-            helperText={get(errors, 'gocardless_id', []). join(" ")}
-            />
-      </FormControl>
-      <FormControl fullWidth sx={{mb: 2}}>
-        <InputLabel htmlFor="gocardless-key">Gocardless key</InputLabel>
-        <OutlinedInput
-            id="gocardless-key"
-            label="Go cardless key"
-            value={get(globalFormData, "gocardless_key", '') || ''}
-            type="text"
-            sx={showGocardlessKey ? {} : {textSecurity: "disc", "-webkit-text-security":"disc"}}
-
-            autocomplete="off"
-            onChange={onChange({formData: globalFormData, setFormData: setGlobalFormData, key: "gocardless_key"})}
-            error={has(errors, "gocardless_key")}
-            helperText={get(errors, 'gocardless_key', []). join(" ")}
-            endAdornment={
-              <InputAdornment position="end">
-                <IconButton
-                  aria-label={
-                    showGocardlessKey ? 'hide the password' : 'display the password'
-                  }
-                  onClick={() => {
-                    setShowGocardlessKey(!showGocardlessKey)
-                  }}
-                  edge="end"
-                >
-                  {showGocardlessKey ? <VisibilityOff /> : <Visibility />}
-                </IconButton>
-              </InputAdornment>
-            }
-            />
-      </FormControl>
-
-      <FormControl fullWidth sx={{mb: 2}}>
-        <Link to={'/config/gocardless'}>Gocardless requisition flow</Link>
-      </FormControl>
-
-      {gocardless_accounts &&
-        // gocardless_accounts.find(({id}) => id == globalFormData.gocardless_account_id) &&
-        gocardless_accounts.length > 0 &&
-      <FormControl fullWidth sx={{ mb: 2 }}>
-        <InputLabel required id="account">Account</InputLabel>
-        <Select
-          labelId="account"
-          label="Account"
-          onChange={onChange({ formData: globalFormData, setFormData: setGlobalFormData, key: "gocardless_account_id" })}
-          value={globalFormData.gocardless_account_id || ""}>
-          {gocardless_accounts && gocardless_accounts.map((dat, id) => {
-            return <MenuItem key={`account-${id}`} value={dat.id}>{dat.id}</MenuItem>
-          })}
-        </Select>
-      </FormControl>}
 
       <FormControl fullWidth sx={{mb: 2}}>
         <FormControlLabel

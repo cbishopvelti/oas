@@ -11,7 +11,7 @@ import { useMatches } from 'react-router-dom';
 
 
 export const MenuTransaction = () => {
-  
+
   const matches = useMatches();
 
   const transactionIds = ["transaction-id", "transactions", "member-transactions"];
@@ -64,13 +64,13 @@ export const MenuTransaction = () => {
         >
         <ListItemText>New Transaction</ListItemText>
       </MenuItem>
-      <MenuItem
+      {/* <MenuItem
         sx={{ml: 2}}
         component={NavLink}
         to={`/import-transactions`}
         end >
         <ListItemText>Import Transactions</ListItemText>
-      </MenuItem>
+      </MenuItem>*/}
     </Collapse>
   </>
 }

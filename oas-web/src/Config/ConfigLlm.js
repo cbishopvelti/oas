@@ -9,6 +9,7 @@ import {
 import {useQuery, gql, useMutation} from '@apollo/client'
 import { get, has } from 'lodash'
 import {useEffect, useState} from 'react'
+import { useOutletContext } from "react-router-dom";
 
 const onChange = ({formData, setFormData, key, isCheckbox}) => (event) => {
   if (isCheckbox) {
@@ -29,7 +30,12 @@ const onChange = ({formData, setFormData, key, isCheckbox}) => (event) => {
 
 export const ConfigLlm = () => {
 
+  const { setTitle } = useOutletContext();
   const [data, setData] = useState({})
+
+  useEffect(() => {
+    setTitle("Llm Config")
+  }, [])
 
   const { data: gqlData, refetech } = useQuery(gql`
     query {
