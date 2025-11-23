@@ -5,6 +5,7 @@ import { useState, useEffect } from "react"
 import { Box, Stack, Alert, TextField,
   FormControl, Button
 } from "@mui/material"
+import { useOutletContext } from "react-router-dom"
 
 const onChange = ({formData, setFormData, key, isCheckbox}) => (event) => {
   if (isCheckbox) {
@@ -18,14 +19,13 @@ const onChange = ({formData, setFormData, key, isCheckbox}) => (event) => {
     ...formData,
     [key]: !event.target.value ? "" : event.target.value
   })
-
-  console.log("001", newFormData)
   setFormData(newFormData)
 }
 
 export const ConfigContent = () => {
 
   const [data, setData] = useState({})
+  const { setTitle } = useOutletContext();
 
   const { data: gqlData, refetch } = useQuery(gql`
     query {
@@ -37,13 +37,17 @@ export const ConfigContent = () => {
   `)
 
   useEffect(() => {
+    setTitle("Content")
+  }, [])
+
+  useEffect(() => {
     setData(get(gqlData, "config_config", {}))
   }, [gqlData])
 
   const [saveConfig, {error}] = useMutation(gql`
     mutation($content: String!, $bacs: String!) {
       save_config_content(content: $content, bacs: $bacs) {
-        success
+        id
       }
     }
   `)
@@ -51,7 +55,6 @@ export const ConfigContent = () => {
   const errors = parseErrors(get(error, 'graphQLErrors', []))
 
   const save = async () => {
-    console.log("002", data)
     try {
       await saveConfig({
         variables: {

@@ -16,6 +16,7 @@ defmodule OasWeb.Schema.SchemaConfig do
     field :content, :string
     field :enable_booking, :boolean
     field :name, :string
+    field :gocardless_enabled, :boolean
     field :gocardless_id, :string
     field :gocardless_key, :string
     field :gocardless_account_id, :string
@@ -117,9 +118,9 @@ defmodule OasWeb.Schema.SchemaConfig do
       arg :content, :string
       arg :enable_booking, :boolean
       arg :name, :string
-      arg :gocardless_id, :string
-      arg :gocardless_key, :string
-      arg :gocardless_account_id, :string
+      # arg :gocardless_id, :string
+      # arg :gocardless_key, :string
+      # arg :gocardless_account_id, :string
       arg :credits, :boolean
       arg :backup_recipient, :string
       resolve fn _, args, _ ->
@@ -129,19 +130,17 @@ defmodule OasWeb.Schema.SchemaConfig do
         |> Ecto.Changeset.cast(args, [
           :token_expiry_days, :temporary_trainings,
           :enable_booking, :name,
-          :gocardless_id, :gocardless_key, :gocardless_account_id,
+          # :gocardless_id, :gocardless_key, :gocardless_account_id,
           :credits, :backup_recipient
         ], empty_values: [[], ""])
         |> Ecto.Changeset.validate_format(:backup_recipient, ~r/@/)
         |> Oas.Repo.update
         |> OasWeb.Schema.SchemaUtils.handle_error
 
-        Oas.Gocardless.Supervisor.restart()
-
         result
       end
     end
-    field :save_config_content, :success do
+    field :save_config_content, :config_config do
       arg :bacs, non_null(:string)
       arg :content, non_null(:string)
       resolve fn _, args, _ ->
@@ -152,6 +151,25 @@ defmodule OasWeb.Schema.SchemaConfig do
         ], empty_values: [[], ""])
         |> Oas.Repo.update
         |> OasWeb.Schema.SchemaUtils.handle_error
+
+        result
+      end
+    end
+    field :save_config_gocardless, :config_config do
+      arg :gocardless_enabled, :boolean
+      arg :gocardless_id, :string
+      arg :gocardless_key, :string
+      arg :gocardless_account_id, :string
+      resolve fn _, args, _ ->
+        result = from(cc in Oas.Config.Config, select: cc)
+        |> Oas.Repo.one
+        |> Ecto.Changeset.cast(args, [
+          :gocardless_enabled, :gocardless_id, :gocardless_key, :gocardless_account_id
+        ], empty_values: [[], ""])
+        |> Oas.Repo.update
+        |> OasWeb.Schema.SchemaUtils.handle_error
+
+        Oas.Gocardless.Supervisor.restart()
 
         result
       end

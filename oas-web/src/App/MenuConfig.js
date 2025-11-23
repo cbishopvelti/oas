@@ -14,7 +14,7 @@ export const MenuConfig = () => {
   const matches = useMatches();
 
   const menuIds = ["config"];
-  const subMenuIds = ['config-llm', 'config-content'];
+  const subMenuIds = ['config-llm', 'config-content', 'config-gocardless', 'gocardless', 'gocardless-requisition'];
   const allIds = [...menuIds, ...subMenuIds];
   const forceIds = [...subMenuIds];
 
@@ -43,6 +43,9 @@ export const MenuConfig = () => {
     return false;
   }
 
+  const gocardlessActive =
+    some(matches, ({id}) => includes(["config-gocardless", "gocardless", "gocardless-requisition"], id))
+
   return <>
     <MenuItem
       component={CustomLink(menuIds)} end to={`/config`}>
@@ -69,6 +72,14 @@ export const MenuConfig = () => {
         end
         >
         <ListItemText>Llm Context</ListItemText>
+      </MenuItem>
+      <MenuItem
+        sx={{ml:2}}
+        className={`${gocardlessActive ? "active" : ""}`}
+        component={NavLink}
+        to={`/config/config-gocardless`}
+        end>
+        <ListItemText>Gocardless</ListItemText>
       </MenuItem>
     </Collapse>
   </>
