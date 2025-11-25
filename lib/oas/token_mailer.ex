@@ -103,11 +103,11 @@ defmodule Oas.TokenMailer do
     cond do
       Decimal.lt?(total_amount, "0.0") && should_send_warning(last_transaction, credits) ->
         send_credits_warning(member, last_transaction)
-      true -> nil
+      true -> []
     end
   end
   def send_credits_warning(member, last_transaction) do
-    config = from(cc in Oas.Config.Config, select: cc) |> Oas.Repo.one
+    # config = from(cc in Oas.Config.Config, select: cc) |> Oas.Repo.one
 
     # last_two_cerdits = from(c from Oas.Credits.Credit,
     #   where: c.member_id == ^member.id and amount < 0
@@ -115,18 +115,62 @@ defmodule Oas.TokenMailer do
 
     href = "#{Application.fetch_env!(:oas, :public_url)}/credits"
 
-    Oas.Tokens.TokenNotifier.deliver(member.email, "#{config.name} notification",
-    """
-    Hi #{member.name}
+    # Oas.Tokens.TokenNotifier.deliver(member.email, "#{config.name} notification",
+    # """
+    # Hi #{member.name}
 
-    You have run out of credits, please check your credit balance at: #{href} and top up.
+    # You have run out of credits, please check your credit balance at: #{href} and top up. (If you bought tokens since #{last_transaction}, please ignore).
 
-    (If you bought tokens since #{last_transaction}, please ignore)
+    # Thanks
 
-    Thanks
-
-    #{config.name}
-    """)
+    # #{config.name}
+    # """)
+    ["You have run out of credits, please check your credit balance at: #{href} and top up. (If you bought tokens since #{last_transaction}, please ignore)."]
   end
   # EO CREDITS
+
+  # SO booking warning
+  def maybe_booking_warning(member, attendance) do
+    case from(a in Oas.Trainings.Attendance,
+      join: t in assoc(a, :training),
+      preload: [:inserted_by, training: t],
+      where: a.id == ^attendance.id and a.member_id != a.inserted_by_member_id and
+        fragment("date(?)", a.inserted_at) > t.when
+    )
+    |> Oas.Repo.one() do
+      nil -> []
+      attendance ->
+        ["You where booked into the jam/training on the #{attendance.training.when} by #{attendance.inserted_by.name}. Please have consideration for your fellow acrobats time and book yourself into future jams/trainings: #{Application.fetch_env!(:oas, :public_url)}/bookings"]
+    end
+
+  end
+
+  # EO booking warning
+
+  def warning_email(member, %{attendance: attendance} \\ %{attendance: nil}) do
+    config = from(cc in Oas.Config.Config, select: cc) |> Oas.Repo.one
+
+    items = maybe_send_credits_warning(member) ++
+    case attendance do
+      nil -> []
+      attendance ->
+        case config.enable_booking do
+          true -> maybe_booking_warning(member, attendance)
+          _ -> []
+        end
+    end
+    case items |> length do
+      0 -> nil
+      _ -> Oas.Tokens.TokenNotifier.deliver(member.email, "#{config.name} notification",
+        """
+        Hi #{member.name}
+
+        #{items |> Enum.join("\n\n")}
+
+        Thanks
+
+        #{config.name}
+        """)
+    end
+  end
 end

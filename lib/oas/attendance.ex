@@ -121,7 +121,8 @@ defmodule Oas.Attendance do
               training.training_where.credit_amount || Oas.Config.Tokens.get_min_token().value
             ),
             %{
-              now: now
+              now: now,
+              attendance: attendance
             }
           )
         else
@@ -130,9 +131,7 @@ defmodule Oas.Attendance do
       token -> use_token(token, attendance.id, training.when)
     end
 
-    # Task.async(fn ->
-    #   Oas.TokenMailer.maybe_send_warnings_email(member)
-    # end) |> Task.ignore()
+    # Depricated, is not send from deduct_credit
     Task.Supervisor.start_child(
       Oas.TaskSupervisor,
       fn ->
