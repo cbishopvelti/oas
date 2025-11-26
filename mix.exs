@@ -65,7 +65,9 @@ defmodule Oas.MixProject do
       {:nimble_csv, "~> 1.2"},
       {:timex, "~> 3.7"},
       {:dialyxir, "~> 1.4.5", only: [:dev], runtime: false},
-      {:mock, "~> 0.3.9"}
+      {:mock, "~> 0.3.9"},
+      {:ollama, "0.9.0"},
+      {:langchain, "~> 0.4.0"}
       # {:nx, "~> 0.9.2"},
       # {:bumblebee, "~> 0.6.0"},
       # {:exla, "~> 0.9.2"}, # Hardware acceleration (optional but recommended)

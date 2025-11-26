@@ -21,6 +21,7 @@ import { MenuMembershipPeriod } from './MenuMembershipPeriod';
 import { MenuAnalysis } from './MenuAnalysis';
 import { MenuVenue } from './MenuVenue';
 import { MenuThing } from './MenuThing';
+import { MenuConfig } from './MenuConfig';
 
 
 export const AppMenu = ({ setOpen }) => {
@@ -102,9 +103,10 @@ export const AppMenu = ({ setOpen }) => {
     </MenuItem> */}
     <MenuAnalysis setMenuOpen={setOpen} />
 
-    <MenuItem onClick={onClick} component={NavLink} end to="/config">
+    {/* <MenuItem onClick={onClick} component={NavLink} end to="/config">
       <ListItemText>Config</ListItemText>
-    </MenuItem>
+    </MenuItem>*/}
+    <MenuConfig setMenuOpen={setOpen} />
 
     <MenuItem onClick={onClick} sx={{
       padding: 0

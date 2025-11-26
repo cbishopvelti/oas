@@ -16,7 +16,8 @@ config :oas, Oas.Repo,
   # database: "./dbs/dev.db",
   # database: "./dbs/prod-backup-2025-11-03T19:35:33.875200Z.db",
   database: "/home/chris/oas-dev-dbs/prod-backup-2025-11-03T19:35:33.875200Z.db",
-  backup_database: "./dbs/sqlite-backup"
+  backup_database: "./dbs/sqlite-backup",
+  log: false
 
 config :oas, Oas.Repo.Replica1,
   database: System.get_env("DB_FILE_REPLICA_1") || "./dbs/sqlite-dev-replica-1.db"
@@ -31,7 +32,7 @@ config :oas, OasWeb.Endpoint,
   # Binding to loopback ipv4 address prevents access from other machines.
   # Change to `ip: {0, 0, 0, 0}` to allow access from other machines.
   http: [ip: {0, 0, 0, 0}, port: 4000],
-  url: [host: "localhost", port: "443", scheme: "https"],
+  url: [host: "localhost", port: 4000, scheme: "http"],
   pubsub_server: Oas.PubSub,
   check_origin: false,
   code_reloader: true,
@@ -117,7 +118,8 @@ config :oas, OasWeb.Endpoint,
   ]
 
 # Do not include metadata nor timestamps in development logs
-config :logger, :console, format: "[$level] $message\n", level: :debug
+config :logger, :console, format: "[$level] $message\n", level: :debug,
+  truncate: :infinity
 
 
 # Set a higher stacktrace during development. Avoid configuring such
@@ -131,4 +133,5 @@ config :oas,
   app_url: System.get_env("REACT_APP_ADMIN_URL") || "http://localhost:3999",
   public_url: System.get_env("REACT_APP_PUBLIC_URL") || "http://localhost:3998",
   disable_gocardless: true,
-  gocardless_backup_dir: "./gocardless_backup"
+  gocardless_backup_dir: "./gocardless_backup",
+  llm_sudio_url: "http://localhost:1234/v1/chat/completions"
