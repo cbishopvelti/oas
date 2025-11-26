@@ -27,6 +27,7 @@ docker run -it -d \
 -v /media/chris/fedora2/root/oas-dbs:/dbs \
 -v /oas-dbs-backup:/oas-dbs-backup \
 -v /media/chris/fedora2/root/gocardless_backup:/gocardless_backup \
+--add-host host.docker.internal:host-gateway \
 chrisjbishop155/oas:v2_prod
 ```
 
