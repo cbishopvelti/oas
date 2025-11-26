@@ -58,6 +58,10 @@ Removed outdated information from the success page ✅.
 Stop people registering with the same name ✅
 Error if backup fails ✅
 Change text on Credits page ✅
+Magic auth link
+llm feature
+Auth through llm
+Book through llm
 Delete from go_cardless
 Commitment mode [x]
 Show future events in filter [x]
@@ -66,3 +70,17 @@ Live update attending [x]
 Live update today booking [x]
 Users adding themselfs twice shouldnt happen [x]
 Style auth service for mobile [x]
+Redirect after registration form.
+Llm enabled for me; if only/first person in channel, then enable, else disable by default. Add whole channel disable option for admin. Maybe pass llm control for admins. [x]
+Saving history. [x]
+Surface chat list for admins. [x]
+Context admin. [x]
+Add llm presence. [x]
+Credits tool. [x]
+Handling if LLM isn't available. [x]
+disable messaging if llm is processing. [x]
+Fix delta/message syncing. [x]
+Fix not coming online when clicking Chat [x]
+css history list online [x]
+Add warning email for not booking in.
+Throttel streaming output. [x]

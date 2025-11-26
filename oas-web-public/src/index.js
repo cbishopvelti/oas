@@ -13,11 +13,12 @@ import { MembershipSuccess } from './Members/MembershipSuccess';
 import { Tokens } from './Tokens/Tokens';
 import { Credits } from './Credits/Credits';
 import { Bookings } from './Bookings/Bookings';
+import { PreLlm } from './Llm/Llm';
 import { Socket as PhoenixSocket } from "phoenix";
 import Cookies from "js-cookie";
 import * as AbsintheSocket from "@absinthe/socket";
 import { createAbsintheSocketLink } from "@absinthe/socket-apollo-link";
-
+import { LlmHistory } from './Llm/LlmHistory';
 
 const router = createBrowserRouter([
   {
@@ -48,6 +49,21 @@ const router = createBrowserRouter([
       {
         path: "bookings",
         element: <Bookings />
+      },
+      {
+        id: "llm",
+        path: "llm",
+        element: <PreLlm />
+      },
+      {
+        id: "llm-id",
+        path: "llm/:id",
+        element: <PreLlm />
+      },
+      {
+        id: "llm-history",
+        path: "llm-history",
+        element: <LlmHistory />
       }
     ],
   },

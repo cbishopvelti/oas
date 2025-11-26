@@ -27,6 +27,7 @@ docker run -it -d \
 -v /media/chris/fedora2/root/oas-dbs:/dbs \
 -v /oas-dbs-backup:/oas-dbs-backup \
 -v /media/chris/fedora2/root/gocardless_backup:/gocardless_backup \
+--add-host host.docker.internal:host-gateway \
 chrisjbishop155/oas:v2_prod
 ```
 
@@ -97,3 +98,21 @@ google app password ***REMOVED***
 
 ##### Works:
 :gen_smtp_client.open([port: 587, relay: "smtp.gmail.com", username: "chrisjbishop155@gmail.com", password: "***REMOVED***", auth: :always, sls: :always, ssl: false, tls: :always, tls_options: [verify: :verify_none]])
+
+#### Ubuntu
+
+docker run -it -d \
+--restart unless-stopped \
+--name=oas \
+-e DANGEROUSLY_DISABLE_HOST_CHECK=true \
+-e REACT_APP_ADMIN_URL="https://admin.oxfordshireacrosociety.co.uk" \
+-e REACT_APP_SERVER_URL="https://server.oxfordshireacrosociety.co.uk" \
+-e REACT_APP_PUBLIC_URL="https://www.oxfordshireacrosociety.co.uk" \
+-e DOMAIN=".oxfordshireacrosociety.co.uk" \
+-e DB_FILE=/dbs/sqlite-prod.db \
+-e MIX_ENV=v2_prod \
+-p 80:80 -p 443:443 \
+-v /media/chris/fedora/root/oas-dbs:/dbs \
+-v /oas-dbs-backup:/oas-dbs-backup \
+-v /media/chris/fedora/root/gocardless_backup:/gocardless_backup \
+chrisjbishop155/oas:v2_prod

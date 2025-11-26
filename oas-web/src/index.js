@@ -33,6 +33,7 @@ import { MemberTrainingAttendance } from './Member/MemberTrainingAttendance';
 import { ConfigTokens } from './Config/ConfigTokens';
 import { Gocardless } from './Config/Gocardless';
 import { GocardlessRequisition } from './Config/GocardlessRequisition';
+import { ConfigLlm } from './Config/ConfigLlm';
 import { AnalysisAttendance } from './Analysis/AnalysisAttendance';
 import { AnalysisBalance } from './Analysis/AnalysisBalance';
 import { Socket as PhoenixSocket } from "phoenix";
@@ -163,6 +164,11 @@ const router = createBrowserRouter([
         id: "config",
         path: "config",
         element: <ConfigTokens />
+      },
+      {
+        id: "config-llm",
+        path: "config/llm",
+        element: <ConfigLlm />
       },
       {
         id: "gocardless",

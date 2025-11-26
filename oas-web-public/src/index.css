@@ -8,6 +8,87 @@ body {
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+    font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+    white-space: wrap;
 }
+
+.llm-content {
+    border: 1px solid gray;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    padding: 4px;
+}
+
+span.online {
+    display: inline-block;
+    height: 10px;
+    width: 10px;
+    background-color: green;
+    border-radius: 50%;
+    margin-left: 4px;
+}
+span.offline {
+    display: inline-block;
+    height: 10px;
+    width: 10px;
+    background-color: gray;
+    border-radius: 50%;
+    margin-left: 4px;
+}
+
+ul.presence-participants {
+    display: flex;
+    margin: 0;
+    padding: 0;
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+    justify-content: space-around;
+    column-gap: 8px;
+}
+ul.presence-participants li {
+    list-style: none;
+    border: 1px solid gray;
+    border-radius: 4px;
+    padding: 4px 16px;
+    /*padding-right: 8px;*/
+    align-content: center;
+}
+ul.presence-participants li span.MuiSwitch-root {
+    /*background-color: green;*/
+    /*padding-right: 0px;*/
+    margin-right: -8px;
+}
+ul.history-participants {
+    display: flex;
+    margin: 0;
+    padding: 0;
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+    /*justify-content: space-between;*/
+    column-gap: 16px;
+}
+ul.history-participants li {
+    list-style: none;
+    border: 1px solid gray;
+    border-radius: 4px;
+    padding: 4px 16px;
+}
+
+div.chat-content {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 32px);
+}
+
+div.chat-content .messages {
+    flex-grow: 20;
+    flex-shrink: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column-reverse;
+}
+
+/*div.chat-content .chat-input {
+    display: flex;
+    flex-direction: column;
+}*/

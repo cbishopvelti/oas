@@ -147,7 +147,7 @@ defmodule OasWeb.Schema.SchemaUser do
         :user_add_attendance, :user_undo_attendance,
         :add_attendance, :delete_attendance
       ], topic: fn attendance ->
-        IO.inspect(attendance, label: "508")
+        IO.inspect(attendance, label: "508 subscription user_attendance_attendance")
         attendance.member_id
       end
     end

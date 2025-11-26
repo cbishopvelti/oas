@@ -73,7 +73,7 @@ defmodule Oas.Members.Membership do
       ) do
         nil
       else
-        [membership] = membership_period.memberships
+        [_membership] = membership_period.memberships
         nil
       end
     end)
