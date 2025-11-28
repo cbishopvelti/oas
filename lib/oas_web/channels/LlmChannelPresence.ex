@@ -7,7 +7,7 @@ defmodule OasWeb.Channels.LlmChannelPresence do
     {:ok, %{}}
   end
 
-  def handle_info(msg, socket) do
+  def handle_info(_msg, socket) do
     # IO.inspect(msg, label: "305")
     {:noreply, socket}
   end
@@ -25,7 +25,7 @@ defmodule OasWeb.Channels.LlmChannelPresence do
     |> Map.new()
   end
 
-  def handle_metas(topic, %{joins: joins, leaves: leaves} = msg, presences, state) do
+  def handle_metas(topic, %{joins: joins, leaves: leaves}, _presences, state) do
 
     # IO.puts("301 handle_metas")
     # Phoenix.PubSub.local_broadcast(.PubSub, "proxy:#{topic}", msg)

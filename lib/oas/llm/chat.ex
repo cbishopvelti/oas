@@ -1,4 +1,3 @@
-import Ecto.Query, only: [from: 2]
 
 defmodule Oas.Llm.Chat do
   use Ecto.Schema

@@ -75,13 +75,18 @@ export const LLMOutputOpitons = {
     },
   ],
   isStreamFinished: true,
-  throttle: throttleBasic({
-    readAheadChars: 1,
-    targetBufferChars: 1,
-    adjustPercentage: 1,
-    frameLookBackMs: 20,
-    windowLookBackMs: 0,
-  })
+  // throttle: throttleBasic({
+  //   readAheadChars: 1,
+  //   targetBufferChars: 1,
+  //   adjustPercentage: 1,
+  //   frameLookBackMs: 0,
+  //   windowLookBackMs: 0,
+  // })
+  throttle: (params) => {
+    return {
+      visibleTextIncrement: 9999999
+    }
+  }
 }
 
 const maybeGetName = (message) => {

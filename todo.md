@@ -73,12 +73,14 @@ Style auth service for mobile [x]
 Redirect after registration form.
 Llm enabled for me; if only/first person in channel, then enable, else disable by default. Add whole channel disable option for admin. Maybe pass llm control for admins. [x]
 Saving history. [x]
-Surface chat list for admins.
+Surface chat list for admins. [x]
 Context admin. [x]
 Add llm presence. [x]
-Credits tool.
+Credits tool. [x]
 Handling if LLM isn't available.
-disable messaging if llm is processing.
-Fix delta/message syncing
-Fix not coming online when clicking Chat
-css sub menu and history list online
+disable messaging if llm is processing. [x]
+Fix delta/message syncing. [x]
+Fix not coming online when clicking Chat [x]
+css history list online [x]
+Add warning email for not booking in.
+Throttel streaming output. [x]

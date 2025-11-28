@@ -15,13 +15,13 @@ defmodule Oas.Application do
       # Start the PubSub system
       {Phoenix.PubSub, name: Oas.PubSub},
       OasWeb.Channels.LlmChannelPresence,
-      OasWeb.Channels.LlmSupervisor,
       {Registry, keys: :unique, name: OasWeb.Channels.LlmRegistry},
       # Start a worker by calling: Oas.Worker.start_link(arg)
       # {Oas.Worker, arg}
       Oas.BackupJob,
       # Oas.Gocardless.AuthServer,
       Oas.Gocardless.Supervisor,
+      {Task.Supervisor, name: Oas.TaskSupervisor},
       # Start the Endpoint (http/https)
       OasWeb.Endpoint,
       {Absinthe.Subscription, OasWeb.Endpoint}

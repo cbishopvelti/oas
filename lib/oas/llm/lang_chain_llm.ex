@@ -1,10 +1,9 @@
 import Ecto.Query, only: [from: 2]
 
 defmodule Oas.Llm.LangChainLlm do
-  alias LangChain.Message.ContentPart
+  alias LangChain.MessageDelta
   alias LangChain.Message
   alias LangChain.ChatModels.ChatOpenAI
-  alias LangChain.Utils.ChainResult
   alias LangChain.Chains.LLMChain
 
   use GenServer
@@ -32,31 +31,52 @@ defmodule Oas.Llm.LangChainLlm do
     callbacks = %{
       on_llm_new_delta: fn chain, deltas ->
         # IO.inspect(deltas, label: "305 on_llm_new_delta")
-        Enum.each(deltas, fn delta ->
-          # IO.write(delta.content)
+        # Enum.each(deltas, fn delta ->
+        #   # IO.write(delta.content)
+        #   GenServer.cast(
+        #     init_args.parent_pid,
+        #     {:broadcast,
+        #      {:delta,
+        #       %{
+        #         content: delta.content,
+        #         role: delta.role,
+        #         status: delta.status,
+        #         metadata: %{
+        #           index: chain.messages |> length()
+        #         }
+        #       }}}
+        #   )
+        # end)
+        if ((deltas |> length) > 0) do
           GenServer.cast(
             init_args.parent_pid,
             {:broadcast,
-             {:delta,
-              %{
-                content: delta.content,
-                role: delta.role,
-                status: delta.status,
-                message_index: chain.messages |> length()
-              }}}
+              {
+                :delta,
+                deltas
+                # |> IO.inspect(label: "301 deltas")
+                |> MessageDelta.merge_deltas()
+                # |> IO.inspect(label: "302")
+                |> (&(Map.put(&1, :content, MessageDelta.content_to_string(&1)))).()
+                |> Map.put(:metadata, %{
+                  index: chain.messages |> length()
+                })
+            } }
           )
-        end)
+        end
+
       end,
       on_message_processed: fn chain, %Message{} = message ->
         # IO.inspect(message, label: "306 on_message_processed")
         # IO.inspect(chain, label: "306.1 chain")
+        message = message |> Map.put(
+          :metadata,
+          (message.metadata || %{}) |> Map.put(:index, (chain.messages |> length) - 1)
+        )
         GenServer.cast(
           init_args.parent_pid,
           {:message,
-            %{
-              message: message,
-              message_index: (chain.messages |> length()) - 1
-            }
+            message
           }
         )
         nil

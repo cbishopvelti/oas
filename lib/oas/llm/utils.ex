@@ -20,7 +20,7 @@ defmodule Oas.Llm.Utils do
         end)
     end
   end
-  defp decode(item, opts) when is_map(item) do
+  defp decode(item, _opts) when is_map(item) do
     Enum.map(item, fn ({k, v}) ->
       key = String.to_atom(k)
       case key do
@@ -46,9 +46,9 @@ defmodule Oas.Llm.Utils do
   def restore(%{chat: chat}) do
 
     Jason.decode!(chat)["messages"]
-    |> IO.inspect(label: "406 tool call")
+    # |> IO.inspect(label: "406 tool call")
     |> decode(struct: Message)
-    |> IO.inspect(label: "407")
+    # |> IO.inspect(label: "407")
   end
 
   def save(state) do

@@ -76,6 +76,7 @@ export const Bookings = () => {
     }
   }`, {
     onData({ data }) {
+      console.log("005 user_attendance_attendance SHOULD HAPPEN")
       refetch()
     }
   })

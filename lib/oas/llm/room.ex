@@ -1,12 +1,8 @@
 import Ecto.Query, only: [from: 2]
 
-defmodule Oas.Llm.RoomLangChain do
-  alias LangChain.Utils
-  alias LangChain.Message.ContentPart
+# defmodule Oas.Llm.RoomLangChain do
+defmodule Oas.Llm.Room do
   alias LangChain.Message
-  alias LangChain.ChatModels.ChatOpenAI
-  alias LangChain.Utils.ChainResult
-  alias LangChain.Chains.LLMChain
   use GenServer
 
   def start(topic, {pid, channel_context}) do
@@ -119,7 +115,7 @@ defmodule Oas.Llm.RoomLangChain do
 
     presence_meta = OasWeb.Channels.LlmChannelPresence.list(state.topic)
     |> Map.to_list()
-    |> Enum.find_value(fn ({pres_id, presence}) ->
+    |> Enum.find_value(fn ({_pres_id, presence}) ->
       presence.metas |> Enum.find(fn %{llm: llm} ->
         llm
       end)
@@ -184,7 +180,7 @@ defmodule Oas.Llm.RoomLangChain do
     new_parents = Map.delete(state.parents, pid)
 
     # Shutdown the thing if there are no connected channels
-    if Map.size(new_parents) === 0 do
+    if map_size(new_parents) === 0 do
       IO.puts("Last monitor is gone. Shutting down worker.")
       {:stop, :normal, %{state | parents: new_parents}}
     else
@@ -205,10 +201,9 @@ defmodule Oas.Llm.RoomLangChain do
     message =
       Message.new_user!(prompt)
       |> Map.put(:metadata, %{
-        member: member
+        member: member,
+        index: state.messages |> length
       })
-
-
 
     GenServer.cast(
       self(),
@@ -238,7 +233,7 @@ defmodule Oas.Llm.RoomLangChain do
 
   # llm -> client
   @impl true
-  def handle_cast({:message, %{message: message, message_index: message_index}}, state) do
+  def handle_cast({:message, message}, state) do
 
     GenServer.cast(
       self(),
@@ -252,7 +247,10 @@ defmodule Oas.Llm.RoomLangChain do
             } end),
           role: message.role,
           status: message.status,
-          message_index: message_index
+          # message_index: message_index
+          metadata: %{
+            index: message.metadata.index
+          }
         }}}
     )
 
@@ -261,11 +259,19 @@ defmodule Oas.Llm.RoomLangChain do
 
     {:noreply, new_state}
   end
+  # delta
   def handle_cast({:broadcast, message, not_pid}, state) do
     parents = state.parents |> Map.delete(not_pid)
 
     Enum.each(parents, fn {pid, _id_str} ->
       GenServer.cast(pid, message)
+    end)
+
+    {:noreply, state}
+  end
+  def handle_cast({:boardcast, {:delta, message}}, state) do
+    Enum.each(state.parents, fn {pid, _id_str} ->
+      GenServer.cast(pid, {:delta, message})
     end)
 
     {:noreply, state}

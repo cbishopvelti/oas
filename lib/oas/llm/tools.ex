@@ -3,28 +3,28 @@ import Ecto.Query, only: [from: 2]
 defmodule Oas.Llm.Tools do
   alias LangChain.Function
 
-  defp get_authentication_tool do
-    auth_tool = Function.new!(%{
-      name: "Authentication tool",
-      description: "If the user asks for their details, or anything that requires authentication and they're not authenticated, run this.",
-      parameters_schema: %{
-        type: "object",
-        properties: %{
-          # thing: %{
-          #   type: "string",
-          #   description: "The thing whose location is being requested."
-          # }
-        },
-        # required: ["thing"]
-      },
-      function: fn _args, _context ->
-        IO.puts("This Happened")
-        # {:ok, "Login in here: " <> "<a href=\"http://the_auth_server:4000/sign_in\">http://the_auth_server:4000/sign_in</a>"}
-        {:ok, "Login " <> "[here](http://the_auth_server:4000/sign_in)"}
-      end
-    })
-    auth_tool
-  end
+  # defp get_authentication_tool do
+  #   auth_tool = Function.new!(%{
+  #     name: "Authentication tool",
+  #     description: "If the user asks for their details, or anything that requires authentication and they're not authenticated, run this.",
+  #     parameters_schema: %{
+  #       type: "object",
+  #       properties: %{
+  #         # thing: %{
+  #         #   type: "string",
+  #         #   description: "The thing whose location is being requested."
+  #         # }
+  #       },
+  #       # required: ["thing"]
+  #     },
+  #     function: fn _args, _context ->
+  #       IO.puts("This Happened")
+  #       # {:ok, "Login in here: " <> "<a href=\"http://the_auth_server:4000/sign_in\">http://the_auth_server:4000/sign_in</a>"}
+  #       {:ok, "Login " <> "[here](http://the_auth_server:4000/sign_in)"}
+  #     end
+  #   })
+  #   auth_tool
+  # end
 
   def book_upcoming_event_tool do
     book_upcoming_event_tool = Function.new!(%{
@@ -53,13 +53,18 @@ defmodule Oas.Llm.Tools do
               nil -> {:error, "Error finding event/traning/jam to add you to."}
               event -> # Oas.Attendance.add_attendance(%{member_id: 1, training_id: 267},%{inserted_by_member_id: 1})
                 try do
-                  Oas.Attendance.add_attendance(
+                  {:ok, _attendance} = Oas.Attendance.add_attendance(
                     %{member_id: member_id, training_id: event.id},
                     %{inserted_by_member_id: member_id}
-                  ) |> IO.inspect(label: "402")
+                  )
+                  # Absinthe.Subscription.publish(OasWeb.Endpoint, %{success: true}, user_attendance_attendance: 139)
+                  Absinthe.Subscription.publish(OasWeb.Endpoint, %{success: true}, user_attendance_attendance: member_id)
+                  Absinthe.Subscription.publish(OasWeb.Endpoint, %{id: event.id}, attendance_attendance: event.id)
+
                   {:ok, "Added to event"}
                 catch
-                  {:error, [%{message: "training_id: has already been taken"} | _]} -> {:error, "You are already booked in to the jam/training."}
+                  {:error, [%{message: "training_id: has already been taken"} | _]} ->
+                    {:error, "The user is already booked in to the jam/training. Tell the user they're already booked in."}
                   {:error, _} -> {:error, "An error occurred"}
                 end
             end
@@ -112,8 +117,8 @@ defmodule Oas.Llm.Tools do
         |> Enum.map(fn booking ->
           attending = Map.get(booking, :attendance, [])
             |> case do
-              [x | _] -> "Attending"
-              _ -> "Not attending"
+              [_x | _] -> "User is attending this event"
+              _ -> "User is not attending this event"
             end
 
           "#{Map.get(booking, :when)}, #{Map.get(booking, :training_where) |> Map.get(:name)}, #{attending}"

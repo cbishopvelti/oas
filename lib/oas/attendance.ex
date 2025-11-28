@@ -130,9 +130,15 @@ defmodule Oas.Attendance do
       token -> use_token(token, attendance.id, training.when)
     end
 
-    Task.async(fn ->
-      Oas.TokenMailer.maybe_send_warnings_email(member)
-    end)
+    # Task.async(fn ->
+    #   Oas.TokenMailer.maybe_send_warnings_email(member)
+    # end) |> Task.ignore()
+    Task.Supervisor.start_child(
+      Oas.TaskSupervisor,
+      fn ->
+        Oas.TokenMailer.maybe_send_warnings_email(member)
+      end
+    )
 
     {:ok, %{
       success: true,
