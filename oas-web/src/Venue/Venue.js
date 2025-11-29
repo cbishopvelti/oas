@@ -1,6 +1,8 @@
 import { gql, useQuery, useMutation } from "@apollo/client";
 import { FormControl, TextField, Box, Button,
-  Stack, Alert, Autocomplete, Tabs, Tab } from "@mui/material";
+  Stack, Alert, Autocomplete, Tabs, Tab,
+  TableHead, TableContainer, TableCell, TableRow, Table,
+  TableBody, IconButton} from "@mui/material";
 import TabContext from '@mui/lab/TabContext';
 import TabList from '@mui/lab/TabList';
 import TabPanel from '@mui/lab/TabPanel';
@@ -8,8 +10,12 @@ import { useEffect, useState as useReactState } from "react";
 // import { useState } from "../utils/useState";
 import moment from "moment";
 import { get, omit, has } from 'lodash'
-import { useNavigate, useParams, useOutletContext } from "react-router-dom";
+import { useNavigate, useParams, useOutletContext, Link } from "react-router-dom";
 import { parseErrors } from "../utils/util";
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import { dayToString } from "./VenueTime";
+
 
 export const Venue = () => {
   const { setTitle } = useOutletContext();
@@ -38,7 +44,13 @@ export const Venue = () => {
       training_where(id: $id) {
         id,
         name,
-        credit_amount
+        credit_amount,
+        training_where_time {
+          id,
+          day_of_week,
+          start_time,
+          recurring
+        }
       }
     }
   `, {
@@ -102,44 +114,103 @@ export const Venue = () => {
 
   const errors = parseErrors(error?.graphQLErrors);
 
-  return <Box sx={{display: 'flex', flexWrap: 'wrap' }}>
-    <FormControl fullWidth sx={{mt: 2, mb: 2, m: 2}}>
-      <TextField
-        required
-        id="name"
-        label="Name"
-        value={get(formData, "name", '')}
-        onChange={
-          onChange({formData, setFormData, key: "name"})
-        }
-        InputLabelProps={{
-          shrink: true,
-        }}
-        error={has(errors, "name")}
-        helperText={get(errors, "name", []).join(" ")}
-        />
-    </FormControl>
+  const [deleteTrainingWhereTimeMutation] = useMutation(gql`
+    mutation($id: Int!) {
+      delete_training_where_time(id: $id) {
+        success
+      }
+    }
+  `)
+  const deleteTrainingWhereTime = (training_where_time_id) => async () => {
+    await deleteTrainingWhereTimeMutation({
+      variables: {
+        id: training_where_time_id
+      }
+    })
+    refetch();
+  }
 
-    <FormControl fullWidth sx={{mt: 2, mb: 2, m: 2}}>
-      <TextField
-        required
-        id="credit-amount"
-        label="Amount"
-        value={get(formData, "credit_amount", '')}
-        onChange={
-          onChange({formData, setFormData, key: "credit_amount"})
-        }
-        InputLabelProps={{
-          shrink: true,
-        }}
-        inputMode="numeric"
-        pattern="[0-9\.]*"
-        error={has(errors, "credit_amount")}
-        helperText={get(errors, "credit_amount", []).join(" ")}
-        />
-    </FormControl>
-    <FormControl fullWidth sx={{m: 2}}>
-      <Button onClick={save(formData)}>Save</Button>
-    </FormControl>
-  </Box>
+  return <div>
+    <Box sx={{display: 'flex', flexWrap: 'wrap' }}>
+      <FormControl fullWidth sx={{mt: 2, mb: 2, m: 2}}>
+        <TextField
+          required
+          id="name"
+          label="Name"
+          value={get(formData, "name", '')}
+          onChange={
+            onChange({formData, setFormData, key: "name"})
+          }
+          InputLabelProps={{
+            shrink: true,
+          }}
+          error={has(errors, "name")}
+          helperText={get(errors, "name", []).join(" ")}
+          />
+      </FormControl>
+
+      <FormControl fullWidth sx={{mt: 2, mb: 2, m: 2}}>
+        <TextField
+          required
+          id="credit-amount"
+          label="Amount"
+          value={get(formData, "credit_amount", '')}
+          onChange={
+            onChange({formData, setFormData, key: "credit_amount"})
+          }
+          InputLabelProps={{
+            shrink: true,
+          }}
+          inputMode="numeric"
+          pattern="[0-9\.]*"
+          error={has(errors, "credit_amount")}
+          helperText={get(errors, "credit_amount", []).join(" ")}
+          />
+      </FormControl>
+      <FormControl fullWidth sx={{m: 2}}>
+        <Button onClick={save(formData)}>Save</Button>
+      </FormControl>
+    </Box>
+    {id && <Box sx={{ mt: 2, mb: 2, m: 2 }}>
+      <div style={{ display: "flex", justifyContent: "space-between" }}>
+        <h3 style={{ display: "inline" }}>Times</h3>
+
+        <Button
+          to={`/venue-time/${id}`}
+          component={Link}>Add time</Button>
+      </div>
+
+      <TableContainer>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Id</TableCell>
+              <TableCell>Day of week</TableCell>
+              <TableCell>Start time</TableCell>
+              <TableCell>Recurring</TableCell>
+              <TableCell>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {get(data, 'training_where.training_where_time', []).map((training_where_time, i) => {
+              return <TableRow key={i}>
+                <TableCell>{training_where_time.id}</TableCell>
+                <TableCell>{dayToString(training_where_time.day_of_week)}</TableCell>
+                <TableCell>{training_where_time.start_time}</TableCell>
+                <TableCell>{(training_where_time.recurring || false).toString()}</TableCell>
+                <TableCell>
+                  <IconButton title={`Edit ${training_where_time.id}`} component={Link} to={`/venue-time/${id}/${training_where_time.id}`}>
+                    <EditIcon />
+                  </IconButton>
+                  <IconButton title={`Delete ${training_where_time.id}`} onClick={deleteTrainingWhereTime(training_where_time.id)}>
+                    <DeleteIcon sx={{color: "red"}} />
+                  </IconButton>
+                </TableCell>
+              </TableRow>
+            })}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>}
+  </div>
 }

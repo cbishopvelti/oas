@@ -69,7 +69,6 @@ export const TrainingWhere = ({
           ...(id ? {id: id} : {} )
         }
       }
-      console.log("001", objToSet)
       setFormData(objToSet)
     }}
   />

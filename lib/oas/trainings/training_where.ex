@@ -7,6 +7,7 @@ defmodule Oas.Trainings.TrainingWhere do
     field :credit_amount, :decimal
 
     has_many :trainings, Oas.Trainings.Training, foreign_key: :training_where_id
+    has_many :training_where_time, Oas.Trainings.TrainingWhereTime, foreign_key: :training_where_id
 
     timestamps()
   end
