@@ -187,7 +187,7 @@ export const TrainingForm = ({id, data, refetch}) => {
               onChange={onChange({ formData, setFormData, key: 'commitment', isCheckbox: true })} />
           }
           label="Commitment mode"
-          title="The user only gets a minute to cancel their booking."
+          title="The user only gets a minute to cancel their booking, this will override any time settings."
         />
       </FormControl>}
 

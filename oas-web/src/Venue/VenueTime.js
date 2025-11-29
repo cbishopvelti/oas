@@ -141,7 +141,7 @@ export const VenueTime = () => {
         id="day-of-week">
         <MenuItem value="">&nbsp;</MenuItem>
         {
-          range(1, 7).map((day_of_week, id) => {
+          range(1, 8).map((day_of_week, id) => {
             return <MenuItem key={id} value={day_of_week}>
               {dayToString(day_of_week)}
             </MenuItem>
@@ -201,7 +201,7 @@ export const VenueTime = () => {
             onChange={onChange({formData, setFormData, key: 'recurring', isCheckbox: true})}/>
         }
         title="If preceding events should be auto generated."
-        label="Recuring?"
+        label="Recuring"
         />
       {has(errors, "recurring") && <FormHelperText error={true}>
         {get(errors, "recurring", []).join(" ")}

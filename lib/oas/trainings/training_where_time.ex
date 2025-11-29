@@ -54,7 +54,7 @@ defmodule Oas.Trainings.TrainingWhereTime do
   end
 
   def get_booking_cutoff(training, nil) do
-    training.when
+    NaiveDateTime.new!(training.when, ~T[00:00:00])
   end
   def get_booking_cutoff(training, training_where_time) do
     # IO.inspect(training, label: "501 training")
