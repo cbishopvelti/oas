@@ -15,6 +15,8 @@ defmodule OasWeb.Schema.SchemaUser do
     field :id, :integer
     field :where, :string
     field :when, :string
+    field :start_time, :string
+    field :booking_cutoff, :string
     field :attendance_id, :integer
     field :inserted_by_member_id, :integer
     field :inserted_at, :string
@@ -43,16 +45,20 @@ defmodule OasWeb.Schema.SchemaUser do
         result = from(trai in Oas.Trainings.Training,
           left_join: atte in assoc(trai, :attendance), on: atte.training_id == trai.id and atte.member_id == ^id,
           left_join: memb in assoc(atte, :member),
-          preload: [:training_where, attendance: {atte, [member: memb]}],
+          preload: [training_where: [:training_where_time], attendance: {atte, [member: memb]}],
           where: trai.when >= ^Date.utc_today() and
           (memb.id == ^id or is_nil(memb.id)),
           order_by: [asc: trai.when, desc: trai.id]
         ) |> Oas.Repo.all
         |> Enum.map(fn booking ->
+          training_where_time = Oas.Trainings.TrainingWhereTime.find_training_where_time(booking, booking.training_where.training_where_time)
+
           %{
             id: Map.get(booking, :id),
             where: Map.get(booking, :training_where) |> Map.get(:name),
             when: Map.get(booking, :when),
+            start_time: Map.get(training_where_time || %{}, :start_time, nil),
+            booking_cutoff: Oas.Trainings.TrainingWhereTime.get_booking_cutoff(booking, training_where_time),
             attendance_id: Map.get(booking, :attendance, [])
               |> List.first
               |> case do

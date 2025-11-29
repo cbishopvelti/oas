@@ -65,6 +65,7 @@ defmodule OasWeb.Schema.SchemaAttendance do
     field :warnings, list_of(:string)
     field :inserted_at, :string
     field :inserted_by_member_id, :integer
+    field :booking_cutoff, :string
   end
 
   # import_types OasWeb.Schema.SchemaTypes
@@ -79,7 +80,7 @@ defmodule OasWeb.Schema.SchemaAttendance do
         results = from(a in Oas.Trainings.Attendance,
           inner_join: m in assoc(a, :member),
           preload: [
-            :training,
+            [training: [training_where: [:training_where_time]]],
             :credit,
             member: [membership_periods: ^from(mp in Oas.Members.MembershipPeriod, where: mp.from <= ^training.when and mp.to >= ^training.when)]
           ],
@@ -89,6 +90,7 @@ defmodule OasWeb.Schema.SchemaAttendance do
         )
         |> Oas.Repo.all
         |> Enum.map(fn record ->
+
           %{member: member} = record
           tokens = Oas.Attendance.get_token_amount(%{member_id: member.id})
           record = Map.put(record, :tokens, tokens)
@@ -102,6 +104,18 @@ defmodule OasWeb.Schema.SchemaAttendance do
             {%{warnings: warnings}, _} -> Map.put(record, :warnings, warnings ++ Map.get(record, :warnings, []))
             _ -> record
           end
+
+          record = Map.put(
+            record,
+            :booking_cutoff,
+            Oas.Trainings.TrainingWhereTime.get_booking_cutoff(
+              record.training,
+              Oas.Trainings.TrainingWhereTime.find_training_where_time(
+                record.training,
+                record.training.training_where.training_where_time
+              )
+            )
+          )
 
           case Oas.Credits.Credit2.get_credit_amount(%{member_id: member.id}) do
             {_, %Decimal{sign: -1}} -> Map.put(record, :warnings, ["No credits"] ++ Map.get(record, :warnings, []))
