@@ -42,6 +42,7 @@ import * as AbsintheSocket from "@absinthe/socket";
 import { createAbsintheSocketLink } from "@absinthe/socket-apollo-link";
 import { Venue } from './Venue/Venue';
 import { Venues } from './Venue/Venues';
+import { VenueTime } from './Venue/VenueTime';
 import { Thing } from './Things/Thing';
 import { Things } from './Things/Things';
 
@@ -192,6 +193,11 @@ const router = createBrowserRouter([
         path: "venue/:id",
         element: <Venue />
       }, {
+        id: "venue-time",
+        path: "venue-time/:training_where_id/:id?",
+        element: <VenueTime />
+      },
+      {
         id: "things",
         path: "things",
         element: <Things />

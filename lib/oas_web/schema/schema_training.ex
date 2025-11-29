@@ -2,11 +2,21 @@ import Ecto.Query, only: [from: 2]
 defmodule OasWeb.Schema.SchemaTraining do
   use Absinthe.Schema.Notation
 
+  object :training_where_time do
+    field :id, :integer
+    field :day_of_week, :integer
+    field :start_time, :string
+    field :booking_offset, :string
+    field :end_time, :string
+    field :recurring, :boolean
+  end
+
   object :training_where do
     field :id, :integer
     field :name, :string
     field :credit_amount, :string
     field :trainings, list_of(:training)
+    field :training_where_time, list_of(:training_where_time)
   end
   input_object :training_where_arg do
     field :id, :integer
@@ -90,7 +100,7 @@ defmodule OasWeb.Schema.SchemaTraining do
       resolve fn _,_,_ ->
         result = from(w in Oas.Trainings.TrainingWhere,
           select: w,
-          preload: :trainings
+          preload: [:trainings]
         )
         |> Oas.Repo.all()
 
