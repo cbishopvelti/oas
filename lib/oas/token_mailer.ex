@@ -140,9 +140,8 @@ defmodule Oas.TokenMailer do
     |> Oas.Repo.one() do
       nil -> []
       attendance ->
-        ["You where booked into the jam/training on the #{attendance.training.when} by #{attendance.inserted_by.name}. Please have consideration for your fellow acrobats time and book yourself into future jams/trainings: #{Application.fetch_env!(:oas, :public_url)}/bookings"]
+        ["You were booked into the jam/training on the #{attendance.training.when} by #{attendance.inserted_by.name}. Please help use reduce errors and save us time by booking yourself into future jams/trainings: #{Application.fetch_env!(:oas, :public_url)}/bookings"]
     end
-
   end
 
   # EO booking warning
