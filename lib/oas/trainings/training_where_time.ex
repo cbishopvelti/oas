@@ -4,7 +4,7 @@ defmodule Oas.Trainings.TrainingWhereTime do
 
 
   schema "training_where_time" do
-    belongs_to :training_where, Oas.Tranings.TrainingWhere
+    belongs_to :training_where, Oas.Trainings.TrainingWhere
     field :day_of_week, :integer
     field :start_time, :time
     field :booking_offset, :string

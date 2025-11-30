@@ -53,7 +53,7 @@ defmodule OasWeb.Schema.SchemaTrainingWhere do
       arg :end_time, :string
       arg :recurring, :boolean
       resolve fn _, args, _ ->
-        case args do
+        out = case args do
           %{id: id} -> Oas.Repo.get(Oas.Trainings.TrainingWhereTime, id)
           _ -> %Oas.Trainings.TrainingWhereTime{}
         end
@@ -63,6 +63,10 @@ defmodule OasWeb.Schema.SchemaTrainingWhere do
           %{data: %{id: _}} -> Oas.Repo.update(&1)
         end)).()
         |> OasWeb.Schema.SchemaUtils.handle_error
+
+        GenServer.cast(Oas.Trainings.RecurringServer, :rerun)
+
+        out
       end
     end
 
