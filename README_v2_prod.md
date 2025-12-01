@@ -31,6 +31,13 @@ docker run -it -d \
 chrisjbishop155/oas:v2_prod
 ```
 
+```
+docker exec -it oas /bin/bash
+cp /app/nginx/v2_nginx.conf /etc/nginx/nginx.conf && certbot --nginx
+nginx -s stop
+nginx
+```
+
 ### Fedora
 ```
 docker pull chrisjbishop155/oas:v2_prod;
@@ -51,13 +58,6 @@ docker run -it -d \
 -v /mnt/disk2/oas-dbs-backup:/oas-dbs-backup \
 -v /gocardless_backup:/gocardless_backup \
 chrisjbishop155/oas:v2_prod
-```
-
-```
-docker exec -it oas /bin/bash
-cp /app/nginx/v2_nginx.conf /etc/nginx/nginx.conf && certbot --nginx
-nginx -s stop
-nginx
 ```
 
 ```
