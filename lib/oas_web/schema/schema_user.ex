@@ -53,8 +53,6 @@ defmodule OasWeb.Schema.SchemaUser do
         |> Enum.map(fn booking ->
           training_where_time = Oas.Trainings.TrainingWhereTime.find_training_where_time(booking, booking.training_where.training_where_time)
 
-          now = NaiveDateTime.utc_now()
-
           %{
             id: Map.get(booking, :id),
             where: Map.get(booking, :training_where) |> Map.get(:name),

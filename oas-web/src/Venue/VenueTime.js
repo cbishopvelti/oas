@@ -125,7 +125,7 @@ export const VenueTime = () => {
 
       if (get(data, 'training_where_time.id')) {
         // navigate(`/venue-time/${training_where_id}/${get(data, 'training_where_time.id')}`)
-        // navigate(`/venue/${training_where_id}`)
+        navigate(`/venue/${training_where_id}`)
       }
     } catch (err) {
       console.error(err)

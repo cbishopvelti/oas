@@ -15,6 +15,13 @@ defmodule Oas.Repo.Migrations.TrainingWhereTime do
       timestamps()
     end
 
+    create table(:training_deleted) do
+      add :training_where_id, references(:training_where, on_delete: :delete_all), null: false
+      add :when, :date, null: false
+
+      timestamps()
+    end
+
     alter table(:trainings) do
       add :start_time, :time, null: true
       add :end_time, :time, null: true

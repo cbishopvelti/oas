@@ -88,7 +88,7 @@ defmodule Oas.Repo.Migrations.CreateSchema do
       add :member_id, references(:members, on_delete: :restrict), null: false
       timestamps()
     end
-    # EO TRANINGS  
+    # EO TRANINGS
 
     create table(:tokens) do
       add :transaction_id, references(:transactions, on_delete: :restrict), null: true, on_delete: :restrict
