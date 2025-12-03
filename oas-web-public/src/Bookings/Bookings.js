@@ -21,10 +21,11 @@ const canUndo = ({
   }
 
   if (
-    !booking.commitment &&
-    moment().isBefore(booking.booking_cutoff)
+    !booking.commitment && booking.booking_cutoff
   ) {
-    return moment(booking.booking_cutoff)
+    if (moment().isBefore(booking.booking_cutoff)) {
+      return moment(booking.booking_cutoff)
+    }
   }
 
   if (

@@ -42,7 +42,7 @@ const onChange = ({formData, setFormData, key, isCheckbox}) => (event) => {
   }
   setFormData({
     ...formData,
-    [key]: !event.target.value ? undefined : event.target.value
+    [key]: !event.target.value ? null : event.target.value
   })
 }
 
@@ -122,8 +122,10 @@ export const VenueTime = () => {
           recurring: formData.recurring
         }
       })
+
       if (get(data, 'training_where_time.id')) {
-        navigate(`/venue-time/${training_where_id}/${get(data, 'training_where_time.id')}`)
+        // navigate(`/venue-time/${training_where_id}/${get(data, 'training_where_time.id')}`)
+        // navigate(`/venue/${training_where_id}`)
       }
     } catch (err) {
       console.error(err)
@@ -169,13 +171,21 @@ export const VenueTime = () => {
       />
     </FormControl>
     <FormControl fullWidth sx={{mt: 2, mb: 2}}>
-      <CustomDurationField
-        label="Booking cutoff offset relative to start time."
-        value={get(formData, "booking_offset", '') || ''}
-        onChange={
-          onChange({formData, setFormData, key: "booking_offset"})
-        }
-      />
+      <FormControl fullWidth sx={{mt: 2, mb: 2}}>
+        <TextField
+          id="booking_offset"
+          label="Booking offset (iso 8601) (eg (-)P2DT15H (2 days, 15 hours))"
+          value={get(formData, "booking_offset") || ''}
+          type="schema"
+          onChange={
+            onChange({formData, setFormData, key: "booking_offset"})
+          }
+          InputLabelProps={{
+            shrink: true,
+          }}
+          error={has(errors, "booking_offset")}
+          helperText={get(errors, "booking_offset", []).join(" ")} />
+      </FormControl>
     </FormControl>
     <FormControl fullWidth sx={{mt:2, mb:2}}>
       <TextField

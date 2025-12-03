@@ -24,6 +24,22 @@ defmodule OasWeb.Schema.SchemaTrainingWhere do
         {:ok, result}
       end
     end
+    field :training_where_time_by_date, :training_where_time do
+      arg :training_where_id, non_null(:integer)
+      arg :when, non_null(:string)
+      resolve fn _, %{training_where_id: training_where_id, when: when1}, _ ->
+
+
+        result = from(twt in Oas.Trainings.TrainingWhereTime,
+          where: twt.training_where_id == ^(training_where_id) and
+          twt.day_of_week == ^(Date.day_of_week(
+            Date.from_iso8601!(when1)
+          ))
+        ) |> Oas.Repo.one()
+
+        {:ok, result}
+      end
+    end
   end
 
   object :training_where_mutations do
