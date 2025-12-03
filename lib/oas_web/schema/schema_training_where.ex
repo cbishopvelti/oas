@@ -65,11 +65,9 @@ defmodule OasWeb.Schema.SchemaTrainingWhere do
         |> OasWeb.Schema.SchemaUtils.handle_error
 
         GenServer.cast(Oas.Trainings.RecurringServer, :rerun)
-
         out
       end
     end
-
     field :delete_training_where, type: :success do
       arg :id, :integer
       resolve fn _, %{id: id}, _ ->
