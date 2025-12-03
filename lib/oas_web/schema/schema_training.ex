@@ -103,7 +103,8 @@ defmodule OasWeb.Schema.SchemaTraining do
       resolve fn _,_,_ ->
         result = from(w in Oas.Trainings.TrainingWhere,
           select: w,
-          preload: [:trainings]
+          preload: [:trainings],
+          order_by: [desc: w.id]
         )
         |> Oas.Repo.all()
 

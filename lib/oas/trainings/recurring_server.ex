@@ -125,7 +125,6 @@ defmodule Oas.Trainings.RecurringServer do
   end
 
   def handle_cast(:rerun, state) do
-    # IO.puts("306 RecurringServer :rerun")
     if state.timer, do: Process.cancel_timer(state.timer)
     new_timer = check_and_create_recurring_events()
     {:noreply, %{state | timer: new_timer}}
