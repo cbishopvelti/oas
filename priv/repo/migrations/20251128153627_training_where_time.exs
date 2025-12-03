@@ -15,6 +15,12 @@ defmodule Oas.Repo.Migrations.TrainingWhereTime do
       timestamps()
     end
 
+    alter table(:trainings) do
+      add :start_time, :time, null: true
+      add :end_time, :time, null: true
+      add :booking_offset, :text, null: true
+    end
+
     create unique_index(:training_where_time, [:day_of_week, :training_where_id])
 
   end
