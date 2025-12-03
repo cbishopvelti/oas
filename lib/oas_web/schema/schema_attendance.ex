@@ -109,6 +109,7 @@ defmodule OasWeb.Schema.SchemaAttendance do
             record,
             :booking_cutoff,
             Oas.Trainings.TrainingWhereTime.get_booking_cutoff(
+              record.inserted_at,
               record.training,
               Oas.Trainings.TrainingWhereTime.find_training_where_time(
                 record.training,

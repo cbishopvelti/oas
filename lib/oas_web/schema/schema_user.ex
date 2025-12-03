@@ -53,12 +53,17 @@ defmodule OasWeb.Schema.SchemaUser do
         |> Enum.map(fn booking ->
           training_where_time = Oas.Trainings.TrainingWhereTime.find_training_where_time(booking, booking.training_where.training_where_time)
 
+          now = NaiveDateTime.utc_now()
+
           %{
             id: Map.get(booking, :id),
             where: Map.get(booking, :training_where) |> Map.get(:name),
             when: Map.get(booking, :when),
             start_time: Map.get(training_where_time || %{}, :start_time, nil),
-            booking_cutoff: Oas.Trainings.TrainingWhereTime.get_booking_cutoff(booking, training_where_time),
+            booking_cutoff: Oas.Trainings.TrainingWhereTime.get_booking_cutoff(Map.get(booking, :attendance, []) |> List.first() |> case do
+              nil -> nil
+              x -> Map.get(x, :inserted_at)
+            end, booking, training_where_time),
             attendance_id: Map.get(booking, :attendance, [])
               |> List.first
               |> case do
@@ -123,6 +128,7 @@ defmodule OasWeb.Schema.SchemaUser do
             ) |> Oas.Repo.one
 
             booking_cutoff = Oas.Trainings.TrainingWhereTime.get_booking_cutoff(
+              result.inserted_at,
               result.training,
               Oas.Trainings.TrainingWhereTime.find_training_where_time(
                 result.training,

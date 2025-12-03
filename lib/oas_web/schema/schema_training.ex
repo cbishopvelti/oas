@@ -40,6 +40,9 @@ defmodule OasWeb.Schema.SchemaTraining do
     field :notes, :string
     field :commitment, :boolean
     field :training_tags, list_of(:training_tag)
+    field :start_time, :string
+    field :booking_offset, :string
+    field :end_time, :string
   end
 
   object :training_queries do
@@ -117,6 +120,9 @@ defmodule OasWeb.Schema.SchemaTraining do
       arg :commitment, :boolean
       arg :training_tags, non_null(list_of(:training_tag_arg))
       arg :notes, :string
+      arg :start_time, :string
+      arg :booking_offset, :string
+      arg :end_time, :string
       resolve fn _, args, _ ->
         %{training_tags: training_tags, training_where: training_where} = args
 
@@ -141,15 +147,16 @@ defmodule OasWeb.Schema.SchemaTraining do
         when1 = Date.from_iso8601!(args.when)
         args = %{args | when: when1 }
 
-        {:ok, result} = %Oas.Trainings.Training{}
-          |> Ecto.Changeset.cast(args, [:when, :notes, :commitment])
+        %Oas.Trainings.Training{}
+          |> Ecto.Changeset.cast(args, [:when, :notes, :commitment,
+            :start_time, :booking_offset, :end_time])
+          |> Oas.Trainings.Training.validate_time()
           |> Ecto.Changeset.put_assoc(
             :training_tags,
             training_tags
           ) |> Ecto.Changeset.put_assoc(:training_where, training_where)
           |> Oas.Repo.insert
-
-        {:ok, result}
+          |> OasWeb.Schema.SchemaUtils.handle_error
       end
     end
     @desc "update training"
@@ -160,6 +167,9 @@ defmodule OasWeb.Schema.SchemaTraining do
       arg :commitment, :boolean
       arg :training_tags, non_null(list_of(:training_tag_arg))
       arg :training_where, non_null(:training_where_arg)
+      arg :start_time, :string
+      arg :booking_offset, :string
+      arg :end_time, :string
       resolve fn _, args, _ ->
         when1 = Date.from_iso8601!(args.when)
         args = %{args | when: when1}
@@ -179,14 +189,19 @@ defmodule OasWeb.Schema.SchemaTraining do
         end
 
         toSave = training
-          |> Ecto.Changeset.cast(args, [:when, :notes, :commitment])
+          |> Ecto.Changeset.cast(args, [:when, :notes, :commitment,
+          :start_time, :booking_offset, :end_time], empty_values: [[], nil] ++ Ecto.Changeset.empty_values())
+          |> Oas.Trainings.Training.validate_time()
           |> Ecto.Changeset.put_assoc(
             :training_tags,
             training_tags
           ) |> Ecto.Changeset.put_assoc(:training_where, training_where)
 
-        {:ok, result} = toSave
+
+        out = toSave
           |> Oas.Repo.update
+          |> OasWeb.Schema.SchemaUtils.handle_error
+
 
         # See if there are any tags to delete
         removedTrainingTags = Ecto.Changeset.get_change(toSave, :training_tags, [])
@@ -233,8 +248,7 @@ defmodule OasWeb.Schema.SchemaTraining do
 
 
         # EO deleting
-
-        {:ok, result}
+        out
       end
     end
     field :delete_training, type: :success do
