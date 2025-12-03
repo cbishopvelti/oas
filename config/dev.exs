@@ -15,7 +15,7 @@ config :oas, Oas.Repo,
   # database: "./dbs/prod-backup-2025-10-03T20:39:52.215384Z.db",
   # database: "./dbs/dev.db",
   # database: "./dbs/prod-backup-2025-11-03T19:35:33.875200Z.db",
-  database: "/home/chris/oas-dev-dbs/prod-backup-2025-11-03T19:35:33.875200Z.db",
+  database: "/home/chris/oas-dev-dbs/oas-2025-12-02T20_40_04.838451Z.db",
   backup_database: "./dbs/sqlite-backup",
   log: false
 

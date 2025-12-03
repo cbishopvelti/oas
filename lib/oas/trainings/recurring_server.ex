@@ -1,5 +1,4 @@
 defmodule Oas.Trainings.RecurringServer do
-  alias Oas.Trainings.RecurringServer
   use GenServer
   import Ecto.Query, only: [from: 2]
   require Logger
@@ -15,10 +14,11 @@ defmodule Oas.Trainings.RecurringServer do
 
   def maybe_create_event(training_where, when1) do
     # Check in-memory first (based on what we just fetched)
-    case Enum.any?(training_where.trainings, fn %{when: when2} -> when1 == when2 end) do
+    case Enum.any?(training_where.trainings, fn %{when: when2} -> when1 == when2 end)
+      or Enum.any?(training_where.training_deleted, fn %{when: when2} -> when1 == when2 end)
+    do
       true ->
         nil
-
       false ->
         %Oas.Trainings.Training{}
         |> Ecto.Changeset.cast(%{
@@ -31,6 +31,7 @@ defmodule Oas.Trainings.RecurringServer do
     end
   end
 
+  # Oas.Trainings.RecurringServer.check_and_create_recurring_events()
   def check_and_create_recurring_events() do
     now = Date.utc_today()
     now_time = Time.utc_now()
@@ -41,9 +42,11 @@ defmodule Oas.Trainings.RecurringServer do
     training_where_time_list =
       from(twt in Oas.Trainings.TrainingWhereTime,
         left_join: tw in assoc(twt, :training_where),
+        left_join: td in assoc(tw, :training_deleted),
+        on: tw.id == td.training_where_id and td.when >= ^now,
         left_join: t in assoc(tw, :trainings),
         on: tw.id == t.training_where_id and t.when >= ^now,
-        preload: [training_where: {tw, trainings: t}],
+        preload: [training_where: {tw, [trainings: t, training_deleted: td]}],
         where: twt.recurring == ^true
       )
       |> Oas.Repo.all()
@@ -115,14 +118,14 @@ defmodule Oas.Trainings.RecurringServer do
   end
 
   def handle_info(:after_join, state) do
-    IO.puts("304 RecurringServer :after_join")
+    # IO.puts("304 RecurringServer :after_join")
     if state.timer, do: Process.cancel_timer(state.timer)
     new_timer = check_and_create_recurring_events()
     {:noreply, %{state | timer: new_timer}}
   end
 
   def handle_cast(:rerun, state) do
-    IO.puts("306 RecurringServer :rerun")
+    # IO.puts("306 RecurringServer :rerun")
     if state.timer, do: Process.cancel_timer(state.timer)
     new_timer = check_and_create_recurring_events()
     {:noreply, %{state | timer: new_timer}}

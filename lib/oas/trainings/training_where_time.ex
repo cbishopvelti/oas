@@ -34,7 +34,6 @@ defmodule Oas.Trainings.TrainingWhereTime do
 
   def changeset(changeset, params \\ %{}) do
     # params = %{params | booking_offset: Duration.from_iso8601!(params.booking_offset)}
-    IO.inspect(params, label: "001")
     changeset
     |> Ecto.Changeset.cast(params, [:day_of_week, :start_time, :booking_offset,
       :end_time, :recurring, :training_where_id
