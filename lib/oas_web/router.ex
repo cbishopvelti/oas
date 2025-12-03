@@ -72,6 +72,7 @@ defmodule OasWeb.Router do
     get "/members/reset_password", MemberResetPasswordController, :new
     post "/members/reset_password", MemberResetPasswordController, :create
     get "/members/reset_password/:token", MemberResetPasswordController, :edit
+    get "/members/reset_password_login_redirect/:token", MemberResetPasswordController, :edit_login_redirect
     put "/members/reset_password/:token", MemberResetPasswordController, :update
   end
 
