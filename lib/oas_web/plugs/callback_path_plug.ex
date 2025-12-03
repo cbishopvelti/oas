@@ -5,6 +5,8 @@ defmodule OasWeb.CallbackPathPlug do
   @callback_path_cookie "_oas_web_callback_path"
   @callback_path_options [sign: true, max_age: @max_age, same_site: "Strict"]
 
+  def callback_path_options(), do: @callback_path_options
+
   def callback_path_cookie(), do: @callback_path_cookie
 
   def callback_path_plug(conn, _opts) do

@@ -13,6 +13,10 @@ defmodule OasWeb.Schema.SchemaMember do
     field :agreed_to_tac, :boolean
   end
 
+  object :member_generate_reset_password_link do
+    field :url, :string
+  end
+
   enum :member_status do
     value :member
     value :x_member
@@ -285,8 +289,23 @@ defmodule OasWeb.Schema.SchemaMember do
             resolution
         end
       end)
-
     end
-  end
 
+    field :member_generate_reset_password_link, :member_generate_reset_password_link do
+      arg :member_id, :integer
+      resolve fn _, %{member_id: member_id}, _ ->
+        member = Oas.Repo.get!(Oas.Members.Member, member_id)
+
+        {encoded_token, member_token} = Oas.Members.MemberToken.build_email_token(member, "reset_password")
+        Oas.Repo.insert!(member_token)
+
+        url = OasWeb.Router.Helpers.member_reset_password_url(OasWeb.Endpoint, :edit_login_redirect, encoded_token)
+
+        {:ok, %{
+          url: url
+        }}
+      end
+    end
+
+  end
 end

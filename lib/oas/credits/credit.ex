@@ -173,7 +173,8 @@ defmodule Oas.Credits.Credit do
 
   def deduct_credit(from, member, amount, opts = %{now: now} \\ %{
     now: Date.utc_today(),
-    changeset: false
+    changeset: false,
+    attendance: nil
   }) do
     if Decimal.positive?(amount) do
       raise "Oas.Credits.Credit.deduct_credit amount is positive"
@@ -204,7 +205,9 @@ defmodule Oas.Credits.Credit do
       Oas.TaskSupervisor,
       fn ->
         Process.sleep(120_000)
-        Oas.TokenMailer.maybe_send_credits_warning(member)
+        # Process.sleep(2) # DEBUG ONLY
+        # Oas.TokenMailer.maybe_send_credits_warning(member)
+        Oas.TokenMailer.warning_email(member, %{attendance: opts.attendance})
       end
     )
 

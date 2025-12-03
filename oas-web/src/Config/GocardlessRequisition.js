@@ -23,6 +23,6 @@ export const GocardlessRequisition = () => {
   return <div>
     {error && <div>Error occurred</div>}
     {loading && <div>Please wait</div>}
-    {data && <div>Success, please go back to config and select the account.</div>}
+    {data && <div>Success, please go back to gocardless config and select the account.</div>}
   </div>
 }

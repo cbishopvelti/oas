@@ -6,7 +6,8 @@ import {
   TableCell,
   TableBody,
   IconButton,
-  TableSortLabel
+  TableSortLabel, Dialog, DialogTitle,
+  DialogContent
 } from '@mui/material';
 import { Link, useParams } from 'react-router-dom';
 import BookOnlineIcon from '@mui/icons-material/BookOnline';
@@ -18,6 +19,10 @@ import moment from 'moment'
 // import { useState } from 'react';
 import { useState } from '../utils/useState';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
+import QrCode2Icon from '@mui/icons-material/QrCode2';
+import { useMutation, gql } from '@apollo/client'
+import { useState as reactUseState } from 'react';
+import QRCode from "react-qr-code";
 
 
 export const MembersDisplay = ({
@@ -28,6 +33,7 @@ export const MembersDisplay = ({
 }) => {
   // const [orderBy, setOrderBy ] = useState();
   const [orderBy, setOrderBy] = useState(undefined, {id: 'MembersDisplay'});
+  const [resetPasswordQrCode, setResetPasswordQrCode] = reactUseState(null);
 
   const sortByHandler = (column) => (b) => {
     if (orderBy?.column == column) {
@@ -62,7 +68,29 @@ export const MembersDisplay = ({
     )
   }
 
-  return <TableContainer>
+  const [genQrCode] = useMutation(gql`
+    mutation($member_id: Int!) {
+      member_generate_reset_password_link(member_id: $member_id) {
+        url
+      }
+    }
+  `)
+  const showLoginQrCode = (member_id, member_name) => async () => {
+    console.log("show login qr code")
+    const result = await genQrCode({
+      variables: {
+        member_id: member_id
+      }
+    });
+    setResetPasswordQrCode({
+      member_name: member_name,
+      url: get(result, 'data.member_generate_reset_password_link.url')
+    })
+    console.log("008", result)
+  }
+
+  return <>
+    <TableContainer>
       <Table>
         <TableHead>
           <TableRow>
@@ -127,6 +155,9 @@ export const MembersDisplay = ({
                 <TableCell sx={{...(member.credit_amount < 0 ? {color: "red"} : {})}}>{member.credit_amount}</TableCell>
                 <TableCell>{moment(member.inserted_at).format("DD/MM/YYYY")}</TableCell>
                 <TableCell>
+                  <IconButton title={`Login user`} onClick={showLoginQrCode(member.id, member.name)}>
+                    <QrCode2Icon />
+                  </IconButton>
                   <IconButton title={`Go to ${member.name}'s Tokens`} component={Link} to={`/member/${member.id}/tokens`}>
                     <BookOnlineIcon />
                   </IconButton>
@@ -148,4 +179,42 @@ export const MembersDisplay = ({
         </TableBody>
       </Table>
     </TableContainer>
+
+    {resetPasswordQrCode && <Dialog
+      fullWidth={true}
+      maxWidth={false}
+      open={resetPasswordQrCode != null}
+      onClose={() => setResetPasswordQrCode(null)}
+      aria-labelledby="alert-dialog-title"
+      aria-describedby="alert-dialog-description"
+    >
+      <DialogTitle id="alert-dialog-title">
+        {`Reset peset password for ${resetPasswordQrCode.member_name}`}
+      </DialogTitle>
+      <DialogContent
+        style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            overflow: 'hidden' // Prevents scrollbars if calculation is slightly off
+          }}
+      >
+        <QRCode
+          size={256}
+          style={{
+            flexGrow: "9999",
+            // 1. Let the QR code be as tall as the screen minus header/padding (approx 150px)
+            maxHeight: "calc(100vh - 150px)",
+            // 2. Let it be as wide as the dialog (for mobile)
+            maxWidth: "100%",
+            // 3. IMPORTANT: Set width/height to auto so the aspect ratio determines the actual size
+            height: "auto",
+            width: "auto"
+          }}
+          value={ resetPasswordQrCode.url  }
+          viewBox={`0 0 256 256`}
+          />
+      </DialogContent>
+    </Dialog>}
+  </>
 }

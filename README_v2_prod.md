@@ -24,11 +24,18 @@ docker run -it -d \
 -e DB_FILE=/dbs/sqlite-prod.db \
 -e MIX_ENV=v2_prod \
 -p 80:80 -p 443:443 \
--v /media/chris/fedora2/root/oas-dbs:/dbs \
+-v /mnt/cb33437a-ff3b-43a5-ac74-23fcfb95a022/root/oas-dbs:/dbs \
 -v /oas-dbs-backup:/oas-dbs-backup \
--v /media/chris/fedora2/root/gocardless_backup:/gocardless_backup \
+-v /mnt/cb33437a-ff3b-43a5-ac74-23fcfb95a022/root/gocardless_backup:/gocardless_backup \
 --add-host host.docker.internal:host-gateway \
 chrisjbishop155/oas:v2_prod
+```
+
+```
+docker exec -it oas /bin/bash
+cp /app/nginx/v2_nginx.conf /etc/nginx/nginx.conf && certbot --nginx
+nginx -s stop
+nginx
 ```
 
 ### Fedora
@@ -51,13 +58,6 @@ docker run -it -d \
 -v /mnt/disk2/oas-dbs-backup:/oas-dbs-backup \
 -v /gocardless_backup:/gocardless_backup \
 chrisjbishop155/oas:v2_prod
-```
-
-```
-docker exec -it oas /bin/bash
-cp /app/nginx/v2_nginx.conf /etc/nginx/nginx.conf && certbot --nginx
-nginx -s stop
-nginx
 ```
 
 ```

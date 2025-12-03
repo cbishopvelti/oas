@@ -45,7 +45,8 @@ import { Venues } from './Venue/Venues';
 import { VenueTime } from './Venue/VenueTime';
 import { Thing } from './Things/Thing';
 import { Things } from './Things/Things';
-
+import { ConfigContent } from './Config/ConfigContent'
+import { ConfigGocardless } from './Config/ConfigGocardless';
 
 const router = createBrowserRouter([
   {
@@ -167,9 +168,19 @@ const router = createBrowserRouter([
         element: <ConfigTokens />
       },
       {
+        id: "config-content",
+        path: "/config/content",
+        element: <ConfigContent />
+      },
+      {
         id: "config-llm",
         path: "config/llm",
         element: <ConfigLlm />
+      },
+      {
+        id: 'config-gocardless',
+        path: 'config/config-gocardless',
+        element: <ConfigGocardless />
       },
       {
         id: "gocardless",
