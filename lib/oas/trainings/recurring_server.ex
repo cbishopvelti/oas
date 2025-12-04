@@ -118,7 +118,6 @@ defmodule Oas.Trainings.RecurringServer do
   end
 
   def handle_info(:after_join, state) do
-    # IO.puts("304 RecurringServer :after_join")
     if state.timer, do: Process.cancel_timer(state.timer)
     new_timer = check_and_create_recurring_events()
     {:noreply, %{state | timer: new_timer}}
