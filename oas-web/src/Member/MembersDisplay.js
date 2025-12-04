@@ -189,7 +189,7 @@ export const MembersDisplay = ({
       aria-describedby="alert-dialog-description"
     >
       <DialogTitle id="alert-dialog-title">
-        {`Reset peset password for ${resetPasswordQrCode.member_name}`}
+        {`Reset ${resetPasswordQrCode.member_name}'s password`}
       </DialogTitle>
       <DialogContent
         style={{
