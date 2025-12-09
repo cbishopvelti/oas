@@ -1,4 +1,4 @@
-import { gql, useMutation, useQuery } from '@apollo/client';
+import { gql, useMutation, useQuery, useSubscription } from '@apollo/client';
 import {
   Table,
   TableContainer,
@@ -18,7 +18,7 @@ import {
   Button,
 
 } from '@mui/material';
-import { get, reduce, round } from 'lodash';
+import { get, reduce, round, padStart } from 'lodash';
 import { useEffect, useState } from 'react';
 import { useState as persistentUseState } from '../utils/useState';
 import EditIcon from '@mui/icons-material/Edit';
@@ -35,6 +35,14 @@ const onChange = ({formData, setFormData, key, required}) => (event) => {
     ...formData,
     [key]: !event.target.value ? undefined : event.target.value
   })
+}
+
+const rerun_time = (transactionData) => {
+  if (!get(transactionData, "gocardless_trans_status.next_run")) {
+    return ''
+  }
+
+  return `, Next import run: ${moment(get(transactionData, "gocardless_trans_status.next_run"), "HH:mm:ss.SSSSSS").format("HHmm")}`
 }
 
 export const Transactions = () => {
@@ -59,8 +67,51 @@ export const Transactions = () => {
     skip: !member_id
   })
 
-  const { setTitle } = useOutletContext();
-  let { data: transactions, loading, refetch } = useQuery(gql`query ($from: String, $to: String, $transaction_tags: [TransactionTagArg], $member_id: Int) {
+  const GocardlessImportCountdownComponent = ({
+    transactionData
+  }) => {
+    let when = moment(get(transactionData, "gocardless_trans_status.next_run"), "HH:mm:ss.SSSSSS")
+
+    const [countdown, setCountdown] = useState("");
+
+    useEffect(() => {
+      let interval = null
+
+      if (when.isBefore(moment())) {
+        when.add(1, 'day');
+      }
+
+      const doTimer = () => {
+        const now = moment()
+
+        setCountdown(
+          `${padStart(when.diff(now, 'hours'), 2, '0')}:${padStart(when.diff(now, 'minutes') % 60, 2, '0')}:${padStart(when.diff(now, 'seconds') % 60, 2, '0')}`
+        );
+
+        if (when.diff(now, 'seconds') < 0) {
+          interval && clearInterval(interval)
+          setCountdown("Loading...")
+        }
+      }
+
+      doTimer()
+      interval = setInterval(doTimer, 1000);
+
+      return () => {
+        clearInterval(interval);
+      }
+    }, []);
+
+    return <div>
+      Next import: {countdown}
+    </div>
+  }
+  const GocardlessImportCountdown = (transactionData) => {
+    return <GocardlessImportCountdownComponent transactionData={transactionData} />
+  }
+
+  const { setTitle, setComponents } = useOutletContext();
+  let { data: transactionData, loading, refetch } = useQuery(gql`query ($from: String, $to: String, $transaction_tags: [TransactionTagArg], $member_id: Int) {
     transactions (from: $from, to: $to, transaction_tags: $transaction_tags, member_id: $member_id) {
       id,
       when,
@@ -78,6 +129,9 @@ export const Transactions = () => {
         id
       }
     }
+    gocardless_trans_status {
+      next_run
+    }
   }`, {
     variables: {
       member_id,
@@ -85,6 +139,7 @@ export const Transactions = () => {
     },
     skip: !filterData.to || !filterData.from
   });
+  const transactions = get(transactionData, "transactions", []) || []
   useEffect(() => {
     let transactionCount = transactions.length
     const counts = reduce(transactions, ({incoming, outgoing}, {amount}) => {
@@ -103,12 +158,26 @@ export const Transactions = () => {
     }, {incoming: 0, outgoing: 0});
 
     if (member_id) {
-      setTitle(`Member: ${get(memberData, 'member.name', member_id)}'s Transactions: ${transactionCount} (${round(counts.incoming, 2)}, ${round(counts.outgoing, 2)}, ${round(counts.incoming + counts.outgoing, 2)})`)
+      setTitle(`Member: ${get(memberData, 'member.name', member_id)}'s Transactions: ${transactionCount} (${round(counts.incoming, 2)}, ${round(counts.outgoing, 2)}`)
     } else {
       setTitle(`Transactions: ${transactionCount} (${round(counts.incoming, 2)}, ${round(counts.outgoing, 2)}, ${round(counts.incoming + counts.outgoing, 2)})`);
     }
-  }, [get(memberData, 'member.name'), transactions])
-  transactions = get(transactions, "transactions", []) || []
+    if (get(transactionData, "gocardless_trans_status.next_run")) {
+      setComponents([GocardlessImportCountdown(transactionData)])
+    }
+  }, [get(memberData, 'member.name'), transactions, transactionData])
+
+  useSubscription(gql`
+    subscription {
+      gocardless_trans_status {
+        success
+      }
+    }
+  `, {
+    onData({ }) {
+      refetch()
+    }
+  })
 
   useEffect(() => {
     refetch()

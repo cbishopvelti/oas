@@ -20,7 +20,7 @@ const DrawerHeader = styled('div')(({ theme }) => ({
   justifyContent: 'flex-end',
 }));
 
-const DrawerBar = ({title}) => {
+const DrawerBar = ({ title, components }) => {
   const {loading, data} = useSubscription(gql`
     subscription {
       global_warnings {
@@ -39,30 +39,43 @@ const DrawerBar = ({title}) => {
     }
   `)
 
-  return <Box sx={{ minHeight: "48px", display: "flex", justifyContent: "space-between", width: "100%"}}>
+  console.log("101 components", components);
+
+  return <Box sx={{ minHeight: "48px", display: "flex", justifyContent: "space-between", width: "100%", mr: "16px"}}>
     <Box sx={{pt: '15px'}}>
       {title}
     </Box>
-    <Box>
-      {data?.global_warnings && data.global_warnings.map((warning, i) => {
+
+    {components.map((component, i) => {
+      console.log("201", component)
+      return <Box key={i} sx={{pt: '15px'}}>
+        {component}
+      </Box>
+    })}
+
+    {data?.global_warnings && <Box>
+      {data.global_warnings.map((warning, i) => {
         return <Alert
-          onClose={() => { mutate({
-            variables: {
-              key: warning.key
-            }
-          })}}
+          onClose={() => {
+            mutate({
+              variables: {
+                key: warning.key
+              }
+            })
+          }}
           severity="warning"
           key={i} sx={{ mt: "0px" }}>
           {warning.warning}
         </Alert>
       })}
-    </Box>
+    </Box>}
   </Box>
 }
 
 function App() {
   const [open, setOpen] = useState(true);
   const [title, setTitle] = useState('');
+  const [components, setComponents] = useState([])
 
   const drawerWidth = 256;
 
@@ -99,9 +112,10 @@ function App() {
           <IconButton sx={{visibility: open ? 'hidden' : 'visible'}} onClick={() => setOpen(true)}>
             <MenuIcon />
           </IconButton>
-          <DrawerBar title={title} />
+          <DrawerBar title={title} components={components} />
         </Box>
-        <Outlet context={{setTitle}} />
+        <Outlet context={{setTitle, setComponents}} />
+
       </div>
     </div>
   );

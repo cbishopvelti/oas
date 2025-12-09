@@ -78,6 +78,8 @@ defmodule OasWeb.Schema do
     import_fields :attendance_subscriptions
 
     import_fields :user_subscriptions
+
+    import_fields :gocardless_subscriptions
   end
 
 

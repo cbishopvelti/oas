@@ -32,7 +32,13 @@ defmodule Oas.Gocardless.TransServer do
       Process.cancel_timer(state.timer_ref)
     end
 
-    {:ok, headers} = Oas.Gocardless.Transactions.process_transacitons()
+    # headers = [ # DEBUG, remove
+    #   {"http_x_ratelimit_account_success_remaining", "3"},
+    #   {"http_x_ratelimit_account_success_reset", "86400"}
+    # ]
+    # Process.sleep(12_000)
+    {:ok, headers} = Oas.Gocardless.Transactions.process_transacitons() # DEBUG ONLY, uncomment
+
 
     remaining = List.keyfind!(headers, "http_x_ratelimit_account_success_remaining", 0) |> elem(1) |> String.to_integer()
     reset_seconds = List.keyfind!(headers, "http_x_ratelimit_account_success_reset", 0)
@@ -47,15 +53,36 @@ defmodule Oas.Gocardless.TransServer do
       timeout
     end
     _timeout_ms = timeout * 1000
-
     # timer_ref = Process.send_after(self(), :init, timeout_ms)
 
+
+    rerun_in_ms = if (remaining > 0) do
+      london_dt = DateTime.now!("Europe/London")
+      local_time = DateTime.to_time(london_dt)
+
+      Time.diff(Time.from_iso8601!("09:30:00"), local_time, :millisecond)
+      |> Integer.mod(
+         86_400_000
+      )
+    else
+      reset_seconds * 1000
+    end
+
+    Absinthe.Subscription.publish(OasWeb.Endpoint, %{}, gocardless_trans_status: "*")
+
     # Once a day
-    timer_ref = Process.send_after(self(), :init, 86_400_060)
+    timer_ref = Process.send_after(self(), :init, rerun_in_ms)
     {:noreply,
       %{
         timer_ref: timer_ref
       }
     }
+  end
+
+  @impl true
+  def handle_call(:status, _from, state) do
+    Process.read_timer(state.timer_ref)
+
+    {:reply, Process.read_timer(state.timer_ref), state}
   end
 end
