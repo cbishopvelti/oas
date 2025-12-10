@@ -26,7 +26,7 @@ export const PendingTransactions = () => {
     if (get(data, "gocardless_trans_status.next_run")) {
       setComponents([GocardlessImportCountdown(data)])
     }
-  }, [])
+  }, [get(data, "gocardless_trans_status.next_run")])
 
   useSubscription(gql`
     subscription {
@@ -50,8 +50,8 @@ export const PendingTransactions = () => {
         </TableRow>
       </TableHead>
       <TableBody>
-        {get(data, "pending_transactions", []).map((data) => {
-          return <TableRow>
+        {get(data, "pending_transactions", []).map((data, i) => {
+          return <TableRow key={i}>
             <TableCell>{data.booking_date}</TableCell>
             <TableCell>{data.remittance_information_unstructured}</TableCell>
             <TableCell>{data.amount}</TableCell>
