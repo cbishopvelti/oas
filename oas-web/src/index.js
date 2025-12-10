@@ -47,6 +47,7 @@ import { Thing } from './Things/Thing';
 import { Things } from './Things/Things';
 import { ConfigContent } from './Config/ConfigContent'
 import { ConfigGocardless } from './Config/ConfigGocardless';
+import { PendingTransactions } from './Money/PendingTransactions';
 
 const router = createBrowserRouter([
   {
@@ -106,6 +107,11 @@ const router = createBrowserRouter([
         id: "transactions",
         path: "transactions",
         element: <Transactions />
+      },
+      {
+        id: "pending-transactions",
+        path: "/transactions/pending",
+        element: <PendingTransactions />
       },
       {
         id: "import-transactions",

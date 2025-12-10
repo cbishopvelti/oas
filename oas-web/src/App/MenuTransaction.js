@@ -17,8 +17,9 @@ export const MenuTransaction = () => {
   const transactionIds = ["transaction-id", "transactions", "member-transactions"];
   const newTransactionIds = ['transaction']
   const importTransactionIds = ['import-transactions']
-  const allIds = [...transactionIds, ...newTransactionIds, ...importTransactionIds];
-  const forceIds = [...newTransactionIds, ...importTransactionIds];
+  const pendingTransactions = ["pending-transactions"]
+  const allIds = [...transactionIds, ...newTransactionIds, ...importTransactionIds, ...pendingTransactions];
+  const forceIds = [...newTransactionIds, ...importTransactionIds, ...pendingTransactions];
 
   const active = some(matches, ({id}) => includes(allIds, id))
   const forceActive = some(matches, ({id}) => includes(forceIds, id));
@@ -71,6 +72,14 @@ export const MenuTransaction = () => {
         end >
         <ListItemText>Import Transactions</ListItemText>
       </MenuItem>*/}
+      <MenuItem
+        sx={{ml: 2}}
+        component={NavLink}
+        to='/transactions/pending'
+        end
+      >
+        <ListItemText>Pending Transactions</ListItemText>
+      </MenuItem>
     </Collapse>
   </>
 }
