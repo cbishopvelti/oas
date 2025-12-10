@@ -45,6 +45,49 @@ const rerun_time = (transactionData) => {
   return `, Next import run: ${moment(get(transactionData, "gocardless_trans_status.next_run"), "HH:mm:ss.SSSSSS").format("HHmm")}`
 }
 
+const GocardlessImportCountdownComponent = ({
+  transactionData
+}) => {
+  let when = moment(get(transactionData, "gocardless_trans_status.next_run"), "HH:mm:ss.SSSSSS")
+
+  const [countdown, setCountdown] = useState("");
+
+  useEffect(() => {
+    let interval = null
+
+    if (when.isBefore(moment())) {
+      when.add(1, 'day');
+    }
+
+    const doTimer = () => {
+      const now = moment()
+
+      setCountdown(
+        `${padStart(when.diff(now, 'hours'), 2, '0')}:${padStart(when.diff(now, 'minutes') % 60, 2, '0')}:${padStart(when.diff(now, 'seconds') % 60, 2, '0')}`
+      );
+
+      if (when.diff(now, 'seconds') < 0) {
+        interval && clearInterval(interval)
+        setCountdown("Loading...")
+      }
+    }
+
+    doTimer()
+    interval = setInterval(doTimer, 1000);
+
+    return () => {
+      clearInterval(interval);
+    }
+  }, []);
+
+  return <div>
+    Next import: {countdown}
+  </div>
+}
+export const GocardlessImportCountdown = (transactionData) => {
+  return <GocardlessImportCountdownComponent transactionData={transactionData} />
+}
+
 export const Transactions = () => {
   const [filterData, setFilterData] = persistentUseState({
     from: moment().subtract(1, 'year').format("YYYY-MM-DD"),
@@ -67,48 +110,7 @@ export const Transactions = () => {
     skip: !member_id
   })
 
-  const GocardlessImportCountdownComponent = ({
-    transactionData
-  }) => {
-    let when = moment(get(transactionData, "gocardless_trans_status.next_run"), "HH:mm:ss.SSSSSS")
 
-    const [countdown, setCountdown] = useState("");
-
-    useEffect(() => {
-      let interval = null
-
-      if (when.isBefore(moment())) {
-        when.add(1, 'day');
-      }
-
-      const doTimer = () => {
-        const now = moment()
-
-        setCountdown(
-          `${padStart(when.diff(now, 'hours'), 2, '0')}:${padStart(when.diff(now, 'minutes') % 60, 2, '0')}:${padStart(when.diff(now, 'seconds') % 60, 2, '0')}`
-        );
-
-        if (when.diff(now, 'seconds') < 0) {
-          interval && clearInterval(interval)
-          setCountdown("Loading...")
-        }
-      }
-
-      doTimer()
-      interval = setInterval(doTimer, 1000);
-
-      return () => {
-        clearInterval(interval);
-      }
-    }, []);
-
-    return <div>
-      Next import: {countdown}
-    </div>
-  }
-  const GocardlessImportCountdown = (transactionData) => {
-    return <GocardlessImportCountdownComponent transactionData={transactionData} />
-  }
 
   const { setTitle, setComponents } = useOutletContext();
   let { data: transactionData, loading, refetch } = useQuery(gql`query ($from: String, $to: String, $transaction_tags: [TransactionTagArg], $member_id: Int) {
