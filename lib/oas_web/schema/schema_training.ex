@@ -2,11 +2,21 @@ import Ecto.Query, only: [from: 2]
 defmodule OasWeb.Schema.SchemaTraining do
   use Absinthe.Schema.Notation
 
+  object :training_where_time do
+    field :id, :integer
+    field :day_of_week, :integer
+    field :start_time, :string
+    field :booking_offset, :string
+    field :end_time, :string
+    field :recurring, :boolean
+  end
+
   object :training_where do
     field :id, :integer
     field :name, :string
     field :credit_amount, :string
     field :trainings, list_of(:training)
+    field :training_where_time, list_of(:training_where_time)
   end
   input_object :training_where_arg do
     field :id, :integer
@@ -30,6 +40,9 @@ defmodule OasWeb.Schema.SchemaTraining do
     field :notes, :string
     field :commitment, :boolean
     field :training_tags, list_of(:training_tag)
+    field :start_time, :string
+    field :booking_offset, :string
+    field :end_time, :string
   end
 
   object :training_queries do
@@ -90,7 +103,8 @@ defmodule OasWeb.Schema.SchemaTraining do
       resolve fn _,_,_ ->
         result = from(w in Oas.Trainings.TrainingWhere,
           select: w,
-          preload: :trainings
+          preload: [:trainings],
+          order_by: [desc: w.id]
         )
         |> Oas.Repo.all()
 
@@ -107,6 +121,9 @@ defmodule OasWeb.Schema.SchemaTraining do
       arg :commitment, :boolean
       arg :training_tags, non_null(list_of(:training_tag_arg))
       arg :notes, :string
+      arg :start_time, :string
+      arg :booking_offset, :string
+      arg :end_time, :string
       resolve fn _, args, _ ->
         %{training_tags: training_tags, training_where: training_where} = args
 
@@ -131,15 +148,16 @@ defmodule OasWeb.Schema.SchemaTraining do
         when1 = Date.from_iso8601!(args.when)
         args = %{args | when: when1 }
 
-        {:ok, result} = %Oas.Trainings.Training{}
-          |> Ecto.Changeset.cast(args, [:when, :notes, :commitment])
+        %Oas.Trainings.Training{}
+          |> Ecto.Changeset.cast(args, [:when, :notes, :commitment,
+            :start_time, :booking_offset, :end_time])
+          |> Oas.Trainings.Training.validate_time()
           |> Ecto.Changeset.put_assoc(
             :training_tags,
             training_tags
           ) |> Ecto.Changeset.put_assoc(:training_where, training_where)
           |> Oas.Repo.insert
-
-        {:ok, result}
+          |> OasWeb.Schema.SchemaUtils.handle_error
       end
     end
     @desc "update training"
@@ -150,6 +168,9 @@ defmodule OasWeb.Schema.SchemaTraining do
       arg :commitment, :boolean
       arg :training_tags, non_null(list_of(:training_tag_arg))
       arg :training_where, non_null(:training_where_arg)
+      arg :start_time, :string
+      arg :booking_offset, :string
+      arg :end_time, :string
       resolve fn _, args, _ ->
         when1 = Date.from_iso8601!(args.when)
         args = %{args | when: when1}
@@ -169,14 +190,19 @@ defmodule OasWeb.Schema.SchemaTraining do
         end
 
         toSave = training
-          |> Ecto.Changeset.cast(args, [:when, :notes, :commitment])
+          |> Ecto.Changeset.cast(args, [:when, :notes, :commitment,
+          :start_time, :booking_offset, :end_time], empty_values: [[], nil] ++ Ecto.Changeset.empty_values())
+          |> Oas.Trainings.Training.validate_time()
           |> Ecto.Changeset.put_assoc(
             :training_tags,
             training_tags
           ) |> Ecto.Changeset.put_assoc(:training_where, training_where)
 
-        {:ok, result} = toSave
+
+        out = toSave
           |> Oas.Repo.update
+          |> OasWeb.Schema.SchemaUtils.handle_error
+
 
         # See if there are any tags to delete
         removedTrainingTags = Ecto.Changeset.get_change(toSave, :training_tags, [])
@@ -223,25 +249,31 @@ defmodule OasWeb.Schema.SchemaTraining do
 
 
         # EO deleting
-
-        {:ok, result}
+        out
       end
     end
     field :delete_training, type: :success do
       arg :id, non_null(:integer)
       resolve fn _, %{id: id}, _ ->
-        {:ok, result} = Oas.Repo.get!(Oas.Trainings.Training, id)
-          |> Oas.Repo.delete
+        training = Oas.Repo.get!(Oas.Trainings.Training, id)
+          # |> Oas.Repo.delete # DEBUG ONLY, uncomment
 
-        from(w in Oas.Trainings.TrainingWhere,
-        as: :training_where,
-        where: not(exists(
-          from(
-            t in Oas.Trainings.Training,
-            where: t.training_where_id == parent_as(:training_where).id
-          )
-        )) and w.id == ^result.training_where_id
-        )  |> Oas.Repo.delete_all
+        IO.inspect(training |> Map.from_struct(), label: "202")
+        %Oas.Trainings.TrainingDeleted{}
+        |> Ecto.Changeset.cast(training |> Map.from_struct(), [:when, :training_where_id])
+        |> Oas.Repo.insert()
+
+        {:ok, _result} = training |> Oas.Repo.delete()
+
+        # from(w in Oas.Trainings.TrainingWhere,
+        # as: :training_where,
+        # where: not(exists(
+        #   from(
+        #     t in Oas.Trainings.Training,
+        #     where: t.training_where_id == parent_as(:training_where).id
+        #   )
+        # )) and w.id == ^result.training_where_id
+        # )  |> Oas.Repo.delete_all
 
         {:ok, %{success: true}}
       end

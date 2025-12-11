@@ -15,6 +15,10 @@ defmodule OasWeb.Schema.SchemaGocardless do
     field :id, :string
   end
 
+  object :gocardless_trans_status do
+    field :next_run, :string
+  end
+
   object :gocardless_queries do
     field :gocardless_banks, list_of(:gocardless_bank) do
       resolve fn _, _, _  ->
@@ -35,6 +39,23 @@ defmodule OasWeb.Schema.SchemaGocardless do
 
         data = Oas.Gocardless.get_accounts()
         {:ok, data |> Enum.map(fn account_id -> %{id: account_id} end)}
+      end
+    end
+    field :gocardless_trans_status, :gocardless_trans_status do
+      resolve fn _, _, _ ->
+        if (!is_nil(Process.whereis(Oas.Gocardless.TransServer)) && Process.whereis(Oas.Gocardless.TransServer) |> Process.alive?() ) do
+          ms_to_next_run = Process.whereis(Oas.Gocardless.TransServer)
+          |> GenServer.call(:status)
+
+          Time.add(Time.utc_now(), ms_to_next_run, :millisecond)
+          {:ok, %{
+            next_run: Time.add(Time.utc_now(), ms_to_next_run, :millisecond)
+          }}
+        else
+          {:ok, %{
+            next_run: nil
+          }}
+        end
       end
     end
   end
@@ -75,6 +96,18 @@ defmodule OasWeb.Schema.SchemaGocardless do
         {:ok, %{
           success: true
         }}
+      end
+    end
+  end
+
+  object :gocardless_subscriptions do
+    field :gocardless_trans_status, :success do
+      config fn _, _ ->
+        {:ok, topic: "*"}
+      end
+
+      resolve fn _, _, _ ->
+        {:ok, %{success: true}}
       end
     end
   end

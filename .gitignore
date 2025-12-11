@@ -49,3 +49,4 @@ config/fly.exs
 local_notes.md
 /data
 /gocardless_backup
+/.VSCodeCounter

@@ -15,6 +15,8 @@ defmodule OasWeb.Schema.SchemaUser do
     field :id, :integer
     field :where, :string
     field :when, :string
+    field :start_time, :string
+    field :booking_cutoff, :string
     field :attendance_id, :integer
     field :inserted_by_member_id, :integer
     field :inserted_at, :string
@@ -43,16 +45,23 @@ defmodule OasWeb.Schema.SchemaUser do
         result = from(trai in Oas.Trainings.Training,
           left_join: atte in assoc(trai, :attendance), on: atte.training_id == trai.id and atte.member_id == ^id,
           left_join: memb in assoc(atte, :member),
-          preload: [:training_where, attendance: {atte, [member: memb]}],
+          preload: [training_where: [:training_where_time], attendance: {atte, [member: memb]}],
           where: trai.when >= ^Date.utc_today() and
           (memb.id == ^id or is_nil(memb.id)),
           order_by: [asc: trai.when, desc: trai.id]
         ) |> Oas.Repo.all
         |> Enum.map(fn booking ->
+          training_where_time = Oas.Trainings.TrainingWhereTime.find_training_where_time(booking, booking.training_where.training_where_time)
+
           %{
             id: Map.get(booking, :id),
             where: Map.get(booking, :training_where) |> Map.get(:name),
             when: Map.get(booking, :when),
+            start_time: Map.get(training_where_time || %{}, :start_time, nil),
+            booking_cutoff: Oas.Trainings.TrainingWhereTime.get_booking_cutoff(Map.get(booking, :attendance, []) |> List.first() |> case do
+              nil -> nil
+              x -> Map.get(x, :inserted_at)
+            end, booking, training_where_time),
             attendance_id: Map.get(booking, :attendance, [])
               |> List.first
               |> case do
@@ -101,30 +110,50 @@ defmodule OasWeb.Schema.SchemaUser do
       arg :attendance_id, non_null(:integer)
       resolve fn _, %{attendance_id: attendance_id}, %{context: %{current_member: %{id: member_id}}} ->
         config = from(c in Oas.Config.Config, select: c) |> Oas.Repo.one
+        now = DateTime.utc_now()
 
         case config.enable_booking do
           true ->
             result = from(atte in Oas.Trainings.Attendance,
               join: trai in assoc(atte, :training),
+              preload: [training: [training_where: [:training_where_time]]],
               where: atte.id == ^attendance_id and
                 atte.inserted_by_member_id == ^member_id and atte.member_id == ^member_id
                 and (
-                  ((is_nil(trai.commitment) or trai.commitment == false) and trai.when > ^Date.utc_today) or
-                  (trai.when == ^Date.utc_today and atte.inserted_at < ^DateTime.add(DateTime.utc_now(), 60))
+                  ((is_nil(trai.commitment) or trai.commitment == false) and trai.when >= ^Date.utc_today)
+                  or (trai.when == ^Date.utc_today and atte.inserted_at < ^DateTime.add(now, 60))
                 )
             ) |> Oas.Repo.one
 
+            booking_cutoff = Oas.Trainings.TrainingWhereTime.get_booking_cutoff(
+              result.inserted_at,
+              result.training,
+              Oas.Trainings.TrainingWhereTime.find_training_where_time(
+                result.training,
+                result.training.training_where.training_where_time
+              )
+            )
+
             case result do
               nil -> {:error, "Unable to undo"}
-              %{id: id} ->
-                Oas.Attendance.delete_attendance(%{attendance_id: id})
-
-                {:ok, %{
-                  success: true,
-                  attendance_id: id,
-                  training_id: result.training_id,
-                  member_id: member_id
-                }}
+              %{
+                id: id,
+                inserted_at: inserted_at
+              } ->
+                if (
+                  NaiveDateTime.compare(inserted_at, booking_cutoff) == :lt  or NaiveDateTime.compare(inserted_at, booking_cutoff) == :eq or
+                  NaiveDateTime.compare(inserted_at, NaiveDateTime.shift(now, minute: 1)) == :lt or NaiveDateTime.compare(inserted_at, NaiveDateTime.shift(now, minute: 1)) == :eq
+                ) do
+                  Oas.Attendance.delete_attendance(%{attendance_id: id})
+                  {:ok, %{
+                    success: true,
+                    attendance_id: id,
+                    training_id: result.training_id,
+                    member_id: member_id
+                  }}
+                else
+                  {:error, "Unable to undo due to being past the booking cutoff of over 1 minute"}
+                end
             end
           _ -> {:error, "Booking feature is not enabled"}
         end

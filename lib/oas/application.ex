@@ -19,8 +19,8 @@ defmodule Oas.Application do
       # Start a worker by calling: Oas.Worker.start_link(arg)
       # {Oas.Worker, arg}
       Oas.BackupJob,
-      # Oas.Gocardless.AuthServer,
       Oas.Gocardless.Supervisor,
+      Oas.Trainings.RecurringServer,
       {Task.Supervisor, name: Oas.TaskSupervisor},
       # Start the Endpoint (http/https)
       OasWeb.Endpoint,

@@ -14,15 +14,16 @@ export const UndoButton = ({
   const [countdown, setCountdown] = useState({});
 
   useEffect(() => {
+    let interval = null
     const doTimer = () => {
       setCountdown({
         seconds: padStart(expires.diff(moment(), 'seconds') % 60, 2, '0'),
         minutes: padStart(expires.diff(moment(), 'minutes') % 60, 2, '0'),
         hours: padStart(expires.diff(moment(), 'hours'), 2, '0')
-        
+
       });
       if (expires.diff(moment(), 'seconds') < 0) {
-        clearInterval(interval)
+        interval && clearInterval(interval)
         refetch();
         setState({ // Force update
           ...state,
@@ -32,8 +33,8 @@ export const UndoButton = ({
     }
 
     doTimer()
+    interval = setInterval(doTimer, 1000);
 
-    const interval = setInterval(doTimer, 1000);
     return () => {
       clearInterval(interval);
     }

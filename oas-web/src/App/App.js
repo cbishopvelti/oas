@@ -2,9 +2,9 @@ import './App.css';
 import { gql, useMutation, useQuery, useSubscription } from '@apollo/client';
 import { Members } from '../Member/Members';
 import { MenuList, MenuItem, ListItemText, Divider, ListItem, Drawer, IconButton, Box, Alert } from '@mui/material';
-import { Outlet } from "react-router-dom";
+import { Outlet, useMatches } from "react-router-dom";
 import { styled, useTheme } from '@mui/material/styles';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { get } from 'lodash';
 import { AppMenu } from './AppMenu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
@@ -20,7 +20,9 @@ const DrawerHeader = styled('div')(({ theme }) => ({
   justifyContent: 'flex-end',
 }));
 
-const DrawerBar = ({title}) => {
+const DrawerBar = ({ title, components, setComponents }) => {
+  const matches = useMatches();
+
   const {loading, data} = useSubscription(gql`
     subscription {
       global_warnings {
@@ -39,30 +41,44 @@ const DrawerBar = ({title}) => {
     }
   `)
 
-  return <Box sx={{ minHeight: "48px", display: "flex", justifyContent: "space-between", width: "100%"}}>
+  useEffect(() => {
+    setComponents([])
+  }, [ matches ])
+
+  return <Box sx={{ minHeight: "48px", display: "flex", justifyContent: "space-between", width: "100%", mr: "16px"}}>
     <Box sx={{pt: '15px'}}>
       {title}
     </Box>
-    <Box>
-      {data?.global_warnings && data.global_warnings.map((warning, i) => {
+
+    {components.map((component, i) => {
+      return <Box key={i} sx={{pt: '15px'}}>
+        {component}
+      </Box>
+    })}
+
+    {data?.global_warnings && <Box>
+      {data.global_warnings.map((warning, i) => {
         return <Alert
-          onClose={() => { mutate({
-            variables: {
-              key: warning.key
-            }
-          })}}
+          onClose={() => {
+            mutate({
+              variables: {
+                key: warning.key
+              }
+            })
+          }}
           severity="warning"
           key={i} sx={{ mt: "0px" }}>
           {warning.warning}
         </Alert>
       })}
-    </Box>
+    </Box>}
   </Box>
 }
 
 function App() {
   const [open, setOpen] = useState(true);
   const [title, setTitle] = useState('');
+  const [components, setComponents] = useState([])
 
   const drawerWidth = 256;
 
@@ -99,9 +115,10 @@ function App() {
           <IconButton sx={{visibility: open ? 'hidden' : 'visible'}} onClick={() => setOpen(true)}>
             <MenuIcon />
           </IconButton>
-          <DrawerBar title={title} />
+          <DrawerBar title={title} components={components} setComponents={setComponents} />
         </Box>
-        <Outlet context={{setTitle}} />
+        <Outlet context={{setTitle, setComponents}} />
+
       </div>
     </div>
   );
