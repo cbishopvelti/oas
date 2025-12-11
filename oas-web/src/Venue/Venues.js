@@ -14,7 +14,7 @@ import {
   Button
 } from '@mui/material';
 import { get } from 'lodash';
-import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
+import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { Link, useOutletContext } from "react-router-dom";
 import { StyledTableRow } from '../utils/util';
@@ -93,7 +93,7 @@ export const Venues = () => {
                     <TableCell>{training_where.credit_amount}</TableCell>
                     <TableCell>
                       <IconButton title={`Edit ${training_where.name}`} component={Link} to={`/venue/${training_where.id}`}>
-                        <FitnessCenterIcon />
+                        <EditIcon />
                       </IconButton>
                       {training_where.trainings.length === 0 && <IconButton title={`Delete ${training_where.id}`} onClick={deleteTraningClick(training_where.id)}>
                         <DeleteIcon sx={{ color: 'red' }} />

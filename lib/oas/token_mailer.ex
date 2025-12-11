@@ -106,7 +106,7 @@ defmodule Oas.TokenMailer do
       true -> []
     end
   end
-  def send_credits_warning(member, last_transaction) do
+  def send_credits_warning(_member, last_transaction) do
     # config = from(cc in Oas.Config.Config, select: cc) |> Oas.Repo.one
 
     # last_two_cerdits = from(c from Oas.Credits.Credit,
@@ -130,7 +130,7 @@ defmodule Oas.TokenMailer do
   # EO CREDITS
 
   # SO booking warning
-  def maybe_booking_warning(member, attendance) do
+  def maybe_booking_warning(_member, attendance) do
     case from(a in Oas.Trainings.Attendance,
       join: t in assoc(a, :training),
       preload: [:inserted_by, training: t],

@@ -29,7 +29,6 @@ defmodule Oas.TransactionsCreditsTest do
 
     @tag only: true
     test("User doesn't pay enough to cover tokens") do
-      IO.inspect(Application.get_env(:oas, Oas.Repo), label: "001")
       config = from(cc in Oas.Config.Config, select: cc) |> Oas.Repo.one
 
       %{id: member_id, name: name} = member = Oas.MembersFixtures.member_fixture()

@@ -51,7 +51,8 @@ export const TrainingAttendance = ({trainingId, setAttendance}) => {
       training {
         when,
         commitment
-      }
+      },
+      booking_cutoff
     },
     config_config {
       enable_booking

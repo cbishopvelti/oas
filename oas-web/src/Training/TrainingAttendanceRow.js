@@ -34,9 +34,9 @@ const canUndo = (attendance, {enable_booking}) => {
 
   if (
     !attendance.training.commitment &&
-    moment().isBefore(attendance.training.when)
+    moment().isBefore(attendance.booking_cutoff)
   ) {
-    return moment(attendance.training.when)
+    return moment(attendance.booking_cutoff)
   }
 
   if (

@@ -1,3 +1,4 @@
+import Ecto.Query, only: [from: 2]
 
 defmodule OasWeb.Schema.SchemaTrainingWhere do
   use Absinthe.Schema.Notation
@@ -6,7 +7,35 @@ defmodule OasWeb.Schema.SchemaTrainingWhere do
     field :training_where, :training_where do
       arg :id, non_null(:integer)
       resolve fn _, %{id: id}, _ ->
-        result = Oas.Repo.get(Oas.Trainings.TrainingWhere, id)
+        # result = Oas.Repo.get(Oas.Trainings.TrainingWhere, id)
+        result = from(tw in Oas.Trainings.TrainingWhere,
+          preload: :training_where_time,
+          where: tw.id == ^id
+        )
+        |> Oas.Repo.one!()
+
+        {:ok, result}
+      end
+    end
+    field :training_where_time, :training_where_time do
+      arg :id, non_null(:integer)
+      resolve fn _, %{id: id}, _ ->
+        result = Oas.Repo.get!(Oas.Trainings.TrainingWhereTime, id)
+        {:ok, result}
+      end
+    end
+    field :training_where_time_by_date, :training_where_time do
+      arg :training_where_id, non_null(:integer)
+      arg :when, non_null(:string)
+      resolve fn _, %{training_where_id: training_where_id, when: when1}, _ ->
+
+
+        result = from(twt in Oas.Trainings.TrainingWhereTime,
+          where: twt.training_where_id == ^(training_where_id) and
+          twt.day_of_week == ^(Date.day_of_week(
+            Date.from_iso8601!(when1)
+          ))
+        ) |> Oas.Repo.one()
 
         {:ok, result}
       end
@@ -29,6 +58,30 @@ defmodule OasWeb.Schema.SchemaTrainingWhere do
           %{data: %{id: _}} -> Oas.Repo.update(&1)
         end)).()
         |> OasWeb.Schema.SchemaUtils.handle_error
+      end
+    end
+    field :training_where_time, type: :training_where_time do
+      arg :id, :integer
+      arg :training_where_id, non_null(:integer)
+      arg :day_of_week, :integer
+      arg :start_time, non_null(:string)
+      arg :booking_offset, :string
+      arg :end_time, :string
+      arg :recurring, :boolean
+      resolve fn _, args, _ ->
+        out = case args do
+          %{id: id} -> Oas.Repo.get(Oas.Trainings.TrainingWhereTime, id)
+          _ -> %Oas.Trainings.TrainingWhereTime{}
+        end
+        |> Oas.Trainings.TrainingWhereTime.changeset(args)
+        |> (&(case &1 do
+          %{data: %{id: nil}} -> Oas.Repo.insert(&1)
+          %{data: %{id: _}} -> Oas.Repo.update(&1)
+        end)).()
+        |> OasWeb.Schema.SchemaUtils.handle_error
+
+        GenServer.cast(Oas.Trainings.RecurringServer, :rerun)
+        out
       end
     end
     field :delete_training_where, type: :success do
@@ -55,6 +108,15 @@ defmodule OasWeb.Schema.SchemaTrainingWhere do
                 end
             end
         end
+      end
+    end
+    field :delete_training_where_time, type: :success do
+      arg :id, non_null(:integer)
+      resolve fn _, %{id: id}, _ ->
+        Oas.Repo.get(Oas.Trainings.TrainingWhereTime, id)
+        |> Oas.Repo.delete()
+
+        {:ok, %{success: true}}
       end
     end
   end

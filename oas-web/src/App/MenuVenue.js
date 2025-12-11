@@ -14,7 +14,7 @@ export const MenuVenue = () => {
 
   const matches = useMatches();
 
-  const venueIds = ["venue-id", "venues"];
+  const venueIds = ["venue-id", "venues", "venue-time"];
   const newVenueIds = ['venue'];
   const allIds = [...venueIds, ...newVenueIds];
   const forceIds = [...newVenueIds];

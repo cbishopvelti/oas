@@ -21,10 +21,11 @@ const canUndo = ({
   }
 
   if (
-    !booking.commitment &&
-    moment().isBefore(booking.when)
+    !booking.commitment && booking.booking_cutoff
   ) {
-    return moment(booking.when)
+    if (moment().isBefore(booking.booking_cutoff)) {
+      return moment(booking.booking_cutoff)
+    }
   }
 
   if (
@@ -59,6 +60,8 @@ export const Bookings = () => {
         id,
         where,
         when,
+        start_time,
+        booking_cutoff,
         attendance_id,
         inserted_by_member_id,
         inserted_at,
@@ -124,15 +127,17 @@ export const Bookings = () => {
         <TableRow>
           <TableCell>Where</TableCell>
           <TableCell>When</TableCell>
+          <TableCell>Start time</TableCell>
           <TableCell>Actions</TableCell>
         </TableRow>
       </TableHead>
       <TableBody>
         {get(data, "user_bookings", []).map((training, i) => {
           return <TableRow key={i} sx={{tableLayout: "fixed", width: "100%"}}>
-            <TableCell sx={{width: "33%"}}>{training.where}</TableCell>
-            <TableCell sx={{width: "33%"}}>{training.when}</TableCell>
-            <TableCell sx={{width: "34%"}}>
+            <TableCell sx={{width: "20%"}}>{training.where}</TableCell>
+            <TableCell sx={{width: "20%"}}>{training.when}</TableCell>
+            <TableCell sx={{ width: "20%" }}>{training.start_time && moment(training.start_time, "HH:mm:ss").format("HH:mm")}</TableCell>
+            <TableCell sx={{width: "20%"}}>
               {!training.attendance_id && <Button onClick={onAttend(training.id)} color="success" sx={{width: "100%"}}>Attend</Button>}
               {user && canUndo({user})(training) && <UndoButton
                 refetch={refetch}

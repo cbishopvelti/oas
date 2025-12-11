@@ -51,6 +51,12 @@ defmodule OasWeb.Schema.SchemaTransaction do
     field :credit, :transaction_credit
   end
 
+  object :pending_transaction do
+    field :remittance_information_unstructured, :string
+    field :booking_date, :string
+    field :amount, :string
+  end
+
   object :transaction_queries do
     field :transactions, list_of(:transaction) do
       arg :from, :string
@@ -126,6 +132,36 @@ defmodule OasWeb.Schema.SchemaTransaction do
           nil -> {:ok, nil}
           %{id: id} -> {:ok, id}
         end
+      end
+    end
+
+    field :pending_transactions, list_of(:pending_transaction) do
+
+      resolve fn _, _, _ ->
+        dir = Application.get_env(:oas, :gocardless_backup_dir, "./gocardless_backup")
+        pending = dir
+          |> File.ls!()
+          |> Enum.map(&Path.join(dir, &1))
+          |> Enum.filter(&File.regular?/1)
+          |> Enum.max_by(&File.stat!(&1).mtime, fn -> nil end)
+          |> File.read!()
+          |> Jason.decode!()
+          |> get_in(["transactions", "pending"])
+          |> Enum.map(fn %{
+              "bookingDate" => bookingDate,
+              "remittanceInformationUnstructured" => remittanceInformationUnstructured,
+              "transactionAmount" => %{
+                "amount" => transactionAmount
+              }
+          } ->
+            %{
+              remittance_information_unstructured: remittanceInformationUnstructured,
+              booking_date: bookingDate,
+              amount: transactionAmount
+            }
+          end)
+
+        {:ok, pending}
       end
     end
   end

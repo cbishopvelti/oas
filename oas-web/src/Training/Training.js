@@ -26,11 +26,16 @@ export const Training = () => {
   }
   const [attendance, setAttendance] = useReactState(0);
 
-  const {data, refetch} = useQuery(gql`
-    query($id: Int!) {
+  const {data: config} = useQuery(gql`
+    query {
       config_config {
         enable_booking
       }
+    }
+  `)
+
+  const {data, refetch} = useQuery(gql`
+    query($id: Int!) {
       training(id: $id) {
         id,
         when,
@@ -44,7 +49,10 @@ export const Training = () => {
           id,
           name
         },
-        attendance
+        attendance,
+        start_time,
+        booking_offset,
+        end_time
       }
     }
   `, {
@@ -77,7 +85,7 @@ export const Training = () => {
           {id && <Tab value={'2'} label="Attendance" />}
         </TabList>
         <TabPanel value={'1'} sx={{width: '100%'}}>
-          <TrainingForm id={id} data={data} refetch={refetch} />
+          <TrainingForm id={id} data={data} config={config} refetch={refetch} />
         </TabPanel>
         {id &&
           <TabPanel value={'2'} sx={{width: '100%'}}>
