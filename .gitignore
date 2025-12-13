@@ -50,3 +50,7 @@ local_notes.md
 /data
 /gocardless_backup
 /.VSCodeCounter
+/docs/dbs/yb_data
+/yugabyte/data/node_1
+/yugabyte/data/node_2
+/yugabyte/data/node_3

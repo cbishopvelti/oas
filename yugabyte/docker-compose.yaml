@@ -1,0 +1,126 @@
+version: '3.8'
+
+
+services:
+  # ----------------------------------------------------------------
+  # NODE 1 (Seed Node)
+  # ----------------------------------------------------------------
+  yb-node1:
+    image: yugabytedb/yugabyte:latest
+    container_name: yb-node1
+    hostname: yb-node1
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 65535
+        hard: 65535
+    volumes:
+      - node1_data:/root/var
+    networks:
+      yb-net:
+        ipv4_address: 172.28.0.11
+    # Healthcheck ensures Node 1 is listening on Master UI port (7000)
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://172.28.0.11:7000/"]
+      interval: 5s
+      timeout: 30s
+      retries: 10
+      start_period: 15s
+    command: [
+      "bin/yugabyted", "start",
+      "--base_dir=/root/var",
+      "--daemon=false",
+      "--ui=true",
+      "--cloud_location=l.r.z1",
+      "--fault_tolerance=zone",
+      "--advertise_address=172.28.0.11",
+      # "--tserver_flags \"enable_ysql_conn_mgr=true\""
+    ]
+
+  # ----------------------------------------------------------------
+  # NODE 2
+  # ----------------------------------------------------------------
+  yb-node2:
+    image: yugabytedb/yugabyte:latest
+    container_name: yb-node2
+    hostname: yb-node2
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 65535
+        hard: 65535
+    volumes:
+      - node2_data:/root/var
+    networks:
+      yb-net:
+        ipv4_address: 172.28.0.12
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://172.28.0.12:7000/"]
+      interval: 5s
+      timeout: 30s
+      retries: 10
+      start_period: 15s
+    depends_on:
+      yb-node1:
+        condition: service_healthy # WAITS for Node 1 to be ready
+    command: [
+      "bin/yugabyted", "start",
+      "--base_dir=/root/var",
+      "--daemon=false",
+      "--ui=true",
+      "--advertise_address=172.28.0.12",
+      "--cloud_location=l.r.z2",
+      "--fault_tolerance=zone",
+      "--join=172.28.0.11",
+      # "--tserver_flags \"enable_ysql_conn_mgr=true\""
+    ]
+
+  # ----------------------------------------------------------------
+  # NODE 3
+  # ----------------------------------------------------------------
+  yb-node3:
+    image: yugabytedb/yugabyte:latest
+    container_name: yb-node3
+    hostname: yb-node3
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 65535
+        hard: 65535
+    volumes:
+      - node3_data:/root/var
+    networks:
+      yb-net:
+        ipv4_address: 172.28.0.13
+    depends_on:
+      yb-node1:
+        condition: service_healthy # WAITS for Node 1 to be ready
+      yb-node2:
+        condition: service_healthy # WAITS for Node 2 to be ready
+    command: [
+      "bin/yugabyted", "start",
+      "--base_dir=/root/var",
+      "--daemon=false",
+      "--ui=true",
+      "--advertise_address=172.28.0.13",
+      "--fault_tolerance=zone",
+      "--cloud_location=l.r.z3",
+      "--join=172.28.0.11",
+      # "--tserver_flags \"enable_ysql_conn_mgr=true\""
+    ]
+
+networks:
+  yb-net:
+    driver: bridge
+    ipam:
+      config:
+        # Using a standard RFC1918 private range to ensure no routing conflicts
+        - subnet: 172.28.0.0/24
+
+# ----------------------------------------------------------------
+# VOLUMES (The Speed Fix)
+# ----------------------------------------------------------------
+volumes:
+  node1_data:
+  node2_data:
+  node3_data:

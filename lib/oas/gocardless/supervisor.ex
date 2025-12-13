@@ -16,16 +16,18 @@ defmodule Oas.Gocardless.Supervisor do
       limit: 1
     ) |> Oas.Repo.one!()
 
-    children = case Application.get_env(:oas, :disable_gocardless, false) &&
-      config.gocardless_enabled
-    do
+    children = case config.gocardless_enabled do
       true ->
-        Logger.warning("Oas.Gocardless.Supervisor gocardless disabled")
-        [Oas.Gocardless.AuthServer]
-      false -> [
-        Oas.Gocardless.AuthServer,
-        Oas.Gocardless.TransServer
-      ]
+        case Application.get_env(:oas, :disable_gocardless, false) do
+          true ->
+            Logger.warning("Oas.Gocardless.Supervisor gocardless disabled")
+            [Oas.Gocardless.AuthServer]
+          false -> [
+            Oas.Gocardless.AuthServer,
+            Oas.Gocardless.TransServer
+          ]
+      end
+      _ -> []
     end
 
     Supervisor.init(children,

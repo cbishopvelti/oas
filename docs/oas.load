@@ -1,0 +1,50 @@
+LOAD DATABASE
+     FROM sqlite:///home/chris/oas-dev-dbs/oas-2025-12-03T20_40_04.838455Z.db
+     INTO pgsql://postgres:pd6k@localhost:5432/oas
+
+WITH include drop, create tables, create indexes, reset sequences
+
+/* Tell pgloader to convert text_datetime to a standard Postgres timestamp */
+CAST type text_datetime to timestamptz
+        drop default drop not null using zero-dates-to-null,
+     type boolean       to boolean
+        drop default,
+
+    type integer with extra auto_increment to bigserial drop typemod,
+
+    column config_config.gocardless_enabled to boolean,
+    column config_config.credits to boolean,
+    column training_deleted.when to date,
+    column training_deleted.inserted_at to timestamptz,
+    column training_deleted.updated_at to timestamptz,
+
+    column things.when to date,
+    column things.inserted_at to timestamptz,
+    column things.updated_at to timestamptz,
+
+    column trainings.start_time to time,
+    column trainings.end_time to time,
+
+    column training_where_time.inserted_at to timestamptz,
+    column training_where_time.updated_at to timestamptz,
+    column training_where_time.start_time to time,
+    column training_where_time.end_time to time,
+    column training_where_time.recurring to boolean,
+
+    column credits.when to date,
+    column credits.expires_on to date,
+    column credits.inserted_at to timestamptz,
+    column credits.updated_at to timestamptz,
+
+    column config_llm.chat_enabled to boolean,
+    column config_llm.inserted_at to timestamptz,
+    column config_llm.updated_at to timestamptz,
+
+    column chat_members.inserted_at to timestamptz,
+    column chat_members.updated_at to timestamptz,
+
+    column chats.inserted_at to timestamptz,
+    column chats.updated_at to timestamptz,
+
+    column members.honorary_member to boolean
+;

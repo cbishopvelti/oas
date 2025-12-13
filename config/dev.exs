@@ -15,9 +15,27 @@ config :oas, Oas.Repo,
   # database: "./dbs/prod-backup-2025-10-03T20:39:52.215384Z.db",
   # database: "./dbs/dev.db",
   # database: "./dbs/prod-backup-2025-11-03T19:35:33.875200Z.db",
-  database: "/home/chris/oas-dev-dbs/oas-2025-12-03T20_40_04.838455Z.db",
+  # database: "/home/chris/oas-dev-dbs/oas-2025-12-03T20_40_04.838455Z.db",
+  username: "postgres",
+  password: "pd6k",
+  database: "oas",
+  endpoints: [
+
+    {"172.28.0.11", 5433}, # Node 1
+    {"172.28.0.13", 5433},  # Node 3
+    {"172.28.0.12", 5433} # Node 2
+
+
+  ],
+  # database: "oas2",
+  # hostname: "localhost",
   backup_database: "./dbs/sqlite-backup",
-  log: false
+  migration_lock: nil,
+  log: false,
+  connect_timeout: 1_000,
+  timeout: 10_000,
+  queue_target: 60_000
+
 
 config :oas, Oas.Repo.Replica1,
   database: System.get_env("DB_FILE_REPLICA_1") || "./dbs/sqlite-dev-replica-1.db"

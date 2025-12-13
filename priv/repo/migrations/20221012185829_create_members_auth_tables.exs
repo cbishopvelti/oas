@@ -18,7 +18,7 @@ defmodule Oas.Repo.Migrations.CreateMembersAuthTables do
     create unique_index(:members, [:bank_account_name])
 
     create table(:members_details) do
-      
+
       add :phone, :string, null: false
       add :address, :string, null: false
       add :dob, :date, null: false
@@ -28,7 +28,7 @@ defmodule Oas.Repo.Migrations.CreateMembersAuthTables do
       add :nok_email, :string, null: false
       add :nok_phone, :string, null: false
       add :nok_address, :string, null: false
-      
+
       add :member_id, references(:members, on_delete: :delete_all), null: false
 
       timestamps()
@@ -36,12 +36,12 @@ defmodule Oas.Repo.Migrations.CreateMembersAuthTables do
 
     create table(:members_tokens) do
       add :member_id, references(:members, on_delete: :delete_all), null: false
-      add :token, :binary, null: false, size: 32
+      add :token, :binary, null: false
       add :context, :string, null: false
       add :sent_to, :string
       timestamps(updated_at: false)
     end
-    
+
 
     create index(:members_tokens, [:member_id])
     create unique_index(:members_tokens, [:context, :token])
