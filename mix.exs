@@ -68,7 +68,9 @@ defmodule Oas.MixProject do
       {:mock, "~> 0.3.9"},
       {:ollama, "0.9.0"},
       {:langchain, "~> 0.4.0"},
-      {:tz, "~> 0.28"}
+      {:tz, "~> 0.28"},
+      {:libcluster, "~> 3.5"},
+      {:ra, "~> 2.17"}
       # {:nx, "~> 0.9.2"},
       # {:bumblebee, "~> 0.6.0"},
       # {:exla, "~> 0.9.2"}, # Hardware acceleration (optional but recommended)

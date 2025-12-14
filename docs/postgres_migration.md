@@ -48,6 +48,5 @@ docker run --rm -d --name yugabyte01 --hostname yugabyte01 \
 
 todo:
 
-fresh migration runs
-Backup
-Setup yugabyteDB
+fresh migration runs [x]
+Setup yugabyteDB [x]

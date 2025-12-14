@@ -8,10 +8,18 @@ defmodule OasWeb.Endpoint do
   @session_options [
     store: :cookie,
     key: "oas_key",
+    same_site: "Lax",
     domain: Application.compile_env(:oas, OasWeb.Endpoint)[:domain],
     signing_salt: "gM7uiSTx",
     http_only: false
   ]
+
+  # plug :dynamic_session
+  # defp dynamic_session(conn, _opts) do
+  #   domain = Application.get_env(:oas, OasWeb.Endpoint)[:domain] |> IO.inspect(label: "101")
+  #   opts = Keyword.put(@session_options, :domain, domain)
+  #   Plug.Session.call(conn, Plug.Session.init(opts))
+  # end
 
   def signing_salt, do: @session_options[:signing_salt]
 

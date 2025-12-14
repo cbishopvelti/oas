@@ -54,7 +54,7 @@ module.exports = module.exports = {
           webSocketURL: {
             hostname: undefined,
             pathname: undefined,
-            port: process.env['MIX_ENV'] ? '443' : undefined,
+            port: (process.env['MIX_ENV'] && !process.env['MIX_ENV'].includes("dev")) ? '443' : undefined,
           },
           overlay: { errors: true, warnings: false }
         }

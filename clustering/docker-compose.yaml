@@ -1,0 +1,99 @@
+
+# docker compose -f clustering/docker-compose.yaml up -d
+services:
+  phoenix-n1:
+    image: chrisjbishop155/oas:v3_dev
+    container_name: phoenix-n1
+    hostname: phoenix-n1
+    cap_add:
+      - NET_ADMIN
+      - NET_BROADCAST
+    environment:
+      REACT_APP_ADMIN_URL: "http://phoenix-n1.oas.local:3999"
+      REACT_APP_SERVER_URL: "http://phoenix-n1.oas.local:4000"
+      REACT_APP_PUBLIC_URL: "http://phoenix-n1.oas.local:3998"
+      DOMAIN: ".oas.local"
+      DANGEROUSLY_DISABLE_HOST_CHECK: "true"
+      ELIXIR_ERL_OPTIONS: "-setcookie oasoasoas"
+      SNAME: n1
+    volumes:
+      - ../:/app
+      - ../clustering/node1/oas-dbs-backup:/oas-dbs-backup
+      - ../clustering/node1/gocardless_backup:/gocardless_backup
+    networks:
+      oas-net:
+        ipv4_address: 172.29.0.21
+        aliases:
+          - phoenix-n1.oas.local
+      yb-net:
+    # entrypoint: ""
+    # command: [
+    #   "/bin/bash", "-c", "sleep 48200"
+    # ]
+
+  phoenix-n2:
+    image: chrisjbishop155/oas:v3_dev
+    container_name: phoenix-n2
+    hostname: phoenix-n2
+    cap_add:
+      - NET_ADMIN
+      - NET_BROADCAST
+    environment:
+      REACT_APP_ADMIN_URL: "http://phoenix-n2.oas.local:3999"
+      REACT_APP_SERVER_URL: "http://phoenix-n2.oas.local:4000"
+      REACT_APP_PUBLIC_URL: "http://phoenix-n2.oas.local:3998"
+      DOMAIN: ".oas.local"
+      DANGEROUSLY_DISABLE_HOST_CHECK: "true"
+      ELIXIR_ERL_OPTIONS: "-setcookie oasoasoas"
+      SNAME: n2
+    volumes:
+      - ../:/app
+      - ../clustering/node2/oas-dbs-backup:/oas-dbs-backup
+      - ../clustering/node2/gocardless_backup:/gocardless_backup
+    networks:
+      oas-net:
+        ipv4_address: 172.29.0.22
+        aliases:
+          - phoenix-n2.oas.local
+      yb-net:
+    # entrypoint: ""
+    # command: [
+    #   "/bin/bash", "-c", "sleep 48200"
+    # ]
+
+  phoenix-n3:
+    image: chrisjbishop155/oas:v3_dev
+    container_name: phoenix-n3
+    hostname: phoenix-n3
+    cap_add:
+      - NET_ADMIN
+      - NET_BROADCAST
+    environment:
+      REACT_APP_ADMIN_URL: "http://phoenix-n3.oas.local:3999"
+      REACT_APP_SERVER_URL: "http://phoenix-n3.oas.local:4000"
+      REACT_APP_PUBLIC_URL: "http://phoenix-n3.oas.local:3998"
+      DOMAIN: ".oas.local"
+      DANGEROUSLY_DISABLE_HOST_CHECK: "true"
+      ELIXIR_ERL_OPTIONS: "-setcookie oasoasoas"
+      SNAME: n3
+    volumes:
+      - ../:/app
+      - ../clustering/node3/oas-dbs-backup:/oas-dbs-backup
+      - ../clustering/node3/gocardless_backup:/gocardless_backup
+    networks:
+      oas-net:
+        ipv4_address: 172.29.0.23
+        aliases:
+          - phoenix-n2.oas.local
+      yb-net:
+
+
+networks:
+  oas-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.29.0.0/24
+  yb-net:
+    external: true
+    name: yugabyte_yb-net

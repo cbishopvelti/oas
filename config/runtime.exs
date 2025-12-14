@@ -13,6 +13,14 @@ if System.get_env("PHX_SERVER") && System.get_env("RELEASE_NAME") do
   config :oas, OasWeb.Endpoint, server: true
 end
 
+if System.get_env("RT_DOMAIN") do
+  current_config = Application.get_env(:oas, OasWeb.Endpoint)
+  current_url = current_config[:url] || []
+
+  new_url = Keyword.merge(current_url, host: System.get_env("RT_DOMAIN"))
+
+  config :oas, OasWeb.Endpoint, url: new_url # , domain: System.get_env("RT_DOMAIN")
+end
 
 if config_env() == :prod and false do
   database_url =

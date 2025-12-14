@@ -54,3 +54,6 @@ local_notes.md
 /yugabyte/data/node_1
 /yugabyte/data/node_2
 /yugabyte/data/node_3
+/n1@phoenix-n1
+/n2@phoenix-n2
+/n3@phoenix-n3
