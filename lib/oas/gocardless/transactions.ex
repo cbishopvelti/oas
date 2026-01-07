@@ -220,6 +220,8 @@ defmodule Oas.Gocardless.Transactions do
         {:ok, headers}
       {:to_many_requests, _, headers} ->
         {:ok, headers}
+      {:unauth_401, _, error} ->
+        {:unauth_401, error}
     end
   end
 
@@ -271,6 +273,12 @@ defmodule Oas.Gocardless.Transactions do
         seconds_retry = List.keyfind!(headers, "http_x_ratelimit_account_success_reset", 0) |> elem(1) |> String.to_integer()
         Logger.warning("Gocardless.Transactions.process_transacitons(#{from}) failed, retrying in #{seconds_retry}s")
         {:to_many_requests, nil, headers}
+      {:ok, 401, _headers, client} ->
+        error = case :hackney.body(client) do
+          {:ok, err} -> inspect(err)
+          other -> inspect(other)
+        end
+        {:unauth_401, nil, error}
     end
   end
 
