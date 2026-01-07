@@ -8,10 +8,6 @@ defmodule Oas.Failover.FailoverServer do
   def init(args) do
     :net_kernel.monitor_nodes(true, node_type: :visible)
 
-    :ra.start() |> IO.inspect(label: "300")
-
-    :ra.start_cluster(:default, :failover, {:module, Oas.Failover.Machine, %{}}, [Node.self() | Node.list()])
-    # |> IO.inspect(label: "301")
 
     {:ok, %{}}
   end

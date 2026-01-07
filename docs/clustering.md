@@ -24,6 +24,8 @@ chrisjbishop155/oas:v3_dev
 ```bash
 docker compose -f clustering/docker-compose.yaml up -d
 
+docker exec -it phoenix-n1 /bin/bash -c 'tmux attach -t server'
+
 iex --sname n1@phoenix-n1 -S mix phx.server
 ```
 

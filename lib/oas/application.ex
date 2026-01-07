@@ -36,7 +36,12 @@ defmodule Oas.Application do
       # Start the Endpoint (http/https)
       OasWeb.Endpoint,
       {Absinthe.Subscription, OasWeb.Endpoint},
-      Oas.Failover.FailoverServer
+      # %{
+      #   id: :pg,
+      #   start: {:pg, :start_link, []}
+      # },
+      # {Squabble, [subscriptions: [Oas.Failover.Squabble], size: 1]}
+      # Oas.Failover.FailoverServer
     ]
 
     :ets.new(:user_table, [:named_table, :public, :set, read_concurrency: true])
