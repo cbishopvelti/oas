@@ -36,6 +36,7 @@ import { GocardlessRequisition } from './Config/GocardlessRequisition';
 import { ConfigLlm } from './Config/ConfigLlm';
 import { AnalysisAttendance } from './Analysis/AnalysisAttendance';
 import { AnalysisBalance } from './Analysis/AnalysisBalance';
+import { AnalysisAnnual } from './Analysis/AnalysisAnnual';
 import { Socket as PhoenixSocket } from "phoenix";
 import Cookies from "js-cookie";
 import * as AbsintheSocket from "@absinthe/socket";
@@ -69,6 +70,11 @@ const router = createBrowserRouter([
         id: 'analysis-balance',
         path: "/analysis/balance",
         element: <AnalysisBalance />
+      },
+      {
+        id: "analysis-annual",
+        path: "/analysis/annual",
+        element: <AnalysisAnnual/>
       },
       {
         id: "members",
