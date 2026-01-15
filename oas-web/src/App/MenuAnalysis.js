@@ -17,8 +17,9 @@ export const MenuAnalysis = () => {
   const ids = ["analysis"];
   const analysisAttendanceIds = ['analysis-attendance']
   const analysisBalanceIds = ['analysis-balance']
-  const allIds = [...ids, ...analysisAttendanceIds, ...analysisBalanceIds];
-  const forceIds = [...analysisAttendanceIds, ...analysisBalanceIds];
+  const analysisAnnualIds = ['analysis-annual']
+  const allIds = [...ids, ...analysisAttendanceIds, ...analysisBalanceIds, ...analysisAnnualIds];
+  const forceIds = [...analysisAttendanceIds, ...analysisBalanceIds, ...analysisAnnualIds];
 
   const active = some(matches, ({id}) => includes(allIds, id))
   const forceActive = some(matches, ({id}) => includes(forceIds, id))
@@ -61,6 +62,9 @@ export const MenuAnalysis = () => {
       </MenuItem>
       <MenuItem sx={{ml: 2}} component={CustomLink(analysisBalanceIds)} end to={`/analysis/balance`}>
         <ListItemText>Balance</ListItemText>
+      </MenuItem>
+      <MenuItem sx={{ml: 2}} component={CustomLink(analysisAnnualIds)} end to={`/analysis/annual`}>
+        <ListItemText>Annual</ListItemText>
       </MenuItem>
     </Collapse>
   </>
