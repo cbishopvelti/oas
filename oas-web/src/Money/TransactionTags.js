@@ -10,7 +10,7 @@ const filter = createFilterOptions();
 export const TransactionTags = ({
   transactionTags = [],
   setTransactionTags = () => {},
-  formData, 
+  formData,
   setFormData,
   filterMode
 }) => {
@@ -41,7 +41,7 @@ export const TransactionTags = ({
       if (id) {
         return id == optionId
       }
-      
+
       return optionName == name
     }}
     getOptionLabel={(option) => {

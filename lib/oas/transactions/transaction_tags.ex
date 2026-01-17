@@ -4,6 +4,9 @@ defmodule Oas.Transactions.TransactionTags do
 
   schema "transaction_tags" do
     field :name, :string
+
+    many_to_many :transactions, Oas.Transactions.Transaction, join_through: "transaction_transaction_tags",
+      join_keys: [transaction_tag_id: :id, transaction_id: :id], on_replace: :delete
     timestamps()
   end
 

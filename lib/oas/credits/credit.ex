@@ -99,6 +99,21 @@ defmodule Oas.Credits.Credit do
       total,
     }
   end
+  def get_credit_amount_to(%{member_id: member_id}, to) do
+    credits = from(c in Oas.Credits.Credit,
+      where: c.who_member_id == ^member_id and c.when <= ^to,
+      preload: [:transaction, :debit, :credit, :membership, :attendance],
+      order_by: [asc: coalesce(c.expires_on, c.when), asc_nulls_first: c.expires_on, asc: c.id]
+      # order_by: [asc_nulls_last: c.expires_on, asc: c.when, asc: c.id]
+    )
+    |> Oas.Repo.all()
+
+    {credits, total} = process_credits(credits)
+    {
+      credits |> Enum.reverse(),
+      total,
+    }
+  end
 
   def get_global_credits() do
     members = from(m in Oas.Members.Member, where: true)
@@ -109,6 +124,29 @@ defmodule Oas.Credits.Credit do
       Oas.Credits.Credit2.get_credit_amount(arg) |> elem(1) |> Decimal.to_float()
     end)
     |> Enum.filter(fn amount -> amount > 0.0 end)
+    |> Enum.sum()
+  end
+  def get_global_credits_to(to) do
+    members = from(m in Oas.Members.Member, where: true)
+    |> Oas.Repo.all()
+    members
+    |> Enum.map(fn %{id: id} -> %{member_id: id} end)
+    |> Enum.map(fn arg ->
+      Oas.Credits.Credit2.get_credit_amount(arg, %{now: to}) |> elem(1) |> Decimal.to_float()
+    end)
+    |> Enum.filter(fn amount -> amount > 0.0 end)
+    |> Enum.sum()
+  end
+
+  def get_global_debt_to(to) do
+    members = from(m in Oas.Members.Member, where: true)
+    |> Oas.Repo.all()
+    members
+    |> Enum.map(fn %{id: id} -> %{member_id: id} end)
+    |> Enum.map(fn arg ->
+      get_credit_amount_to(arg, to) |> elem(1) |> Decimal.to_float()
+    end)
+    |> Enum.filter(fn amount -> amount < 0 end)
     |> Enum.sum()
   end
 
