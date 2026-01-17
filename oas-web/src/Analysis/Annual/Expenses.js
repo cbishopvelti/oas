@@ -1,13 +1,11 @@
-import {
-  Box, TableContainer, Table,
-  TableBody, TableRow, TableCell
-} from '@mui/material'
+import { Table, TableBody, TableCell, TableContainer, Box, TableRow } from "@mui/material"
 
-export const AnnualIncome = ({data}) => {
+export const AnnualExpenses = ({data}) => {
+
+
 
   return <Box sx={{backgroundColor: 'white', p: 2}}>
-    <h3>Income</h3>
-
+    <h3>Expenses</h3>
     <TableContainer>
       <Table>
         <TableBody>
@@ -24,6 +22,5 @@ export const AnnualIncome = ({data}) => {
         </TableBody>
       </Table>
     </TableContainer>
-
   </Box>
 }

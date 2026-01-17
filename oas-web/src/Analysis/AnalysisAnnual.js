@@ -7,6 +7,10 @@ import moment from 'moment';
 import { AnnualIncome } from './Annual/Income';
 import { gql, useQuery } from '@apollo/client';
 import { TransactionTags } from '../Money/TransactionTags';
+import { AnnualReceivables } from './Annual/Receivables';
+import { AnnualExpenses } from './Annual/Expenses';
+import { AnnualLiabilities } from './Annual/Liabilities';
+import { AnnualBalance } from './Annual/Balance'
 
 const onChange = ({formData, setFormData, key}) => (event) => {
   setFormData({
@@ -31,10 +35,29 @@ export const AnalysisAnnual = () => {
       analysis_annual(from: $from, to: $to, transaction_tags: $transaction_tags) {
         annual_income {
           total,
+          tagged {
+            tag_names,
+            amount
+          }
+        },
+        annual_receivables {
           tokens,
-          credit
-        }
-      }
+          credits,
+          total
+        },
+        annual_expenses {
+          total,
+          tagged {
+            tag_names,
+            amount
+          }
+        },
+        annual_liabilities {
+          credits,
+          total
+        },
+        annual_balance
+      },
     }
   `, {
     variables: filterData
@@ -77,8 +100,12 @@ export const AnalysisAnnual = () => {
       </FormControl>
     </Box>
 
-    <Box sx={{ display: 'flex', flexWrap: 'wrap' }}>
-      <AnnualIncome data={data?.analysis_annual?.annual_income}/>
+    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mt: 2 }}>
+      <AnnualIncome data={data?.analysis_annual?.annual_income} />
+      <AnnualReceivables data={data?.analysis_annual.annual_receivables} />
+      <AnnualExpenses data={data?.analysis_annual.annual_expenses} />
+      <AnnualLiabilities data={data?.analysis_annual.annual_liabilities} />
+      <AnnualBalance balance={data?.analysis_annual.annual_balance} />
     </Box>
   </Box>
 }

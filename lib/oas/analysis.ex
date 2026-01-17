@@ -100,10 +100,12 @@ defmodule Oas.Analysis do
     attendance = from(att in Oas.Trainings.Attendance,
       left_join: tok in assoc(att, :token),
       inner_join: tra in assoc(att, :training),
+      left_join: cre in assoc(att, :credit),
       preload: [token: tok, training: tra],
       # inner_join: mem in assoc(tok, :member), # DEBUG ONLY
       where: tra.when <= ^to and
         (is_nil(tok.used_on) or tok.used_on >= ^from)
+        and is_nil(cre.id)
         # and mem.id == ^1 # DEBUG ONLY
     ) |> Oas.Repo.all
 

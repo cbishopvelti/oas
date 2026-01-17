@@ -3,7 +3,7 @@ import Ecto.Query, only: [from: 2]
 defmodule Oas.Credits.Credit2 do
   def get_credit_amount(%{member_id: member_id}, opts \\ %{now: Date.utc_today()} ) do
     credits = from(c in Oas.Credits.Credit,
-      where: c.who_member_id == ^member_id,
+      where: c.who_member_id == ^member_id and c.when <= ^opts.now,
       preload: [:transaction, :debit, :credit, :membership, :attendance],
       # order_by: [asc: coalesce(c.expires_on, c.when), asc_nulls_first: c.expires_on, asc: c.id]
       # order_by: [asc_nulls_last: c.expires_on, asc: c.when, asc: c.id]

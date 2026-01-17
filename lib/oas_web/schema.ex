@@ -19,6 +19,7 @@ defmodule OasWeb.Schema do
   import_types OasWeb.Schema.SchemaTrainingWhere
   import_types OasWeb.Schema.SchemaThing
   import_types OasWeb.Schema.SchemaAnalysisAnnual
+  import_types OasWeb.Schema.SchemaTransactionTags
 
   query do
     import_fields :attendance_queries
@@ -47,6 +48,8 @@ defmodule OasWeb.Schema do
     import_fields :thing_queries
 
     import_fields :analysis_annual_queries
+
+    import_fields :transaction_tags_queries
   end
 
 
@@ -73,6 +76,8 @@ defmodule OasWeb.Schema do
     import_fields :credits_mutations
 
     import_fields :thing_mutations
+
+    import_fields :transaction_tags_mutations
   end
 
   subscription do
