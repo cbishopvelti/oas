@@ -7,6 +7,9 @@ defmodule Oas.Transactions.TransactionTags do
 
     many_to_many :transactions, Oas.Transactions.Transaction, join_through: "transaction_transaction_tags",
       join_keys: [transaction_tag_id: :id, transaction_id: :id], on_replace: :delete
+
+    has_many :transaction_tag_auto, Oas.Transactions.TransactionTagAuto
+
     timestamps()
   end
 

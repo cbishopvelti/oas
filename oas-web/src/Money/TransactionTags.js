@@ -1,32 +1,83 @@
 import { gql, useMutation, useQuery } from "@apollo/client";
-import { Autocomplete, TextField } from "@mui/material";
-import { get, includes, set, filter as lodashFilter, differenceWith, differenceBy, pick, map, uniqBy } from 'lodash'
+import { Autocomplete, Box, Chip, IconButton, TextField } from "@mui/material";
+import { get, includes, set, filter as lodashFilter, differenceWith, differenceBy, pick, map, uniqBy, findIndex, slice, pullAt, find } from 'lodash'
 import { createFilterOptions } from '@mui/material/Autocomplete';
 import { useEffect } from "react";
+import LabelIcon from '@mui/icons-material/Label';
+import LabelOffIcon from '@mui/icons-material/LabelOff';
 
 const filter = createFilterOptions();
 
+const canAutoTag = (formData, tagName) => {
+  if (get(formData, "who") && !get(formData, "who_member_id") &&
+    !includes(["Gocardless", "Credits", "Tokens", "Membership"], tagName)
+  ) {
+    return true
+  }
+  return false
+}
 
 export const TransactionTags = ({
   transactionTags = [],
   setTransactionTags = () => {},
   formData,
   setFormData,
-  filterMode
+  filterMode,
 }) => {
+  console.log("008 ===== render =====", filterMode, formData.auto_tags)
+
   const {data, refetch } = useQuery(gql`
-    query {
+    query ($who: String) {
       transaction_tags {
         id,
         name
       }
+      transaction_auto_tags(who: $who)
     }
-  `)
+  `, {
+    variables: {
+      who: get(formData, "who", null)
+    },
+  })
+
+  console.log("006 data", data)
 
   let transaction_tags = uniqBy([...(get(data, 'transaction_tags', []) || []), ...transactionTags ], 'name')
   useEffect(() => {
     refetch()
   }, [formData.saveCount])
+
+  useEffect(() => {
+    console.log("007 ----")
+    if (filterMode) {
+      return
+    }
+
+    const currentAutoTags = map(get(formData, "auto_tags", []), ({id}) => id);
+    const missingTags = differenceBy(data?.transaction_auto_tags, currentAutoTags);
+    console.log("007.5", data?.transaction_auto_tags)
+    console.log("007.6", formData.auto_tags)
+    console.log("007.7", currentAutoTags.length)
+
+    if (missingTags.length === 0) {
+      return
+    }
+
+    setFormData((oldFormData) => {
+      const out = {
+        ...oldFormData,
+        test1: "test2",
+        auto_tags: uniqBy([
+          ...get(oldFormData, "auto_tags", []),
+          ...map(data?.transaction_auto_tags, (id) => {
+            return find(transaction_tags, (tt) => tt.id === id)
+          })
+        ], (item) => item.id)
+      }
+      console.log("007.2 ----", out)
+      return out
+    })
+  }, [data?.transaction_auto_tags, data?.transaction_tags, get(formData, "who", null)])
 
   return <Autocomplete
     id="transactionTags"
@@ -80,5 +131,70 @@ export const TransactionTags = ({
         ...transactionTags
       ], 'name'))
     }}
+    renderTags={(tagValue, getTagProps) =>
+      tagValue.map((option, index) => {
+        const { key, ...tagProps } = getTagProps({ index });
+
+        console.log("009", formData.auto_tags)
+        const i = findIndex((formData.auto_tags || []), (tag) => {
+          return tag.name === option.name
+        })
+
+        return (
+          <Chip
+            key={key}
+            {...tagProps}
+            label={<Box style={{ display: 'flex', alignItems: 'center' }}>
+              <span>{option.name}</span>
+              {canAutoTag(formData, option.name) && i === -1 && <IconButton
+                size="small"
+                // Add a little margin to separate from text
+                sx={{ marginLeft: 0.5, padding: 0.25 }}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setFormData((prevFormData) => {
+                    return {
+                      ...prevFormData,
+                      auto_tags: [...(prevFormData.auto_tags || []), option]
+                    }
+                  })
+                }}
+                title="Auto tag disabled, click to enable; Auto tagging will tag any future transaction with this tag which has the same 'who'"
+              >
+                <LabelIcon
+                  fontSize="small"
+                  sx={{ color: "#0000EE;" }}
+
+                />
+              </IconButton>}
+              {canAutoTag(formData, option.name) && i >= 0 && <IconButton
+                size="small"
+                // Add a little margin to separate from text
+                sx={{ marginLeft: 0.5, padding: 0.25 }}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setFormData((prevFormData) => {
+                    console.log("001", prevFormData.auto_tags, i)
+
+                    const out = {
+                      ...prevFormData,
+                      auto_tags: prevFormData.auto_tags.toSpliced(i, 1)
+                    }
+                    console.log("001.1 out", out)
+                    return out
+                  })
+                }}
+                title="Auto tag Enabled, click to disable."
+              >
+                <LabelOffIcon
+                  fontSize="small"
+                />
+              </IconButton>}
+            </Box>
+            }
+
+          />
+        );
+      })}
   />
 }

@@ -94,6 +94,7 @@ export const GocardlessImportCountdown = (transactionData) => {
 
 export const Transactions = () => {
   const [filterData, setFilterData] = persistentUseState({
+    wat: "what",
     from: moment().subtract(1, 'year').format("YYYY-MM-DD"),
     to: moment().format("YYYY-MM-DD"),
     transaction_tags: []
