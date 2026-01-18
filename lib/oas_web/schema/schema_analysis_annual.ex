@@ -110,7 +110,7 @@ defmodule OasWeb.Schema.SchemaAnalysisAnnual do
       end
     end
     field :annual_income, :annual_income do
-      resolve fn parent, b, c ->
+      resolve fn parent, _b, _c ->
 
         total = from(t in Oas.Transactions.Transaction,
           where: t.when >= ^parent.from and t.when <= ^parent.to and t.amount >= ^0
