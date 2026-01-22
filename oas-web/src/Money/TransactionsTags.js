@@ -82,7 +82,7 @@ export const TransactionsTags = ({
     <DialogActions>
       <Button color="error" onClick={handleTagsClose(false)}>Cancel</Button>
       <Button
-        disabled={new Set(formData.transactionsTags).isSubsetOf(new Set(data?.transactions_tags)) &&
+        disabled={new Set(formData.transaction_tags).isSubsetOf(new Set(data?.transactions_tags)) &&
           new Set(data?.transactions_tags).isSubsetOf(new Set(formData.transaction_tags))
         }
         onClick={handleTagsClose(true)}>

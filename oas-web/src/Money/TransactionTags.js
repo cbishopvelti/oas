@@ -24,7 +24,6 @@ export const TransactionTags = ({
   setFormData,
   filterMode,
 }) => {
-  console.log("008 ===== render =====", filterMode, formData.auto_tags)
 
   const {data, refetch } = useQuery(gql`
     query ($who: String) {
@@ -40,24 +39,18 @@ export const TransactionTags = ({
     },
   })
 
-  console.log("006 data", data)
-
   let transaction_tags = uniqBy([...(get(data, 'transaction_tags', []) || []), ...transactionTags ], 'name')
   useEffect(() => {
     refetch()
   }, [formData.saveCount])
 
   useEffect(() => {
-    console.log("007 ----")
     if (filterMode) {
       return
     }
 
     const currentAutoTags = map(get(formData, "auto_tags", []), ({id}) => id);
     const missingTags = differenceBy(data?.transaction_auto_tags, currentAutoTags);
-    console.log("007.5", data?.transaction_auto_tags)
-    console.log("007.6", formData.auto_tags)
-    console.log("007.7", currentAutoTags.length)
 
     if (missingTags.length === 0) {
       return
@@ -66,7 +59,6 @@ export const TransactionTags = ({
     setFormData((oldFormData) => {
       const out = {
         ...oldFormData,
-        test1: "test2",
         auto_tags: uniqBy([
           ...get(oldFormData, "auto_tags", []),
           ...map(data?.transaction_auto_tags, (id) => {
@@ -74,7 +66,6 @@ export const TransactionTags = ({
           })
         ], (item) => item.id)
       }
-      console.log("007.2 ----", out)
       return out
     })
   }, [data?.transaction_auto_tags, data?.transaction_tags, get(formData, "who", null)])
@@ -85,6 +76,7 @@ export const TransactionTags = ({
     options={(transaction_tags).map(({name, id}) => ({ label: name, id, name }))}
     renderInput={(params) => <TextField {...params} label="Tags" />}
     multiple
+    freeSolo
     selectOnFocus
     clearOnBlur
     handleHomeEndKeys
@@ -135,7 +127,6 @@ export const TransactionTags = ({
       tagValue.map((option, index) => {
         const { key, ...tagProps } = getTagProps({ index });
 
-        console.log("009", formData.auto_tags)
         const i = findIndex((formData.auto_tags || []), (tag) => {
           return tag.name === option.name
         })
@@ -174,13 +165,11 @@ export const TransactionTags = ({
                 onClick={(event) => {
                   event.stopPropagation();
                   setFormData((prevFormData) => {
-                    console.log("001", prevFormData.auto_tags, i)
 
                     const out = {
                       ...prevFormData,
                       auto_tags: prevFormData.auto_tags.toSpliced(i, 1)
                     }
-                    console.log("001.1 out", out)
                     return out
                   })
                 }}

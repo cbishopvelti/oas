@@ -46,7 +46,7 @@ const TransactionRow = memo(({
         alignItems: "center",
 
       }}>
-        {transaction.transaction_tags.map(({ name }) => name).join(', ')}
+        <span>{transaction.transaction_tags.map(({ name }) => name).join(', ')}</span>
         <Checkbox sx={{}}
           checked={selectedTag || false}
           onChange={(event) => {

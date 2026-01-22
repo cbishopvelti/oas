@@ -246,7 +246,8 @@ defmodule OasWeb.Schema.SchemaAnalysisAnnual do
       arg :from, non_null(:string)
       arg :to, non_null(:string)
       arg :transaction_tags, list_of(:transaction_tag_arg)
-      resolve fn _, %{from: from, to: to, transaction_tags: transaction_tags}, _ ->
+      resolve fn _, %{from: from, to: to} = args, _ ->
+        transaction_tags = Map.get(args, :transaction_tags, [])
         # IO.inspect(transaction_tags, label: "001")
         {:ok, %{
           from: from,

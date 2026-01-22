@@ -41,10 +41,6 @@ export const Transaction = () => {
   };
 
   let [formData, setFormData] = useState(defaultData);
-  // setFormData = (x) => {
-  //   console.log("---> 501", x)
-  //   return setFormData(x)
-  // }
 
   const {data, refetch} = useQuery(gql`
     query ($id: Int!) {

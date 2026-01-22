@@ -122,8 +122,13 @@ defmodule Oas.Gocardless.TransactionsCredits do
       }
     )
 
+    auto_tags = Oas.Transactions.TransactionTagAuto.get_auto_tags(
+      Map.get(out_transaction.changes, :who),
+      Map.get(out_transaction.changes, :who_member_id, nil)
+    ) |> Enum.map(fn %{name: name} -> name end)
+
     data = %{
-      transaction_tags: ["Gocardless"]
+      transaction_tags: ["Gocardless" | auto_tags] |> Enum.uniq()
     }
 
     out_changeset = generate_transaction_credits_2(out_transaction, data)

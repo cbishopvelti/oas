@@ -126,6 +126,11 @@ defmodule Oas.Gocardless.Transactions do
       process_membership(out_transaction)
       |> process_tokens()
 
+    auto_tags = Oas.Transactions.TransactionTagAuto.get_auto_tags(
+      out_transaction.who,
+      out_transaction.who_member_id
+    )
+
     out_transaction
     |> Oas.Transactions.Transaction.changeset()
     |> Ecto.Changeset.put_assoc(:gocardless_transaction_iid, %Oas.Transactions.Gocardless{}
@@ -142,7 +147,8 @@ defmodule Oas.Gocardless.Transactions do
       )
     )
     |> Oas.Transactions.TransactionTags.doTransactionTags(
-      %{transaction_tags: Map.get(out_transaction, :tags, []) |> Enum.map(fn name -> %{name: name} end)
+      %{transaction_tags: ((Map.get(out_transaction, :tags, []) |> Enum.map(fn name -> %{name: name} end)) ++
+        auto_tags) |> Enum.uniq_by(fn %{name: name} -> name end)
     })
     |> (&(case Ecto.assoc_loaded?(out_transaction.membership) do
       false -> &1
@@ -199,7 +205,9 @@ defmodule Oas.Gocardless.Transactions do
       end
     end)
   end
+
   # Oas.Gocardless.Transactions.process_transacitons("./gocardless_backup/transactions_2025-09-24_test.json")
+  # Oas.Gocardless.Transactions.process_transacitons("./gocardless_backup/transactions_2025-09-24_test_1.json")
   def process_transacitons(file_path \\ nil) do
     # get last transaction
     last_transaction = from(tra in Oas.Transactions.Transaction,
