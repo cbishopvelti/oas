@@ -27,7 +27,6 @@ defmodule OasWeb.Schema.SchemaAnalysisAnnual do
   object :annual do
     field :annual_balance, :float do
       resolve fn parent, _, _ ->
-        IO.puts("005 ------------")
         to = parent.to |> Date.from_iso8601!()
         out = from(t in Oas.Transactions.Transaction,
           where: t.when <= ^to,
@@ -156,7 +155,6 @@ defmodule OasWeb.Schema.SchemaAnalysisAnnual do
             {cr, []} when not is_nil(cr)->
               if (parent.transaction_tags |> MapSet.member?("Credits")) do
                 key = inter_tags |> MapSet.put("Credits")
-                # IO.puts("002 key #{inspect(key)}")
                 acc |> Map.put(
                   key,
                   Map.get(acc, key, Decimal.new("0")) |> Decimal.add(tr.amount)
@@ -177,7 +175,6 @@ defmodule OasWeb.Schema.SchemaAnalysisAnnual do
               end
               if (parent.transaction_tags |> MapSet.member?("Credits")) do
                 key = inter_tags |> MapSet.delete("Tokens") |> MapSet.put("Credits")
-                # IO.puts("003 key #{inspect(key)}")
                 acc |> Map.put(
                   key,
                   Map.get(acc, key, Decimal.new("0")) |> Decimal.add(elem(out, 0))
@@ -191,7 +188,6 @@ defmodule OasWeb.Schema.SchemaAnalysisAnnual do
               |> then(fn acc ->
                 if (parent.transaction_tags |> MapSet.member?("Tokens")) do
                   key = inter_tags |> MapSet.delete("Credits") |> MapSet.put("Tokens")
-                  # IO.puts("004 key #{inspect(key)}")
                   acc |> Map.put(
                     key,
                     Map.get(acc, key, Decimal.new("0")) |> Decimal.add(elem(out, 1))
@@ -248,7 +244,6 @@ defmodule OasWeb.Schema.SchemaAnalysisAnnual do
       arg :transaction_tags, list_of(:transaction_tag_arg)
       resolve fn _, %{from: from, to: to} = args, _ ->
         transaction_tags = Map.get(args, :transaction_tags, [])
-        # IO.inspect(transaction_tags, label: "001")
         {:ok, %{
           from: from,
           to: to,
