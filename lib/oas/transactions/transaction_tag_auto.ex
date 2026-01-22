@@ -10,20 +10,24 @@ defmodule Oas.Transactions.TransactionTagAuto do
   end
 
 
+  def get_auto_tags(who, nil) do
+    from(
+      tt in Oas.Transactions.TransactionTags,
+      inner_join: ta in assoc(tt, :transaction_tag_auto),
+      where: ta.who == ^who
+    ) |> Oas.Repo.all()
+  end
+  def get_auto_tags(_, _) do
+    []
+  end
 
   def do_auto_tags(old_who, who, transaction_tags, auto_tags) do
-    IO.inspect(old_who, label: "001 old_who")
-    IO.inspect(who, label: "001.1 who")
-    IO.inspect(transaction_tags, label: "001.2 transaction_tags")
-    IO.inspect(auto_tags, label: "001.3, auto_tags")
-
     now = NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second)
 
     auto_tags = auto_tags
     |> Enum.map(fn %{id: _id} = tag -> tag
       %{name: name} -> transaction_tags |> Enum.find(fn %{name: nam} -> nam == name end)
     end)
-
 
     # Delete
     if (old_who !== who) do
@@ -52,7 +56,14 @@ defmodule Oas.Transactions.TransactionTagAuto do
       ) |> Oas.Repo.delete_all()
     end
 
-    Oas.Repo.insert_all(Oas.Transactions.TransactionTagAuto, auto_tags |> Enum.map(fn %{id: id} ->
+    still_exists = MapSet.intersection(
+      MapSet.new(transaction_tags |> Enum.map(fn %{id: id} -> id end)),
+      MapSet.new(auto_tags |> Enum.map(fn %{id: id} -> id end))
+    )
+
+    Oas.Repo.insert_all(Oas.Transactions.TransactionTagAuto, auto_tags
+    |> Enum.filter(fn %{id: id} -> MapSet.member?(still_exists, id) end)
+    |> Enum.map(fn %{id: id} ->
       %{
         transaction_tag_id: id,
         who: who,
@@ -60,6 +71,5 @@ defmodule Oas.Transactions.TransactionTagAuto do
         updated_at: now
       }
     end), on_conflict: :nothing)
-
   end
 end
