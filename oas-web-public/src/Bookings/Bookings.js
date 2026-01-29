@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Box, TableContainer, Table, TableHead,
   TableBody, TableCell, TableRow, Button
@@ -43,9 +43,10 @@ export const Bookings = () => {
   const [state, setState] = useState({
     update: 0
   })
-  const [{user, userLoading}] = useOutletContext();
+  const [{ user, userLoading }] = useOutletContext();
 
   const navigate = useNavigate();
+
 
   useEffect(() => {
     if (!user && userLoading === false) {
@@ -118,7 +119,7 @@ export const Bookings = () => {
 
 
 
-  return <Box>
+  return <Box className="" sx={{}}>
     <h2>My Bookings</h2>
     <CreditWarning watch={ get(data, "user_bookings") } />
     {(!has(data, "user_bookings") || get(data, "user_bookings", []).length == 0) && <p>No upcoming events</p>}

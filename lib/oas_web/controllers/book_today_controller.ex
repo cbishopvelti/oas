@@ -63,7 +63,10 @@ defmodule OasWeb.BookTodayController do
           #   public_url: Application.fetch_env!(:oas, :public_url)
           # })
         catch
-          {:error, errors} -> conn
+          {:error, [%{message: "training_id: has already been taken", db_field: "training_id"}]} ->
+            conn |> redirect(external: Application.fetch_env!(:oas, :public_url) <> "/bookings?error=already_booked")
+          {:error, errors} ->
+            conn
             |> put_flash(:error, errors |> Enum.map(fn (err) -> err.message end) |> Enum.join("<br/>\n"))
             |> render("index.html", %{
               public_url: Application.fetch_env!(:oas, :public_url)

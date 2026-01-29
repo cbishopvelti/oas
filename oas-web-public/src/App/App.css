@@ -54,3 +54,21 @@ a.active:hover {
     transform: rotate(360deg);
   }
 }
+
+
+/* 1. Define the flash animation */
+@keyframes flash-red {
+    0%, 50% {
+        background-color: red;
+    }
+    /* 2. Instantly switch to TRANSPARENT from 50.01% to 100% */
+    50.01%, 100% {
+        background-color: transparent;
+    }
+}
+
+/* 2. Apply it only when .over-credits exists */
+.content:has(.over-credits) {
+    /* animation: name duration timing-function iteration-count */
+    animation: flash-red 0.7s 5;
+}

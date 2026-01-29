@@ -44,12 +44,13 @@ defmodule OasWeb.Schema.SchemaGocardless do
     field :gocardless_trans_status, :gocardless_trans_status do
       resolve fn _, _, _ ->
         if (!is_nil(Process.whereis(Oas.Gocardless.TransServer)) && Process.whereis(Oas.Gocardless.TransServer) |> Process.alive?() ) do
-          ms_to_next_run = Process.whereis(Oas.Gocardless.TransServer)
-          |> GenServer.call(:status)
+          next_run = case Process.whereis(Oas.Gocardless.TransServer) |> GenServer.call(:status) do
+            nil -> nil
+            ms_to_next_run -> Time.add(Time.utc_now(), ms_to_next_run, :millisecond)
+          end
 
-          Time.add(Time.utc_now(), ms_to_next_run, :millisecond)
           {:ok, %{
-            next_run: Time.add(Time.utc_now(), ms_to_next_run, :millisecond)
+            next_run: next_run
           }}
         else
           {:ok, %{
