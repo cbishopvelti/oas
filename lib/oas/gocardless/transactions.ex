@@ -214,12 +214,13 @@ defmodule Oas.Gocardless.Transactions do
       select: max(tra.when)
     ) |> Oas.Repo.one
 
+    # Debug only, uncomment
     transactions = if (file_path == nil) do
       get_transactions_real(last_transaction)
     else
       get_transactions_file(file_path)
     end
-    # {:ok, transactions, headers} = Oas.Gocardless.TransactionsMockData.get_transactions_mock_1(last_transaction) # DEBUG ONLY, change to get_transactions_real()
+    # transactions = Oas.Gocardless.TransactionsMockData.get_transactions_mock_1(last_transaction) # DEBUG ONLY, change to get_transactions_real()
 
     case transactions do
       {:ok, transactions, headers} ->
