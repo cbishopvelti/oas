@@ -12,13 +12,15 @@ This is the administration system for the Oxfordshire Acro Society. It is the co
 #### Event scheduling and attendance
 - **Event Scheduling**: Administrators can schedule training sessions and jams.
 - **Booking System**: Members can book upcoming sessions.
+- **book in via nfc or qr code**: Attendees can book in via nfc tag or qr code.
 - **Attendance Tracking**: Track attendance for each event.
+- **Analysis**: Reports and graphs of attendance data.
 #### Financials
 - **Open Banking Integration (Gocardless)**: Automatically pull transactions and link with members.
 - **Financial Reporting**: Generate reports on income, expenses, and member balances.
 - **Credits**: Management and tracking of members credits.
 - **Credit Expiry**: Credits can be configured to expire after a certain period.
-- **Credit Transfer**: Admins can transfer members credits between members.
+- **Credit Transfer**: Admins can transfer users credits to other users.
 - **Financial Analysis**: Generate reports and graphs of financial data.
 #### Chat
 - **Chat**: Provides members communication with an Admin or AI assistant.
@@ -26,6 +28,7 @@ This is the administration system for the Oxfordshire Acro Society. It is the co
 #### Administration
 - **Notifications** Members will recieve emails notifactions about their credit balance and booking vigilance.
 - **Administration**: Admins can administer everything.
+- **Reviewers**: Reviewers can monitor data.
 - **Backups**: Daily database snapshots with configurable offsite transfer.
 - **Content Management**: Admins can manage content.
 
@@ -37,7 +40,7 @@ Initialize the database: ```mix ecto.create```
 Run the migrations: ```mix ecto.migrate```
 Start the server: ```iex -S mix phx.server```
 Start the admin ui ```cd oas-web && npm run start && cd ../```
-Start the frontend ui ```cd oas-web-public && npm run start && cd ../```
+Start the public ui ```cd oas-web-public && npm run start && cd ../```
 
 To setup an admin user, register through the UI then reset your password. In the dev environment, the reset email will be available at /dev/mailbox.
 Open the sqlite database manually and set is_admin to true for that user.
