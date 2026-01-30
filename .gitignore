@@ -55,3 +55,6 @@ local_notes.md
 /n2@phoenix-n2
 /n3@phoenix-n3
 /yugabyte
+/replacements.txt
+/priv/repo/seed_fake.exs
+/priv/repo/seeds.exs
