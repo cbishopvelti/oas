@@ -69,10 +69,6 @@ defmodule Oas.MixProject do
       {:ollama, "0.9.0"},
       {:langchain, "~> 0.4.0"},
       {:tz, "~> 0.28"}
-      # {:nx, "~> 0.9.2"},
-      # {:bumblebee, "~> 0.6.0"},
-      # {:exla, "~> 0.9.2"}, # Hardware acceleration (optional but recommended)
-      # {:explorer, "~> 0.10.1"}
     ]
   end
 
