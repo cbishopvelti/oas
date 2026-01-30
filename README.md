@@ -1,6 +1,6 @@
 # OAS
 
-This is the administration system for the Oxfordshire Acro Society.
+This is the administration system for the Oxfordshire Acro Society. It is the code that runs https://www.oxfordshireacrosociety.co.uk/.
 
 ### Features
 
@@ -48,5 +48,5 @@ see [README_v2_prod.md](README_v2_prod.md)
 
 ### Lisence
 
-This project is **proprietary software**. All rights are reserved by Chris Bishop. 
+This project is **proprietary software**. All rights are reserved by Christopher Bishop. 
 Unauthorized copying, modification, or distribution of these files is strictly prohibited.
