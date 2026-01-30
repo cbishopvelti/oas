@@ -1,7 +1,7 @@
 # docker build . -f Dockerfile_gcloud -t chrisjbishop155/oas:latest
 # docker push chrisjbishop155/oas:latest
 
-from elixir:1.18.3
+FROM elixir:1.18.3
 
 RUN apt-get update
 
