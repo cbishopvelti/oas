@@ -1,6 +1,6 @@
 # OAS
 
-This is the administration system for the Oxfordshire Acro Society. It is the code that runs https://www.oxfordshireacrosociety.co.uk/.
+This is the administration system for the Oxfordshire Acro Society. It is the code that runs [https://www.oxfordshireacrosociety.co.uk/].
 
 ### Features
 
