@@ -58,3 +58,4 @@ local_notes.md
 /replacements.txt
 /priv/repo/seed_fake.exs
 /priv/repo/seeds.exs
+/config/v2_prod.exs
