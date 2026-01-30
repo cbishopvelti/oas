@@ -23,7 +23,7 @@ config :oas, OasWeb.Endpoint,
   check_origin: false,
   code_reloader: true,
   debug_errors: true,
-  secret_key_base: "***REMOVED***",
+  secret_key_base: "6wXQb14AQy7OdLnCqFecdSojsiNJCyovZqpPm5HszCLRhOUYPbhaCTm4IIjTqCA8",
   watchers: [
     # Start the esbuild watcher by calling Esbuild.install_and_run(:default, args)
     esbuild: {Esbuild, :install_and_run, [:default, ~w(--sourcemap=inline --watch)]}
