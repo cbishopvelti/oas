@@ -205,7 +205,11 @@ function App() {
             </MenuList>
           </div>
         </Drawer>
-        <Box className="content" p={2} sx={{position: "relative"}}>
+      <Box className="content" p={2} sx={{
+        position: "relative",
+        boxSizing: "border-box",
+        height: "100vh"
+      }}>
           {matches && <IconButton sx={{visibility: open ? 'hidden' : 'visible'}} onClick={() => setOpen(true)}>
             <MenuIcon />
           </IconButton>}

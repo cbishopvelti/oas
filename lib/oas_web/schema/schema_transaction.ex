@@ -116,6 +116,23 @@ defmodule OasWeb.Schema.SchemaTransaction do
         {:ok, result || []}
       end
     end
+    field :transaction_auto_tags, list_of(:integer) do
+      arg :who, :string
+      resolve fn
+        _, %{who: nil}, _ ->
+          {:ok, []}
+        _, %{who: ""}, _ ->
+          {:ok, []}
+        _, %{who: who}, _ ->
+          out = from(ta in Oas.Transactions.TransactionTagAuto,
+            where: ta.who == ^who,
+            select: ta.transaction_tag_id
+          ) |> Oas.Repo.all()
+          {:ok, out}
+        _, %{}, _ ->
+          {:ok, []}
+      end
+    end
     field :check_duplicate, type: :integer do
       arg :who, non_null(:string)
       arg :amount, non_null(:float)
@@ -243,11 +260,13 @@ defmodule OasWeb.Schema.SchemaTransaction do
       arg :token_quantity, :integer
       arg :token_value, :float
       arg :transaction_tags, list_of(:transaction_tag_arg)
+      arg :auto_tags, list_of(:transaction_tag_arg)
       arg :membership_period_id, :integer
       arg :their_reference, :string
       arg :my_reference, non_null(:string)
       # arg :credit_amount, :float
       arg :credit, :credit_arg
+
       resolve fn _parent, args, _context ->
         when1 = Date.from_iso8601!(args.when)
         args = %{args | when: when1}
@@ -284,13 +303,6 @@ defmodule OasWeb.Schema.SchemaTransaction do
           |> OasWeb.Schema.SchemaUtils.handle_error
 
         # delete unused tags
-        _removedTransactionTags = Ecto.Changeset.get_change(toSave, :transaction_tags, [])
-        |> Enum.filter(fn
-          %{action: :replace} -> true
-          _ -> false
-        end)
-        |> Enum.map(fn %{data: %{id: id}} -> id end)
-
         from(
           tt in Oas.Transactions.TransactionTags,
           as: :transaction_tags,
@@ -311,6 +323,16 @@ defmodule OasWeb.Schema.SchemaTransaction do
             maybeDoTokens(args, result, when1)
             # Adds membership
             maybeDoMembership(args, result)
+
+            # Auto tag
+            if (is_nil(args.who_member_id)) do
+              Oas.Transactions.TransactionTagAuto.do_auto_tags(
+                toSave.data.who,
+                args.who,
+                result.transaction_tags,
+                Map.get(args, :auto_tags, [])
+              )
+            end
 
             {:ok, result}
         end

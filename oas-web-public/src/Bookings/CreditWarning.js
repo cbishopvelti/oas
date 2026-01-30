@@ -1,7 +1,7 @@
 import { get, uniqBy } from 'lodash'
 import { useQuery, useLazyQuery, gql} from '@apollo/client';
-import { useOutletContext, Link } from 'react-router-dom'
-import { Alert } from '@mui/material';
+import { useOutletContext, Link, useParams, useSearchParams } from 'react-router-dom'
+import { Alert, Box } from '@mui/material';
 import { useEffect } from 'react';
 
 
@@ -10,6 +10,7 @@ export const CreditWarning = ({
   watch
 }) => {
   const [outletContext] = useOutletContext();
+  const [params, setParams] = useSearchParams()
 
   const member_email = get(outletContext, 'user.email')
 
@@ -42,9 +43,22 @@ export const CreditWarning = ({
      credits[0].after_amount :
      0;
 
-  return <>
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setParams({})
+    }, 6000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  return <Box sx={{gap: "12px", display: "flex", flexDirection: "column"}}>
     {currentBalance < 0 && <Alert severity="warning">
       Your current balance is <b style={{ ...currentBalance < 0 ? { color: "red" } : { }}}>{ currentBalance }</b> please purchase more credits. Insturctions <Link to="/credits">here</Link>.
     </Alert>}
-  </>
+    {
+      params.get("error") && <Alert severity="info">
+        You have already booked into this session.
+      </Alert>
+    }
+  </Box>
 }

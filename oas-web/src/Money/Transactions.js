@@ -16,10 +16,12 @@ import {
   DialogContentText,
   DialogActions,
   Button,
+  Input,
+  Checkbox,
 
 } from '@mui/material';
-import { get, reduce, round, padStart } from 'lodash';
-import { useEffect, useState } from 'react';
+import { get, reduce, round, padStart, includes, pickBy } from 'lodash';
+import { useEffect, useState, useMemo } from 'react';
 import { useState as persistentUseState } from '../utils/useState';
 import EditIcon from '@mui/icons-material/Edit';
 import { Link, useParams,useOutletContext } from "react-router-dom";
@@ -29,6 +31,8 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { unparse } from 'papaparse';
 import DownloadIcon from '@mui/icons-material/Download';
 import { StyledTableRow } from '../utils/util'
+import { TransactionsRows } from './TransactionsRows';
+import { TransactionsTags } from './TransactionsTags';
 
 const onChange = ({formData, setFormData, key, required}) => (event) => {
   setFormData({
@@ -90,10 +94,15 @@ export const GocardlessImportCountdown = (transactionData) => {
 
 export const Transactions = () => {
   const [filterData, setFilterData] = persistentUseState({
+    wat: "what",
     from: moment().subtract(1, 'year').format("YYYY-MM-DD"),
     to: moment().format("YYYY-MM-DD"),
     transaction_tags: []
-  }, {id: 'Transactions'})
+  }, { id: 'Transactions' })
+  const [whoFilter, setWhoFilter] = useState("")
+  const [selectedTags, setSelectedTags] = useState(new Set())
+  const [ transactionsTagsOpen, setTransactionsTagsOpen] = useState(false)
+
   let { member_id } = useParams();
   if (member_id) {
     member_id = parseInt(member_id)
@@ -109,8 +118,6 @@ export const Transactions = () => {
     },
     skip: !member_id
   })
-
-
 
   const { setTitle, setComponents } = useOutletContext();
   let { data: transactionData, loading, refetch } = useQuery(gql`query ($from: String, $to: String, $transaction_tags: [TransactionTagArg], $member_id: Int) {
@@ -211,6 +218,17 @@ export const Transactions = () => {
     refetch();
   }
 
+  const filteredTransactions = useMemo(() => {
+    return transactions.filter((transaction) => {
+      return includes(transaction.who, whoFilter)
+    })
+  }, [transactions, whoFilter])
+
+  useEffect(() => {
+    const transIds = new Set(filteredTransactions.map((tran) => tran.id))
+    setSelectedTags((prevTags) => prevTags.intersection(transIds))
+  }, [filteredTransactions])
+
   return <div>
     <Box sx={{display: 'flex', gap: 2, m: 2, alignItems: 'center'}}>
       <FormControl sx={{ minWidth: 256}}>
@@ -268,40 +286,68 @@ export const Transactions = () => {
             <TableCell>Id</TableCell>
             <TableCell>When</TableCell>
             <TableCell>What</TableCell>
-            <TableCell>Who</TableCell>
-            <TableCell>Tags</TableCell>
+            <TableCell>
+
+              <Box sx={{display: "flex", justifyContent: "space-between", alignItems: "center"}}>
+                Who
+                <Input
+                  placeholder={"Filter"}
+                  type="text"
+                  variant='standard'
+                  size='small'
+                  value={whoFilter}
+                  onChange={(event) => setWhoFilter(event.target.value)}
+                  sx={{
+                    ml: 2, fontSize: 12
+                    }} />
+
+              </Box>
+            </TableCell>
+            <TableCell>
+              <Box sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}>
+                Tags
+                <Box>
+                  {selectedTags.size > 0 && <Button
+                    onClick={() => setTransactionsTagsOpen(true)}
+                    >Edit</Button>}
+                  <Checkbox
+                    sx={{}}
+                    checked={new Set(filteredTransactions.map(tran => tran.id)).isSubsetOf(selectedTags)}
+                    onChange={(event) => {
+                      setSelectedTags(prevTags => {
+                        if (!event.target.checked) {
+                          return new Set()
+                        } else {
+                          return new Set(filteredTransactions.map((tran) => {
+                            return tran.id
+                          }))
+                        }
+                      })
+                    }}
+                    />
+                </Box>
+              </Box>
+            </TableCell>
             <TableCell>Amount</TableCell>
             <TableCell>Actions</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
-          {
-            transactions.map((transaction) => (
-              <StyledTableRow className={`${transaction.warnings && 'warnings'}`} key={transaction.id}>
-                <TableCell>{transaction.id}</TableCell>
-                <TableCell>{transaction.when}</TableCell>
-                <TableCell>{transaction.what}</TableCell>
-                <TableCell>{transaction.who}</TableCell>
-                <TableCell>{transaction.transaction_tags.map(({name}) => name).join(', ')}</TableCell>
-                <TableCell>{transaction.amount}</TableCell>
-                <TableCell>
-                  <IconButton title={`Edit ${transaction.what}`} component={Link} to={`/transaction/${transaction.id}`}>
-                    <EditIcon />
-                  </IconButton>
-                  {(get(transaction, 'tokens', []).length == 0 && !get(transaction, 'membership', null)) &&
-                    <IconButton title={`Delete ${transaction.what}`} onClick={deleteClick({transaction_id: transaction.id})}>
-                      <DeleteIcon sx={{color: 'red'}} />
-                    </IconButton>
-                  }
-                </TableCell>
-              </StyledTableRow>
-            ))
-          }
+          <TransactionsRows
+            deleteClick={deleteClick}
+            transactions={filteredTransactions}
+            setSelectedTags={setSelectedTags}
+            selectedTags={selectedTags}
+            />
         </TableBody>
       </Table>
     </TableContainer>
     <Dialog
-        open={deleteOpen != 0}
+        open={deleteOpen !== 0}
         onClose={handleDeleteClose(false)}
         aria-labelledby="alert-dialog-title"
         aria-describedby="alert-dialog-description"
@@ -320,6 +366,13 @@ export const Transactions = () => {
             Yes
           </Button>
         </DialogActions>
-      </Dialog>
+    </Dialog>
+    <TransactionsTags
+      selectedTags={selectedTags}
+      setSelectedTags={setSelectedTags}
+      refetch={refetch}
+      transactionsTagsOpen={transactionsTagsOpen}
+      setTransactionsTagsOpen={setTransactionsTagsOpen}
+    />
   </div>
 }

@@ -48,7 +48,7 @@ export const TransferToken = ({token, refetch}) => {
     <IconButton title={`Transfer token`} onClick={() => setOpen(true)}>
       <TransferWithinAStationIcon />
     </IconButton>
-    <Dialog open={open} onClose={() => {console.log("hnadle close"); setOpen(false)}}>
+    <Dialog open={open} onClose={() => {setOpen(false)}}>
       <DialogTitle>Select member to transfer to</DialogTitle>
       <FormControl sx={{m: 2, minWidth: 256}}>
         <Autocomplete

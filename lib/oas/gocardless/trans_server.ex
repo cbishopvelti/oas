@@ -9,6 +9,7 @@ defmodule Oas.Gocardless.TransServer do
     GenServer.start_link(__MODULE__, state, name: __MODULE__)
   end
 
+  # IEx.Helpers.pid("#PID<0.422.0>") |> Process.send_after(:init, 0)
   @impl true
   def init(_) do
     pid = Process.whereis(Oas.Gocardless.AuthServer)
@@ -16,8 +17,8 @@ defmodule Oas.Gocardless.TransServer do
     case {pid && Process.alive?(pid), account_id} do
       {true, account_id } when account_id != nil ->
         # IO.puts("alive, start")
-        Logger.info("Oas.Gocardless.TransServer.init success")
-        Process.send_after(self(), :init, 0)
+        Logger.info("Oas.Gocardless.TransServer.init success #{inspect(self())}")
+        Process.send_after(self(), :init, 0) # DEBUG ONLY, uncomment
         {:ok, %{}}
       args ->
         IO.inspect(args, label: "001 error")
@@ -88,8 +89,10 @@ defmodule Oas.Gocardless.TransServer do
 
   @impl true
   def handle_call(:status, _from, state) do
-    Process.read_timer(state.timer_ref)
 
-    {:reply, Process.read_timer(state.timer_ref), state}
+    case Map.get(state, :timer_ref, nil) do
+      nil -> {:reply, nil, state}
+      ref -> {:reply, Process.read_timer(ref), state}
+    end
   end
 end

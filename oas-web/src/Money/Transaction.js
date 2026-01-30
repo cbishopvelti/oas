@@ -40,7 +40,7 @@ export const Transaction = () => {
     when: moment().format("YYYY-MM-DD")
   };
 
-  const [formData, setFormData] = useState(defaultData);
+  let [formData, setFormData] = useState(defaultData);
 
   const {data, refetch} = useQuery(gql`
     query ($id: Int!) {
@@ -92,18 +92,20 @@ export const Transaction = () => {
   }, [id])
   useEffect(() => {
     if (get(data, "transaction")) {
-
-      setFormData({
+      setFormData((prevFormData) => ({
+        ...{
+          auto_tags: get(prevFormData, "auto_tags", [])
+        },
         ...get(data, "transaction", {}),
         ...(has(data, "transaction.membership.membership_period_id") ? { membership_period_id: get(data, "transaction.membership.membership_period_id")} : {})
-      });
+      }));
     }
   }, [data])
   useEffect(() => {
     if (formData.type === "INCOMING") {
-      setFormData({
-        ...omit(formData, 'their_reference'),
-      })
+      setFormData((prevFormData) => ({
+        ...omit(prevFormData, 'their_reference'),
+      }))
     }
   }, [formData.type])
 
@@ -120,7 +122,6 @@ export const Transaction = () => {
   }, [])
 
   const onChange = ({formData, setFormData, key}) => (event) => {
-
     let extraData = {}
     if(key == 'amount' && !formData.type) {
       if (parseFloat(event.target.value) >= 0) {
@@ -212,7 +213,8 @@ export const Transaction = () => {
     $membership_period_id: Int,
     $their_reference: String,
     $my_reference: String!,
-    $credit: CreditArg
+    $credit: CreditArg,
+    $auto_tags: [TransactionTagArg]
   ){
     transaction (
       id: $id,
@@ -230,7 +232,8 @@ export const Transaction = () => {
       membership_period_id: $membership_period_id,
       their_reference: $their_reference,
       my_reference: $my_reference,
-      credit: $credit
+      credit: $credit,
+      auto_tags: $auto_tags
     ) {
       id
     }
@@ -245,7 +248,8 @@ export const Transaction = () => {
       ...(get(formData, 'who_member_id') ? {who_member_id: parseInt(get(formData, 'who_member_id'))} : {}),
       ...(formData.token_quantity ? {token_quantity: parseInt(formData.token_quantity)}: {}),
       ...(formData.token_quantity ? {token_value: parseFloat(formData.token_value)}: {}),
-      transaction_tags: (formData.transaction_tags?.map((item) => omit(item, '__typename') )),
+      transaction_tags: (formData.transaction_tags?.map((item) => omit(item, '__typename'))),
+      auto_tags: (formData.auto_tags?.map((item) => omit(item, '__typename'))),
       ...(formData.tokens ? {tokens: formData.tokens.map((item) => omit(item, '__typename'))} : {}),
       ...(formData.credit?.amount ? { credit: { amount: parseFloat( formData.credit?.amount) } } : {})
     };
@@ -466,6 +470,8 @@ export const Transaction = () => {
 
       <FormControl fullWidth sx={{m: 2}}>
         <TransactionTags
+          who={get(formData, "who", '')}
+          who_member_id={get(formData, "who_member_id", null)}
           formData={formData}
           setFormData={setFormData}
         />

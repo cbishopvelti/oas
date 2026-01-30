@@ -20,8 +20,8 @@ defmodule Oas.Gocardless.TransactionsMockData do
 
   def get_transactions_mock_1(_when) do
     {:ok, [%{
-      "bookingDate" => "2025-03-11",
-      "bookingDateTime" => "2025-02-07T00:00:00.000Z",
+      "bookingDate" => "2026-01-29",
+      "bookingDateTime" => "2026-01-29T00:00:00.000Z",
       "debtorName" => "DONT KNOW",
       "internalTransactionId" => "1bb4606bd800c76abfebffb5a5511db0",
       "proprietaryBankTransactionCode" => "POS",

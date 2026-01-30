@@ -1,4 +1,4 @@
-import { set, setWith, clone, get, has } from "lodash"
+import { set, setWith, cloneDeep, get, has } from "lodash"
 import { FormControl, TextField, Switch, FormControlLabel, FormHelperText } from '@mui/material'
 
 const onChange = ({formData, setFormData, isCheckbox, key}) => (event) => {
@@ -8,15 +8,15 @@ const onChange = ({formData, setFormData, isCheckbox, key}) => (event) => {
     value = event.target.checked
   }
 
-  formData = set(clone(formData), key, value)
+  formData = set(cloneDeep(formData), key, value)
   setFormData(formData)
 }
 
 
 export const MemberDetails = ({
   errors,
-  formData, 
-  setFormData  
+  formData,
+  setFormData
 }) => {
   return <>
     <FormControl fullWidth sx={{m: 2}}>
