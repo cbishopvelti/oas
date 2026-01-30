@@ -1,21 +1,6 @@
 import Config
 
-# Configure your database
-# config :oas, Oas.Repo,
-#   username: "postgres",
-#   password: "postgres",
-#   hostname: "localhost",
-#   database: "oas_dev",
-#   show_sensitive_data_on_connection_error: true,
-#   pool_size: 10
-
 config :oas, Oas.Repo,
-  # database: System.get_env("DB_FILE") || "./dbs/sqlite-2023-dev.db",
-  # database:  System.get_env("DB_FILE") || "./dbs/sqlite-prod-2025-09-22.db",
-  # database: "./dbs/prod-backup-2025-10-03T20:39:52.215384Z.db",
-  # database: "./dbs/dev.db",
-  # database: "./dbs/prod-backup-2025-11-03T19:35:33.875200Z.db",
-  # database: "/home/chris/oas-dev-dbs/oas-2025-12-03T20_40_04.838455Z.db",
   database: "/home/chris/oas-dev-dbs/prod-backup-2026-01-07T17:10:06.700840Z.db",
   backup_database: "./dbs/sqlite-backup",
   log: false
@@ -47,41 +32,6 @@ config :oas, OasWeb.Endpoint,
 config :oas, Oas.Mailer, adapter: Swoosh.Adapters.Local
 config :oas, Oas.TokenMailer, adapter: Swoosh.Adapters.Local,
   from: {"OAS", "chris@oxfordshireacrosociety.co.uk"}
-
-# config :oas, Oas.Mailer,
-#   adapter: Swoosh.Adapters.SMTP,
-#   relay: "smtp.gmail.com",
-#   username: "chrisjbishop155@gmail.com",
-#   port: 587,
-#   password: "***REMOVED***",
-#   tls: :always,
-#   ssl: false,
-#   auth: :always,
-#   tls_options: [
-#     versions: [:"tlsv1.2", :"tlsv1.3"],
-#     verify: :verify_peer,
-#     cacerts: :public_key.cacerts_get(),
-#     depth: 99,
-#     server_name_indication: 'smtp.gmail.com'
-#   ]
-# config :oas, Oas.TokenMailer,
-#   from: {"OAS", "chris@oxfordshireacrosociety.co.uk"},
-#   adapter: Swoosh.Adapters.SMTP,
-#   relay: "smtp.gmail.com",
-#   username: "chrisjbishop155@gmail.com",
-#   port: 587,
-#   password: "***REMOVED***",
-#   tls: :always,
-#   ssl: false,
-#   auth: :always,
-#   tls_options: [
-#     versions: [:"tlsv1.2", :"tlsv1.3"],
-#     verify: :verify_peer,
-#     cacerts: :public_key.cacerts_get(),
-#     depth: 99,
-#     server_name_indication: 'smtp.gmail.com'
-#   ]
-
 
 # ## SSL Support
 #
