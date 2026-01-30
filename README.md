@@ -1,83 +1,27 @@
-# Oas
+# OAS
 
-## Deploy
+This is the administration system for the Oxfordshire Acro Society.
 
-```
-docker build . -t chrisjbishop155/oas
-docker push chrisjbishop155/oas
-```
-```
-docker pull chrisjbishop155/oas
-```
-```
-docker stop oas; docker rm oas; `
-docker run -it -d `
---name=oas `
--e DANGEROUSLY_DISABLE_HOST_CHECK=true `
--e REACT_APP_ADMIN_URL="https://admin.oxfordshireacrosociety.co.uk" `
--e REACT_APP_SERVER_URL="https://server.oxfordshireacrosociety.co.uk" `
--e REACT_APP_PUBLIC_URL="https://www.oxfordshireacrosociety.co.uk" `
--e DOMAIN=".oxfordshireacrosociety.co.uk" `
--e DB_FILE=/dbs/sqlite-prod.db `
--e MIX_ENV=prod `
--p 4000:4000 -p 3999:3999 -p 3998:3998 `
--v D:/oas-dbs:/dbs `
--v C:/oas-dbs-backup:/dbs-backup `
-chrisjbishop155/oas:latest
-```
-```
-docker stop oas-staging; docker rm oas-staging; `
-docker run -it -d `
---name=oas-staging `
--e DANGEROUSLY_DISABLE_HOST_CHECK=true `
--e REACT_APP_ADMIN_URL="https://admin.staging.oxfordshireacrosociety.co.uk" `
--e REACT_APP_PUBLIC_URL="https://www.staging.oxfordshireacrosociety.co.uk" `
--e REACT_APP_SERVER_URL="https://server.staging.oxfordshireacrosociety.co.uk" `
--e DOMAIN=".staging.oxfordshireacrosociety.co.uk" `
--e DB_FILE=/dbs/sqlite-stage.db `
--e MIX_ENV=stage `
--p 5000:4000 -p 4999:3999 -p 4998:3998 `
--v D:/oas-dbs:/dbs `
--v C:/oas-dbs-staging-backup:/dbs-backup `
-chrisjbishop155/oas:latest
-```
+### Features
 
-Certs
-```
-certbot certonly --webroot
-server.oxfordshireacrosociety.co.uk admin.oxfordshireacrosociety.co.uk www.oxfordshireacrosociety.co.uk
-server.staging.oxfordshireacrosociety.co.uk admin.staging.oxfordshireacrosociety.co.uk www.staging.oxfordshireacrosociety.co.uk
+- Membership management
+- Event scheduling and attendance
+- Members credit management
+- Financial tracking and reporting
 
-www.societybishop.co.uk societybishop.co.uk server.demo.societybishop.co.uk admin.demo.societybishop.co.uk
-C:\Users\chris\nginx-1.23.2\html
-C:\Users\chris\nginx-1.23.2\html-staging
-```
+### Installation
 
+See the [docker_v2](docker_v2)
 
+Initialize the database: ```mix ecto.create```
+Run the migrations: ```mix ecto.migrate```
+Start the server: ```iex -S mix phx.server```
+Start the admin ui ```cd oas-web && npm run start && cd ../```
+Start the frontend ui ```cd oas-web-public && npm run start && cd ../```
 
+To setup an admin user, register through the UI then reset your password. In the dev environment, the reset email will be available at /dev/mailbox.
+Open the sqlite database manually and set is_admin to true for that user.
 
-## Todo
+### Deployment
 
-Save success
-
-
-Make emails optional.
-- Registration form merge
-This is hard due to https://stackoverflow.com/questions/74862749/in-ecto-migration-is-there-a-way-to-rename-a-table-without-updating-the-constrai?noredirect=1#comment132116590_74862749
-
-Put booking behind configuration
-
-## Add tokens
-
-%Oas.Tokens.Token{
-  member_id: 29,
-  expires_on: Date.add(Date.utc_today(), 365),
-  value: 4.5
-} |> Oas.Repo.insert()
-
-
-
-### Domains
-
-https://account.squarespace.com/domains
-un: chrisjbishop155@gmail.com
+see [README_v2_prod.md](README_v2_prod.md)
