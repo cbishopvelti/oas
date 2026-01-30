@@ -256,24 +256,12 @@ defmodule OasWeb.Schema.SchemaTraining do
       arg :id, non_null(:integer)
       resolve fn _, %{id: id}, _ ->
         training = Oas.Repo.get!(Oas.Trainings.Training, id)
-          # |> Oas.Repo.delete # DEBUG ONLY, uncomment
 
-        IO.inspect(training |> Map.from_struct(), label: "202")
         %Oas.Trainings.TrainingDeleted{}
         |> Ecto.Changeset.cast(training |> Map.from_struct(), [:when, :training_where_id])
         |> Oas.Repo.insert()
 
         {:ok, _result} = training |> Oas.Repo.delete()
-
-        # from(w in Oas.Trainings.TrainingWhere,
-        # as: :training_where,
-        # where: not(exists(
-        #   from(
-        #     t in Oas.Trainings.Training,
-        #     where: t.training_where_id == parent_as(:training_where).id
-        #   )
-        # )) and w.id == ^result.training_where_id
-        # )  |> Oas.Repo.delete_all
 
         {:ok, %{success: true}}
       end
