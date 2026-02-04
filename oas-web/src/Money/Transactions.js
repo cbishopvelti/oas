@@ -86,6 +86,11 @@ const GocardlessImportCountdownComponent = ({
 
   return <div>
     Next import: {countdown}
+    {get(transactionData, "gocardless_trans_status.success_on") &&
+      <span>,&nbsp;Successfully imported on: {get(transactionData, "gocardless_trans_status.success_on")}</span>}
+    {get(transactionData, "gocardless_trans_status.failed_on") &&
+      <><span>,</span><span style={{ color: "red" }}>&nbsp;Failed import on: {get(transactionData, "gocardless_trans_status.failed_on")}
+    </span></>}
   </div>
 }
 export const GocardlessImportCountdown = (transactionData) => {
@@ -139,7 +144,9 @@ export const Transactions = () => {
       }
     }
     gocardless_trans_status {
-      next_run
+      next_run,
+      success_on,
+      failed_on
     }
   }`, {
     variables: {

@@ -228,7 +228,8 @@ defmodule Oas.Gocardless.Transactions do
         process_transactions_2(transactions)
         {:ok, headers}
       {:to_many_requests, _, headers} ->
-        {:ok, headers}
+        Logger.info("Gocardless :to_many_requests")
+        {:to_many_requests, headers}
       {:unauth_401, _, error} ->
         {:unauth_401, error}
     end

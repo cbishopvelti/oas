@@ -40,51 +40,49 @@ defmodule Oas.Gocardless.TransServer do
     # Process.sleep(12_000)
 
     case Oas.Gocardless.Transactions.process_transacitons() do
-      {:ok, headers} ->
+      {:ok, _headers} ->
+        london_dt = DateTime.now!("Europe/London")
+        local_time = DateTime.to_time(london_dt)
+        rerun_in_ms_9 = Time.diff(Time.from_iso8601!("09:30:00"), local_time, :millisecond)
+        |> Integer.mod(
+           86_400_000
+        )
+
+        Absinthe.Subscription.publish(OasWeb.Endpoint, %{}, gocardless_trans_status: "*")
+        timer_ref = Process.send_after(self(), :init, rerun_in_ms_9)
+        {:noreply,
+          state
+          |> Map.put(:timer_ref, timer_ref)
+          |> Map.put(:success_on, DateTime.now!("Europe/London"))
+          |> Map.delete(:failed_on)
+        }
+      {:to_many_requests, headers} ->
         remaining = List.keyfind!(headers, "http_x_ratelimit_account_success_remaining", 0) |> elem(1) |> String.to_integer()
         reset_seconds = List.keyfind!(headers, "http_x_ratelimit_account_success_reset", 0)
           |> elem(1)
           |> String.to_integer()
           |> Kernel.+(60) # Insure we have a little buffer.
 
-        timeout = div(reset_seconds, (remaining + 1))
-        timeout = if Mix.env() != :test do
-          Enum.max([timeout, 3_600])
-        else
-          timeout
-        end
-        _timeout_ms = timeout * 1000
-        # timer_ref = Process.send_after(self(), :init, timeout_ms)
+        Logger.info("Gocardless :to_many_requests remaining #{remaining}")
+        Logger.info("Gocardless :to_many_requests reset_seconds #{reset_seconds}")
 
-
-        rerun_in_ms = if (remaining > 0) do
-          london_dt = DateTime.now!("Europe/London")
-          local_time = DateTime.to_time(london_dt)
-
-          Time.diff(Time.from_iso8601!("09:30:00"), local_time, :millisecond)
-          |> Integer.mod(
-             86_400_000
-          )
-        else
-          reset_seconds * 1000
-        end
+        rerun_in_ms_reset = reset_seconds * 1000
 
         Absinthe.Subscription.publish(OasWeb.Endpoint, %{}, gocardless_trans_status: "*")
 
-        # Once a day
-        timer_ref = Process.send_after(self(), :init, rerun_in_ms)
+        timer_ref = Process.send_after(self(), :init, rerun_in_ms_reset)
         {:noreply,
-          %{
-            timer_ref: timer_ref
-          }
+          state
+          |> Map.put(:timer_ref, timer_ref)
+          |> Map.put(:failed_on, DateTime.now!("Europe/London"))
         }
       {:unauth_401, error} ->
         Logger.error("Gocardless unathenticated #{error}")
         Oas.Gocardless.send_warning(:gocardless_get_accounts, error)
-        {:stop, :normal, %{timer_ref: nil}}
+        {:stop, :normal,
+          state |> Map.put(:timer_ref, nil)
+        }
     end
-
-
   end
 
   @impl true
@@ -92,7 +90,15 @@ defmodule Oas.Gocardless.TransServer do
 
     case Map.get(state, :timer_ref, nil) do
       nil -> {:reply, nil, state}
-      ref -> {:reply, Process.read_timer(ref), state}
+      ref -> {
+        :reply,
+        %{
+          next_in: Process.read_timer(ref),
+          success_on: Map.get(state, :success_on),
+          failed_on: Map.get(state, :failed_on)
+        },
+        state
+      }
     end
   end
 end

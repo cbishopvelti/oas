@@ -17,6 +17,8 @@ defmodule OasWeb.Schema.SchemaGocardless do
 
   object :gocardless_trans_status do
     field :next_run, :string
+    field :success_on, :string
+    field :failed_on, :string
   end
 
   object :gocardless_queries do
@@ -44,17 +46,30 @@ defmodule OasWeb.Schema.SchemaGocardless do
     field :gocardless_trans_status, :gocardless_trans_status do
       resolve fn _, _, _ ->
         if (!is_nil(Process.whereis(Oas.Gocardless.TransServer)) && Process.whereis(Oas.Gocardless.TransServer) |> Process.alive?() ) do
-          next_run = case Process.whereis(Oas.Gocardless.TransServer) |> GenServer.call(:status) do
+          status = Process.whereis(Oas.Gocardless.TransServer) |> GenServer.call(:status)
+          next_run = case status |> Map.get(:next_in) do
             nil -> nil
             ms_to_next_run -> Time.add(Time.utc_now(), ms_to_next_run, :millisecond)
           end
 
           {:ok, %{
-            next_run: next_run
+            next_run: next_run,
+            success_on: status |> Map.get(:success_on)
+              |> case do
+                nil -> nil
+                x -> Calendar.strftime(x, "%Y-%m-%d %H:%M:%S")
+              end,
+            failed_on: status |> Map.get(:failed_on)
+              |> case do
+                nil -> nil
+                x -> Calendar.strftime(x, "%Y-%m-%d %H:%M:%S")
+              end
           }}
         else
           {:ok, %{
-            next_run: nil
+            next_run: nil,
+            success_on: nil,
+            failed_on: "PERMANENT"
           }}
         end
       end
