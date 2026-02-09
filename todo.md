@@ -84,3 +84,11 @@ Fix not coming online when clicking Chat [x]
 css history list online [x]
 Add warning email for not booking in. [x]
 Throttel streaming output. [x]
+
+### Chat
+
+Initial message ✅
+Notify admins of when a user messages ✅
+Users should be notified of new messages from other participants ✅
+Now messages should go in the sub menu under Chat. ✅
+Handle message seen ✅

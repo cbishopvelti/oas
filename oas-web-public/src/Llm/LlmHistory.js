@@ -12,15 +12,6 @@ const LlmHistoryRow = ({
   phoenixSocket
 }) => {
   useEffect(() => {
-    // let channel = phoenixSocket.channel(history.topic, {})
-    // const presence = new Presence(channel)
-
-    // presence.onSync(() => {
-    //   console.log("405 onSync", presence)
-    // })
-
-    // channel.join()
-
   }, [phoenixSocket])
 
 
@@ -54,74 +45,55 @@ const LlmHistoryRow = ({
 }
 
 export const LlmHistory = () => {
-  const [phoenixSocket, setPhoenixSocket] = useState(undefined);
   const [channel, setChannel] = useState(undefined);
   const [history, setHistory] = useState([]);
   const [presence, setPresence] = useState({});
   const [outletContext] = useOutletContext();
 
   useEffect(() => {
+    let channel;
+    (async () => {
+      const phoenixSocket = await outletContext.phoenixSocketPromise
+      channel = phoenixSocket.channel(`history`, {})
+      const presence = new Presence(channel)
 
-    const phoenixSocket = new PhoenixSocket(`${process.env["REACT_APP_SERVER_URL"].replace(/^http/, "ws")}/public_socket`, {
-      reconnectAfterMs: (() => 120_000),
-     	rejoinAfterMs: (() => 120_000),
-      params: () => {
-        if (Cookies.get("oas_key")) {
-          return { cookie: Cookies.get("oas_key") };
-        } else {
-          return {};
-        }
-      }
-    });
-    phoenixSocket.connect()
-    setPhoenixSocket(phoenixSocket)
-
-    let channel = phoenixSocket.channel(`history`, {})
-    const presence = new Presence(channel)
-
-    channel.on("history", ({history}) => {
-      setHistory(history);
-    })
-    channel.on("new_history", (new_history) => {
-      setHistory((history) => {
-        const index = findIndex(history, ({id}) => id === new_history.id)
-
-        return [
-          new_history,
-          ...(index !== -1 ? history.toSpliced(index, 1 ) : history)
-        ]
+      channel.on("history", ({history}) => {
+        setHistory(history);
       })
-    })
+      channel.on("new_history", (new_history) => {
+        setHistory((history) => {
+          const index = findIndex(history, ({id}) => id === new_history.id)
 
-    presence.onSync(() => {
-      console.log("001 onSync ------", presence)
-      setPresence({
-        ...presence.state
+          return [
+            new_history,
+            ...(index !== -1 ? history.toSpliced(index, 1 ) : history)
+          ]
+        })
       })
-    })
 
-    channel
-      .join()
-      .receive("ok", (resp) => {
+      presence.onSync(() => {
+        setPresence({
+          ...presence.state
+        })
       })
-      .receive("error", (resp) => {
-        console.error("error", resp)
-      })
-    setChannel(channel)
+
+      channel
+        .join()
+        .receive("ok", (resp) => {
+        })
+        .receive("error", (resp) => {
+          console.error("error", resp)
+        })
+      setChannel(channel)
+    })()
 
     return () => {
       setChannel(undefined)
-      channel.leave()
-      phoenixSocket.disconnect(() => {
-        console.warn("003 phoenixSocket disconnect")
-      });
+      channel && channel.leave()
     }
   }, [])
 
   const mergeHistoryAndPresence = (history, presence) => {
-    // console.log("601 mergeHistoryAndPresence")
-    // console.log("601.1 history", history)
-    // console.log("601.2 presence", presence)
     return map(history, (histor) => {
       const presenceForHistory = pickBy(presence, (presenc) => {
         return presenc.topic === histor.topic
@@ -133,7 +105,6 @@ export const LlmHistory = () => {
     })
   }
 
-  // console.log("----------------------------")
   const historyAndPresence = mergeHistoryAndPresence(history, presence)
 
   return <Box>
@@ -153,7 +124,7 @@ export const LlmHistory = () => {
         </TableHead>
         <TableBody>
           {historyAndPresence.map((history, i) => {
-            return <LlmHistoryRow key={i} history={history} phoenixSocket={phoenixSocket} />
+            return <LlmHistoryRow key={i} history={history} phoenixSocket={outletContext.phoenixSocket} />
           })}
         </TableBody>
       </Table>

@@ -1,15 +1,15 @@
+import OasWeb.Channels.Utils
 require Protocol
 Protocol.derive(Jason.Encoder, LangChain.Message)
 Protocol.derive(Jason.Encoder, LangChain.Message.ContentPart)
 
 
+
 defmodule OasWeb.Channels.LlmChannel do
-  alias LangChain.MessageDelta
   use Phoenix.Channel
+  alias LangChain.MessageDelta
 
   def join("llm:" <> _room_uuid, _params, socket) do
-    IO.puts("001 OasWeb.Channels.LlmChannel.join pid: #{inspect(self())}")
-
     send(self(), :after_join)
 
     {
@@ -21,30 +21,10 @@ defmodule OasWeb.Channels.LlmChannel do
     }
   end
 
-  # Safe to push to client
-  defp socket_to_member_map(socket) do
-
-    member = if current_member = socket.assigns[:current_member] do
-      member_data =
-        current_member
-        |> Map.from_struct()
-        |> Map.take([:id, :name, :is_admin, :is_reviewer])
-
-      member_data
-    else
-      nil
-    end
-
-    member
-  end
-
   def handle_info(:after_join, socket) do
-    # IO.puts("205 LlmChannel :after_join #{inspect(self())}")
-    # IO.inspect(socket.assigns.current_member, label: "506 current_member")
     member = socket_to_member_map(socket)
 
     # Presence
-    # IO.inspect(OasWeb.Channels.LlmChannelPresence.list(socket), label: "206")
     metas = %{
       channel_pid: self(),
       online_at: System.system_time(:second),
@@ -65,7 +45,6 @@ defmodule OasWeb.Channels.LlmChannel do
 
     messages = GenServer.call(pid, :messages)
     participants = GenServer.call(pid, :participants)
-    # IO.inspect(messages, label: "501 messages")
     push(socket, "messages", %{
       participants: participants |> Enum.map(fn participant ->
         participant |> Map.take([:id, :name])
@@ -211,15 +190,12 @@ defmodule OasWeb.Channels.LlmChannel do
     {:noreply, socket}
   end
   def handle_cast({:participants, participants}, socket) do
+
     push(
       socket,
       Atom.to_string(:participants),
       participants
     )
-    {:noreply, socket}
-  end
-  def handle_cast(stuff, socket) do
-    IO.inspect(stuff, label: "008 WAT handle_cast SHOULDN'T HAPPEN")
     {:noreply, socket}
   end
 

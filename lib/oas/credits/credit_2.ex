@@ -20,7 +20,6 @@ defmodule Oas.Credits.Credit2 do
 
 
   defp process_credits(credits, opts) do
-    # IO.inspect(credits, label: "001");
 
     {trans, active_ledger} = credits |> Enum.map_reduce([], fn (credit, ledger) ->
       # IO.puts("vvvvvvvvvvvvvvvv")
