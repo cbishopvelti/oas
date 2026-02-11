@@ -47,14 +47,19 @@ function App() {
       enable_booking
     },
     public_config_llm {
-      chat_enabled
+      chat_enabled,
+      llm_enabled
     }
   }`)
 
   const enableBooking = get(data, 'public_config_config.enable_booking', false);
 
+  let [{ promise: phoenixSocketPromise, resolve: phoenixSocketResolve, reject: phoenixSocketReject }]
+    = useState(Promise.withResolvers());
+
   const [outletContext, setOutletContext] = useState({
-    refetchUser: refetch
+    refetchUser: refetch,
+    phoenixSocketPromise
   });
   useEffect(() => {
     refetch();
@@ -143,7 +148,7 @@ function App() {
               href={`${process.env.REACT_APP_SERVER_URL}/members/log_in?callback_path=${encodeURIComponent("/bookings")}&callback_domain=public_url`}>My Bookings</a>
             </MenuItem>}
 
-            { get(data, 'public_config_llm.chat_enabled', false) && <MenuChat />}
+            {get(data, 'public_config_llm.chat_enabled', false) && <MenuChat phoenixSocketResolve={phoenixSocketResolve} phoenixSocketReject={phoenixSocketReject} />}
 
             {(get(data, 'user.is_admin') || get(data, 'user.is_reviewer')) && <MenuItem onClick={onClick} sx={{padding: 0}}>
               <a style={{

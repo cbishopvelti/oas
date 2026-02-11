@@ -34,13 +34,14 @@ export const ConfigLlm = () => {
   const [data, setData] = useState({})
 
   useEffect(() => {
-    setTitle("Llm Config")
+    setTitle("Chat")
   }, [])
 
   const { data: gqlData, refetech } = useQuery(gql`
     query {
       config_llm {
         chat_enabled
+        llm_enabled
         context
       }
     }
@@ -51,9 +52,10 @@ export const ConfigLlm = () => {
   }, [gqlData])
 
   const [saveConfig, {error}] = useMutation(gql`
-    mutation($context: String!, $chat_enabled: Boolean!) {
-      save_config_llm(context: $context, chat_enabled: $chat_enabled) {
+    mutation($context: String!, $chat_enabled: Boolean!, $llm_enabled: Boolean!) {
+      save_config_llm(context: $context, chat_enabled: $chat_enabled, llm_enabled: $llm_enabled) {
         chat_enabled
+        llm_enabled
         context
       }
     }
@@ -81,14 +83,23 @@ export const ConfigLlm = () => {
           <Alert key={i} sx={{m:2}} severity="error">{message}</Alert>
         ))}
       </Stack>
-      <FormControl sx={{mb: 2}}>
+      <FormControl fullWidth sx={{mb: 2, width: "100%"}}>
         <FormControlLabel
           control={
             <Switch
               checked={get(data, 'chat_enabled', false) || false}
               onChange={onChange({formData: data, setFormData: setData, key: 'chat_enabled', isCheckbox: true})}/>
           }
-          label="Enable Llm" />
+          label="Chat Enabled" />
+      </FormControl>
+      <FormControl fullWidth sx={{mb: 2}}>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={get(data, 'llm_enabled', false) || false}
+              onChange={onChange({formData: data, setFormData: setData, key: 'llm_enabled', isCheckbox: true})}/>
+          }
+          label="Llm Enabled" />
       </FormControl>
       <FormControl fullWidth sx={{mb: 2}}>
         <TextField

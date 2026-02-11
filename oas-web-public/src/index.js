@@ -103,8 +103,18 @@ const theLink = split(
 
 const client = new ApolloClient({
   // uri: `${process.env["REACT_APP_PUBLIC_URL"]}/api/graphql`,
-  cache: new InMemoryCache(),
-  link: theLink
+  cache: new InMemoryCache({
+    typePolicies: {
+      Query: {
+        fields: {
+          public_config_config: {
+            merge: true,
+          },
+        },
+      },
+    },
+  }),
+  link: theLink,
 });
 
 const root = ReactDOM.createRoot(document.getElementById('root'));

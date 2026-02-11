@@ -83,6 +83,6 @@ config :phoenix, :plug_init_mode, :runtime
 config :oas,
   app_url: System.get_env("REACT_APP_ADMIN_URL") || "http://localhost:3999",
   public_url: System.get_env("REACT_APP_PUBLIC_URL") || "http://localhost:3998",
-  # disable_gocardless: true,
+  disable_gocardless: true,
   gocardless_backup_dir: "./gocardless_backup",
   llm_sudio_url: "http://localhost:1234/v1/chat/completions"

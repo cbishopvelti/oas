@@ -55,7 +55,7 @@ defmodule Oas.Llm.Utils do
     # remove pid
     new_state = %{state | messages: state.messages |>
       Enum.map(fn (message) ->
-        %{message | metadata: (message.metadata |> Map.drop([:from_channel_pid]))}
+        %{message | metadata: ((message.metadata || %{}) |> Map.drop([:from_channel_pid]))}
       end)
     }
 
@@ -66,14 +66,14 @@ defmodule Oas.Llm.Utils do
       )
     )
 
-    out = state.chat
+    chat = state.chat
     |> Ecto.Changeset.cast(
       %{chat: json_chat},
       [:chat]
     )
     |> Oas.Repo.update!(returning: true)
 
-    out
+    %{state | chat: chat}
   end
 
   def get_presence_id(socket) do

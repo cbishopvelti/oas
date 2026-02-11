@@ -10,6 +10,10 @@ defmodule Oas.Llm.Chat do
 
     many_to_many :members, Oas.Members.Member, join_through: Oas.Llm.ChatMembers
     has_many :chat_members, Oas.Llm.ChatMembers
+
+    many_to_many :seen, Oas.Members.Member, join_through: Oas.Llm.ChatSeen
+    has_many :chat_seen, Oas.Llm.ChatSeen
+
     timestamps()
   end
 end

@@ -71,7 +71,7 @@ export const MenuConfig = () => {
         to={`/config/llm`}
         end
         >
-        <ListItemText>Llm Context</ListItemText>
+        <ListItemText>Chat</ListItemText>
       </MenuItem>
       <MenuItem
         sx={{ml:2}}
