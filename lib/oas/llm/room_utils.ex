@@ -19,12 +19,17 @@ defmodule Oas.Llm.RoomUtils do
     presence = OasWeb.Channels.LlmChannelPresence.list(state.topic)
     |> Map.to_list()
     |> Enum.flat_map(fn {_id, %{metas: metas}} ->
-      Enum.map(metas, fn %{member: member} -> member.id end)
+      Enum.map(metas, fn %{member: %{id: member_id}, presence_id: presence_id} -> {member_id, presence_id}
+        %{presence_id: presence_id} -> {nil, presence_id}
+      end)
     end)
     |> MapSet.new()
 
     presence # Mark as seen, as they're in the room currently
-    |> Enum.map(fn member_id ->
+    |> Enum.filter(fn {nil, _} -> false
+      _ -> true
+    end)
+    |> Enum.map(fn {member_id, _} ->
       now = DateTime.utc_now() |> DateTime.to_naive() |> NaiveDateTime.truncate(:second)
       %{
         member_id: member_id,
@@ -36,15 +41,18 @@ defmodule Oas.Llm.RoomUtils do
     |> (&(Oas.Repo.insert_all(Oas.Llm.ChatSeen, &1, on_conflict: {:replace, [:updated_at]}))).()
     |> dbg()
 
-    presence_x_sender = presence |> MapSet.reject(fn id -> id == (message.metadata |> get_in([:member, :id])) end)
+    presence_x_sender = presence |> MapSet.reject(fn {_member_id, presence_id} -> presence_id == (message.metadata |> get_in([:presence_id])) end)
 
     members_to_notify_ids = members_to_notify
-    |> Enum.filter(fn member -> !MapSet.member?(presence, member.id) end)
+    |> Enum.filter(fn member ->
+      IO.inspect(message)
+      !MapSet.member?(presence, member.id)
+    end)
     |> Enum.map(fn %{id: id} -> id end)
     |> MapSet.new()
 
     if presence_x_sender |> MapSet.size() > 0 and send_admins do
-
+      # There's more than one person in the room, so don't need to send a notification to the admins
     else
       OasWeb.Channels.LlmChannelPresence.list("global")
       |> Map.to_list()
@@ -52,7 +60,7 @@ defmodule Oas.Llm.RoomUtils do
         Enum.map(metas, fn meta -> meta end)
       end)
       |> Enum.filter(fn
-        %{member: nil} -> false # they're anonymous
+        %{member: nil} -> true
         %{member: member} ->
           MapSet.member?(members_to_notify_ids, member.id)
       end)

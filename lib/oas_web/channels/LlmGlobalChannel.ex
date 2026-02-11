@@ -30,7 +30,6 @@ defmodule OasWeb.Channels.LlmGlobalChannel do
 
   def handle_info(:after_join, socket) do
     # Send unread chats
-    IO.inspect(socket, label: "001")
     case socket.assigns |> Map.get(:current_member) do
       nil -> # they're anonymous, so no notifications
         :ok
@@ -56,16 +55,16 @@ defmodule OasWeb.Channels.LlmGlobalChannel do
               is_nil(s.id) or # We've not seen it
               (s.member_id == ^member.id and s.updated_at < c.updated_at # We've seen it, but it was old
                 and ( # The last message wasn't us
-                  fragment("json_extract(?, '$.messages[0].metadata.member.id')", c.chat) != ^member.id
+                  fragment("coalesce(json_extract(?, '$.messages[0].metadata.member.id'), -1)", c.chat) != ^member.id
                 )
               )
             )
           ),
           order_by: [desc: c.updated_at, asc: mj.id]
         ) |> Oas.Repo.all()
-        |> Enum.map(fn %{topic: topic, chat: chat, members: members} ->
+        |> Enum.map(fn %{topic: topic, chat: _chat, members: members} ->
           first_member_not_us = members |> Enum.drop_while(fn %{id: id} -> id == member.id end) |> List.first() || %{
-            name: "Alone"
+            name: "Alone/Anonymous"
           }
 
           %{

@@ -92,3 +92,4 @@ Notify admins of when a user messages ✅
 Users should be notified of new messages from other participants ✅
 Now messages should go in the sub menu under Chat. ✅
 Handle message seen ✅
+Check works for Anonymous users ✅
