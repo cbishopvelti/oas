@@ -39,13 +39,11 @@ defmodule Oas.Llm.RoomUtils do
       }
     end)
     |> (&(Oas.Repo.insert_all(Oas.Llm.ChatSeen, &1, on_conflict: {:replace, [:updated_at]}))).()
-    |> dbg()
 
     presence_x_sender = presence |> MapSet.reject(fn {_member_id, presence_id} -> presence_id == (message.metadata |> get_in([:presence_id])) end)
 
     members_to_notify_ids = members_to_notify
     |> Enum.filter(fn member ->
-      IO.inspect(message)
       !MapSet.member?(presence, member.id)
     end)
     |> Enum.map(fn %{id: id} -> id end)

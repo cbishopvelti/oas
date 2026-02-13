@@ -34,8 +34,6 @@ const isMe = (message, who_am_i) => {
 }
 
 export const mergePresenceParticipants = (presence, participants) => {
-  // console.log("005", participants)
-  // TODO: change first to find the actuall relevent meta.
   const presenceMembers = presence.map((pres) => {
     return {
       ...(first(pres.metas).member ?
@@ -51,7 +49,6 @@ export const mergePresenceParticipants = (presence, participants) => {
     }
   })
   const out = unionBy(presenceMembers, participants, ({ id }) => id)
-  // console.log("006", out)
   return out;
 }
 
@@ -137,10 +134,20 @@ export const Llm = () => {
           return out
         })
       })
+      channel.on("message_error", ({ error, prompt }) => {
+        setMessages((messages) => {
+          const index = findIndex(messages, (message) => message.content[0].content === prompt)
+          return messages.toSpliced(index, 1, {
+            content: [
+              {
+                content: error,
+              }
+            ],
+            role: "assistent"
+          })
+        })
+      })
       channel.on("messages", ({messages, who_am_i, participants}) => {
-        // console.log("002.1 messages WAT", messages)
-        // console.log("002.2 who_am_i", who_am_i)
-        // console.log("002.3 participants", participants)
         setWhoIdObj(who_am_i)
         setParticipants(participants)
         setMessages(
@@ -179,9 +186,6 @@ export const Llm = () => {
     return () => {
       setChannel(undefined)
       channel && channel.leave()
-      // phoenixSocket.disconnect(() => {
-      //   console.warn("003 phoenixSocket disconnect")
-      // });
     }
   }, [id])
 
@@ -235,9 +239,6 @@ export const Llm = () => {
       ...presenceParticipants.slice(meIndex + 1)   // Everyone after 'Me'
     ]
   }
-
-  // console.log("101, presenceState", presenceState)
-  // console.log("102, presenecParticipants", presenceParticipants)
 
   return (
     <div className="chat-content">

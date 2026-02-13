@@ -81,7 +81,6 @@ defmodule OasWeb.Channels.LlmChannel do
     }
   end
   def handle_info({:DOWN, _ref, :process, pid, reason}, %{assigns: %{room_pid: pid}} = state) do
-    # IO.puts("LlmChannel :DOWN #{_ref}, #{pid}, #{reason}")
     {:stop, reason, state}
   end
 
@@ -123,7 +122,6 @@ defmodule OasWeb.Channels.LlmChannel do
   end
 
   defp debounce_data({:delta, message}, socket) do
-    # IO.inspect(message, label: "101 deltas message")
     new_delta = if (socket.assigns |> Map.has_key?(:delta)) && !(socket.assigns |> Map.get(:delta) |> is_nil()) do
       MessageDelta.merge_delta(
         socket.assigns |> Map.get(:delta),
@@ -132,19 +130,14 @@ defmodule OasWeb.Channels.LlmChannel do
     else
       message
     end
-    # IO.inspect(message, label: "101 start")
-    # IO.inspect(new_delta, label: "101.2 new_delta")
 
     if (message.status == :complete) do
-
-      # IO.inspect(message, label: "102 end")
       push(socket, Atom.to_string(:delta), new_delta |> delta_to_out())
 
       Process.cancel_timer(socket.assigns.delta_debounce)
       socket |> assign(:delta, nil) |> assign(:delta_debounce, nil)
     else
       if ( is_nil(socket.assigns |> Map.get(:delta_debounce, nil)) || !(socket.assigns |> Map.get(:delta_debounce, nil) |> Process.read_timer())) do
-        IO.puts("vvvvv START START START vvvvv")
         push(socket, Atom.to_string(:delta), new_delta |> delta_to_out())
 
         Phoenix.Socket.assign(socket, :delta_debounce,
@@ -181,7 +174,6 @@ defmodule OasWeb.Channels.LlmChannel do
   end
   # Other Clients -> Client, for sending prompts from other users
   def handle_cast({:prompt, message}, socket) do
-    IO.inspect(socket, label: "LlmChannel handle_cast :prompt")
     push(
       socket,
       Atom.to_string(:prompt),
@@ -199,6 +191,13 @@ defmodule OasWeb.Channels.LlmChannel do
     {:noreply, socket}
   end
 
+  def handle_in("prompt", prompt, socket) when byte_size(prompt) > 2048 do
+    push(socket, "message_error", %{
+      error: "Message is to large, cannot be more than 2048 bytes",
+      prompt: prompt
+    })
+    {:noreply, socket}
+  end
   def handle_in("prompt", prompt, socket) do
 
     broadcast_from!(socket, "message",
@@ -226,10 +225,8 @@ defmodule OasWeb.Channels.LlmChannel do
       true -> # is authed to do this
         case value do
           true ->
-            # IO.inspect(socket.assigns, label: "301 socket.assigns")
-            # IO.inspect(OasWeb.Channels.LlmChannelPresence.list(socket.topic), label: "302 presence")
             channel_meta = OasWeb.Channels.LlmChannelPresence.get_by_key(socket.topic, presence_id).metas
-            |> List.first() # TODO
+            |> List.first()
             channel_pid = channel_meta |> Map.get(:channel_pid)
 
             {:ok, _pid} = Oas.Llm.LlmClient.start(
