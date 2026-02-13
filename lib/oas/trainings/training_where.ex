@@ -6,6 +6,10 @@ defmodule Oas.Trainings.TrainingWhere do
     field :name, :string
     field :credit_amount, :decimal
 
+    field :gocardless_name, :string
+    field :billing_type, Ecto.Enum, values: [:per_hour, :per_attendee]
+    field :billing_config, :map
+
     has_many :trainings, Oas.Trainings.Training, foreign_key: :training_where_id
     has_many :training_where_time, Oas.Trainings.TrainingWhereTime, foreign_key: :training_where_id
     has_many :training_deleted, Oas.Trainings.TrainingDeleted, foreign_key: :training_where_id
@@ -20,9 +24,51 @@ defmodule Oas.Trainings.TrainingWhere do
     end
   end
 
+  defp validate_and_set_billing_config(changeset) do
+    type = get_field(changeset, :billing_type)
+    config = get_field(changeset, :billing_config) || %{}
+
+    key_to_validate =
+      case type do
+        :per_attendee -> :per_attendee
+        :per_hour -> :per_hour
+        _ -> nil
+      end
+
+    if key_to_validate do
+      raw_value = Map.get(config, key_to_validate) || Map.get(config, to_string(key_to_validate))
+
+      case cast_to_decimal(raw_value) do
+        {:ok, valid_decimal} ->
+          new_config = Map.put(config, to_string(key_to_validate), valid_decimal)
+          put_change(changeset, :billing_config, new_config)
+        :missing ->
+          add_error(changeset, :billing_config, "#{key_to_validate} rate must be set")
+
+        :invalid ->
+          add_error(changeset, :billing_config, "#{key_to_validate} must be a valid number")
+      end
+    else
+      changeset
+    end
+  end
+
+  defp cast_to_decimal(nil), do: :missing
+  defp cast_to_decimal(""), do: :missing
+  defp cast_to_decimal(val) do
+    case Decimal.cast(val) do
+      {:ok, decimal} -> {:ok, decimal}
+      :error -> :invalid
+    end
+  end
+
   def changeset(changeset, params \\ %{}) do
     changeset
-    |> Ecto.Changeset.cast(params, [:name, :credit_amount])
+    |> Ecto.Changeset.cast(params, [:name, :credit_amount,
+      :billing_type, :gocardless_name, :billing_config],
+      empty_values:  [[], nil] ++ Ecto.Changeset.empty_values()
+    )
     |> validate_credit_amount
+    |> validate_and_set_billing_config
   end
 end

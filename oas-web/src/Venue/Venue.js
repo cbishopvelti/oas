@@ -2,14 +2,14 @@ import { gql, useQuery, useMutation } from "@apollo/client";
 import { FormControl, TextField, Box, Button,
   Stack, Alert, Autocomplete, Tabs, Tab,
   TableHead, TableContainer, TableCell, TableRow, Table,
-  TableBody, IconButton} from "@mui/material";
+  TableBody, IconButton, Select, InputLabel, MenuItem} from "@mui/material";
 import TabContext from '@mui/lab/TabContext';
 import TabList from '@mui/lab/TabList';
 import TabPanel from '@mui/lab/TabPanel';
 import { useEffect, useState as useReactState } from "react";
 // import { useState } from "../utils/useState";
 import moment from "moment";
-import { get, omit, has } from 'lodash'
+import { get, omit, has, set, cloneDeep } from 'lodash'
 import { useNavigate, useParams, useOutletContext, Link } from "react-router-dom";
 import { parseErrors } from "../utils/util";
 import EditIcon from '@mui/icons-material/Edit';
@@ -32,11 +32,25 @@ export const Venue = () => {
   }
   const [attendance, setAttendance] = useReactState(0);
 
-  const onChange = ({formData, setFormData, key}) => (event) => {
-    setFormData({
-      ...formData,
-      [key]: !event.target.value ? undefined : event.target.value
-    })
+  const onChange = ({ formData, setFormData, key }) => (event) => {
+    if (key === "billing_type" && !event.target.value) {
+      formData = {
+        ...formData,
+        "gocardless_name": null
+      }
+    }
+    // Clear form data
+    if (key === "billing_type" && event.target.value !== formData.billing_type) {
+      formData = {
+        ...formData,
+        "billing_config": null
+      }
+    }
+
+
+    setFormData(
+      set(cloneDeep(formData), key, !event.target.value ? null : event.target.value)
+    )
   }
 
   const {data, refetch} = useQuery(gql`
@@ -45,6 +59,9 @@ export const Venue = () => {
         id,
         name,
         credit_amount,
+        billing_type,
+        billing_config
+        gocardless_name,
         training_where_time {
           id,
           day_of_week,
@@ -81,8 +98,12 @@ export const Venue = () => {
   }, [data])
 
   const [mutate, {error}] = useMutation(gql`
-    mutation($id: Int, $name: String!, $credit_amount: String!) {
-      training_where(id: $id, name: $name, credit_amount: $credit_amount) {
+    mutation($id: Int, $name: String!, $credit_amount: String!,
+      $billing_type: BillingType, $gocardless_name: String, $billing_config: Json
+    ) {
+      training_where(id: $id, name: $name, credit_amount: $credit_amount,
+        billing_type: $billing_type, gocardless_name: $gocardless_name, billing_config: $billing_config
+      ) {
         id
       }
     }
@@ -95,8 +116,14 @@ export const Venue = () => {
       ...formData
     }
 
+    let toSave = omit(variables, ["training_where_time", "__typename"])
+    toSave = set(
+      toSave,
+      "billing_config",
+      (get(variables, "billing_config") && JSON.stringify(get(variables, "billing_config"))) || null)
+
     const { data, errors } = await mutate({
-      variables
+      variables: toSave
     });
 
     setFormData({
@@ -167,6 +194,66 @@ export const Venue = () => {
           helperText={get(errors, "credit_amount", []).join(" ")}
           />
       </FormControl>
+
+      <FormControl fullWidth sx={{ m: 2 }}>
+        <InputLabel required id="billing-type">Billing type</InputLabel>
+        <Select
+          labelId="billing-type"
+          label="Billing type"
+          value={get(formData, "billing_type", '') || ""}
+          onChange={onChange({formData, setFormData, key: "billing_type"})}
+        >
+          <MenuItem value="">None</MenuItem>
+          <MenuItem value="PER_HOUR">Per hour</MenuItem>
+          <MenuItem value="PER_ATTENDEE">Per attendee</MenuItem>
+        </Select>
+      </FormControl>
+
+      {get(formData, "billing_type") &&
+        <FormControl fullWidth sx={{m: 2}}>
+          <TextField
+            id="gocardless_name"
+            label="Gocardless Name"
+            value={get(formData, "gocardless_name", '') || ''}
+            onChange={onChange({formData, setFormData, key: 'gocardless_name'})}
+            error={has(errors, "gocardless_name")}
+            helperText={get(errors, "gocardless_name", []).join(" ")}
+          />
+        </FormControl>
+      }
+
+      {get(formData, "billing_type") === "PER_HOUR" &&
+        <FormControl fullWidth sx={{ m: 2 }}>
+          <TextField
+            id="billing_config"
+            label="Amount per Hour"
+            required
+            inputMode="numeric"
+            pattern="[0-9\.]*"
+            value={get(formData, "billing_config.per_hour", "") || ''}
+            onChange={onChange({ formData, setFormData, key: "billing_config.per_hour" })}
+            error={has(errors, "billing_config")}
+            helperText={get(errors, "billing_config", []).join(" ")}
+          />
+        </FormControl>
+      }
+
+      {get(formData, "billing_type") === "PER_ATTENDEE" &&
+        <FormControl fullWidth sx={{ m: 2 }}>
+          <TextField
+            id="billing_config"
+            label="Amount per Attendee"
+            required
+            value={get(formData, "billing_config.per_attendee", "") || ''}
+            onChange={onChange({ formData, setFormData, key: "billing_config.per_attendee" })}
+            error={has(errors, "billing_config")}
+            helperText={get(errors, "billing_config", []).join(" ")}
+            inputMode="numeric"
+            pattern="[0-9\.]*"
+          />
+        </FormControl>
+      }
+
       <FormControl fullWidth sx={{m: 2}}>
         <Button onClick={save(formData)}>Save</Button>
       </FormControl>

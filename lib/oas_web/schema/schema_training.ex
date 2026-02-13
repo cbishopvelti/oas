@@ -11,10 +11,18 @@ defmodule OasWeb.Schema.SchemaTraining do
     field :recurring, :boolean
   end
 
+  enum :billing_type do
+    value :per_attendee, as: :per_attendee
+    value :per_hour, as: :per_hour
+  end
+
   object :training_where do
     field :id, :integer
     field :name, :string
     field :credit_amount, :string
+    field :gocardless_name, :string
+    field :billing_type, :billing_type
+    field :billing_config, :json
     field :trainings, list_of(:training)
     field :training_where_time, list_of(:training_where_time)
   end

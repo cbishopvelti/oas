@@ -47,7 +47,11 @@ defmodule OasWeb.Schema.SchemaTrainingWhere do
       arg :id, :integer
       arg :name, non_null(:string)
       arg :credit_amount, non_null(:string)
+      arg :billing_type, :billing_type, default_value: nil
+      arg :gocardless_name, :string, default_value: nil
+      arg :billing_config, :json, default_value: nil
       resolve fn _, args, _ ->
+        dbg(args)
         case args do
           %{id: id} -> Oas.Repo.get(Oas.Trainings.TrainingWhere, id)
           _ -> %Oas.Trainings.TrainingWhere{}
