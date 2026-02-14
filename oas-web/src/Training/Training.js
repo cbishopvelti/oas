@@ -41,9 +41,13 @@ export const Training = () => {
         when,
         notes,
         commitment,
+        venue_billing_enabled,
+        venue_billing_amount,
+        venue_billing_override,
         training_where {
           id,
-          name
+          name,
+          billing_type
         }
         training_tags {
           id,

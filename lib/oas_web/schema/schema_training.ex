@@ -51,6 +51,9 @@ defmodule OasWeb.Schema.SchemaTraining do
     field :start_time, :string
     field :booking_offset, :string
     field :end_time, :string
+    field :venue_billing_enabled, :boolean
+    field :venue_billing_override, :string
+    field :venue_billing_amount, :string
   end
 
   object :training_queries do
@@ -69,7 +72,12 @@ defmodule OasWeb.Schema.SchemaTraining do
         |> Oas.Repo.preload(:attendance)
         |> (&(%{ &1 | attendance: length(&1.attendance) })).()
 
-        {:ok, result}
+        venue_billing_override = case result.venue_billing_override do
+          nil -> nil
+          decim -> Decimal.to_string(decim)
+        end
+
+        {:ok, %{result | venue_billing_override: venue_billing_override}}
       end
     end
     field :trainings, list_of(:training) do
@@ -132,6 +140,8 @@ defmodule OasWeb.Schema.SchemaTraining do
       arg :start_time, :string
       arg :booking_offset, :string
       arg :end_time, :string
+      arg :venue_billing_enabled, :boolean
+      arg :venue_billing_override, :string
       resolve fn _, args, _ ->
         %{training_tags: training_tags, training_where: training_where} = args
 
@@ -158,7 +168,9 @@ defmodule OasWeb.Schema.SchemaTraining do
 
         %Oas.Trainings.Training{}
           |> Ecto.Changeset.cast(args, [:when, :notes, :commitment,
-            :start_time, :booking_offset, :end_time])
+            :start_time, :booking_offset, :end_time,
+            :venue_billing_enabled, :venue_billing_override
+            ])
           |> Oas.Trainings.Training.validate_time()
           |> Ecto.Changeset.put_assoc(
             :training_tags,
@@ -179,6 +191,8 @@ defmodule OasWeb.Schema.SchemaTraining do
       arg :start_time, :string
       arg :booking_offset, :string
       arg :end_time, :string
+      arg :venue_billing_enabled, :boolean
+      arg :venue_billing_override, :string
       resolve fn _, args, _ ->
         when1 = Date.from_iso8601!(args.when)
         args = %{args | when: when1}
@@ -199,7 +213,9 @@ defmodule OasWeb.Schema.SchemaTraining do
 
         toSave = training
           |> Ecto.Changeset.cast(args, [:when, :notes, :commitment,
-          :start_time, :booking_offset, :end_time], empty_values: [[], nil] ++ Ecto.Changeset.empty_values())
+            :start_time, :booking_offset, :end_time,
+            :venue_billing_enabled, :venue_billing_override
+          ], empty_values: [[], nil] ++ Ecto.Changeset.empty_values())
           |> Oas.Trainings.Training.validate_time()
           |> Ecto.Changeset.put_assoc(
             :training_tags,
@@ -254,7 +270,6 @@ defmodule OasWeb.Schema.SchemaTraining do
               )) and w.id == ^training.training_where.id
             )  |> Oas.Repo.delete_all
         end
-
 
         # EO deleting
         out

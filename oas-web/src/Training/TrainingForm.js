@@ -10,13 +10,14 @@ import { TrainingWhere } from "./TrainingWhere";
 import {useNavigate} from 'react-router-dom'
 import { parseErrors } from "../utils/util";
 import { TrainingFormTime } from "./TrainingFormTime";
+import { TrainingFormBilling } from "./TrainingFormBilling";
 
 export const TrainingForm = ({id, data, config, refetch}) => {
   const navigate = useNavigate();
 
   const defaultData = {
     when: moment().format("YYYY-MM-DD"),
-    training_tags: []
+    training_tags: [],
   }
   const [formData, setFormData] = useState(defaultData);
 
@@ -52,19 +53,32 @@ export const TrainingForm = ({id, data, config, refetch}) => {
     })
   }
   const [ insertMutation, {error: error1} ] = useMutation(gql`
-    mutation ($when: String!, $training_tags: [TrainingTagArg]!, $training_where: TrainingWhereArg!, $notes: String, $commitment: Boolean,
-      $start_time: String, $booking_offset: String, $end_time: String
+    mutation ($when: String!, $training_tags: [TrainingTagArg]!, $training_where: TrainingWhereArg!,
+      $notes: String, $commitment: Boolean, $start_time: String,
+      $booking_offset: String, $end_time: String, $venue_billing_enabled: Boolean,
+      $venue_billing_override: String
     ) {
-      insert_training (when: $when, training_tags: $training_tags, training_where: $training_where, notes: $notes, commitment: $commitment,
-        start_time: $start_time, booking_offset: $booking_offset, end_time: $end_time
+      insert_training (
+        when: $when,
+        training_tags: $training_tags,
+        training_where: $training_where,
+        notes: $notes,
+        commitment: $commitment,
+        start_time: $start_time,
+        booking_offset: $booking_offset,
+        end_time: $end_time,
+        venue_billing_enabled: $venue_billing_enabled,
+        venue_billing_override: $venue_billing_override
       ) {
         id
       }
     }
   `);
   const [updateMutation, {error: error2}] = useMutation(gql`
-    mutation ($id: Int!, $when: String!, $training_tags: [TrainingTagArg]!, $training_where: TrainingWhereArg!, $notes: String, $commitment: Boolean,
-      $start_time: String, $booking_offset: String, $end_time: String
+    mutation ($id: Int!, $when: String!, $training_tags: [TrainingTagArg]!,
+      $training_where: TrainingWhereArg!, $notes: String, $commitment: Boolean,
+      $start_time: String, $booking_offset: String, $end_time: String,
+      $venue_billing_enabled: Boolean, $venue_billing_override: String
     ){
       update_training (
         when: $when,
@@ -75,7 +89,9 @@ export const TrainingForm = ({id, data, config, refetch}) => {
         commitment: $commitment,
         start_time: $start_time,
         booking_offset: $booking_offset,
-        end_time: $end_time
+        end_time: $end_time,
+        venue_billing_enabled: $venue_billing_enabled,
+        venue_billing_override: $venue_billing_override
       ) {
         id
       }
@@ -87,7 +103,11 @@ export const TrainingForm = ({id, data, config, refetch}) => {
       try {
         const { data } = await insertMutation({
           variables: {
-            ...omit(formData, ["training_tags.__typename", "training_where.__typename"]),
+            ...omit(formData, [
+              "training_tags.__typename",
+              "training_where.__typename",
+              "training_where.billing_type"
+            ]),
             notes: formData.notes || ""
           }
         });
@@ -100,7 +120,11 @@ export const TrainingForm = ({id, data, config, refetch}) => {
       try {
         const { data } = await updateMutation({
           variables: {
-            ...omit(formData, ["training_tags.__typename", "training_where.__typename"]),
+            ...omit(formData, [
+              "training_tags.__typename",
+              "training_where.__typename",
+              "training_where.billing_type"
+            ]),
             notes: formData.notes || ""
           }
         });
@@ -121,6 +145,8 @@ export const TrainingForm = ({id, data, config, refetch}) => {
     ...get(error1, "graphQLErrors", []),
     ...get(error2, "graphQLErrors", [])
   ]);
+
+  console.log("001 data", data)
 
   return <Box sx={{width: '100%'}}>
     <Stack sx={{ width: '100%' }}>
@@ -178,27 +204,43 @@ export const TrainingForm = ({id, data, config, refetch}) => {
           control={
             <Switch
               checked={get(formData, 'commitment', false) || false}
-            onChange={(event) => {
-              let tmpFormData = formData;
-              if (event.target.checked === true) {
-                assign(tmpFormData, {
-                  start_time: "",
-                  booking_offset: "",
-                  end_time: "",
-                })
-              }
-              onChange({ formData: tmpFormData, setFormData, key: 'commitment', isCheckbox: true })(event)
-            }} />
+              onChange={(event) => {
+                let tmpFormData = formData;
+                if (event.target.checked === true) {
+                  assign(tmpFormData, {
+                    start_time: "",
+                    booking_offset: "",
+                    end_time: "",
+                  })
+                }
+                onChange({ formData: tmpFormData, setFormData, key: 'commitment', isCheckbox: true })(event)
+              }} />
           }
           label="Commitment mode"
           title="The user only gets a minute to cancel their booking, this will override any time settings."
         />
-      </FormControl>}
+    </FormControl>}
 
-      {!get(formData, 'commitment', false) && <TrainingFormTime formData={formData} setFormData={setFormData} errors={errors} />}
+    {!get(formData, 'commitment', false) && <TrainingFormTime formData={formData} setFormData={setFormData} errors={errors} />}
 
-      <FormControl fullWidth sx={{mt: 2, mb: 2}}>
-        <Button onClick={save(formData)}>Save</Button>
+    <TrainingFormBilling formData={formData} setFormData={setFormData} errors={errors} />
+    {/* {get(data, 'training.training_where.billing_type', false) && <>
+      <FormControl fullWidth sx={{ mt: 2, mb: 2 }}>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={get(formData, "venue_billing_enabled", false) || false}
+              onChange={onChange({ formData: formData, setFormData, key: "venue_billing_enabled", isCheckbox: true })}
+            />}
+          label="Venue billing enabled"
+          title="If this event will be added to the venues billing account."
+        />
       </FormControl>
+    </>
+    }*/}
+
+    <FormControl fullWidth sx={{mt: 2, mb: 2}}>
+      <Button onClick={save(formData)}>Save</Button>
+    </FormControl>
   </Box>
 }

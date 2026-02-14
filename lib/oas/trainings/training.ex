@@ -9,6 +9,9 @@ defmodule Oas.Trainings.Training do
     field :booking_offset, :string
     field :end_time, :time
 
+    field :venue_billing_enabled, :boolean
+    field :venue_billing_override, :decimal
+
     has_many :attendance, Oas.Trainings.Attendance
     many_to_many :training_tags, Oas.Trainings.TrainingTags,
       join_through: "training_training_tags", join_keys: [training_id: :id, training_tag_id: :id], on_replace: :delete

@@ -41,14 +41,7 @@ export const TrainingFormTime = ({
   })
 
   useEffect(() => {
-    console.log("101", formData.when, formData.training_where?.id)
-    console.log("102", formData)
-
-
   }, [formData.when, formData.training_where?.id])
-
-  console.log("103", trainingWhereTime)
-  console.log("103.1", get(trainingWhereTime, 'training_where_time_by_date.booking_offset', ''))
 
   return <>
     <FormControl fullWidth sx={{mt: 2, mb: 2}}>
@@ -75,7 +68,6 @@ export const TrainingFormTime = ({
         type="schema"
         onChange={(event) => {
           let tmpFormData = formData
-          console.log("006", trainingWhereTime, get(trainingWhereTime, 'training_where_time_by_date.booking_offset'))
           if ( !get(formData, "start_time") && get(trainingWhereTime, 'training_where_time_by_date.start_time')) {
 
             tmpFormData.start_time = get(trainingWhereTime, 'training_where_time_by_date.start_time')
