@@ -14,6 +14,7 @@ defmodule OasWeb.Schema.SchemaTraining do
   enum :billing_type do
     value :per_attendee, as: :per_attendee
     value :per_hour, as: :per_hour
+    value :fixed, as: :fixed
   end
 
   object :training_where do
@@ -127,6 +128,31 @@ defmodule OasWeb.Schema.SchemaTraining do
         {:ok, result}
       end
     end
+    field :training_billing_amount, :string do
+      arg :training_id, :integer
+      arg :training_where_id, non_null(:integer)
+      arg :start_time, :string
+      arg :end_time, :string
+      resolve fn _, args, _ ->
+
+
+        training_where = Oas.Trainings.TrainingWhere
+        |> Oas.Repo.get!(args |> Map.get(:training_where_id))
+
+        training = Oas.Trainings.Training
+        |> Oas.Repo.get(args |> Map.get(:training_id))
+        |> Oas.Repo.preload(:attendance)
+
+        out = Oas.Trainings.TrainingWhere.get_billing_amount(%{
+          training: training,
+          training_where: training_where,
+          start_time: args |> Map.get(:start_time),
+          end_time: args |> Map.get(:end_time)
+        })
+
+        {:ok, out}
+      end
+    end
   end
 
   object :training_mutations do
@@ -165,11 +191,20 @@ defmodule OasWeb.Schema.SchemaTraining do
 
         when1 = Date.from_iso8601!(args.when)
         args = %{args | when: when1 }
+        |> case do
+          %{venue_billing_enabled: true} = args ->
+            args |> Map.put(:venue_billing_config, Map.get(training_where, :billing_config))
+          _ ->
+            args
+        end
+
+
 
         %Oas.Trainings.Training{}
           |> Ecto.Changeset.cast(args, [:when, :notes, :commitment,
             :start_time, :booking_offset, :end_time,
-            :venue_billing_enabled, :venue_billing_override
+            :venue_billing_enabled, :venue_billing_override,
+            :venue_billing_config
             ])
           |> Oas.Trainings.Training.validate_time()
           |> Ecto.Changeset.put_assoc(

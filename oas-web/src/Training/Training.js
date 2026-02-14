@@ -34,7 +34,7 @@ export const Training = () => {
     }
   `)
 
-  const {data, refetch} = useQuery(gql`
+  const {data, refetch, loading} = useQuery(gql`
     query($id: Int!) {
       training(id: $id) {
         id,
@@ -78,6 +78,7 @@ export const Training = () => {
 
   const [{value}, setValue] = useState({value: (!id ? '1' : '2')}, {id: `trainings-tabs-${id}`});
 
+  const attendanceAcc = attendance || parent_attendance;
 
   return <div>
     <Box sx={{display: 'flex', flexWrap: 'wrap' }}>
@@ -89,7 +90,13 @@ export const Training = () => {
           {id && <Tab value={'2'} label="Attendance" />}
         </TabList>
         <TabPanel value={'1'} sx={{width: '100%'}}>
-          <TrainingForm id={id} data={data} config={config} refetch={refetch} />
+          <TrainingForm
+            id={id}
+            data={data}
+            loading={loading}
+            config={config}
+            refetch={refetch}
+            attendanceAcc={attendanceAcc} />
         </TabPanel>
         {id &&
           <TabPanel value={'2'} sx={{width: '100%'}}>

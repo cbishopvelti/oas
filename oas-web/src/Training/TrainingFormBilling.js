@@ -21,7 +21,9 @@ const onChange = ({ formData, setFormData, key, isCheckbox }) => (event) => {
 export const TrainingFormBilling = ({
   formData,
   setFormData,
-  errors
+  errors,
+  trainingWhereTime,
+  attendanceAcc
 }) => {
   const [billingOverride, setBillingOverride] = useState(false);
 
@@ -36,20 +38,33 @@ export const TrainingFormBilling = ({
     skip: !get(formData, "training_where.id")
   })
 
-  const { data: billingAmount } = useQuery(gql(`query (
+  const { data: billingAmount, refetch: billingAmountRefetch } = useQuery(gql`query (
     $training_id: Int,
     $training_where_id: Int!,
-    $when: String!
+    $start_time: String,
+    $end_time: String
   ) {
-    training_billing_amount
+    training_billing_amount(training_id: $training_id, training_where_id: $training_where_id,
+      start_time: $start_time,
+      end_time: $end_time
+    )
   }`, {
     variables: {
       training_id: formData.id,
       training_where_id: get(formData, "training_where.id"),
-      when: formData.when
+      start_time: get(formData, "start_time") || get(trainingWhereTime, 'training_where_time_by_date.start_time'),
+      end_time: get(formData, "end_time") || get(trainingWhereTime, 'training_where_time_by_date.end_time')
     },
-    skip: !get(formData, "training_where.id") || !formData.when || billingOverride
-  }))
+    skip: !get(formData, "training_where.id") ||
+      (get(formData, "training_where.billing_type") === "PER_HOUR" && !formData.when) ||
+      billingOverride,
+  })
+
+  useEffect(() => {
+    if (get(formData, "training_where.id")) {
+      billingAmountRefetch()
+    }
+  }, [attendanceAcc, formData])
 
   useEffect(() => {
     if (!venueLoading) {
@@ -128,7 +143,9 @@ export const TrainingFormBilling = ({
           label={`Billing ${billingOverride ? 'override' : 'amount'}`}
           type="text"
           disabled={!billingOverride}
-          value={get(formData, "venue_billing_override", '') || ''}
+          value={billingOverride ? (get(formData, "venue_billing_override", '') || '') :
+            billingAmount?.training_billing_amount || ''
+          }
           onChange={
             onChange({formData, setFormData, key: "venue_billing_override"})
           }

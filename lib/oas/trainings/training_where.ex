@@ -1,4 +1,5 @@
 defmodule Oas.Trainings.TrainingWhere do
+  require Ecto.Query
   use Ecto.Schema
   import Ecto.Changeset
 
@@ -7,7 +8,7 @@ defmodule Oas.Trainings.TrainingWhere do
     field :credit_amount, :decimal
 
     field :gocardless_name, :string
-    field :billing_type, Ecto.Enum, values: [:per_hour, :per_attendee]
+    field :billing_type, Ecto.Enum, values: [:per_hour, :per_attendee, :fixed]
     field :billing_config, :map
 
     has_many :trainings, Oas.Trainings.Training, foreign_key: :training_where_id
@@ -70,5 +71,30 @@ defmodule Oas.Trainings.TrainingWhere do
     )
     |> validate_credit_amount
     |> validate_and_set_billing_config
+  end
+
+  def get_billing_amount(%{
+    training_where: training_where,
+    training: training,
+    start_time: start_time,
+    end_time: end_time
+  }) do
+    case training_where.billing_type do
+      nil -> ""
+      :per_hour ->
+        # training_where.billing_config
+        "todo"
+      :per_attendee ->
+
+        case training do
+          nil -> ""
+          training ->
+            per_attendee = training_where.billing_config["per_attendee"] |> Decimal.new()
+            attendance = training.attendance |> Enum.count()
+
+            Decimal.mult(per_attendee, attendance) |> Decimal.to_string()
+        end
+    end
+
   end
 end

@@ -12,7 +12,10 @@ import { parseErrors } from "../utils/util";
 import { TrainingFormTime } from "./TrainingFormTime";
 import { TrainingFormBilling } from "./TrainingFormBilling";
 
-export const TrainingForm = ({id, data, config, refetch}) => {
+export const TrainingForm = ({
+  id, data, loading, config,
+  refetch, attendanceAcc
+}) => {
   const navigate = useNavigate();
 
   const defaultData = {
@@ -32,11 +35,13 @@ export const TrainingForm = ({id, data, config, refetch}) => {
     if (!data) {
       return;
     }
-    setFormData(
-      {
-        ...get(data, "training")
-      }
-    )
+    if (!loading) {
+      setFormData(
+        {
+          ...get(data, "training")
+        }
+      )
+    }
   }, [data])
 
   const onChange = ({formData, setFormData, key, isCheckbox}) => (event) => {
@@ -98,6 +103,25 @@ export const TrainingForm = ({id, data, config, refetch}) => {
     }
   `)
 
+
+  const {data: trainingWhereTime} = useQuery(gql`
+    query($training_where_id: Int!, $when: String!) {
+      training_where_time_by_date(when: $when, training_where_id: $training_where_id){
+        start_time,
+        booking_offset,
+        end_time
+      }
+    }
+  `, {
+    variables: {
+      when: formData.when,
+      training_where_id: formData.training_where?.id
+    },
+    skip: !formData.when || !formData.training_where?.id || (
+      get(formData, 'commitment', false) && formData.training_where?.billing_type !== "PER_HOUR"
+    )
+  })
+
   const save = (formData) => async () => {
     if (!formData.id) {
       try {
@@ -145,8 +169,6 @@ export const TrainingForm = ({id, data, config, refetch}) => {
     ...get(error1, "graphQLErrors", []),
     ...get(error2, "graphQLErrors", [])
   ]);
-
-  console.log("001 data", data)
 
   return <Box sx={{width: '100%'}}>
     <Stack sx={{ width: '100%' }}>
@@ -221,9 +243,20 @@ export const TrainingForm = ({id, data, config, refetch}) => {
         />
     </FormControl>}
 
-    {!get(formData, 'commitment', false) && <TrainingFormTime formData={formData} setFormData={setFormData} errors={errors} />}
+    {(!get(formData, 'commitment', false) || formData.training_where?.billing_type === "PER_HOUR") && <TrainingFormTime
+      formData={formData}
+      setFormData={setFormData}
+      errors={errors}
+      trainingWhereTime={trainingWhereTime}
+    />}
 
-    <TrainingFormBilling formData={formData} setFormData={setFormData} errors={errors} />
+    <TrainingFormBilling
+      formData={formData}
+      setFormData={setFormData}
+      errors={errors}
+      trainingWhereTime={trainingWhereTime}
+      attendanceAcc={attendanceAcc}
+    />
     {/* {get(data, 'training.training_where.billing_type', false) && <>
       <FormControl fullWidth sx={{ mt: 2, mb: 2 }}>
         <FormControlLabel

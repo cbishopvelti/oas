@@ -22,5 +22,9 @@ Add into the Annual report
 
 Test reccuring training creation
 
+Add a table to show transactions against a venue
+
+Make gocardless link table.
+
 ### Continue
 to write training_billing_amount graphql

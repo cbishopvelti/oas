@@ -9,8 +9,8 @@ defmodule Oas.Repo.Migrations.VenueBilling do
     end
 
     alter table(:trainings) do
-      add :venue_billing_enabled, :boolean, null: true
-      add :venue_billing_override, :decimal, null: true
+      add :venue_billing_type, :string, null: true
+      add :venue_billing_config, :map, null: true
     end
 
     create table(:transactions_training_wheres) do

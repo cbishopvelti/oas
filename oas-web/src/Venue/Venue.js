@@ -15,6 +15,7 @@ import { parseErrors } from "../utils/util";
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { dayToString } from "./VenueTime";
+import { VenueBilling } from "./VenueBilling";
 
 
 export const Venue = () => {
@@ -195,64 +196,7 @@ export const Venue = () => {
           />
       </FormControl>
 
-      <FormControl fullWidth sx={{ m: 2 }}>
-        <InputLabel required id="billing-type">Billing type</InputLabel>
-        <Select
-          labelId="billing-type"
-          label="Billing type"
-          value={get(formData, "billing_type", '') || ""}
-          onChange={onChange({formData, setFormData, key: "billing_type"})}
-        >
-          <MenuItem value="">None</MenuItem>
-          <MenuItem value="PER_HOUR">Per hour</MenuItem>
-          <MenuItem value="PER_ATTENDEE">Per attendee</MenuItem>
-        </Select>
-      </FormControl>
-
-      {get(formData, "billing_type") &&
-        <FormControl fullWidth sx={{m: 2}}>
-          <TextField
-            id="gocardless_name"
-            label="Gocardless Name"
-            value={get(formData, "gocardless_name", '') || ''}
-            onChange={onChange({formData, setFormData, key: 'gocardless_name'})}
-            error={has(errors, "gocardless_name")}
-            helperText={get(errors, "gocardless_name", []).join(" ")}
-          />
-        </FormControl>
-      }
-
-      {get(formData, "billing_type") === "PER_HOUR" &&
-        <FormControl fullWidth sx={{ m: 2 }}>
-          <TextField
-            id="billing_config"
-            label="Amount per Hour"
-            required
-            inputMode="numeric"
-            pattern="[0-9\.]*"
-            value={get(formData, "billing_config.per_hour", "") || ''}
-            onChange={onChange({ formData, setFormData, key: "billing_config.per_hour" })}
-            error={has(errors, "billing_config")}
-            helperText={get(errors, "billing_config", []).join(" ")}
-          />
-        </FormControl>
-      }
-
-      {get(formData, "billing_type") === "PER_ATTENDEE" &&
-        <FormControl fullWidth sx={{ m: 2 }}>
-          <TextField
-            id="billing_config"
-            label="Amount per Attendee"
-            required
-            value={get(formData, "billing_config.per_attendee", "") || ''}
-            onChange={onChange({ formData, setFormData, key: "billing_config.per_attendee" })}
-            error={has(errors, "billing_config")}
-            helperText={get(errors, "billing_config", []).join(" ")}
-            inputMode="numeric"
-            pattern="[0-9\.]*"
-          />
-        </FormControl>
-      }
+      <VenueBilling formData={formData} setFormData={setFormData} errors={errors} onChange={onChange} prefix={""} />
 
       <FormControl fullWidth sx={{m: 2}}>
         <Button onClick={save(formData)}>Save</Button>
