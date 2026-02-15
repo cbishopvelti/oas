@@ -64,20 +64,22 @@ defmodule Oas.Trainings.TrainingWhere do
   end
 
   def changeset(changeset, params \\ %{}) do
+    IO.inspect(params, label: "007")
     changeset
     |> Ecto.Changeset.cast(params, [:name, :credit_amount,
       :billing_type, :gocardless_name, :billing_config],
-      empty_values:  [[], nil] ++ Ecto.Changeset.empty_values()
+      empty_values:  [[], nil, %{}] ++ Ecto.Changeset.empty_values()
     )
     |> validate_credit_amount
     |> validate_and_set_billing_config
   end
 
+  @deprecated "remove"
   def get_billing_amount(%{
     training_where: training_where,
     training: training,
-    start_time: start_time,
-    end_time: end_time
+    start_time: _start_time,
+    end_time: _end_time
   }) do
     case training_where.billing_type do
       nil -> ""

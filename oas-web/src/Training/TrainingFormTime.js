@@ -19,14 +19,24 @@ const onChange = ({formData, setFormData, key, isCheckbox}) => (event) => {
 }
 
 export const TrainingFormTime = ({
+  data,
   formData,
   errors,
   setFormData,
   trainingWhereTime
 }) => {
 
+
   useEffect(() => {
-  }, [formData.when, formData.training_where?.id])
+    if (get(formData, "training_where.id") !== get(data, "training.training_where.id")) {
+      setFormData({
+        ...formData,
+        start_time: get(trainingWhereTime, 'training_where_time_by_date.start_time'),
+        end_time: get(trainingWhereTime, 'training_where_time_by_date.end_time'),
+        booking_offset: get(trainingWhereTime, 'training_where_time_by_date.booking_offset')
+      })
+    }
+  }, [trainingWhereTime])
 
   return <>
     <FormControl fullWidth sx={{mt: 2, mb: 2}}>
@@ -34,7 +44,7 @@ export const TrainingFormTime = ({
         id="start_time"
         label="Start time"
         required={get(formData, "training_where.billing_type") === "PER_HOUR"}
-        value={get(formData, "start_time") || get(trainingWhereTime, 'training_where_time_by_date.start_time', '') || ''}
+        value={get(formData, "start_time") || ''}
         type="time"
         onChange={
           onChange({formData, setFormData, key: "start_time"})
@@ -71,7 +81,7 @@ export const TrainingFormTime = ({
         id="end_time"
         label="End time"
         required={get(formData, "training_where.billing_type") === "PER_HOUR"}
-        value={get(formData, "end_time") || get(trainingWhereTime, 'training_where_time_by_date.end_time', '') || ''}
+        value={get(formData, "end_time") || ''}
         type="time"
         onChange={
           onChange({formData, setFormData, key: "end_time"})

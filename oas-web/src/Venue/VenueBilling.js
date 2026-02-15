@@ -6,7 +6,9 @@ export const VenueBilling = ({
   onChange,
   prefix }) => {
 
-  return <><FormControl fullWidth sx={{ m: 2 }}>
+  const margin = !!prefix ? {mt: 2, mb: 2} : {m: 2}
+
+  return <><FormControl fullWidth sx={margin}>
     <InputLabel required id="billing-type">Billing type</InputLabel>
     <Select
       labelId="billing-type"
@@ -35,7 +37,7 @@ export const VenueBilling = ({
   }
 
   {get(formData, `${prefix}billing_type`) === "PER_HOUR" &&
-    <FormControl fullWidth sx={{ m: 2 }}>
+    <FormControl fullWidth sx={margin}>
       <TextField
         id="billing_config"
         label="Amount per Hour"
@@ -51,7 +53,7 @@ export const VenueBilling = ({
   }
 
     {get(formData, `${prefix}billing_type`) === "PER_ATTENDEE" &&
-      <FormControl fullWidth sx={{ m: 2 }}>
+      <FormControl fullWidth sx={margin}>
         <TextField
           id="billing_config"
           label="Amount per Attendee"
@@ -66,7 +68,7 @@ export const VenueBilling = ({
       </FormControl>}
 
     {get(formData, `${prefix}billing_type`) === "FIXED" &&
-      <FormControl fullWidth sx={{ m: 2 }}>
+      <FormControl fullWidth sx={margin}>
         <TextField
           id="billing_config"
           label="Fixed amount"

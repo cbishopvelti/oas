@@ -4,13 +4,13 @@ defmodule Oas.Repo.Migrations.VenueBilling do
   def change do
     alter table(:training_where) do
       add :billing_type, :string, null: true
-      add :billing_config, :map, null: true
+      add :billing_config, :map, null: true, default: nil
       add :gocardless_name, :string, null: true
     end
 
     alter table(:trainings) do
       add :venue_billing_type, :string, null: true
-      add :venue_billing_config, :map, null: true
+      add :venue_billing_config, :map, null: true, default: nil
     end
 
     create table(:transactions_training_wheres) do

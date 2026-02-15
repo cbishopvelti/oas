@@ -60,8 +60,8 @@ export const TrainingForm = ({
   const [ insertMutation, {error: error1} ] = useMutation(gql`
     mutation ($when: String!, $training_tags: [TrainingTagArg]!, $training_where: TrainingWhereArg!,
       $notes: String, $commitment: Boolean, $start_time: String,
-      $booking_offset: String, $end_time: String, $venue_billing_enabled: Boolean,
-      $venue_billing_override: String
+      $booking_offset: String, $end_time: String, $venue_billing_type: BillingType,
+      $venue_billing_config: Json
     ) {
       insert_training (
         when: $when,
@@ -72,8 +72,8 @@ export const TrainingForm = ({
         start_time: $start_time,
         booking_offset: $booking_offset,
         end_time: $end_time,
-        venue_billing_enabled: $venue_billing_enabled,
-        venue_billing_override: $venue_billing_override
+        venue_billing_type: $venue_billing_type,
+        venue_billing_config: $venue_billing_config
       ) {
         id
       }
@@ -83,7 +83,7 @@ export const TrainingForm = ({
     mutation ($id: Int!, $when: String!, $training_tags: [TrainingTagArg]!,
       $training_where: TrainingWhereArg!, $notes: String, $commitment: Boolean,
       $start_time: String, $booking_offset: String, $end_time: String,
-      $venue_billing_enabled: Boolean, $venue_billing_override: String
+      $venue_billing_type: BillingType, $venue_billing_config: Json
     ){
       update_training (
         when: $when,
@@ -95,8 +95,8 @@ export const TrainingForm = ({
         start_time: $start_time,
         booking_offset: $booking_offset,
         end_time: $end_time,
-        venue_billing_enabled: $venue_billing_enabled,
-        venue_billing_override: $venue_billing_override
+        venue_billing_type: $venue_billing_type,
+        venue_billing_config: $venue_billing_config
       ) {
         id
       }
@@ -123,6 +123,7 @@ export const TrainingForm = ({
   })
 
   const save = (formData) => async () => {
+    console.log("101 save", formData)
     if (!formData.id) {
       try {
         const { data } = await insertMutation({
@@ -132,7 +133,10 @@ export const TrainingForm = ({
               "training_where.__typename",
               "training_where.billing_type"
             ]),
-            notes: formData.notes || ""
+            notes: formData.notes || "",
+            ...(has(formData, "venue_billing_config") ? {
+              venue_billing_config: (get(formData, "venue_billing_config") && JSON.stringify(get(formData, "venue_billing_config"))) || null
+            } : {})
           }
         });
 
@@ -149,7 +153,10 @@ export const TrainingForm = ({
               "training_where.__typename",
               "training_where.billing_type"
             ]),
-            notes: formData.notes || ""
+            notes: formData.notes || "",
+            ...(has(formData, "venue_billing_config") ? {
+              venue_billing_config: (get(formData, "venue_billing_config") && JSON.stringify(get(formData, "venue_billing_config"))) || null
+            } : {})
           }
         });
 
@@ -244,6 +251,7 @@ export const TrainingForm = ({
     </FormControl>}
 
     {(!get(formData, 'commitment', false) || formData.training_where?.billing_type === "PER_HOUR") && <TrainingFormTime
+      data={data}
       formData={formData}
       setFormData={setFormData}
       errors={errors}
@@ -251,6 +259,7 @@ export const TrainingForm = ({
     />}
 
     <TrainingFormBilling
+      data={data}
       formData={formData}
       setFormData={setFormData}
       errors={errors}
@@ -262,8 +271,8 @@ export const TrainingForm = ({
         <FormControlLabel
           control={
             <Switch
-              checked={get(formData, "venue_billing_enabled", false) || false}
-              onChange={onChange({ formData: formData, setFormData, key: "venue_billing_enabled", isCheckbox: true })}
+              checked={get(formData, "venue_billing_type", false) || false}
+              onChange={onChange({ formData: formData, setFormData, key: "venue_billing_type", isCheckbox: true })}
             />}
           label="Venue billing enabled"
           title="If this event will be added to the venues billing account."
