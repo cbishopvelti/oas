@@ -1,4 +1,4 @@
-import { FormControl, InputLabel, Select, MenuItem, TextField } from "@mui/material"
+import { FormControl, InputLabel, Select, MenuItem, TextField, FormHelperText } from "@mui/material"
 import { get, has } from 'lodash'
 
 export const VenueBilling = ({
@@ -8,19 +8,24 @@ export const VenueBilling = ({
 
   const margin = !!prefix ? {mt: 2, mb: 2} : {m: 2}
 
-  return <><FormControl fullWidth sx={margin}>
+  return <><FormControl fullWidth sx={margin} error={has(errors, `${prefix}billing_type`)}>
     <InputLabel required id="billing-type">Billing type</InputLabel>
     <Select
       labelId="billing-type"
       label="Billing type"
       value={get(formData, `${prefix}billing_type`, '') || ""}
-      onChange={onChange({formData, setFormData, key: `${prefix}billing_type`})}
+      onChange={onChange({ formData, setFormData, key: `${prefix}billing_type` })}
+      error={has(errors, `${prefix}billing_type`)}
+      helperText={get(errors, `${prefix}billing_type`, []).join(" ")}
     >
       <MenuItem value="">None</MenuItem>
       <MenuItem value="PER_HOUR">Per hour</MenuItem>
       <MenuItem value="PER_ATTENDEE">Per attendee</MenuItem>
       <MenuItem value="FIXED">Fixed</MenuItem>
     </Select>
+    <FormHelperText>
+      {get(errors, `${prefix}billing_type`, []).join(" ")}
+    </FormHelperText>
   </FormControl>
 
   {get(formData, `${prefix}billing_type`) && !prefix &&

@@ -1,5 +1,6 @@
+import Ecto.Query, only: [from: 2]
+
 defmodule Oas.Trainings.TrainingWhere do
-  require Ecto.Query
   use Ecto.Schema
   import Ecto.Changeset
 
@@ -63,6 +64,22 @@ defmodule Oas.Trainings.TrainingWhere do
     end
   end
 
+  defp validate_per_hour(changeset) do
+    case get_field(changeset, :billing_type) do
+      :per_hour ->
+        case Ecto.Changeset.get_field(changeset, :id) do
+          nil -> changeset
+          id -> case from(t in Oas.Trainings.TrainingWhereTime,
+            where: t.training_where_id == ^id and (is_nil(t.start_time) or is_nil(t.end_time) )
+          ) |> Oas.Repo.exists?() do
+            true -> changeset |> add_error(:billing_type, "start_time and end_time must be set on all Times")
+            false -> changeset
+          end
+        end
+      _ -> changeset
+    end
+  end
+
   def changeset(changeset, params \\ %{}) do
     IO.inspect(params, label: "007")
     changeset
@@ -72,6 +89,7 @@ defmodule Oas.Trainings.TrainingWhere do
     )
     |> validate_credit_amount
     |> validate_and_set_billing_config
+    |> validate_per_hour
   end
 
   @deprecated "remove"
