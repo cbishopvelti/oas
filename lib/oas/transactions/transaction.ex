@@ -45,6 +45,14 @@ defmodule Oas.Transactions.Transaction do
     end
   end
 
+  defp validate_who_id (changeset) do
+    case !is_nil(get_field(changeset, :who_member_id)) and !is_nil(get_field(changeset, :training_where_id)) do
+      true -> add_error(changeset, :who_member_id, "who_member_id and training_where_id can't both be set.")
+        |> add_error(:training_where_id, "training_where_id and who_member_id can't both be set.")
+      false -> changeset
+    end
+  end
+
   def changeset(transaction, params \\ %{}) do
     transaction
     |> cast(params, [:what, :when, :who, :who_member_id, :training_where_id,
@@ -53,5 +61,6 @@ defmodule Oas.Transactions.Transaction do
     |> validate_required([:what, :when, :who, :type, :amount])
     |> validate_type
     |> validate_amount
+    |> validate_who_id
   end
 end

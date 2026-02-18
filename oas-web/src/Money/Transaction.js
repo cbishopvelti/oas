@@ -216,7 +216,16 @@ export const Transaction = () => {
       }
     }
   `)
-  const reprocessTranactionWithVenueMutate = () => { } // TODO
+  const [reprocessTranactionWithVenueMutate, { }] = useMutation(gql`
+    mutation(
+      $training_where_id: Int!,
+      $id: Int!
+    ) {
+      reprocess_transaction_with_training_where(id: $id, training_where_id: $training_where_id) {
+        success
+      }
+    }
+  `)
 
   const [clearWarnings, {data: clearWarningsData}] = useMutation(gql`mutation(
     $transaction_id: Int!
@@ -463,7 +472,6 @@ export const Transaction = () => {
             selectOnFocus
             handleHomeEndKeys
             onChange={(event, newValue, a, b, c, d) => {
-              console.log("008 newValue", newValue)
               if (newValue?.who) {
                 setFormData({
                   ...formData,
@@ -479,7 +487,6 @@ export const Transaction = () => {
                   who_member_id: newValue.who_member_id
                 })
               } else if (newValue?.training_where_id) {
-                console.log('008.2')
                 setFormData({
                   ...formData,
                   who: newValue.label,
