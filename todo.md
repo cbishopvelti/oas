@@ -84,3 +84,10 @@ Fix not coming online when clicking Chat [x]
 css history list online [x]
 Add warning email for not booking in. [x]
 Throttel streaming output. [x]
+
+### 2026-02-18
+
+training_where_time ovewrite price. ✅
+Add attendee limit.
+Show user their membership status.
+Create page for lidia.

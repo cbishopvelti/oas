@@ -59,9 +59,31 @@ defmodule Oas.Attendance do
     nil
   end
 
+  defp get_training_credit_amount(training) do
+    training_where = training |> Map.get(:training_where) || %{}
+    training_where_time = (training_where || %{}) |> Map.get(:training_where_time) |> List.first() || %{}
+
+    (training_where_time |> Map.get(:credit_amount)) ||
+    (training_where |> Map.get(:credit_amount)) ||
+    Oas.Config.Tokens.get_min_token().value
+  end
+
   def add_attendance(%{member_id: member_id, training_id: training_id}, %{inserted_by_member_id: inserted_by_member_id}) do
-    training = Oas.Repo.get!(Oas.Trainings.Training, training_id)
-    |> Oas.Repo.preload(:training_where)
+
+    training = from(tr in Oas.Trainings.Training,
+      left_join: tw in assoc(tr, :training_where),
+      left_join: twt in assoc(tw, :training_where_time), on: twt.training_where_id == tw.id and
+        twt.day_of_week == fragment(
+          "CASE CAST(strftime('%w', ?) AS INTEGER) WHEN 0 THEN 7 ELSE CAST(strftime('%w', ?) AS INTEGER) END",
+          tr.when,
+          tr.when
+        ),
+      preload: [training_where: {tw, [training_where_time: twt]}],
+      where: tr.id == ^training_id
+    ) |> Oas.Repo.one!()
+
+    # training = Oas.Repo.get!(Oas.Trainings.Training, training_id)
+    # |> Oas.Repo.preload(:training_where)
 
     # now = Date.utc_today()
     now = training.when
@@ -118,7 +140,7 @@ defmodule Oas.Attendance do
             member,
             Decimal.sub(
               0,
-              training.training_where.credit_amount || Oas.Config.Tokens.get_min_token().value
+              get_training_credit_amount(training)
             ),
             %{
               now: now,

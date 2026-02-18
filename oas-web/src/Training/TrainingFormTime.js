@@ -75,7 +75,6 @@ export const TrainingFormTime = ({
         type="schema"
         onChange={(event) => {
           let tmpFormData = formData
-          console.log("006", trainingWhereTime, get(trainingWhereTime, 'training_where_time_by_date.booking_offset'))
           if ( !get(formData, "start_time") && get(trainingWhereTime, 'training_where_time_by_date.start_time')) {
 
             tmpFormData.start_time = get(trainingWhereTime, 'training_where_time_by_date.start_time')

@@ -9,6 +9,7 @@ defmodule OasWeb.Schema.SchemaTraining do
     field :booking_offset, :string
     field :end_time, :string
     field :recurring, :boolean
+    field :credit_amount, :string
   end
 
   object :training_where do

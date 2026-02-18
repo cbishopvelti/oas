@@ -68,6 +68,7 @@ defmodule OasWeb.Schema.SchemaTrainingWhere do
       arg :booking_offset, :string
       arg :end_time, :string
       arg :recurring, :boolean
+      arg :credit_amount, :string
       resolve fn _, args, _ ->
         out = case args do
           %{id: id} -> Oas.Repo.get(Oas.Trainings.TrainingWhereTime, id)

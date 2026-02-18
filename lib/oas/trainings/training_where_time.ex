@@ -10,6 +10,7 @@ defmodule Oas.Trainings.TrainingWhereTime do
     field :booking_offset, :string
     field :end_time, :time
     field :recurring, :boolean
+    field :credit_amount, :decimal
 
     timestamps()
   end
@@ -36,7 +37,7 @@ defmodule Oas.Trainings.TrainingWhereTime do
     # params = %{params | booking_offset: Duration.from_iso8601!(params.booking_offset)}
     changeset
     |> Ecto.Changeset.cast(params, [:day_of_week, :start_time, :booking_offset,
-      :end_time, :recurring, :training_where_id
+      :end_time, :recurring, :training_where_id, :credit_amount
     ], empty_values: [[], nil] ++ Ecto.Changeset.empty_values())
     |> validate_required([:start_time])
     |> validate_recurring()
