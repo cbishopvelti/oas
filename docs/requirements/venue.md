@@ -14,15 +14,15 @@ Venue form: All end times should be set if per_hour ✅
 
 Time fields should still be displayed in comittment mode if venue billing is enabled and billing is per_hour. ✅
 
-Transactions directly link to a venue via join table
+Transactions directly link to a venue via join table ✅
 
+Add a table to show transactions against a venue
 The Venue running account should be generated upon request.
 
 Add into the Annual report
 
 Test reccuring training creation
 
-Add a table to show transactions against a venue
 
 Make gocardless link table. ✅
 - test registration ✅
