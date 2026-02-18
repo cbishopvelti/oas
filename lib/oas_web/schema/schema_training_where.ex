@@ -9,10 +9,15 @@ defmodule OasWeb.Schema.SchemaTrainingWhere do
       resolve fn _, %{id: id}, _ ->
         # result = Oas.Repo.get(Oas.Trainings.TrainingWhere, id)
         result = from(tw in Oas.Trainings.TrainingWhere,
-          preload: :training_where_time,
+          preload: [:training_where_time, :gocardless],
           where: tw.id == ^id
         )
         |> Oas.Repo.one!()
+
+        result = case result.gocardless do
+          nil -> result
+          gc -> result |> Map.put(:gocardless_name, gc.name)
+        end
 
         {:ok, result}
       end
@@ -51,17 +56,34 @@ defmodule OasWeb.Schema.SchemaTrainingWhere do
       arg :gocardless_name, :string, default_value: nil
       arg :billing_config, :json, default_value: nil
       resolve fn _, args, _ ->
-        dbg(args)
-        case args do
+
+        args = case Map.get(args, :gocardless_name) do
+          nil -> args |> Map.put(:gocardless, nil)
+          gcn -> args |> Map.put(:gocardless, %{
+            name: gcn,
+            type: :member
+          })
+        end
+
+        training_where = case args do
           %{id: id} -> Oas.Repo.get(Oas.Trainings.TrainingWhere, id)
+            |> Oas.Repo.preload(:gocardless)
           _ -> %Oas.Trainings.TrainingWhere{}
         end
+
+        args = case !is_nil(training_where.gocardless) and Map.has_key?(training_where.gocardless, :id) and !is_nil(args.gocardless) do
+          true -> args |> put_in([:gocardless, :id], training_where.gocardless.id)
+          false -> args
+        end
+
+        training_where
         |> Oas.Trainings.TrainingWhere.changeset(args)
+        |> dbg
         |> (&(case &1 do
           %{data: %{id: nil}} -> Oas.Repo.insert(&1)
           %{data: %{id: _}} -> Oas.Repo.update(&1)
         end)).()
-        |> OasWeb.Schema.SchemaUtils.handle_error
+        |> OasWeb.Schema.SchemaUtils.handle_errors_with_assoc()
       end
     end
     field :training_where_time, type: :training_where_time do

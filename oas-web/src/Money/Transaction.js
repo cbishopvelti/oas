@@ -164,7 +164,7 @@ export const Transaction = () => {
     dupRefetch()
   }, [formData])
 
-  const [whoLinkMutate, { data: whoData}] = useMutation(gql`mutation(
+  const [whoLinkMutate, { data: whoData, error: whoGqlError}] = useMutation(gql`mutation(
     $who_member_id: Int!,
     $gocardless_name: String!
     ) {
@@ -175,7 +175,10 @@ export const Transaction = () => {
         success
       }
     }
-  `)
+  `, {
+    onError: () => { }
+  })
+  const whoErrors = parseErrors(whoGqlError?.graphQLErrors)
 
   const [reprocessTranactionMutate, {data: reprocessTransactionData}] = useMutation(gql`
     mutation(
@@ -372,8 +375,8 @@ export const Transaction = () => {
               }}
               label="Who"
               required
-              error={has(errors, "who") || has(errors, "who_member_id")}
-              helperText={[...get(errors, "who", []), get(errors, "who_member_id", [])].join(' ')}
+              error={has(errors, "who") || has(errors, "who_member_id") || has(whoErrors, "gocardless_name")}
+              helperText={[...get(errors, "who", []), ...get(errors, "who_member_id", []), ...get(whoErrors, "gocardless_name", [])].join(' ')}
               />
             }
             filterOptions={(options, params) => {

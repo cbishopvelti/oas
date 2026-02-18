@@ -8,9 +8,9 @@ defmodule Oas.Trainings.TrainingWhere do
     field :name, :string
     field :credit_amount, :decimal
 
-    field :gocardless_name, :string
     field :billing_type, Ecto.Enum, values: [:per_hour, :per_attendee, :fixed]
     field :billing_config, :map
+    belongs_to :gocardless, Oas.Gocardless.GocardlessEcto
 
     has_many :trainings, Oas.Trainings.Training, foreign_key: :training_where_id
     has_many :training_where_time, Oas.Trainings.TrainingWhereTime, foreign_key: :training_where_id
@@ -81,12 +81,12 @@ defmodule Oas.Trainings.TrainingWhere do
   end
 
   def changeset(changeset, params \\ %{}) do
-    IO.inspect(params, label: "007")
     changeset
     |> Ecto.Changeset.cast(params, [:name, :credit_amount,
-      :billing_type, :gocardless_name, :billing_config],
+      :billing_type, :billing_config],
       empty_values:  [[], nil, %{}] ++ Ecto.Changeset.empty_values()
     )
+    |> Ecto.Changeset.cast_assoc(:gocardless, with: &Oas.Gocardless.GocardlessEcto.changeset/2)
     |> validate_credit_amount
     |> validate_and_set_billing_config
     |> validate_per_hour

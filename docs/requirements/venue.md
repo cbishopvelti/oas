@@ -5,14 +5,14 @@ Gocardless link
 
 Trainings will have a toggle for if billing is enabled ✅
 You should be able to override Venue billing option. ✅
-Training will have an override amount ✅
+Training will have an override amount. This is now the Fixed option ✅
 
-Validate per_hour that start_time and end_time are set.
+Validate per_hour that start_time and end_time are set. ✅
 
-TrainingForm: if per_hour, start_time and end time are required, unless override is set.
-Venue form: All end times should be set if per_hour
+TrainingForm: if per_hour, start_time and end time are required, unless override is set. ✅
+Venue form: All end times should be set if per_hour ✅
 
-Time fields should still be displayed in comittment mode if venue billing is enabled, override is not set and billing_type is per_hour.
+Time fields should still be displayed in comittment mode if venue billing is enabled and billing is per_hour. ✅
 
 Transactions directly link to a venue via join table
 
@@ -25,6 +25,10 @@ Test reccuring training creation
 Add a table to show transactions against a venue
 
 Make gocardless link table.
+- test registration ✅
+- venue gocardless
+
+Loads of queries when opening a transaction page
 
 ### Continue
 to write training_billing_amount graphql

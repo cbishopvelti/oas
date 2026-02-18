@@ -12,7 +12,8 @@ defmodule Oas.Gocardless.Transactions do
     name: name
   }) do
     who_member = from(m in Oas.Members.Member,
-      where: m.gocardless_name == ^name
+      inner_join: g in assoc(m, :gocardless),
+      where: g.name == ^name
     ) |> Oas.Repo.one
 
     who = case who_member do
@@ -97,7 +98,7 @@ defmodule Oas.Gocardless.Transactions do
               )
             else
               Map.put(out_transaction, :warnings,
-                ["This looks like a membership, but related member (via gocardless_name: \"" <> out_transaction.who <> "\") was not found" | (Map.get(out_transaction, :warnings, []) || [])])
+                ["This looks like a membership, but related member (via gocardless.name: \"" <> out_transaction.who <> "\") was not found" | (Map.get(out_transaction, :warnings, []) || [])])
             end
           true -> out_transaction
         end
@@ -179,7 +180,8 @@ defmodule Oas.Gocardless.Transactions do
       maybe_member = case name do
           nil -> nil
           name -> from(m in Oas.Members.Member,
-            where: m.gocardless_name == ^name
+            inner_join: g in assoc(m, :gocardless),
+            where: g.name == ^name
           ) |> Oas.Repo.one()
         end
       date = Map.get(transaction, "bookingDate")

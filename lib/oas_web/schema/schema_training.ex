@@ -72,6 +72,11 @@ defmodule OasWeb.Schema.SchemaTraining do
         |> Oas.Repo.preload(:attendance)
         |> (&(%{ &1 | attendance: length(&1.attendance) })).()
 
+        result = case result.training_where |> Oas.Repo.preload(:gocardless) do
+          nil -> result
+          gc -> result |> Map.put(:gocardless_name, gc.name)
+        end
+
         {:ok, result}
       end
     end
@@ -88,7 +93,7 @@ defmodule OasWeb.Schema.SchemaTraining do
       }, _ ->
 
         results = from(t in Oas.Trainings.Training,
-          preload: [:training_where],
+          preload: [training_where: [:gocardless]],
           left_join: a in assoc(t, :attendance),
           group_by: [t.id],
           select: %{training: t, attendance: count(a.id)},
@@ -99,7 +104,14 @@ defmodule OasWeb.Schema.SchemaTraining do
             t.when >= ^from and t.when <= ^to and
             ((0 == ^length(training_where)) or  w.id in ^(training_where |> Enum.map(fn %{id: id} -> id end)))
         ) |> Oas.Repo.all
-        |> Enum.map(fn %{training: t, attendance: a} -> %{t | attendance: a} end)
+        |> Enum.map(fn %{training: t, attendance: a} ->
+          t = case t.training_where.gocardless do
+            nil -> t
+            gc -> t |> Map.put(:gocardless_name, gc.name)
+          end
+
+          %{t | attendance: a}
+        end)
 
         {:ok, results}
       end
@@ -114,10 +126,16 @@ defmodule OasWeb.Schema.SchemaTraining do
       resolve fn _,_,_ ->
         result = from(w in Oas.Trainings.TrainingWhere,
           select: w,
-          preload: [:trainings],
+          preload: [:trainings, :gocardless],
           order_by: [desc: w.id]
         )
         |> Oas.Repo.all()
+        |> Enum.map(fn training_where ->
+          case training_where.gocardless do
+            nil -> training_where
+            gc -> training_where |> Map.put(:gocardless_name, gc.name)
+          end
+        end)
 
         {:ok, result}
       end
@@ -192,8 +210,6 @@ defmodule OasWeb.Schema.SchemaTraining do
             args
         end
 
-
-
         %Oas.Trainings.Training{}
           |> Ecto.Changeset.cast(args, [:when, :notes, :commitment,
             :start_time, :booking_offset, :end_time,
@@ -226,7 +242,8 @@ defmodule OasWeb.Schema.SchemaTraining do
         when1 = Date.from_iso8601!(args.when)
         args = %{args | when: when1}
         training = Oas.Repo.get!(Oas.Trainings.Training, args.id)
-          |> Oas.Repo.preload(:training_tags) |> Oas.Repo.preload(:training_where)
+          |> Oas.Repo.preload(:training_tags)
+          |> Oas.Repo.preload(:training_where)
 
         %{training_tags: training_tags, training_where: training_where} = args
         training_tags = training_tags
