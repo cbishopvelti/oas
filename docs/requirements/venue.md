@@ -21,7 +21,7 @@ The Venue running account should be generated upon request.
 
 Add into the Annual report
 
-Test reccuring training creation
+Test reccuring training creation ✅
 
 
 Make gocardless link table. ✅
