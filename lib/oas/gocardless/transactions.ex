@@ -184,11 +184,19 @@ defmodule Oas.Gocardless.Transactions do
             where: g.name == ^name
           ) |> Oas.Repo.one()
         end
+      maybe_training_where = case name do
+        nil -> nil
+        name -> from(tw in Oas.Trainings.TrainingWhere,
+          inner_join: g in assoc(tw, :gocardless),
+          where: g.name == ^name
+        ) |> Oas.Repo.one()
+      end
       date = Map.get(transaction, "bookingDate")
       transaction
       |> Map.put(:name, name)
       |> Map.put(:amount, amount)
       |> Map.put(:maybe_member, maybe_member)
+      |> Map.put(:maybe_training_where, maybe_training_where)
       |> Map.put(:date, date |> Date.from_iso8601!())
     end)
     # FILTER DUPLICATES
@@ -210,6 +218,7 @@ defmodule Oas.Gocardless.Transactions do
 
   # Oas.Gocardless.Transactions.process_transacitons("./gocardless_backup/transactions_2025-09-24_test.json")
   # Oas.Gocardless.Transactions.process_transacitons("./gocardless_backup/transactions_2025-09-24_test_1.json")
+  # Oas.Gocardless.Transactions.process_transacitons("./gocardless_backup/transactions_2025-09-24_test_2.json")
   def process_transacitons(file_path \\ nil) do
     # get last transaction
     last_transaction = from(tra in Oas.Transactions.Transaction,
