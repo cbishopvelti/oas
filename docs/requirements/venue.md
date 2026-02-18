@@ -24,11 +24,12 @@ Test reccuring training creation
 
 Add a table to show transactions against a venue
 
-Make gocardless link table.
+Make gocardless link table. ✅
 - test registration ✅
-- venue gocardless
+- venue gocardless ✅
 
 Loads of queries when opening a transaction page
+Validate Transactions can't have training_where_id and who_member_id both set.
 
 ### Continue
 to write training_billing_amount graphql

@@ -145,5 +145,37 @@ defmodule OasWeb.Schema.SchemaTrainingWhere do
         {:ok, %{success: true}}
       end
     end
+    # Similar to schema_member.ex :gocardless_who_link
+    field :gocardless_training_where_link, type: :success do
+      arg :training_where_id, non_null(:integer)
+      arg :gocardless_name, non_null(:string)
+      resolve fn _, %{training_where_id: training_where_id, gocardless_name: gocardless_name}, _ ->
+
+        training_where = Oas.Repo.get!(Oas.Trainings.TrainingWhere, training_where_id)
+        |> Oas.Repo.preload(:gocardless)
+
+        gocardless_id = case training_where.gocardless do
+          nil -> nil
+          %{id: id} -> id
+        end
+
+        result = training_where
+        |> Ecto.Changeset.cast(%{
+          gocardless: %{
+            id: gocardless_id,
+            name: gocardless_name,
+            type: :training_where
+          }
+        }, [])
+        |> Ecto.Changeset.cast_assoc(:gocardless, with: &Oas.Gocardless.GocardlessEcto.changeset/2)
+        |> Oas.Repo.update()
+        |> OasWeb.Schema.SchemaUtils.handle_errors_with_assoc()
+
+        case result do
+          {:error, error} -> {:error, error}
+          {:ok, _res} -> {:ok, %{success: true}}
+        end
+      end
+    end
   end
 end

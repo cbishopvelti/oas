@@ -98,7 +98,7 @@ export const Venue = () => {
     }
   }, [data])
 
-  const [mutate, {error}] = useMutation(gql`
+  const [mutate, {error, reset}] = useMutation(gql`
     mutation($id: Int, $name: String!, $credit_amount: String!,
       $billing_type: BillingType, $gocardless_name: String, $billing_config: Json
     ) {
@@ -139,8 +139,11 @@ export const Venue = () => {
       navigate(`/venue/${get(data, 'training_where.id')}`)
     }
   }
-
   const errors = parseErrors(error?.graphQLErrors);
+
+  useEffect(() => {
+    reset()
+  }, [id])
 
   const [deleteTrainingWhereTimeMutation] = useMutation(gql`
     mutation($id: Int!) {

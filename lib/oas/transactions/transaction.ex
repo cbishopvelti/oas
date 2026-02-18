@@ -7,6 +7,7 @@ defmodule Oas.Transactions.Transaction do
     field :when, :date
     field :who, :string
     belongs_to :member, Oas.Members.Member, foreign_key: :who_member_id
+    belongs_to :training_where, Oas.Trainings.TrainingWhere
     field :type, :string
     field :their_reference, :string
     field :my_reference, :string
@@ -46,7 +47,7 @@ defmodule Oas.Transactions.Transaction do
 
   def changeset(transaction, params \\ %{}) do
     transaction
-    |> cast(params, [:what, :when, :who, :who_member_id,
+    |> cast(params, [:what, :when, :who, :who_member_id, :training_where_id,
       :type, :amount, :bank_details, :notes,
       :their_reference, :my_reference], empty_values: [[], nil])
     |> validate_required([:what, :when, :who, :type, :amount])

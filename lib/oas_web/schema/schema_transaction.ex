@@ -37,6 +37,7 @@ defmodule OasWeb.Schema.SchemaTransaction do
     field :what, :string
     field :who, :string
     field :who_member_id, :integer
+    field :training_where_id, :integer
     field :type, :string
     field :bank_details, :string
     field :notes, :string
@@ -253,6 +254,7 @@ defmodule OasWeb.Schema.SchemaTransaction do
       arg :when, non_null(:string)
       arg :who, :string
       arg :who_member_id, :integer
+      arg :training_where_id, :integer
       arg :type, non_null(:string)
       arg :amount, non_null(:float)
       arg :bank_details, :string
