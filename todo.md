@@ -88,7 +88,12 @@ Throttel streaming output. [x]
 ### 2026-02-18
 
 training_where_time ovewrite price ✅
-Add attendee limit ✅. Test recurring server
+Add attendee limit.
+- Test recurring server
+- Live update ✅
+- Refetch ✅
+- QR code login ✅
+
 Jams on same day.
 Show user their membership status.
 Create page for lidia.

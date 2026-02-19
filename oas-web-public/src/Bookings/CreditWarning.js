@@ -1,4 +1,4 @@
-import { get, uniqBy } from 'lodash'
+import { get, omit, uniqBy } from 'lodash'
 import { useQuery, useLazyQuery, gql} from '@apollo/client';
 import { useOutletContext, Link, useParams, useSearchParams } from 'react-router-dom'
 import { Alert, Box } from '@mui/material';
@@ -45,13 +45,18 @@ export const CreditWarning = ({
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setParams({})
-    }, 6000);
+      setParams({ ...omit(params, "error") })
+    }, 120_00);
 
     return () => clearTimeout(timer);
   }, []);
 
-  return <Box sx={{gap: "12px", display: "flex", flexDirection: "column"}}>
+  return <Box sx={{ gap: "12px", display: "flex", flexDirection: "column" }}>
+    {
+      params.get("error-full") && <Alert severity='error'>
+        This event is full. You have not been booked in. Please contact an admin.
+      </Alert>
+    }
     {currentBalance < 0 && <Alert severity="warning">
       Your current balance is <b style={{ ...currentBalance < 0 ? { color: "red" } : { }}}>{ currentBalance }</b> please purchase more credits. Insturctions <Link to="/credits">here</Link>.
     </Alert>}

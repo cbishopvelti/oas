@@ -21,6 +21,7 @@ defmodule OasWeb.Schema.SchemaUser do
     field :inserted_by_member_id, :integer
     field :inserted_at, :string
     field :commitment, :boolean
+    field :full, :boolean
   end
 
   object :user_queries do
@@ -42,15 +43,24 @@ defmodule OasWeb.Schema.SchemaUser do
     field :user_bookings, list_of(:user_bookings) do
       resolve fn _, _, %{context: %{current_member: %{id: id}}} ->
 
+        attendance_counts =
+          from a in Oas.Trainings.Attendance,
+            group_by: a.training_id,
+            select: %{training_id: a.training_id, count: count(a.id)}
+
         result = from(trai in Oas.Trainings.Training,
           left_join: atte in assoc(trai, :attendance), on: atte.training_id == trai.id and atte.member_id == ^id,
           left_join: memb in assoc(atte, :member),
+          left_join: ac in subquery(attendance_counts), on: ac.training_id == trai.id,
           preload: [training_where: [:training_where_time], attendance: {atte, [member: memb]}],
           where: trai.when >= ^Date.utc_today() and
           (memb.id == ^id or is_nil(memb.id)),
-          order_by: [asc: trai.when, desc: trai.id]
+          order_by: [asc: trai.when, desc: trai.id],
+
+          select: {trai, coalesce(ac.count, 0)}
         ) |> Oas.Repo.all
-        |> Enum.map(fn booking ->
+        |> Enum.map(fn {booking, limit} ->
+          dbg(booking)
           training_where_time = Oas.Trainings.TrainingWhereTime.find_training_where_time(booking, booking.training_where.training_where_time)
 
           %{
@@ -80,7 +90,11 @@ defmodule OasWeb.Schema.SchemaUser do
                 nil -> nil
                 x -> Map.get(x, :inserted_at)
               end,
-            commitment: Map.get(booking, :commitment, nil)
+            commitment: Map.get(booking, :commitment, nil),
+            full: case Map.get(booking, :limit) do
+              nil -> false
+              tr_limit -> limit >= tr_limit
+            end
           }
         end)
 
@@ -97,10 +111,14 @@ defmodule OasWeb.Schema.SchemaUser do
 
         case config.enable_booking do
           true ->
-            Oas.Attendance.add_attendance(
-              %{training_id: training_id, member_id: member_id},
-              %{inserted_by_member_id: member_id}
-            )
+            try do
+              Oas.Attendance.add_attendance(
+                %{training_id: training_id, member_id: member_id},
+                %{inserted_by_member_id: member_id}
+              )
+            catch
+              error -> error
+            end
           _ -> {:error, "Booking feature is not enabled"}
         end
       end
@@ -169,7 +187,7 @@ defmodule OasWeb.Schema.SchemaUser do
         topic = context |> Map.get(:context) |> Map.get(:current_member) |> Map.get(:id)
         IO.inspect(topic, label: "509.1")
 
-        {:ok, topic: context |> Map.get(:context) |> Map.get(:current_member) |> Map.get(:id)}
+        {:ok, topic: [context |> Map.get(:context) |> Map.get(:current_member) |> Map.get(:id), "global"]}
       end
 
       trigger [

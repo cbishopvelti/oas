@@ -78,7 +78,8 @@ defmodule Oas.Attendance do
           tr.when,
           tr.when
         ),
-      preload: [training_where: {tw, [training_where_time: twt]}],
+      left_join: att in assoc(tr, :attendance),
+      preload: [:attendance, training_where: {tw, [training_where_time: twt]}],
       where: tr.id == ^training_id
     ) |> Oas.Repo.one!()
 
@@ -96,6 +97,8 @@ defmodule Oas.Attendance do
       )
     ])
 
+    inserted_by_member = Oas.Repo.get!(Oas.Members.Member, inserted_by_member_id)
+
     # FIX DEBT
     # attendance = %Oas.Trainings.Attendance{
     #   member_id: member_id,
@@ -110,10 +113,13 @@ defmodule Oas.Attendance do
         inserted_by_member_id: inserted_by_member_id,
       }, [:member_id, :training_id, :inserted_by_member_id])
       |> Ecto.Changeset.unique_constraint([:training_id, :member_id, :dedub_training_member])
+      |> Oas.Trainings.Attendance.validate_limit(training, inserted_by_member)
+      |> Oas.Trainings.Attendance.maybe_publish_full(training)
       |> Oas.Repo.insert()
     do
       {:ok, attendance} -> attendance
-      {:error, errors} -> throw OasWeb.Schema.SchemaUtils.handle_error({:error, errors})
+      {:error, errors} ->
+        throw OasWeb.Schema.SchemaUtils.handle_error({:error, errors})
     end
 
 
@@ -170,10 +176,11 @@ defmodule Oas.Attendance do
   end
 
   def delete_attendance(%{attendance_id: attendance_id}) do
-    attendance = Oas.Repo.get!(Oas.Trainings.Attendance, attendance_id)
-      |> Oas.Repo.preload(:token)
-      |> Oas.Repo.preload(:member)
-      |> Oas.Repo.preload(:training)
+    attendance = from(att in Oas.Trainings.Attendance,
+      preload: [:token, :member, training: [:attendance]],
+      where: att.id == ^attendance_id
+    ) |> Oas.Repo.one!()
+    |> IO.inspect(label: "009")
 
     if (attendance.token != nil) do
       debtAttendance = from(a in Oas.Trainings.Attendance,
@@ -207,6 +214,8 @@ defmodule Oas.Attendance do
     # EO maybe delete membership
 
     Oas.Repo.delete!(attendance)
+
+    Oas.Trainings.Attendance.maybe_publish_spaces(attendance.training)
 
     {:ok, %{
       success: true,
@@ -337,7 +346,7 @@ defmodule Oas.Attendance do
       order_by: [asc: tr.when, asc: tr.id],
       limit: 1
     ) |> Oas.Repo.one |> case do
-      nil -> {nil, nil}
+      nil -> {nil, nil}attendance
       x -> x
     end
 
