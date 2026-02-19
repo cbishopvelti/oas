@@ -89,5 +89,6 @@ Throttel streaming output. [x]
 
 training_where_time ovewrite price. ✅
 Add attendee limit.
+Jams on same day.
 Show user their membership status.
 Create page for lidia.
