@@ -29,7 +29,8 @@ export const TrainingFormTime = ({
       training_where_time_by_date(when: $when, training_where_id: $training_where_id){
         start_time,
         booking_offset,
-        end_time
+        end_time,
+        limit
       }
     }
   `, {
@@ -39,16 +40,6 @@ export const TrainingFormTime = ({
     },
     skip: !formData.when || !formData.training_where?.id
   })
-
-  useEffect(() => {
-    console.log("101", formData.when, formData.training_where?.id)
-    console.log("102", formData)
-
-
-  }, [formData.when, formData.training_where?.id])
-
-  console.log("103", trainingWhereTime)
-  console.log("103.1", get(trainingWhereTime, 'training_where_time_by_date.booking_offset', ''))
 
   return <>
     <FormControl fullWidth sx={{mt: 2, mb: 2}}>

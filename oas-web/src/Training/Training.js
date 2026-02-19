@@ -41,9 +41,10 @@ export const Training = () => {
         when,
         notes,
         commitment,
+        limit,
         training_where {
           id,
-          name
+          name,
         }
         training_tags {
           id,

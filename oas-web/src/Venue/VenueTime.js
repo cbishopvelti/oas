@@ -60,7 +60,8 @@ export const VenueTime = () => {
       training_where(id: $training_where_id) {
         id,
         name,
-        credit_amount
+        credit_amount,
+        limit
       }
     }
   `, {
@@ -80,7 +81,8 @@ export const VenueTime = () => {
         booking_offset,
         end_time,
         recurring,
-        credit_amount
+        credit_amount,
+        limit
       }
     }
   `,{
@@ -97,7 +99,8 @@ export const VenueTime = () => {
   const [mutation, {error}] = useMutation(gql`
     mutation($id: Int, $day_of_week: Int, $training_where_id: Int!,
       $start_time: String!, $booking_offset: String,
-      $end_time: String, $recurring: Boolean, $credit_amount: String
+      $end_time: String, $recurring: Boolean, $credit_amount: String,
+      $limit: Int
     ) {
       training_where_time(
         id: $id,
@@ -107,7 +110,8 @@ export const VenueTime = () => {
         booking_offset: $booking_offset,
         end_time: $end_time,
         recurring: $recurring,
-        credit_amount: $credit_amount
+        credit_amount: $credit_amount,
+        limit: $limit
       ) {
         id
       }
@@ -126,7 +130,8 @@ export const VenueTime = () => {
           booking_offset: formData.booking_offset,
           end_time: formData.end_time,
           recurring: formData.recurring,
-          credit_amount: formData.credit_amount
+          credit_amount: formData.credit_amount,
+          limit: formData.limit ? parseInt(formData.limit) : null
         }
       })
       await refetch()
@@ -140,6 +145,7 @@ export const VenueTime = () => {
     }
   }
 
+  console.log("007", formData)
   return <Box sx={{m: 2}}>
     <FormControl fullWidth sx={{mt: 2, mb: 2}}>
       <InputLabel required id="day-of-week">Day of the week</InputLabel>
@@ -247,17 +253,65 @@ export const VenueTime = () => {
                   control={
                     <Switch
                       size="small"
-                      checked={isString(get(formData, "credit_amount", null))}
+                      checked={get(formData, "credit_amount", null) != null}
                       onChange={(e) => {
                         if (e.target.checked) {
                           setFormData((fd) => ({
                             ...fd,
-                            credit_amount: get(trainingWhereData, 'training_where.credit_amount', '')
+                            credit_amount: get(trainingWhereData, 'training_where.credit_amount', '') || ''
                           }))
                         } else {
                           setFormData((fd) => ({
                             ...fd,
                             credit_amount: null
+                          }))
+                        }
+                      }}
+                    />
+                  }
+                  label="Override"
+                  labelPlacement="start"
+                />
+              </InputAdornment>
+            ),
+          }}
+        />
+    </FormControl>
+
+    <FormControl fullWidth sx={{ mt: 2, mb: 2 }}>
+      <TextField
+        id="limit"
+        label="Limit"
+        disabled={get(formData, "limit", null) == null}
+        value={get(formData, "limit") || get(trainingWhereData, 'training_where.limit', '') || ''}
+        onChange={onChange({ formData, setFormData, key: "limit" })}
+        InputLabelProps={{
+          shrink: true
+        }}
+        inputMode="numeric"
+        pattern="[0-9]*"
+        error={has(errors, "limit")}
+        helperText={get(errors, "limit", []).join(" ")}
+        InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <FormControlLabel
+                  control={
+                    <Switch
+                      size="small"
+                      checked={get(formData, "limit", null) != null}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          console.log("001")
+                          setFormData((fd) => ({
+                            ...fd,
+                            limit: get(trainingWhereData, 'training_where.limit', '') || ''
+                          }))
+                        } else {
+                          console.log("001.2")
+                          setFormData((fd) => ({
+                            ...fd,
+                            limit: null
                           }))
                         }
                       }}

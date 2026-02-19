@@ -9,7 +9,7 @@ import TabPanel from '@mui/lab/TabPanel';
 import { useEffect, useState as useReactState } from "react";
 // import { useState } from "../utils/useState";
 import moment from "moment";
-import { get, omit, has } from 'lodash'
+import { get, omit, has, pick } from 'lodash'
 import { useNavigate, useParams, useOutletContext, Link } from "react-router-dom";
 import { parseErrors } from "../utils/util";
 import EditIcon from '@mui/icons-material/Edit';
@@ -45,6 +45,7 @@ export const Venue = () => {
         id,
         name,
         credit_amount,
+        limit,
         training_where_time {
           id,
           day_of_week,
@@ -81,8 +82,8 @@ export const Venue = () => {
   }, [data])
 
   const [mutate, {error}] = useMutation(gql`
-    mutation($id: Int, $name: String!, $credit_amount: String!) {
-      training_where(id: $id, name: $name, credit_amount: $credit_amount) {
+    mutation($id: Int, $name: String!, $credit_amount: String!, $limit: Int) {
+      training_where(id: $id, name: $name, credit_amount: $credit_amount, limit: $limit) {
         id
       }
     }
@@ -95,9 +96,14 @@ export const Venue = () => {
       ...formData
     }
 
+    console.log("005", variables)
     const { data, errors } = await mutate({
-      variables
+      variables: {
+        ...pick(variables, ["id", 'name', 'credit_amount']),
+        limit: variables.limit ? parseInt(variables.limit) : null
+      }
     });
+    console.log("006", errors)
 
     setFormData({
       ...formData,
@@ -167,6 +173,25 @@ export const Venue = () => {
           helperText={get(errors, "credit_amount", []).join(" ")}
           />
       </FormControl>
+
+      <FormControl fullWidth sx={{ m: 2 }}>
+        <TextField
+          id="limit"
+          label="Limit"
+          value={get(formData, "limit", '') || ''}
+          onChange={
+            onChange({formData, setFormData, key: "limit"})
+          }
+          InputLabelProps={{
+            shrink: true
+          }}
+          inputMode="numeric"
+          pattern="[0-9]*"
+          error={has(errors, "limit")}
+          helperText={get(errors, "limit", []).join(" ")}
+          />
+      </FormControl>
+
       <FormControl fullWidth sx={{m: 2}}>
         <Button onClick={save(formData)}>Save</Button>
       </FormControl>
