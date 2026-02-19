@@ -346,7 +346,7 @@ defmodule Oas.Attendance do
       order_by: [asc: tr.when, asc: tr.id],
       limit: 1
     ) |> Oas.Repo.one |> case do
-      nil -> {nil, nil}attendance
+      nil -> {nil, nil}
       x -> x
     end
 
