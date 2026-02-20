@@ -62,7 +62,6 @@ defmodule OasWeb.Schema.SchemaUser do
           select: {trai, coalesce(ac.count, 0)}
         ) |> Oas.Repo.all
         |> Enum.map(fn {booking, limit} ->
-          dbg(booking)
           training_where_time = Oas.Trainings.TrainingWhereTime.find_training_where_time(booking, booking.training_where.training_where_time)
 
           %{
@@ -187,7 +186,6 @@ defmodule OasWeb.Schema.SchemaUser do
       config fn _args, context ->
         # IO.inspect(context, label: "509 context")
         topic = context |> Map.get(:context) |> Map.get(:current_member) |> Map.get(:id)
-        IO.inspect(topic, label: "509.1")
 
         {:ok, topic: [context |> Map.get(:context) |> Map.get(:current_member) |> Map.get(:id), "global"]}
       end

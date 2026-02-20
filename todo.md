@@ -94,6 +94,6 @@ Add attendee limit. ✅
 - Refetch ✅
 - QR code login ✅
 Exempt membership count ✅
-Show user their membership status.
+Show user their membership status. ✅
 Jams on same day attendance.
 Create page for lidia.
