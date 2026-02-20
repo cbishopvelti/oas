@@ -89,11 +89,11 @@ Throttel streaming output. [x]
 
 training_where_time ovewrite price ✅
 Add attendee limit. ✅
-- Test recurring server ✅
+- Test with training auto creation ✅
 - Live update ✅
-- Refetch ✅
-- QR code login ✅
-Exempt membership count ✅
+- Refetch upon data changing ✅
+- Test login with qr/nfc code ✅
+Exempt membership count when calculating if user has become full member ✅
 Show user their membership status. ✅
-Jams on same day attendance.
+Better nfc/qrcode trainings on same day attendance resolution. ✅
 Create page for lidia.
