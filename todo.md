@@ -85,6 +85,15 @@ css history list online [x]
 Add warning email for not booking in. [x]
 Throttel streaming output. [x]
 
+### Chat
+
+Initial message ✅
+Notify admins of when a user messages ✅
+Users should be notified of new messages from other participants ✅
+Now messages should go in the sub menu under Chat. ✅
+Handle message seen ✅
+Check works for Anonymous users ✅
+
 ### 2026-02-18
 
 training_where_time ovewrite price ✅

@@ -15,9 +15,6 @@ defmodule Oas.Debug do
     ) # |> Oas.Repo.all()
     |> Oas.Repo.delete_all()
 
-    IO.inspect(tokens, label: "001.1 tokens")
-    IO.inspect(credits, label: "001.2 credits")
-
     # Oas.Repo.get!(Oas.Transactions.Gocardless, transaction_id)
     result2 = from(g in Oas.Transactions.Gocardless, where: g.transaction_id == ^transaction_id) |> Oas.Repo.delete_all()
     # |> Oas.Repo.all()

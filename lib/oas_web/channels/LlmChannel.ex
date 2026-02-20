@@ -1,15 +1,15 @@
+import OasWeb.Channels.Utils
 require Protocol
 Protocol.derive(Jason.Encoder, LangChain.Message)
 Protocol.derive(Jason.Encoder, LangChain.Message.ContentPart)
 
 
+
 defmodule OasWeb.Channels.LlmChannel do
-  alias LangChain.MessageDelta
   use Phoenix.Channel
+  alias LangChain.MessageDelta
 
   def join("llm:" <> _room_uuid, _params, socket) do
-    IO.puts("001 OasWeb.Channels.LlmChannel.join pid: #{inspect(self())}")
-
     send(self(), :after_join)
 
     {
@@ -21,30 +21,10 @@ defmodule OasWeb.Channels.LlmChannel do
     }
   end
 
-  # Safe to push to client
-  defp socket_to_member_map(socket) do
-
-    member = if current_member = socket.assigns[:current_member] do
-      member_data =
-        current_member
-        |> Map.from_struct()
-        |> Map.take([:id, :name, :is_admin, :is_reviewer])
-
-      member_data
-    else
-      nil
-    end
-
-    member
-  end
-
   def handle_info(:after_join, socket) do
-    # IO.puts("205 LlmChannel :after_join #{inspect(self())}")
-    # IO.inspect(socket.assigns.current_member, label: "506 current_member")
     member = socket_to_member_map(socket)
 
     # Presence
-    # IO.inspect(OasWeb.Channels.LlmChannelPresence.list(socket), label: "206")
     metas = %{
       channel_pid: self(),
       online_at: System.system_time(:second),
@@ -65,7 +45,6 @@ defmodule OasWeb.Channels.LlmChannel do
 
     messages = GenServer.call(pid, :messages)
     participants = GenServer.call(pid, :participants)
-    # IO.inspect(messages, label: "501 messages")
     push(socket, "messages", %{
       participants: participants |> Enum.map(fn participant ->
         participant |> Map.take([:id, :name])
@@ -102,7 +81,6 @@ defmodule OasWeb.Channels.LlmChannel do
     }
   end
   def handle_info({:DOWN, _ref, :process, pid, reason}, %{assigns: %{room_pid: pid}} = state) do
-    # IO.puts("LlmChannel :DOWN #{_ref}, #{pid}, #{reason}")
     {:stop, reason, state}
   end
 
@@ -144,7 +122,6 @@ defmodule OasWeb.Channels.LlmChannel do
   end
 
   defp debounce_data({:delta, message}, socket) do
-    # IO.inspect(message, label: "101 deltas message")
     new_delta = if (socket.assigns |> Map.has_key?(:delta)) && !(socket.assigns |> Map.get(:delta) |> is_nil()) do
       MessageDelta.merge_delta(
         socket.assigns |> Map.get(:delta),
@@ -153,19 +130,14 @@ defmodule OasWeb.Channels.LlmChannel do
     else
       message
     end
-    # IO.inspect(message, label: "101 start")
-    # IO.inspect(new_delta, label: "101.2 new_delta")
 
     if (message.status == :complete) do
-
-      # IO.inspect(message, label: "102 end")
       push(socket, Atom.to_string(:delta), new_delta |> delta_to_out())
 
       Process.cancel_timer(socket.assigns.delta_debounce)
       socket |> assign(:delta, nil) |> assign(:delta_debounce, nil)
     else
       if ( is_nil(socket.assigns |> Map.get(:delta_debounce, nil)) || !(socket.assigns |> Map.get(:delta_debounce, nil) |> Process.read_timer())) do
-        IO.puts("vvvvv START START START vvvvv")
         push(socket, Atom.to_string(:delta), new_delta |> delta_to_out())
 
         Phoenix.Socket.assign(socket, :delta_debounce,
@@ -202,7 +174,6 @@ defmodule OasWeb.Channels.LlmChannel do
   end
   # Other Clients -> Client, for sending prompts from other users
   def handle_cast({:prompt, message}, socket) do
-    IO.inspect(socket, label: "LlmChannel handle_cast :prompt")
     push(
       socket,
       Atom.to_string(:prompt),
@@ -211,6 +182,7 @@ defmodule OasWeb.Channels.LlmChannel do
     {:noreply, socket}
   end
   def handle_cast({:participants, participants}, socket) do
+
     push(
       socket,
       Atom.to_string(:participants),
@@ -218,11 +190,14 @@ defmodule OasWeb.Channels.LlmChannel do
     )
     {:noreply, socket}
   end
-  def handle_cast(stuff, socket) do
-    IO.inspect(stuff, label: "008 WAT handle_cast SHOULDN'T HAPPEN")
+
+  def handle_in("prompt", prompt, socket) when byte_size(prompt) > 2048 do
+    push(socket, "message_error", %{
+      error: "Message is to large, cannot be more than 2048 bytes",
+      prompt: prompt
+    })
     {:noreply, socket}
   end
-
   def handle_in("prompt", prompt, socket) do
 
     broadcast_from!(socket, "message",
@@ -250,10 +225,8 @@ defmodule OasWeb.Channels.LlmChannel do
       true -> # is authed to do this
         case value do
           true ->
-            # IO.inspect(socket.assigns, label: "301 socket.assigns")
-            # IO.inspect(OasWeb.Channels.LlmChannelPresence.list(socket.topic), label: "302 presence")
             channel_meta = OasWeb.Channels.LlmChannelPresence.get_by_key(socket.topic, presence_id).metas
-            |> List.first() # TODO
+            |> List.first()
             channel_pid = channel_meta |> Map.get(:channel_pid)
 
             {:ok, _pid} = Oas.Llm.LlmClient.start(

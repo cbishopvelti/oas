@@ -1,35 +1,13 @@
 import { useEffect, useRef, useState, useCallback, memo } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import {
-  loadHighlighter,
-  useCodeBlockToHtml,
-  allLangs,
-  allLangsAlias,
-} from "@llm-ui/code";
-// WARNING: Importing bundledThemes increases your bundle size
-// see: https://llm-ui.com/docs/blocks/code#bundle-size
-// import { bundledThemes } from "shiki/themes";
-import parseHtml from "html-react-parser";
-import { getHighlighterCore } from "shiki/core";
-import { bundledLanguagesInfo } from "shiki/langs";
-import { map, last, first, union, unionBy, reverse, some, find, findIndex, throttle, startsWith } from "lodash"
-
-// import getWasm from "shiki/wasm";
-
-import {
-  codeBlockLookBack,
-  findCompleteCodeBlock,
-  findPartialCodeBlock,
-} from "@llm-ui/code";
-import { markdownLookBack } from "@llm-ui/markdown";
+import { map, last, first, union, unionBy, reverse, some, find, findIndex, throttle, startsWith, get, isEqual } from "lodash"
 import { useLLMOutput, useStreamExample, throttleBasic } from "@llm-ui/react";
-import { Form, useNavigate, useParams } from "react-router-dom";
+import { Form, useNavigate, useOutletContext, useParams } from "react-router-dom";
 import { FormControl, TextField, Button, Box, Switch } from "@mui/material";
 import Cookies from "js-cookie";
 import { Socket as PhoenixSocket, Presence } from "phoenix";
 import { v4 } from 'uuid'
 import { MarkdownComponent, CodeBlock, ContentBox, LLMOutputOpitons } from "./ContentBox";
+import { useQuery, gql} from '@apollo/client'
 
 export const PreLlm = () => {
   const navigate = useNavigate()
@@ -56,8 +34,6 @@ const isMe = (message, who_am_i) => {
 }
 
 export const mergePresenceParticipants = (presence, participants) => {
-  // console.log("005", participants)
-  // TODO: change first to find the actuall relevent meta.
   const presenceMembers = presence.map((pres) => {
     return {
       ...(first(pres.metas).member ?
@@ -73,7 +49,6 @@ export const mergePresenceParticipants = (presence, participants) => {
     }
   })
   const out = unionBy(presenceMembers, participants, ({ id }) => id)
-  // console.log("006", out)
   return out;
 }
 
@@ -89,9 +64,18 @@ export const Llm = () => {
   const [presenceState, setPresenceState] = useState([])
   const [participants, setParticipants] = useState([])
   const [disableInput, setDisableInput] = useState(false)
+  const [outletContext] = useOutletContext()
 
   const { id } = useParams()
 
+  const { data: configData } = useQuery(gql`
+    query {
+      public_config_llm {
+        llm_enabled,
+        llm_enabled
+      }
+    }
+  `)
 
   const pushMessage = useCallback((message) => {
     setMessages((messages ) => [{
@@ -106,110 +90,118 @@ export const Llm = () => {
   }, [setMessages, whoIdObj])
 
   useEffect(() => {
-    const phoenixSocket = new PhoenixSocket(`${process.env["REACT_APP_SERVER_URL"].replace(/^http/, "ws")}/public_socket`, {
-      reconnectAfterMs: (() => 120_000),
-     	rejoinAfterMs: (() => 120_000),
-      params: () => {
-        if (Cookies.get("oas_key")) {
-          return { cookie: Cookies.get("oas_key") };
-        } else {
-          return {};
+    let channel
+    (async () => {
+      const phoenixSocket = await outletContext.phoenixSocketPromise
+      channel = phoenixSocket.channel(`llm:${id}`, {})
+      let presence = new Presence(channel)
+
+      let accData = "";
+      channel.on("delta", (data) => {
+        if (data.content) {
+          accData = accData + data.content
         }
-      }
-    });
-    phoenixSocket.connect()
-
-    let channel = phoenixSocket.channel(`llm:${id}`, {})
-    let presence = new Presence(channel)
-
-
-    let messages = [];
-    let accData = "";
-    channel.on("delta", (data) => {
-      if (data.content) {
-        accData = accData + data.content
-      }
-      setIsStreamFinished(data.done)
-      if (data.status === "complete") {
-        pushMessage({
-          role: "assistent",
-          content: accData,
-          metadata: data.metadata
-        })
-        setDisableInput(false);
-        accData = ""
-      }
-      // setOutputKey(v4())
-      setOutput(accData)
-    })
-
-    channel.on("message", (message) => {
-      setDisableInput(false)
-      if (message.content?.length === 0) {
-        // Probably a tool call
-        return;
-      }
-      setMessages((messages) => {
-        const index = findIndex(messages, (mess) => mess.metadata.index === message.metadata.index)
-        let out;
-        if (message.metadata.index === undefined || index === -1) {
-
-          out = [message, ...messages]
-        } else {
-          out = messages
+        setIsStreamFinished(data.done)
+        if (data.status === "complete") {
+          pushMessage({
+            role: "assistent",
+            content: accData,
+            metadata: data.metadata
+          })
+          setDisableInput(false);
+          accData = ""
         }
-
-        return out
+        // setOutputKey(v4())
+        setOutput(accData)
       })
-    })
-    channel.on("messages", ({messages, who_am_i, participants}) => {
-      // console.log("002.1 messages", messages)
-      // console.log("002.2 who_am_i", who_am_i)
-      console.log("002.3 participants", participants)
-      setWhoIdObj(who_am_i)
-      setParticipants(participants)
-      setMessages(
-        messages.map((message) => {
-          return {
-            ...message,
-            ...(isMe(message, who_am_i) ? { isMe: true } : {})
+
+      channel.on("message", (message) => {
+        setDisableInput(false)
+        if (message.content?.length === 0) {
+          // Probably a tool call
+          return;
+        }
+        setMessages((messages) => {
+          const index = findIndex(messages, (mess) => mess.metadata.index === message.metadata.index)
+          let out;
+          if (message.metadata.index === undefined || index === -1) {
+
+            out = [message, ...messages]
+          } else {
+            out = messages
           }
+
+          return out
         })
-      )
-    })
-    channel.on("participants", ({participants}) => {
-      console.log("003 new participants", participants)
-      setParticipants(participants)
-    })
-    // from other clients
-    channel.on("prompt", (prompt) => {
-      setMessages((messages ) => [prompt, ...messages])
-    })
-
-    presence.onSync(() => {
-      console.log("001 onSync", presence.state)
-      setPresenceState(Object.entries(presence.state).map(([k, v]) => { return {presence_id: k, metas: v.metas} }))
-    })
-
-    channel
-      .join()
-      .receive("ok", (resp) => {
       })
-      .receive("error", (resp) => {
-        console.error("error", resp)
+      channel.on("message_error", ({ error, prompt }) => {
+        setMessages((messages) => {
+          const index = findIndex(messages, (message) => message.content[0].content === prompt)
+          return messages.toSpliced(index, 1, {
+            content: [
+              {
+                content: error,
+              }
+            ],
+            role: "assistent"
+          })
+        })
       })
-    setChannel(channel)
+      channel.on("messages", ({messages, who_am_i, participants}) => {
+        setWhoIdObj(who_am_i)
+        setParticipants(participants)
+        setMessages(
+          messages.map((message) => {
+            return {
+              ...message,
+              ...(isMe(message, who_am_i) ? { isMe: true } : {})
+            }
+          })
+        )
+      })
+      channel.on("participants", ({participants}) => {
+
+        setParticipants(participants)
+      })
+      // from other clients
+      channel.on("prompt", (prompt) => {
+        setMessages((messages ) => [prompt, ...messages])
+      })
+
+      presence.onSync(() => {
+        setPresenceState(Object.entries(presence.state).map(([k, v]) => { return {presence_id: k, metas: v.metas} }))
+      })
+
+      channel
+        .join()
+        .receive("ok", (resp) => {
+        })
+        .receive("error", (resp) => {
+          console.error("error", resp)
+        })
+      setChannel(channel)
+    })()
 
 
     return () => {
       setChannel(undefined)
-      channel.leave()
-      phoenixSocket.disconnect(() => {
-        console.warn("003 phoenixSocket disconnect")
-      });
+      channel && channel.leave()
     }
-  }, [])
+  }, [id])
 
+  useEffect(() => {
+    const meIndex = findIndex(participants, (participant) => participant.id == whoIdObj.presence_id)
+    if (meIndex > 0) {
+
+      const newParticipants = [
+        participants[meIndex],               // The 'Me' user first
+        ...participants.slice(0, meIndex),   // Everyone before 'Me'
+        ...participants.slice(meIndex + 1)   // Everyone after 'Me'
+      ]
+      setParticipants(newParticipants);
+    }
+
+  }, [participants, whoIdObj])
 
   const { blockMatches } = useLLMOutput({
     llmOutput: output,
@@ -237,9 +229,16 @@ export const Llm = () => {
   }
 
 
-  const presenceParticipants = mergePresenceParticipants(presenceState, participants);
-  // console.log("101, presenceState", presenceState)
-  // console.log("102, presenecParticipants", presenceParticipants)
+  let presenceParticipants = mergePresenceParticipants(presenceState, participants);
+
+  const meIndex = findIndex(presenceParticipants, (participant) => participant.id == whoIdObj.presence_id)
+  if (meIndex > 0) {
+    presenceParticipants = [
+      presenceParticipants[meIndex],               // The 'Me' user first
+      ...presenceParticipants.slice(0, meIndex),   // Everyone before 'Me'
+      ...presenceParticipants.slice(meIndex + 1)   // Everyone after 'Me'
+    ]
+  }
 
   return (
     <div className="chat-content">
@@ -248,7 +247,7 @@ export const Llm = () => {
           return <li key={i}>
             <span >{ who.presence_name ||who.name || who.presence_id || "unknown" }</span>&nbsp;
             {who.online ? <span className="online"></span> : <span className="offline"></span>}
-            {!startsWith(who.presence_id, "assistent") && <Switch
+            {!startsWith(who.presence_id, "assistent") && get(configData, "public_config_llm.llm_enabled", false) && <Switch
               checked={some(presenceState, ({metas}) => {
                 const out = some(metas, ({from_channel_pid}) => from_channel_pid === who.channel_pid)
                 return out

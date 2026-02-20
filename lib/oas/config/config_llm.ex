@@ -3,6 +3,7 @@ defmodule Oas.Config.ConfigLlm do
 
   schema "config_llm" do
     field :chat_enabled, :boolean
+    field :llm_enabled, :boolean
     field :context, :string
     timestamps()
   end
