@@ -5,6 +5,7 @@ defmodule Oas.Trainings.TrainingWhere do
   schema "training_where" do
     field :name, :string
     field :credit_amount, :decimal
+    field :limit, :integer
 
     has_many :trainings, Oas.Trainings.Training, foreign_key: :training_where_id
     has_many :training_where_time, Oas.Trainings.TrainingWhereTime, foreign_key: :training_where_id
@@ -22,7 +23,7 @@ defmodule Oas.Trainings.TrainingWhere do
 
   def changeset(changeset, params \\ %{}) do
     changeset
-    |> Ecto.Changeset.cast(params, [:name, :credit_amount])
+    |> Ecto.Changeset.cast(params, [:name, :credit_amount, :limit])
     |> validate_credit_amount
   end
 end

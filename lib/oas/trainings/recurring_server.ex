@@ -12,7 +12,8 @@ defmodule Oas.Trainings.RecurringServer do
     {:ok, %{timer: nil}}
   end
 
-  def maybe_create_event(training_where, when1) do
+  def maybe_create_event(training_where_time, when1) do
+    training_where = training_where_time.training_where
     # Check in-memory first (based on what we just fetched)
     case Enum.any?(training_where.trainings, fn %{when: when2} -> when1 == when2 end)
       or Enum.any?(training_where.training_deleted, fn %{when: when2} -> when1 == when2 end)
@@ -24,7 +25,9 @@ defmodule Oas.Trainings.RecurringServer do
         |> Ecto.Changeset.cast(%{
           when: when1,
           notes: nil,
-          commitment: false
+          commitment: false,
+          limit: Map.get(training_where_time, :limit) ||
+            Map.get(training_where, :limit)
         }, [:when, :notes, :commitment])
         |> Ecto.Changeset.put_assoc(:training_where, training_where)
         |> Oas.Repo.insert() # This might raise if a DB Unique Index is hit
@@ -76,7 +79,7 @@ defmodule Oas.Trainings.RecurringServer do
         Enum.each(calculated_events, fn
           {:ok, {recurring_time, when1}} ->
             # Attempt to create the event
-            maybe_create_event(recurring_time.training_where, when1)
+            maybe_create_event(recurring_time, when1)
           _ ->
             :ok
         end)

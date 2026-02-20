@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import {
   Box, TableContainer, Table, TableHead,
-  TableBody, TableCell, TableRow, Button
+  TableBody, TableCell, TableRow, Button,
+  FormHelperText
 } from '@mui/material';
 import { useQuery, gql, useMutation, useSubscription } from '@apollo/client';
 import { has, get } from 'lodash';
@@ -9,6 +10,7 @@ import moment from 'moment';
 import { useOutletContext, redirect, useNavigate } from 'react-router-dom';
 import { UndoButton } from './UndoButton';
 import { CreditWarning } from './CreditWarning';
+import { parseErrors } from '../Members/MembershipForm';
 
 const canUndo = ({
   user
@@ -66,7 +68,8 @@ export const Bookings = () => {
         attendance_id,
         inserted_by_member_id,
         inserted_at,
-        commitment
+        commitment,
+        full
       }
     }
   `, {
@@ -80,18 +83,21 @@ export const Bookings = () => {
     }
   }`, {
     onData({ data }) {
-      console.log("005 user_attendance_attendance SHOULD HAPPEN")
       refetch()
     }
   })
 
-  const [attendMutation] = useMutation(gql`
+  const [attendMutation, {error}] = useMutation(gql`
     mutation($training_id: Int!) {
       user_add_attendance(training_id: $training_id) {
         success
       }
     }
-  `)
+  `, {
+    onError: () => {
+      refetch()
+    }
+  })
   const onAttend = (training_id) => async (event) => {
     await attendMutation({
       variables: {
@@ -100,6 +106,7 @@ export const Bookings = () => {
     })
     refetch();
   }
+  const errors = parseErrors(error?.graphQLErrors || []);
 
   const [undoMutation] = useMutation(gql`
     mutation($attendance_id: Int!) {
@@ -139,7 +146,7 @@ export const Bookings = () => {
             <TableCell sx={{width: "20%"}}>{training.when}</TableCell>
             <TableCell sx={{ width: "20%" }}>{training.start_time && moment(training.start_time, "HH:mm:ss").format("HH:mm")}</TableCell>
             <TableCell sx={{width: "20%"}}>
-              {!training.attendance_id && <Button onClick={onAttend(training.id)} color="success" sx={{width: "100%"}}>Attend</Button>}
+              {!training.attendance_id && !training.full && <Button onClick={onAttend(training.id)} color="success" sx={{width: "100%"}}>Attend</Button>}
               {user && canUndo({user})(training) && <UndoButton
                 refetch={refetch}
                 expires={canUndo({user})(training)}
@@ -147,7 +154,14 @@ export const Bookings = () => {
                 setState={setState}
                 onClick={undo(training.attendance_id)}
               >Undo</UndoButton>}
-              {training.attendance_id && user && !canUndo({user})(training) && <Button disabled={true} sx={{width: "100%"}} color="success">Attending</Button>}
+              {training.attendance_id && user && !canUndo({ user })(training) && <Button disabled={true} sx={{ width: "100%" }} color="success">Attending</Button>}
+              {
+                !(user && canUndo({ user })(training)) &&
+                !training.attendance_id && user && !canUndo({ user })(training) &&
+                training.full &&
+                <Button disabled={true} sx={{width: "100%"}}>Full</Button>
+              }
+              {has(errors, `limit-${training.id}`) && <FormHelperText error={true}>{get(errors, `limit-${training.id}`, []).join(" ")}</FormHelperText>}
             </TableCell>
           </TableRow>
         })}

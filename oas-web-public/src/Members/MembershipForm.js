@@ -27,7 +27,7 @@ const onChange = ({formData, setFormData, isCheckbox, key}) => (event) => {
   setFormData(formData)
 }
 
-const parseErrors = (errors) => {
+export const parseErrors = (errors) => {
 
   return errors.reduce((acc, error) => {
     if (error.db_field) {

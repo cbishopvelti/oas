@@ -41,9 +41,11 @@ export const Training = () => {
         when,
         notes,
         commitment,
+        limit,
+        exempt_membership_count,
         training_where {
           id,
-          name
+          name,
         }
         training_tags {
           id,

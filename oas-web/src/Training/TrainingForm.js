@@ -20,12 +20,51 @@ export const TrainingForm = ({id, data, config, refetch}) => {
   }
   const [formData, setFormData] = useState(defaultData);
 
-  useEffect(() => {
+  const { data: trainingWhere } = useQuery(gql`
+    query($id: Int!) {
+      training_where(id: $id) {
+        limit
+      }
+    }
+  `, {
+    variables: {
+      id: formData.training_where?.id
+    },
+    skip: !formData.training_where?.id
+  })
 
+  const {data: trainingWhereTime} = useQuery(gql`
+    query($training_where_id: Int!, $when: String!) {
+      training_where_time_by_date(when: $when, training_where_id: $training_where_id){
+        limit
+      }
+    }
+  `, {
+    variables: {
+      when: formData.when,
+      training_where_id: formData.training_where?.id
+    },
+    skip: !formData.when || !formData.training_where?.id
+  })
+
+  useEffect(() => {
+    setFormData((fd) => ({
+      ...fd,
+      limit: data?.training?.limit ||
+        trainingWhereTime?.training_where_time_by_date?.limit ||
+        trainingWhere?.training_where?.limit ||
+        null
+    }))
+  }, [trainingWhereTime, trainingWhere])
+
+  useEffect(() => {
     if (!id) {
-      setFormData(defaultData)
+      setFormData({
+        ...defaultData,
+      })
     }
   }, [id])
+
 
   useEffect(() => {
     if (!data) {
@@ -33,7 +72,7 @@ export const TrainingForm = ({id, data, config, refetch}) => {
     }
     setFormData(
       {
-        ...get(data, "training")
+        ...get(data, "training"),
       }
     )
   }, [data])
@@ -53,10 +92,12 @@ export const TrainingForm = ({id, data, config, refetch}) => {
   }
   const [ insertMutation, {error: error1} ] = useMutation(gql`
     mutation ($when: String!, $training_tags: [TrainingTagArg]!, $training_where: TrainingWhereArg!, $notes: String, $commitment: Boolean,
-      $start_time: String, $booking_offset: String, $end_time: String
+      $start_time: String, $booking_offset: String, $end_time: String, $limit: Int,
+      $exempt_membership_count: Boolean
     ) {
       insert_training (when: $when, training_tags: $training_tags, training_where: $training_where, notes: $notes, commitment: $commitment,
-        start_time: $start_time, booking_offset: $booking_offset, end_time: $end_time
+        start_time: $start_time, booking_offset: $booking_offset, end_time: $end_time, limit: $limit,
+        exempt_membership_count: $exempt_membership_count
       ) {
         id
       }
@@ -64,7 +105,8 @@ export const TrainingForm = ({id, data, config, refetch}) => {
   `);
   const [updateMutation, {error: error2}] = useMutation(gql`
     mutation ($id: Int!, $when: String!, $training_tags: [TrainingTagArg]!, $training_where: TrainingWhereArg!, $notes: String, $commitment: Boolean,
-      $start_time: String, $booking_offset: String, $end_time: String
+      $start_time: String, $booking_offset: String, $end_time: String, $limit: Int,
+      $exempt_membership_count: Boolean
     ){
       update_training (
         when: $when,
@@ -75,7 +117,9 @@ export const TrainingForm = ({id, data, config, refetch}) => {
         commitment: $commitment,
         start_time: $start_time,
         booking_offset: $booking_offset,
-        end_time: $end_time
+        end_time: $end_time,
+        limit: $limit,
+        exempt_membership_count: $exempt_membership_count
       ) {
         id
       }
@@ -88,7 +132,8 @@ export const TrainingForm = ({id, data, config, refetch}) => {
         const { data } = await insertMutation({
           variables: {
             ...omit(formData, ["training_tags.__typename", "training_where.__typename"]),
-            notes: formData.notes || ""
+            notes: formData.notes || "",
+            limit: formData.limit ? parseInt(formData.limit) : null
           }
         });
 
@@ -101,7 +146,8 @@ export const TrainingForm = ({id, data, config, refetch}) => {
         const { data } = await updateMutation({
           variables: {
             ...omit(formData, ["training_tags.__typename", "training_where.__typename"]),
-            notes: formData.notes || ""
+            notes: formData.notes || "",
+            limit: formData.limit ? parseInt(formData.limit) : null
           }
         });
 
@@ -158,6 +204,37 @@ export const TrainingForm = ({id, data, config, refetch}) => {
           helperText={get(errors, "when", []).join(" ")}
           />
       </FormControl>
+
+      <FormControl fullWidth sx={{ mt: 2, mb: 2 }}>
+        <TextField
+          id="limit"
+          label="Limit"
+          value={get(formData, "limit", '') || ''}
+          onChange={
+            onChange({formData, setFormData, key: "limit"})
+          }
+          InputLabelProps={{
+            shrink: true
+          }}
+          error={has(errors, "limit")}
+          helperText={get(errors, "limit", []).join(" ")}
+          />
+      </FormControl>
+      <FormControl fullWidth sx={{ mt: 2, mb: 2 }}>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={get(formData, 'exempt_membership_count', false) || false}
+              onChange={(event) => {
+                onChange({formData, setFormData, key: 'exempt_membership_count', isCheckbox: true})(event)
+              }}
+              />
+          }
+          label="Exempt from membership count"
+          title="This training will not count towards a users trainings before they must become a full members"
+          />
+      </FormControl>
+
       <FormControl fullWidth sx={{mt: 2, mb: 2}}>
         <TextField
           id="notes"
@@ -178,17 +255,15 @@ export const TrainingForm = ({id, data, config, refetch}) => {
           control={
             <Switch
               checked={get(formData, 'commitment', false) || false}
-            onChange={(event) => {
-              let tmpFormData = formData;
-              if (event.target.checked === true) {
-                assign(tmpFormData, {
-                  start_time: "",
-                  booking_offset: "",
-                  end_time: "",
-                })
-              }
-              onChange({ formData: tmpFormData, setFormData, key: 'commitment', isCheckbox: true })(event)
-            }} />
+              onChange={(event) => {
+                let tmpFormData = formData;
+                if (event.target.checked === true) {
+                  assign(tmpFormData, {
+                    booking_offset: "",
+                  })
+                }
+                onChange({ formData: tmpFormData, setFormData, key: 'commitment', isCheckbox: true })(event)
+              }} />
           }
           label="Commitment mode"
           title="The user only gets a minute to cancel their booking, this will override any time settings."
@@ -196,6 +271,7 @@ export const TrainingForm = ({id, data, config, refetch}) => {
       </FormControl>}
 
       {!get(formData, 'commitment', false) && <TrainingFormTime formData={formData} setFormData={setFormData} errors={errors} />}
+
 
       <FormControl fullWidth sx={{mt: 2, mb: 2}}>
         <Button onClick={save(formData)}>Save</Button>

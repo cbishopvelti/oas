@@ -47,6 +47,7 @@ defmodule OasWeb.Schema.SchemaTrainingWhere do
       arg :id, :integer
       arg :name, non_null(:string)
       arg :credit_amount, non_null(:string)
+      arg :limit, :integer
       resolve fn _, args, _ ->
         case args do
           %{id: id} -> Oas.Repo.get(Oas.Trainings.TrainingWhere, id)
@@ -68,6 +69,8 @@ defmodule OasWeb.Schema.SchemaTrainingWhere do
       arg :booking_offset, :string
       arg :end_time, :string
       arg :recurring, :boolean
+      arg :credit_amount, :string
+      arg :limit, :integer
       resolve fn _, args, _ ->
         out = case args do
           %{id: id} -> Oas.Repo.get(Oas.Trainings.TrainingWhereTime, id)
