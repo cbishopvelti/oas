@@ -310,7 +310,6 @@ export const Transaction = () => {
     refetch()
     navigate(`/transaction/${get(data, 'transaction.id')}`)
   }
-  console.log("009", errors)
   return <>
     <Box sx={{display: 'flex', flexWrap: 'wrap' }}>
       <Stack sx={{ width: '100%' }}>

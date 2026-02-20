@@ -40,6 +40,9 @@ export const TrainingForm = ({
   const {data: trainingWhereTime} = useQuery(gql`
     query($training_where_id: Int!, $when: String!) {
       training_where_time_by_date(when: $when, training_where_id: $training_where_id){
+        start_time,
+        booking_offset,
+        end_time,
         limit
       }
     }
@@ -48,7 +51,9 @@ export const TrainingForm = ({
       when: formData.when,
       training_where_id: formData.training_where?.id
     },
-    skip: !formData.when || !formData.training_where?.id
+    skip: !formData.when || !formData.training_where?.id || (
+      get(formData, 'commitment', false) && formData.training_where?.billing_type !== "PER_HOUR"
+    )
   })
 
   useEffect(() => {
@@ -150,27 +155,7 @@ export const TrainingForm = ({
     }
   `)
 
-
-  const {data: trainingWhereTime} = useQuery(gql`
-    query($training_where_id: Int!, $when: String!) {
-      training_where_time_by_date(when: $when, training_where_id: $training_where_id){
-        start_time,
-        booking_offset,
-        end_time
-      }
-    }
-  `, {
-    variables: {
-      when: formData.when,
-      training_where_id: formData.training_where?.id
-    },
-    skip: !formData.when || !formData.training_where?.id || (
-      get(formData, 'commitment', false) && formData.training_where?.billing_type !== "PER_HOUR"
-    )
-  })
-
   const save = (formData) => async () => {
-    console.log("101 save", formData)
     if (!formData.id) {
       try {
         const { data } = await insertMutation({

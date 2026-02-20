@@ -29,6 +29,13 @@ defmodule OasWeb.Schema.SchemaTraining do
     field :limit, :integer
     field :trainings, list_of(:training)
     field :training_where_time, list_of(:training_where_time)
+    field :account_liability, :string do
+      resolve fn %{id: id}, _, _ ->
+        {total, _} = Oas.Trainings.TrainingWhere.get_account_liability(id)
+
+        {:ok, total}
+      end
+    end
   end
   input_object :training_where_arg do
     field :id, :integer

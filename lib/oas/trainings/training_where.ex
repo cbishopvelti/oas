@@ -12,6 +12,7 @@ defmodule Oas.Trainings.TrainingWhere do
     field :billing_type, Ecto.Enum, values: [:per_hour, :per_attendee, :fixed]
     field :billing_config, :map
     belongs_to :gocardless, Oas.Gocardless.GocardlessEcto
+    has_many :transactions, Oas.Transactions.Transaction
 
     has_many :trainings, Oas.Trainings.Training, foreign_key: :training_where_id
     has_many :training_where_time, Oas.Trainings.TrainingWhereTime, foreign_key: :training_where_id
@@ -93,29 +94,56 @@ defmodule Oas.Trainings.TrainingWhere do
     |> validate_per_hour
   end
 
-  @deprecated "remove"
-  def get_billing_amount(%{
-    training_where: training_where,
-    training: training,
-    start_time: _start_time,
-    end_time: _end_time
-  }) do
-    case training_where.billing_type do
-      nil -> ""
-      :per_hour ->
-        # training_where.billing_config
-        "todo"
-      :per_attendee ->
+  def get_billing_for_training(%{venue_billing_type: nil}) do
+    Decimal.new("0")
+  end
+  def get_billing_for_training(%{venue_billing_type: :per_hour} = training) do
+    hours = (Time.diff(training.end_time,  training.start_time, :minute) / 60)
+      |> Decimal.from_float()
 
-        case training do
-          nil -> ""
-          training ->
-            per_attendee = training_where.billing_config["per_attendee"] |> Decimal.new()
-            attendance = training.attendance |> Enum.count()
+    training.venue_billing_config["per_hour"]
+    |> Decimal.mult(hours)
+  end
+  def get_billing_for_training(%{venue_billing_type: :per_attendee} = training) do
+    training.venue_billing_config["per_attendee"]
+    |> Decimal.mult(training.attendance |> length())
+  end
 
-            Decimal.mult(per_attendee, attendance) |> Decimal.to_string()
-        end
-    end
+  # Oas.Trainings.TrainingWhere.get_account_liability(2)
+  def get_account_liability(id) do
 
+    trainings = from(trai in Oas.Trainings.Training,
+      preload: [:attendance, :training_where],
+      where: trai.training_where_id == ^id and not is_nil(trai.venue_billing_type),
+      order_by: [asc: trai.when]
+    )
+    |> Oas.Repo.all()
+
+
+    transactions = from(tran in Oas.Transactions.Transaction,
+      where: tran.training_where_id == ^id,
+      order_by: [asc: tran.when]
+    ) |> Oas.Repo.all()
+
+    both = (trainings ++ transactions)
+    |> Enum.sort_by(fn %{when: when1} -> when1 end, :asc)
+
+    out = both |> Enum.reduce({Decimal.new("0"), []}, fn %Oas.Transactions.Transaction{} = trans, {total, rows} ->
+        amount = trans.amount |> Decimal.mult("-1")
+        acc_amount = Decimal.add(amount, total)
+        {acc_amount, [{acc_amount, amount, %{
+          what: trans.what,
+          when: trans.when
+        }}]}
+      %Oas.Trainings.Training{} = trai, {total, rows} ->
+        amount = get_billing_for_training(trai)
+        acc_amount = Decimal.add(total, amount)
+        {acc_amount, [{acc_amount, amount, %{
+          what: trai.training_where.name,
+          when: trai.when
+        }} | rows]}
+    end)
+
+    out
   end
 end

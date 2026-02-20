@@ -41,7 +41,7 @@ export const TrainingFormBilling = ({
     skip: !get(formData, "training_where.id")
   })
 
-  const setBillingEnabeldAction = (event) => { // Billing Enabeld, set the config to the venue/training_where config
+  const setBillingEnabledAction = (event) => { // Billing Enabeld, set the config to the venue/training_where config
     const billingEnabled = event.target.checked;
     if (billingEnabled) {
       setFormData((formData) => {
@@ -89,7 +89,7 @@ export const TrainingFormBilling = ({
         control={
           <Switch
             checked={billingEnabled}
-            onChange={setBillingEnabeldAction}
+            onChange={setBillingEnabledAction}
           />}
         label="Venue billing enabled"
         title="If this event will be added to the venues billing account."

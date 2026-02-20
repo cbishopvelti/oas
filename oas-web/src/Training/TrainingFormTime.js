@@ -37,23 +37,6 @@ export const TrainingFormTime = ({
     }
   }, [trainingWhereTime])
 
-  const {data: trainingWhereTime} = useQuery(gql`
-    query($training_where_id: Int!, $when: String!) {
-      training_where_time_by_date(when: $when, training_where_id: $training_where_id){
-        start_time,
-        booking_offset,
-        end_time,
-        limit
-      }
-    }
-  `, {
-    variables: {
-      when: formData.when,
-      training_where_id: formData.training_where?.id
-    },
-    skip: !formData.when || !formData.training_where?.id
-  })
-
   return <>
     <FormControl fullWidth sx={{mt: 2, mb: 2}}>
       <TextField

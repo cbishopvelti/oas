@@ -52,7 +52,6 @@ defmodule OasWeb.Schema.SchemaMember do
     field :token_count, :integer do
       resolve fn %{id: id}, _, _ ->
         token_count = Oas.Attendance.get_token_amount(%{member_id: id})
-
         {:ok, token_count}
       end
     end
@@ -141,17 +140,8 @@ defmodule OasWeb.Schema.SchemaMember do
             where(&1, [m], m.id == ^member_id)
         end)).()
 
-        result = Oas.Repo.all(query)
-
-        result = result
-        |> Enum.map(fn record ->
-          %{id: id} = record
-          token_count = Oas.Attendance.get_token_amount(%{member_id: id})
-          Map.put(record, :token_count, token_count)
-          |> Map.put(:gocardless_name, Map.get(record.gocardless || %{}, :name))
-        end)
-
-        {:ok, result}
+        # Just return the raw database records
+        {:ok, Oas.Repo.all(query)}
       end
     end
     field :member, :member do

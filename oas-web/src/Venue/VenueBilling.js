@@ -14,7 +14,15 @@ export const VenueBilling = ({
       labelId="billing-type"
       label="Billing type"
       value={get(formData, `${prefix}billing_type`, '') || ""}
-      onChange={onChange({ formData, setFormData, key: `${prefix}billing_type` })}
+      onChange={(event) => {
+        setFormData((formData) => {
+          return {
+            ...formData,
+            [`${prefix}billing_type`]: event.target.value,
+            [`${prefix}billing_config`]: null
+          }
+        })
+      }}
       error={has(errors, `${prefix}billing_type`)}
       helperText={get(errors, `${prefix}billing_type`, []).join(" ")}
     >

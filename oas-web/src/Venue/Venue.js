@@ -120,17 +120,15 @@ export const Venue = () => {
       ...formData
     }
 
-    let toSave = omit(variables, ["training_where_time", "__typename"])
+    let toSave = pick(variables, ["id", 'name', 'credit_amount', "billing_type", "billing_config"])
     toSave = set(
       toSave,
       "billing_config",
       (get(variables, "billing_config") && JSON.stringify(get(variables, "billing_config"))) || null)
+    toSave = set(toSave, "limit", variables.limit ? parseInt(variables.limit) : null)
 
     const { data, errors } = await mutate({
-      variables: {
-        ...pick(variables, ["id", 'name', 'credit_amount', "billing_type", "billing_config"]),
-        limit: variables.limit ? parseInt(variables.limit) : null
-      }
+      variables: toSave
     });
 
     setFormData({
