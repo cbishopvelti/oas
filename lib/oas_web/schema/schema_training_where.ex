@@ -3,6 +3,15 @@ import Ecto.Query, only: [from: 2]
 defmodule OasWeb.Schema.SchemaTrainingWhere do
   use Absinthe.Schema.Notation
 
+  object :training_where_account_liability do
+    field :what, :string
+    field :when, :string
+    field :amount, :string
+    field :acc_amount, :string
+    field :transaction_id, :integer
+    field :training_id, :integer
+  end
+
   object :training_where_queries do
     field :training_where, :training_where do
       arg :id, non_null(:integer)
@@ -33,8 +42,6 @@ defmodule OasWeb.Schema.SchemaTrainingWhere do
       arg :training_where_id, non_null(:integer)
       arg :when, non_null(:string)
       resolve fn _, %{training_where_id: training_where_id, when: when1}, _ ->
-
-
         result = from(twt in Oas.Trainings.TrainingWhereTime,
           where: twt.training_where_id == ^(training_where_id) and
           twt.day_of_week == ^(Date.day_of_week(
@@ -43,6 +50,20 @@ defmodule OasWeb.Schema.SchemaTrainingWhere do
         ) |> Oas.Repo.one()
 
         {:ok, result}
+      end
+    end
+
+    field :training_where_account_liability, list_of(:training_where_account_liability) do
+      arg :id, non_null(:integer)
+      resolve fn _, %{id: id}, _ ->
+        {_total, result} = Oas.Trainings.TrainingWhere.get_account_liability(id)
+        out = result |> Enum.map(fn {acc_amount, amount, item} ->
+          item
+          |> Map.put(:acc_amount, acc_amount)
+          |> Map.put(:amount, amount)
+        end)
+
+        {:ok, out}
       end
     end
   end

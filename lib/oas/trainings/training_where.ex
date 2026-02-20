@@ -133,14 +133,16 @@ defmodule Oas.Trainings.TrainingWhere do
         acc_amount = Decimal.add(amount, total)
         {acc_amount, [{acc_amount, amount, %{
           what: trans.what,
-          when: trans.when
+          when: trans.when,
+          transaction_id: trans.id
         }}]}
       %Oas.Trainings.Training{} = trai, {total, rows} ->
         amount = get_billing_for_training(trai)
         acc_amount = Decimal.add(total, amount)
         {acc_amount, [{acc_amount, amount, %{
           what: trai.training_where.name,
-          when: trai.when
+          when: trai.when,
+          training_id: trai.id
         }} | rows]}
     end)
 
