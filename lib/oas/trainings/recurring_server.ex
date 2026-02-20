@@ -28,7 +28,7 @@ defmodule Oas.Trainings.RecurringServer do
           commitment: false,
           limit: Map.get(training_where_time, :limit) ||
             Map.get(training_where, :limit)
-        }, [:when, :notes, :commitment])
+        }, [:when, :notes, :commitment, :limit])
         |> Ecto.Changeset.put_assoc(:training_where, training_where)
         |> Oas.Repo.insert() # This might raise if a DB Unique Index is hit
     end
