@@ -48,6 +48,9 @@ export const Credits = () => {
         after_amount
       }
       public_bacs(email: $email)
+      public_member(email: $email) {
+        member_status
+      }
     }
     `, {
     variables: {
@@ -93,7 +96,10 @@ export const Credits = () => {
       </Stack>}
 
       {errors.length == 0 && has(data, 'public_credits') &&
-        <h3 style={{ ...currentBalance< 0? { color: "red" } : { }}}>Your current credit balance is <b>{currentBalance}</b>.</h3>}
+        <h3>
+          <span style={{ ...currentBalance < 0 ? { color: "red" } : {} }}>Your current credit balance is <b>{currentBalance}</b>.&nbsp;</span>
+          <span>Your membership status is: { get(data, 'public_member.member_status') }.</span>
+        </h3>}
 
       {errors.length == 0 && has(data, 'public_credits') &&
         <p>Credits are used to pay for training sessions and other activities.</p>}

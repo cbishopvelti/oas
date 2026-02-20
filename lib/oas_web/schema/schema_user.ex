@@ -9,6 +9,7 @@ defmodule OasWeb.Schema.SchemaUser do
     field :is_admin, :boolean
     field :is_reviewer, :boolean
     field :logout_link, :string
+    field :membership_status, :member_status
   end
 
   object :user_bookings do
@@ -35,6 +36,7 @@ defmodule OasWeb.Schema.SchemaUser do
           email: Map.get(context, :current_member, %{}) |> Map.get(:email),
           is_admin: Map.get(context, :current_member, %{}) |> Map.get(:is_admin),
           is_reviewer: Map.get(context, :current_member, %{}) |> Map.get(:is_reviewer),
+          membership_status: Oas.Attendance.check_membership(Map.get(context, :current_member, %{})),
           logout_link: Map.get(context, :logout_link, %{})
         }}
       end

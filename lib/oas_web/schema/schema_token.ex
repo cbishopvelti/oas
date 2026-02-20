@@ -140,7 +140,9 @@ defmodule OasWeb.Schema.SchemaToken do
           nil ->
             {:error, "Member not found"}
           member ->
-            {:ok, member}
+            {:ok,
+              member
+            }
         end
       end
     end
