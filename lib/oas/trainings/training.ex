@@ -9,6 +9,8 @@ defmodule Oas.Trainings.Training do
     field :start_time, :time
     field :booking_offset, :string
     field :end_time, :time
+    field :limit, :integer
+    field :exempt_membership_count, :boolean
 
     field :venue_billing_type, Ecto.Enum, values: [:per_hour, :per_attendee, :fixed]
     field :venue_billing_config, :map

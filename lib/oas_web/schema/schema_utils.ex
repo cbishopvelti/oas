@@ -20,9 +20,14 @@ defmodule OasWeb.Schema.SchemaUtils do
           Map.get(changes, assoc, %{errors: []}).errors
 
         outError = errors
-        |> Enum.map(fn {key, {value, options}} ->
+        |> Enum.map(fn {key, {value, options}} = error ->
+          string_key = case Keyword.has_key?(options, :id) do
+            true -> Atom.to_string(key) <> "-" <> (Keyword.get(options, :id) |> to_string())
+            false -> Atom.to_string(key)
+          end
+
           message = Atom.to_string(key) <> ": " <> translate_error({value, options})
-          %{message: message, db_field: Atom.to_string(key)}
+          %{message: message, db_field: string_key}
         end)
 
         {:error, outError}

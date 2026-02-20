@@ -26,7 +26,6 @@ export const TrainingFormTime = ({
   trainingWhereTime
 }) => {
 
-
   useEffect(() => {
     if (get(formData, "training_where.id") !== get(data, "training.training_where.id")) {
       setFormData({
@@ -37,6 +36,23 @@ export const TrainingFormTime = ({
       })
     }
   }, [trainingWhereTime])
+
+  const {data: trainingWhereTime} = useQuery(gql`
+    query($training_where_id: Int!, $when: String!) {
+      training_where_time_by_date(when: $when, training_where_id: $training_where_id){
+        start_time,
+        booking_offset,
+        end_time,
+        limit
+      }
+    }
+  `, {
+    variables: {
+      when: formData.when,
+      training_where_id: formData.training_where?.id
+    },
+    skip: !formData.when || !formData.training_where?.id
+  })
 
   return <>
     <FormControl fullWidth sx={{mt: 2, mb: 2}}>
@@ -65,7 +81,6 @@ export const TrainingFormTime = ({
         onChange={(event) => {
           let tmpFormData = formData
           if (!get(formData, "start_time") && get(trainingWhereTime, 'training_where_time_by_date.start_time')) {
-
             tmpFormData.start_time = get(trainingWhereTime, 'training_where_time_by_date.start_time')
           }
           onChange({ formData, setFormData, key: "booking_offset" })(event)

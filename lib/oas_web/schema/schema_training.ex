@@ -9,6 +9,8 @@ defmodule OasWeb.Schema.SchemaTraining do
     field :booking_offset, :string
     field :end_time, :string
     field :recurring, :boolean
+    field :credit_amount, :string
+    field :limit, :integer
   end
 
   enum :billing_type do
@@ -24,6 +26,7 @@ defmodule OasWeb.Schema.SchemaTraining do
     field :gocardless_name, :string
     field :billing_type, :billing_type
     field :billing_config, :json
+    field :limit, :integer
     field :trainings, list_of(:training)
     field :training_where_time, list_of(:training_where_time)
   end
@@ -54,6 +57,8 @@ defmodule OasWeb.Schema.SchemaTraining do
     field :end_time, :string
     field :venue_billing_type, :billing_type
     field :venue_billing_config, :json
+    field :limit, :integer
+    field :exempt_membership_count, :boolean
   end
 
   object :training_queries do
@@ -180,6 +185,7 @@ defmodule OasWeb.Schema.SchemaTraining do
       arg :end_time, :string
       arg :venue_billing_type, :billing_type, default_value: nil
       arg :venue_billing_config, :json, default_value: nil
+      arg :exempt_membership_count, :boolean
       resolve fn _, args, _ ->
         %{training_tags: training_tags, training_where: training_where} = args
 
@@ -213,7 +219,9 @@ defmodule OasWeb.Schema.SchemaTraining do
         %Oas.Trainings.Training{}
           |> Ecto.Changeset.cast(args, [:when, :notes, :commitment,
             :start_time, :booking_offset, :end_time,
-            :venue_billing_type, :venue_billing_config
+            :venue_billing_type, :venue_billing_config,
+            :limit,
+            :exempt_membership_count
             ])
           |> Oas.Trainings.Training.validate_time()
           |> Oas.Trainings.Training.validate_billing()
@@ -238,6 +246,8 @@ defmodule OasWeb.Schema.SchemaTraining do
       arg :end_time, :string
       arg :venue_billing_type, :billing_type, default_value: nil
       arg :venue_billing_config, :json, default_value: nil
+      arg :limit, :integer
+      arg :exempt_membership_count, :boolean
       resolve fn _, args, _ ->
         when1 = Date.from_iso8601!(args.when)
         args = %{args | when: when1}
@@ -260,7 +270,9 @@ defmodule OasWeb.Schema.SchemaTraining do
         toSave = training
           |> Ecto.Changeset.cast(args, [:when, :notes, :commitment,
             :start_time, :booking_offset, :end_time,
-            :venue_billing_type, :venue_billing_config
+            :venue_billing_type, :venue_billing_config,
+            :limit,
+            :exempt_membership_count
           ], empty_values: [[], nil] ++ Ecto.Changeset.empty_values())
           |> Oas.Trainings.Training.validate_time()
           |> Oas.Trainings.Training.validate_billing()

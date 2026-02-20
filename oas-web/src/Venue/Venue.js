@@ -9,7 +9,7 @@ import TabPanel from '@mui/lab/TabPanel';
 import { useEffect, useState as useReactState } from "react";
 // import { useState } from "../utils/useState";
 import moment from "moment";
-import { get, omit, has, set, cloneDeep } from 'lodash'
+import { get, omit, has, pick, set, cloneDeep } from 'lodash'
 import { useNavigate, useParams, useOutletContext, Link } from "react-router-dom";
 import { parseErrors } from "../utils/util";
 import EditIcon from '@mui/icons-material/Edit';
@@ -61,8 +61,9 @@ export const Venue = () => {
         name,
         credit_amount,
         billing_type,
-        billing_config
+        billing_config,
         gocardless_name,
+        limit,
         training_where_time {
           id,
           day_of_week,
@@ -100,10 +101,12 @@ export const Venue = () => {
 
   const [mutate, {error, reset}] = useMutation(gql`
     mutation($id: Int, $name: String!, $credit_amount: String!,
-      $billing_type: BillingType, $gocardless_name: String, $billing_config: Json
+      $billing_type: BillingType, $gocardless_name: String, $billing_config: Json,
+      $limit: Int
     ) {
       training_where(id: $id, name: $name, credit_amount: $credit_amount,
-        billing_type: $billing_type, gocardless_name: $gocardless_name, billing_config: $billing_config
+        billing_type: $billing_type, gocardless_name: $gocardless_name, billing_config: $billing_config,
+        limit: $limit
       ) {
         id
       }
@@ -124,7 +127,10 @@ export const Venue = () => {
       (get(variables, "billing_config") && JSON.stringify(get(variables, "billing_config"))) || null)
 
     const { data, errors } = await mutate({
-      variables: toSave
+      variables: {
+        ...pick(variables, ["id", 'name', 'credit_amount', "billing_type", "billing_config"]),
+        limit: variables.limit ? parseInt(variables.limit) : null
+      }
     });
 
     setFormData({
@@ -196,6 +202,24 @@ export const Venue = () => {
           pattern="[0-9\.]*"
           error={has(errors, "credit_amount")}
           helperText={get(errors, "credit_amount", []).join(" ")}
+          />
+      </FormControl>
+
+      <FormControl fullWidth sx={{ m: 2 }}>
+        <TextField
+          id="limit"
+          label="Limit"
+          value={get(formData, "limit", '') || ''}
+          onChange={
+            onChange({formData, setFormData, key: "limit"})
+          }
+          InputLabelProps={{
+            shrink: true
+          }}
+          inputMode="numeric"
+          pattern="[0-9]*"
+          error={has(errors, "limit")}
+          helperText={get(errors, "limit", []).join(" ")}
           />
       </FormControl>
 

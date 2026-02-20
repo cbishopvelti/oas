@@ -7,6 +7,7 @@ defmodule Oas.Trainings.TrainingWhere do
   schema "training_where" do
     field :name, :string
     field :credit_amount, :decimal
+    field :limit, :integer
 
     field :billing_type, Ecto.Enum, values: [:per_hour, :per_attendee, :fixed]
     field :billing_config, :map
@@ -82,7 +83,7 @@ defmodule Oas.Trainings.TrainingWhere do
 
   def changeset(changeset, params \\ %{}) do
     changeset
-    |> Ecto.Changeset.cast(params, [:name, :credit_amount,
+    |> Ecto.Changeset.cast(params, [:name, :credit_amount, :limit,
       :billing_type, :billing_config],
       empty_values:  [[], nil, %{}] ++ Ecto.Changeset.empty_values()
     )

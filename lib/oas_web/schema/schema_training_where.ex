@@ -55,6 +55,7 @@ defmodule OasWeb.Schema.SchemaTrainingWhere do
       arg :billing_type, :billing_type, default_value: nil
       arg :gocardless_name, :string, default_value: nil
       arg :billing_config, :json, default_value: nil
+      arg :limit, :integer
       resolve fn _, args, _ ->
 
         args = case Map.get(args, :gocardless_name) do
@@ -94,6 +95,8 @@ defmodule OasWeb.Schema.SchemaTrainingWhere do
       arg :booking_offset, :string
       arg :end_time, :string
       arg :recurring, :boolean
+      arg :credit_amount, :string
+      arg :limit, :integer
       resolve fn _, args, _ ->
         out = case args do
           %{id: id} -> Oas.Repo.get(Oas.Trainings.TrainingWhereTime, id)

@@ -4,6 +4,7 @@ defmodule OasWeb.PublicSocket do
 
   channel "llm:*", OasWeb.Channels.LlmChannel
   channel "history", OasWeb.Channels.LlmHistoryChannel
+  channel "global", OasWeb.Channels.LlmGlobalChannel
 
   # @session_options Module.get_attribute(OasWeb.Endpoint, :session_options)
 

@@ -24,12 +24,51 @@ export const TrainingForm = ({
   }
   const [formData, setFormData] = useState(defaultData);
 
-  useEffect(() => {
+  const { data: trainingWhere } = useQuery(gql`
+    query($id: Int!) {
+      training_where(id: $id) {
+        limit
+      }
+    }
+  `, {
+    variables: {
+      id: formData.training_where?.id
+    },
+    skip: !formData.training_where?.id
+  })
 
+  const {data: trainingWhereTime} = useQuery(gql`
+    query($training_where_id: Int!, $when: String!) {
+      training_where_time_by_date(when: $when, training_where_id: $training_where_id){
+        limit
+      }
+    }
+  `, {
+    variables: {
+      when: formData.when,
+      training_where_id: formData.training_where?.id
+    },
+    skip: !formData.when || !formData.training_where?.id
+  })
+
+  useEffect(() => {
+    setFormData((fd) => ({
+      ...fd,
+      limit: data?.training?.limit ||
+        trainingWhereTime?.training_where_time_by_date?.limit ||
+        trainingWhere?.training_where?.limit ||
+        null
+    }))
+  }, [trainingWhereTime, trainingWhere])
+
+  useEffect(() => {
     if (!id) {
-      setFormData(defaultData)
+      setFormData({
+        ...defaultData,
+      })
     }
   }, [id])
+
 
   useEffect(() => {
     if (!data) {
@@ -61,7 +100,9 @@ export const TrainingForm = ({
     mutation ($when: String!, $training_tags: [TrainingTagArg]!, $training_where: TrainingWhereArg!,
       $notes: String, $commitment: Boolean, $start_time: String,
       $booking_offset: String, $end_time: String, $venue_billing_type: BillingType,
-      $venue_billing_config: Json
+      $venue_billing_config: Json,
+      $limit: Int,
+      $exempt_membership_count: Boolean
     ) {
       insert_training (
         when: $when,
@@ -73,7 +114,9 @@ export const TrainingForm = ({
         booking_offset: $booking_offset,
         end_time: $end_time,
         venue_billing_type: $venue_billing_type,
-        venue_billing_config: $venue_billing_config
+        venue_billing_config: $venue_billing_config,
+        limit: $limit,
+        exempt_membership_count: $exempt_membership_count
       ) {
         id
       }
@@ -83,7 +126,9 @@ export const TrainingForm = ({
     mutation ($id: Int!, $when: String!, $training_tags: [TrainingTagArg]!,
       $training_where: TrainingWhereArg!, $notes: String, $commitment: Boolean,
       $start_time: String, $booking_offset: String, $end_time: String,
-      $venue_billing_type: BillingType, $venue_billing_config: Json
+      $venue_billing_type: BillingType, $venue_billing_config: Json,
+      $limit: Int,
+      $exempt_membership_count: Boolean
     ){
       update_training (
         when: $when,
@@ -96,7 +141,9 @@ export const TrainingForm = ({
         booking_offset: $booking_offset,
         end_time: $end_time,
         venue_billing_type: $venue_billing_type,
-        venue_billing_config: $venue_billing_config
+        venue_billing_config: $venue_billing_config,
+        limit: $limit,
+        exempt_membership_count: $exempt_membership_count
       ) {
         id
       }
@@ -128,12 +175,9 @@ export const TrainingForm = ({
       try {
         const { data } = await insertMutation({
           variables: {
-            ...omit(formData, [
-              "training_tags.__typename",
-              "training_where.__typename",
-              "training_where.billing_type"
-            ]),
+            ...omit(formData, ["training_tags.__typename", "training_where.__typename", "training_where.billing_type"]),
             notes: formData.notes || "",
+            limit: formData.limit ? parseInt(formData.limit) : null,
             ...(has(formData, "venue_billing_config") ? {
               venue_billing_config: (get(formData, "venue_billing_config") && JSON.stringify(get(formData, "venue_billing_config"))) || null
             } : {})
@@ -148,12 +192,9 @@ export const TrainingForm = ({
       try {
         const { data } = await updateMutation({
           variables: {
-            ...omit(formData, [
-              "training_tags.__typename",
-              "training_where.__typename",
-              "training_where.billing_type"
-            ]),
+            ...omit(formData, ["training_tags.__typename", "training_where.__typename", "training_where.billing_type"]),
             notes: formData.notes || "",
+            limit: formData.limit ? parseInt(formData.limit) : null,
             ...(has(formData, "venue_billing_config") ? {
               venue_billing_config: (get(formData, "venue_billing_config") && JSON.stringify(get(formData, "venue_billing_config"))) || null
             } : {})
@@ -213,6 +254,37 @@ export const TrainingForm = ({
           helperText={get(errors, "when", []).join(" ")}
           />
       </FormControl>
+
+      <FormControl fullWidth sx={{ mt: 2, mb: 2 }}>
+        <TextField
+          id="limit"
+          label="Limit"
+          value={get(formData, "limit", '') || ''}
+          onChange={
+            onChange({formData, setFormData, key: "limit"})
+          }
+          InputLabelProps={{
+            shrink: true
+          }}
+          error={has(errors, "limit")}
+          helperText={get(errors, "limit", []).join(" ")}
+          />
+      </FormControl>
+      <FormControl fullWidth sx={{ mt: 2, mb: 2 }}>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={get(formData, 'exempt_membership_count', false) || false}
+              onChange={(event) => {
+                onChange({formData, setFormData, key: 'exempt_membership_count', isCheckbox: true})(event)
+              }}
+              />
+          }
+          label="Exempt from membership count"
+          title="This training will not count towards a users trainings before they must become a full members"
+          />
+      </FormControl>
+
       <FormControl fullWidth sx={{mt: 2, mb: 2}}>
         <TextField
           id="notes"
@@ -237,9 +309,7 @@ export const TrainingForm = ({
                 let tmpFormData = formData;
                 if (event.target.checked === true) {
                   assign(tmpFormData, {
-                    start_time: "",
                     booking_offset: "",
-                    end_time: "",
                   })
                 }
                 onChange({ formData: tmpFormData, setFormData, key: 'commitment', isCheckbox: true })(event)
@@ -277,6 +347,10 @@ export const TrainingForm = ({
           label="Venue billing enabled"
           title="If this event will be added to the venues billing account."
         />
+      </FormControl>
+
+      <FormControl fullWidth sx={{mt: 2, mb: 2}}>
+        <Button onClick={save(formData)}>Save</Button>
       </FormControl>
     </>
     }*/}

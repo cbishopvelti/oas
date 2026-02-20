@@ -85,10 +85,10 @@ export const Transaction = () => {
       setTitle("New Transaction");
     } else {
       setTitle(`Editing Transaction: ${id}`)
+      refetch()
     }
-    refetch()
     if (!id) {
-      setFormData(defaultData)
+      setFormData(() => defaultData)
     }
   }, [id])
   useEffect(() => {
@@ -164,7 +164,8 @@ export const Transaction = () => {
     }
   `, {
     variables: {
-      ...formData,
+      when: formData.when,
+      who: formData.who,
       amount: parseFloat(get(formData, 'amount'))
     },
     skip: !formData.amount || !formData.who || !formData.when || id

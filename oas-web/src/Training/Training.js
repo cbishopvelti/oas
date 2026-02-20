@@ -43,6 +43,8 @@ export const Training = () => {
         commitment,
         venue_billing_type,
         venue_billing_config,
+        limit,
+        exempt_membership_count,
         training_where {
           id,
           name,

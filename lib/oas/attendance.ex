@@ -59,9 +59,32 @@ defmodule Oas.Attendance do
     nil
   end
 
+  defp get_training_credit_amount(training) do
+    training_where = training |> Map.get(:training_where) || %{}
+    training_where_time = (training_where || %{}) |> Map.get(:training_where_time) |> List.first() || %{}
+
+    (training_where_time |> Map.get(:credit_amount)) ||
+    (training_where |> Map.get(:credit_amount)) ||
+    Oas.Config.Tokens.get_min_token().value
+  end
+
   def add_attendance(%{member_id: member_id, training_id: training_id}, %{inserted_by_member_id: inserted_by_member_id}) do
-    training = Oas.Repo.get!(Oas.Trainings.Training, training_id)
-    |> Oas.Repo.preload(:training_where)
+
+    training = from(tr in Oas.Trainings.Training,
+      left_join: tw in assoc(tr, :training_where),
+      left_join: twt in assoc(tw, :training_where_time), on: twt.training_where_id == tw.id and
+        twt.day_of_week == fragment(
+          "CASE CAST(strftime('%w', ?) AS INTEGER) WHEN 0 THEN 7 ELSE CAST(strftime('%w', ?) AS INTEGER) END",
+          tr.when,
+          tr.when
+        ),
+      left_join: att in assoc(tr, :attendance),
+      preload: [:attendance, training_where: {tw, [training_where_time: twt]}],
+      where: tr.id == ^training_id
+    ) |> Oas.Repo.one!()
+
+    # training = Oas.Repo.get!(Oas.Trainings.Training, training_id)
+    # |> Oas.Repo.preload(:training_where)
 
     # now = Date.utc_today()
     now = training.when
@@ -73,6 +96,8 @@ defmodule Oas.Attendance do
         where: mp.from <= ^training.when and mp.to >= ^training.when
       )
     ])
+
+    inserted_by_member = Oas.Repo.get!(Oas.Members.Member, inserted_by_member_id)
 
     # FIX DEBT
     # attendance = %Oas.Trainings.Attendance{
@@ -88,10 +113,13 @@ defmodule Oas.Attendance do
         inserted_by_member_id: inserted_by_member_id,
       }, [:member_id, :training_id, :inserted_by_member_id])
       |> Ecto.Changeset.unique_constraint([:training_id, :member_id, :dedub_training_member])
+      |> Oas.Trainings.Attendance.validate_limit(training, inserted_by_member)
+      |> Oas.Trainings.Attendance.maybe_publish_full(training)
       |> Oas.Repo.insert()
     do
       {:ok, attendance} -> attendance
-      {:error, errors} -> throw OasWeb.Schema.SchemaUtils.handle_error({:error, errors})
+      {:error, errors} ->
+        throw OasWeb.Schema.SchemaUtils.handle_error({:error, errors})
     end
 
 
@@ -118,7 +146,7 @@ defmodule Oas.Attendance do
             member,
             Decimal.sub(
               0,
-              training.training_where.credit_amount || Oas.Config.Tokens.get_min_token().value
+              get_training_credit_amount(training)
             ),
             %{
               now: now,
@@ -148,10 +176,10 @@ defmodule Oas.Attendance do
   end
 
   def delete_attendance(%{attendance_id: attendance_id}) do
-    attendance = Oas.Repo.get!(Oas.Trainings.Attendance, attendance_id)
-      |> Oas.Repo.preload(:token)
-      |> Oas.Repo.preload(:member)
-      |> Oas.Repo.preload(:training)
+    attendance = from(att in Oas.Trainings.Attendance,
+      preload: [:token, :member, training: [:attendance]],
+      where: att.id == ^attendance_id
+    ) |> Oas.Repo.one!()
 
     if (attendance.token != nil) do
       debtAttendance = from(a in Oas.Trainings.Attendance,
@@ -185,6 +213,8 @@ defmodule Oas.Attendance do
     # EO maybe delete membership
 
     Oas.Repo.delete!(attendance)
+
+    Oas.Trainings.Attendance.maybe_publish_spaces(attendance.training)
 
     {:ok, %{
       success: true,
@@ -328,7 +358,8 @@ defmodule Oas.Attendance do
   def check_membership(member = %{id: id, membership_periods: []}) do
     result = from(a in Oas.Trainings.Attendance,
       join: m in assoc(a, :member),
-      where: m.id == ^id,
+      join: t in assoc(a, :training),
+      where: m.id == ^id and (is_nil(t.exempt_membership_count) or t.exempt_membership_count == ^false),
       select: count(m.id)
     ) |> Oas.Repo.one
 

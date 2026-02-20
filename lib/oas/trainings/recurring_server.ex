@@ -26,13 +26,15 @@ defmodule Oas.Trainings.RecurringServer do
           when: when1,
           notes: nil,
           commitment: false,
+          limit: Map.get(training_where_time, :limit) ||
+            Map.get(training_where, :limit),
           start_time: training_where_time.start_time,
           end_time: training_where_time.end_time,
           booking_offset: training_where_time.booking_offset,
           venue_billing_type: training_where.billing_type,
           venue_billing_config: training_where.billing_config
         }, [
-          :when, :notes, :commitment,
+          :when, :notes, :commitment, :limit,
           :start_time, :end_time, :booking_offset,
           :venue_billing_type, :venue_billing_config
         ])
