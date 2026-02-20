@@ -5,6 +5,7 @@ defmodule Oas.Repo.Migrations.TrainingWhereTimeAmount do
 
     alter table(:trainings) do
       add :limit, :integer, null: true
+      add :exempt_membership_count, :boolean, null: true
     end
 
     alter table(:training_where) do

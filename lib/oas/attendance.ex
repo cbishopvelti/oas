@@ -180,7 +180,6 @@ defmodule Oas.Attendance do
       preload: [:token, :member, training: [:attendance]],
       where: att.id == ^attendance_id
     ) |> Oas.Repo.one!()
-    |> IO.inspect(label: "009")
 
     if (attendance.token != nil) do
       debtAttendance = from(a in Oas.Trainings.Attendance,
@@ -359,7 +358,8 @@ defmodule Oas.Attendance do
   def check_membership(member = %{id: id, membership_periods: []}) do
     result = from(a in Oas.Trainings.Attendance,
       join: m in assoc(a, :member),
-      where: m.id == ^id,
+      join: t in assoc(a, :training),
+      where: m.id == ^id and (is_nil(t.exempt_membership_count) or t.exempt_membership_count == ^false),
       select: count(m.id)
     ) |> Oas.Repo.one
 

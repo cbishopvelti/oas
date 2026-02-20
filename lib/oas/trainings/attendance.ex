@@ -28,8 +28,8 @@ defmodule Oas.Trainings.Attendance do
     end
   end
 
-  # If this training is going to bu full after this changeset is applied, then publish
-  def maybe_publish_full(changeset, %{limit: nil}, inserted_by_member) do
+  # If this training is going to be full after this changeset is applied, then publish
+  def maybe_publish_full(changeset, %{limit: nil}) do
     changeset
   end
   def maybe_publish_full(changeset, training) do
