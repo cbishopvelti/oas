@@ -105,16 +105,19 @@ defmodule Oas.Gocardless.TransactionsCredits do
   def generate_transaction_credits(%{
     name: name,
     maybe_member: maybe_member,
+    maybe_training_where: maybe_training_where,
     date: date,
     amount: amount
   } = in_transaction) do
+
     out_transaction = Oas.Transactions.Transaction.changeset(
       %Oas.Transactions.Transaction{},
       %{
         what: "From gocardless",
         when: date,
-        who: (maybe_member || %{}) |> Map.get(:name, name),
+        who: (maybe_member || maybe_training_where || %{}) |> Map.get(:name, name),
         who_member_id: (maybe_member || %{}) |> Map.get(:id, nil),
+        training_where_id: (maybe_training_where || %{}) |> Map.get(:id, nil),
         type: if Decimal.lt?(amount, "0.0") do "OUTGOING" else "INCOMING" end,
         amount: amount,
         bank_details: name,
@@ -127,6 +130,11 @@ defmodule Oas.Gocardless.TransactionsCredits do
       Map.get(out_transaction.changes, :who_member_id, nil)
     ) |> Enum.map(fn %{name: name} -> name end)
 
+    auto_tags = case maybe_training_where do
+      nil -> auto_tags
+      _ -> ["Venue" | auto_tags]
+    end
+
     data = %{
       transaction_tags: ["Gocardless" | auto_tags] |> Enum.uniq()
     }
@@ -138,7 +146,7 @@ defmodule Oas.Gocardless.TransactionsCredits do
     |> Ecto.Changeset.put_assoc(:gocardless_transaction_iid, %Oas.Transactions.Gocardless{}
       |> Oas.Transactions.Gocardless.changeset(
         %{
-          gocardless_data: JSON.encode!(in_transaction |> Map.drop([:name, :maybe_member, :date, :amount])),
+          gocardless_data: JSON.encode!(in_transaction |> Map.drop([:name, :maybe_member, :maybe_training_where, :date, :amount])),
           warnings: (case Map.get(out_transaction, :warnings, nil) do
             nil -> nil
             [] -> nil

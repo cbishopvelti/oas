@@ -9,10 +9,15 @@ defmodule OasWeb.Schema.SchemaTrainingWhere do
       resolve fn _, %{id: id}, _ ->
         # result = Oas.Repo.get(Oas.Trainings.TrainingWhere, id)
         result = from(tw in Oas.Trainings.TrainingWhere,
-          preload: :training_where_time,
+          preload: [:training_where_time, :gocardless],
           where: tw.id == ^id
         )
         |> Oas.Repo.one!()
+
+        result = case result.gocardless do
+          nil -> result
+          gc -> result |> Map.put(:gocardless_name, gc.name)
+        end
 
         {:ok, result}
       end
@@ -47,18 +52,39 @@ defmodule OasWeb.Schema.SchemaTrainingWhere do
       arg :id, :integer
       arg :name, non_null(:string)
       arg :credit_amount, non_null(:string)
+      arg :billing_type, :billing_type, default_value: nil
+      arg :gocardless_name, :string, default_value: nil
+      arg :billing_config, :json, default_value: nil
       arg :limit, :integer
       resolve fn _, args, _ ->
-        case args do
+
+        args = case Map.get(args, :gocardless_name) do
+          nil -> args |> Map.put(:gocardless, nil)
+          gcn -> args |> Map.put(:gocardless, %{
+            name: gcn,
+            type: :member
+          })
+        end
+
+        training_where = case args do
           %{id: id} -> Oas.Repo.get(Oas.Trainings.TrainingWhere, id)
+            |> Oas.Repo.preload(:gocardless)
           _ -> %Oas.Trainings.TrainingWhere{}
         end
+
+        args = case !is_nil(training_where.gocardless) and Map.has_key?(training_where.gocardless, :id) and !is_nil(args.gocardless) do
+          true -> args |> put_in([:gocardless, :id], training_where.gocardless.id)
+          false -> args
+        end
+
+        training_where
         |> Oas.Trainings.TrainingWhere.changeset(args)
+        |> dbg
         |> (&(case &1 do
           %{data: %{id: nil}} -> Oas.Repo.insert(&1)
           %{data: %{id: _}} -> Oas.Repo.update(&1)
         end)).()
-        |> OasWeb.Schema.SchemaUtils.handle_error
+        |> OasWeb.Schema.SchemaUtils.handle_errors_with_assoc()
       end
     end
     field :training_where_time, type: :training_where_time do
@@ -120,6 +146,38 @@ defmodule OasWeb.Schema.SchemaTrainingWhere do
         |> Oas.Repo.delete()
 
         {:ok, %{success: true}}
+      end
+    end
+    # Similar to schema_member.ex :gocardless_who_link
+    field :gocardless_training_where_link, type: :success do
+      arg :training_where_id, non_null(:integer)
+      arg :gocardless_name, non_null(:string)
+      resolve fn _, %{training_where_id: training_where_id, gocardless_name: gocardless_name}, _ ->
+
+        training_where = Oas.Repo.get!(Oas.Trainings.TrainingWhere, training_where_id)
+        |> Oas.Repo.preload(:gocardless)
+
+        gocardless_id = case training_where.gocardless do
+          nil -> nil
+          %{id: id} -> id
+        end
+
+        result = training_where
+        |> Ecto.Changeset.cast(%{
+          gocardless: %{
+            id: gocardless_id,
+            name: gocardless_name,
+            type: :training_where
+          }
+        }, [])
+        |> Ecto.Changeset.cast_assoc(:gocardless, with: &Oas.Gocardless.GocardlessEcto.changeset/2)
+        |> Oas.Repo.update()
+        |> OasWeb.Schema.SchemaUtils.handle_errors_with_assoc()
+
+        case result do
+          {:error, error} -> {:error, error}
+          {:ok, _res} -> {:ok, %{success: true}}
+        end
       end
     end
   end

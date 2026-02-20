@@ -128,7 +128,7 @@ defmodule OasWeb.Schema.SchemaMember do
         query = (
           from m in Oas.Members.Member,
           select: m,
-          preload: [:tokens],
+          preload: [:tokens, :gocardless],
           order_by: [desc: :id]
         )
         |> (&(case show_all do
@@ -148,8 +148,8 @@ defmodule OasWeb.Schema.SchemaMember do
           %{id: id} = record
           token_count = Oas.Attendance.get_token_amount(%{member_id: id})
           Map.put(record, :token_count, token_count)
+          |> Map.put(:gocardless_name, Map.get(record.gocardless || %{}, :name))
         end)
-
 
         {:ok, result}
       end
@@ -158,11 +158,19 @@ defmodule OasWeb.Schema.SchemaMember do
       arg :member_id, non_null(:integer)
       resolve fn _, %{member_id: member_id}, _ ->
 
-        result = Oas.Repo.get!(Oas.Members.Member, member_id) |> Oas.Repo.preload(:member_details)
+        result = Oas.Repo.get!(Oas.Members.Member, member_id)
+        |> Oas.Repo.preload(:member_details)
+        |> Oas.Repo.preload(:gocardless)
 
         token_count = Oas.Attendance.get_token_amount(%{member_id: member_id})
 
-        {:ok, Map.put(result, :token_count, token_count)}
+        dbg(result)
+
+        {
+          :ok,
+          Map.put(result, :token_count, token_count)
+          |> Map.put(:gocardless_name, Map.get(result.gocardless || %{}, :name))
+        }
       end
     end
   end
@@ -182,6 +190,14 @@ defmodule OasWeb.Schema.SchemaMember do
       arg :member_details, :member_details_arg
       resolve fn _parent, args, _context ->
 
+        args = case Map.get(args, :gocardless_name) do
+          nil -> args |> Map.put(:gocardless, nil)
+          gcn -> args |> Map.put(:gocardless, %{
+            name: gcn,
+            type: :member
+          })
+        end
+
         toSave = case Map.get(args, :id) do
           nil ->
             length=12
@@ -189,8 +205,12 @@ defmodule OasWeb.Schema.SchemaMember do
             attrs = Map.merge(%{password: password}, args)
             %Oas.Members.Member{}
             |> Oas.Members.Member.registration_changeset(attrs)
+            |> Ecto.Changeset.cast_assoc(:gocardless, with: &Oas.Gocardless.GocardlessEcto.changeset/2)
+
           id ->
-            member = Oas.Repo.get!(Oas.Members.Member, id) |> Oas.Repo.preload(:member_details)
+            member = Oas.Repo.get!(Oas.Members.Member, id)
+              |> Oas.Repo.preload(:member_details)
+              |> Oas.Repo.preload(:gocardless)
             attrs = case member do
               _x = %{member_details: %{id: id}} ->
                 case Map.get(args, :member_details) do
@@ -199,11 +219,22 @@ defmodule OasWeb.Schema.SchemaMember do
                 end
               _x -> args
             end
-            member |> Oas.Members.Member.changeset(attrs)
+
+            attrs = case !is_nil(member.gocardless) and !is_nil(attrs.gocardless) do
+              true -> attrs |> put_in([:gocardless, :id], member.gocardless.id)
+              false -> attrs
+            end
+
+            member
+            |> Oas.Members.Member.changeset(attrs)
+            |> Ecto.Changeset.cast_assoc(
+              :gocardless,
+              with: &Oas.Gocardless.GocardlessEcto.changeset/2
+            )
+
         end
 
         result = toSave
-
         |> (&(case Map.get(args, :member_details) do
           nil -> &1
           _ -> Ecto.Changeset.cast_assoc(&1, :member_details)
@@ -212,7 +243,7 @@ defmodule OasWeb.Schema.SchemaMember do
             %{data: %{id: nil}} -> Oas.Repo.insert(&1)
             _ -> Oas.Repo.update(&1)
           end)).()
-        |> OasWeb.Schema.SchemaUtils.handle_error()
+        |> OasWeb.Schema.SchemaUtils.handle_errors_with_assoc()
 
         case result do
           {:error, error} -> {:error, error}
@@ -233,11 +264,29 @@ defmodule OasWeb.Schema.SchemaMember do
       arg :who_member_id, non_null(:integer)
       arg :gocardless_name, non_null(:string)
       resolve fn _, %{who_member_id: who_member_id, gocardless_name: gocardless_name}, _ ->
-        Oas.Repo.get!(Oas.Members.Member, who_member_id)
-        |> Ecto.Changeset.change(gocardless_name: gocardless_name)
-        |> Oas.Repo.update!()
 
-        {:ok, %{success: true}}
+        member = Oas.Repo.get!(Oas.Members.Member, who_member_id)
+        |> Oas.Repo.preload(:gocardless)
+
+        gocardless_id = case member.gocardless do
+          nil -> nil
+          %{id: id} -> id
+        end
+
+        result = member
+        |> Ecto.Changeset.cast(%{gocardless: %{
+          id: gocardless_id,
+          name: gocardless_name,
+          type: :member
+        }}, [])
+        |> Ecto.Changeset.cast_assoc(:gocardless, with: &Oas.Gocardless.GocardlessEcto.changeset/2)
+        |> Oas.Repo.update()
+        |> OasWeb.Schema.SchemaUtils.handle_errors_with_assoc()
+
+        case result do
+          {:error, error} -> {:error, error}
+          {:ok, _res} -> {:ok, %{success: true}}
+        end
       end
     end
 

@@ -10,13 +10,17 @@ import { TrainingWhere } from "./TrainingWhere";
 import {useNavigate} from 'react-router-dom'
 import { parseErrors } from "../utils/util";
 import { TrainingFormTime } from "./TrainingFormTime";
+import { TrainingFormBilling } from "./TrainingFormBilling";
 
-export const TrainingForm = ({id, data, config, refetch}) => {
+export const TrainingForm = ({
+  id, data, loading, config,
+  refetch, attendanceAcc
+}) => {
   const navigate = useNavigate();
 
   const defaultData = {
     when: moment().format("YYYY-MM-DD"),
-    training_tags: []
+    training_tags: [],
   }
   const [formData, setFormData] = useState(defaultData);
 
@@ -70,11 +74,13 @@ export const TrainingForm = ({id, data, config, refetch}) => {
     if (!data) {
       return;
     }
-    setFormData(
-      {
-        ...get(data, "training"),
-      }
-    )
+    if (!loading) {
+      setFormData(
+        {
+          ...get(data, "training")
+        }
+      )
+    }
   }, [data])
 
   const onChange = ({formData, setFormData, key, isCheckbox}) => (event) => {
@@ -91,12 +97,25 @@ export const TrainingForm = ({id, data, config, refetch}) => {
     })
   }
   const [ insertMutation, {error: error1} ] = useMutation(gql`
-    mutation ($when: String!, $training_tags: [TrainingTagArg]!, $training_where: TrainingWhereArg!, $notes: String, $commitment: Boolean,
-      $start_time: String, $booking_offset: String, $end_time: String, $limit: Int,
+    mutation ($when: String!, $training_tags: [TrainingTagArg]!, $training_where: TrainingWhereArg!,
+      $notes: String, $commitment: Boolean, $start_time: String,
+      $booking_offset: String, $end_time: String, $venue_billing_type: BillingType,
+      $venue_billing_config: Json,
+      $limit: Int,
       $exempt_membership_count: Boolean
     ) {
-      insert_training (when: $when, training_tags: $training_tags, training_where: $training_where, notes: $notes, commitment: $commitment,
-        start_time: $start_time, booking_offset: $booking_offset, end_time: $end_time, limit: $limit,
+      insert_training (
+        when: $when,
+        training_tags: $training_tags,
+        training_where: $training_where,
+        notes: $notes,
+        commitment: $commitment,
+        start_time: $start_time,
+        booking_offset: $booking_offset,
+        end_time: $end_time,
+        venue_billing_type: $venue_billing_type,
+        venue_billing_config: $venue_billing_config,
+        limit: $limit,
         exempt_membership_count: $exempt_membership_count
       ) {
         id
@@ -104,8 +123,11 @@ export const TrainingForm = ({id, data, config, refetch}) => {
     }
   `);
   const [updateMutation, {error: error2}] = useMutation(gql`
-    mutation ($id: Int!, $when: String!, $training_tags: [TrainingTagArg]!, $training_where: TrainingWhereArg!, $notes: String, $commitment: Boolean,
-      $start_time: String, $booking_offset: String, $end_time: String, $limit: Int,
+    mutation ($id: Int!, $when: String!, $training_tags: [TrainingTagArg]!,
+      $training_where: TrainingWhereArg!, $notes: String, $commitment: Boolean,
+      $start_time: String, $booking_offset: String, $end_time: String,
+      $venue_billing_type: BillingType, $venue_billing_config: Json,
+      $limit: Int,
       $exempt_membership_count: Boolean
     ){
       update_training (
@@ -118,6 +140,8 @@ export const TrainingForm = ({id, data, config, refetch}) => {
         start_time: $start_time,
         booking_offset: $booking_offset,
         end_time: $end_time,
+        venue_billing_type: $venue_billing_type,
+        venue_billing_config: $venue_billing_config,
         limit: $limit,
         exempt_membership_count: $exempt_membership_count
       ) {
@@ -126,14 +150,37 @@ export const TrainingForm = ({id, data, config, refetch}) => {
     }
   `)
 
+
+  const {data: trainingWhereTime} = useQuery(gql`
+    query($training_where_id: Int!, $when: String!) {
+      training_where_time_by_date(when: $when, training_where_id: $training_where_id){
+        start_time,
+        booking_offset,
+        end_time
+      }
+    }
+  `, {
+    variables: {
+      when: formData.when,
+      training_where_id: formData.training_where?.id
+    },
+    skip: !formData.when || !formData.training_where?.id || (
+      get(formData, 'commitment', false) && formData.training_where?.billing_type !== "PER_HOUR"
+    )
+  })
+
   const save = (formData) => async () => {
+    console.log("101 save", formData)
     if (!formData.id) {
       try {
         const { data } = await insertMutation({
           variables: {
-            ...omit(formData, ["training_tags.__typename", "training_where.__typename"]),
+            ...omit(formData, ["training_tags.__typename", "training_where.__typename", "training_where.billing_type"]),
             notes: formData.notes || "",
-            limit: formData.limit ? parseInt(formData.limit) : null
+            limit: formData.limit ? parseInt(formData.limit) : null,
+            ...(has(formData, "venue_billing_config") ? {
+              venue_billing_config: (get(formData, "venue_billing_config") && JSON.stringify(get(formData, "venue_billing_config"))) || null
+            } : {})
           }
         });
 
@@ -145,9 +192,12 @@ export const TrainingForm = ({id, data, config, refetch}) => {
       try {
         const { data } = await updateMutation({
           variables: {
-            ...omit(formData, ["training_tags.__typename", "training_where.__typename"]),
+            ...omit(formData, ["training_tags.__typename", "training_where.__typename", "training_where.billing_type"]),
             notes: formData.notes || "",
-            limit: formData.limit ? parseInt(formData.limit) : null
+            limit: formData.limit ? parseInt(formData.limit) : null,
+            ...(has(formData, "venue_billing_config") ? {
+              venue_billing_config: (get(formData, "venue_billing_config") && JSON.stringify(get(formData, "venue_billing_config"))) || null
+            } : {})
           }
         });
 
@@ -268,13 +318,45 @@ export const TrainingForm = ({id, data, config, refetch}) => {
           label="Commitment mode"
           title="The user only gets a minute to cancel their booking, this will override any time settings."
         />
-      </FormControl>}
+    </FormControl>}
 
-      {!get(formData, 'commitment', false) && <TrainingFormTime formData={formData} setFormData={setFormData} errors={errors} />}
+    {(!get(formData, 'commitment', false) || formData.training_where?.billing_type === "PER_HOUR") && <TrainingFormTime
+      data={data}
+      formData={formData}
+      setFormData={setFormData}
+      errors={errors}
+      trainingWhereTime={trainingWhereTime}
+    />}
 
+    <TrainingFormBilling
+      data={data}
+      formData={formData}
+      setFormData={setFormData}
+      errors={errors}
+      trainingWhereTime={trainingWhereTime}
+      attendanceAcc={attendanceAcc}
+    />
+    {/* {get(data, 'training.training_where.billing_type', false) && <>
+      <FormControl fullWidth sx={{ mt: 2, mb: 2 }}>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={get(formData, "venue_billing_type", false) || false}
+              onChange={onChange({ formData: formData, setFormData, key: "venue_billing_type", isCheckbox: true })}
+            />}
+          label="Venue billing enabled"
+          title="If this event will be added to the venues billing account."
+        />
+      </FormControl>
 
       <FormControl fullWidth sx={{mt: 2, mb: 2}}>
         <Button onClick={save(formData)}>Save</Button>
       </FormControl>
+    </>
+    }*/}
+
+    <FormControl fullWidth sx={{mt: 2, mb: 2}}>
+      <Button onClick={save(formData)}>Save</Button>
+    </FormControl>
   </Box>
 }

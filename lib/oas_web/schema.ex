@@ -3,6 +3,7 @@ defmodule OasWeb.Schema do
   use Absinthe.Schema
 
   import_types Absinthe.Plug.Types
+  import_types AbsintheJsonScalar
   import_types OasWeb.Schema.SchemaTypes
   import_types OasWeb.Schema.SchemaAttendance
   import_types OasWeb.Schema.SchemaTraining

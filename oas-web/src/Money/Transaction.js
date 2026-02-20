@@ -50,6 +50,7 @@ export const Transaction = () => {
         when,
         who,
         who_member_id,
+        training_where_id,
         type,
         amount,
         bank_details,
@@ -114,9 +115,20 @@ export const Transaction = () => {
     members {
       id,
       name
+    },
+    training_wheres {
+      id,
+      name
     }
   }`);
+
   const members = get(membersData, 'members', [])
+  const venues = get(membersData, 'training_wheres', []).map(({ name, id }) => {
+    return {
+      name,
+      training_where_id: id
+    }
+  })
   useEffect(() => {
     refetechMembers()
   }, [])
@@ -165,7 +177,7 @@ export const Transaction = () => {
     dupRefetch()
   }, [formData])
 
-  const [whoLinkMutate, { data: whoData}] = useMutation(gql`mutation(
+  const [whoLinkMutate, { data: whoData, error: whoGqlError}] = useMutation(gql`mutation(
     $who_member_id: Int!,
     $gocardless_name: String!
     ) {
@@ -176,7 +188,24 @@ export const Transaction = () => {
         success
       }
     }
-  `)
+  `, {
+    onError: () => { }
+  })
+  const whoErrors = parseErrors(whoGqlError?.graphQLErrors)
+
+  const [whoLinkVenueMutate, { error: venueGqlError}] = useMutation(gql`mutation(
+    $training_where_id: Int!,
+    $gocardless_name: String!
+  ) {
+    gocardless_training_where_link(
+      gocardless_name: $gocardless_name,
+      training_where_id: $training_where_id
+    ) {
+      success
+    }
+  }`, {
+    onError: () => { }
+  })
 
   const [reprocessTranactionMutate, {data: reprocessTransactionData}] = useMutation(gql`
     mutation(
@@ -184,6 +213,16 @@ export const Transaction = () => {
       $id: Int!
     ) {
       reprocess_transaction(id: $id, who_member_id: $who_member_id) {
+        success
+      }
+    }
+  `)
+  const [reprocessTranactionWithVenueMutate, { }] = useMutation(gql`
+    mutation(
+      $training_where_id: Int!,
+      $id: Int!
+    ) {
+      reprocess_transaction_with_training_where(id: $id, training_where_id: $training_where_id) {
         success
       }
     }
@@ -204,6 +243,7 @@ export const Transaction = () => {
     $when: String!,
     $who: String,
     $who_member_id: Int,
+    $training_where_id: Int,
     $type: String!,
     $amount: Float!,
     $bank_details: String,
@@ -223,6 +263,7 @@ export const Transaction = () => {
       when: $when,
       who: $who,
       who_member_id: $who_member_id,
+      training_where_id: $training_where_id,
       type: $type,
       amount: $amount,
       bank_details: $bank_details,
@@ -239,7 +280,7 @@ export const Transaction = () => {
       id
     }
   }`)
-  const errors = parseErrors(error?.graphQLErrors);
+  const errors = parseErrors([...(error?.graphQLErrors || []), ...(venueGqlError?.graphQLErrors || [])]);
   const save = (formData) => async () => {
     formData = omit(formData, "training_tags.__typename");
 
@@ -269,7 +310,7 @@ export const Transaction = () => {
     refetch()
     navigate(`/transaction/${get(data, 'transaction.id')}`)
   }
-
+  console.log("009", errors)
   return <>
     <Box sx={{display: 'flex', flexWrap: 'wrap' }}>
       <Stack sx={{ width: '100%' }}>
@@ -325,7 +366,7 @@ export const Transaction = () => {
             freeSolo
             required
             value={formData.who || find(members, ({id}) => id === formData.who_member_id)?.name || ''}
-            options={(members || []).map(({name, id}) => ({label: name, who_member_id: id }))}
+            options={(members.concat(venues)).map(({name, id, training_where_id}) => ({label: name, who_member_id: id, training_where_id }))}
             renderInput={(params) => <TextField
               {...params}
               InputProps={{
@@ -333,37 +374,63 @@ export const Transaction = () => {
                 endAdornment: (<Fragment>
                   {params.InputProps.endAdornment}
                   {data?.transaction?.who_member_id == null &&
+                    data?.transaction?.training_where_id == null &&
                     data?.transaction.who &&
                     formData.who !== data?.transaction?.who &&
-                    formData.who_member_id != null &&
+                    ((formData.who_member_id != null) !== (formData.training_where_id != null)) &&
                     whoData?.gocardless_who_link?.success !== true &&
-                    <IconButton title="Link this gocardless id to this member (wont save/effect this transaction, as save will also be required)" sx={{ color: "#0000EE;" }} onClick={() => {
-                      whoLinkMutate({
-                        variables: {
-                          gocardless_name: data.transaction.who,
-                          who_member_id: formData.who_member_id
+                    <IconButton
+                      title={`Link this gocardless id to this ${formData.who_member_id ? "member" : "venue"} (wont save/effect this transaction, a save will also be required)`}
+                      sx={{ color: "#0000EE;" }}
+                      onClick={() => {
+                        if (formData.who_member_id) {
+                          whoLinkMutate({
+                            variables: {
+                              gocardless_name: data.transaction.who,
+                              who_member_id: formData.who_member_id
+                            }
+                          })
+                        } else if (formData.training_where_id) {
+                          whoLinkVenueMutate({
+                            variables: {
+                              gocardless_name: data.transaction.who,
+                              training_where_id: formData.training_where_id
+                            }
+                          })
                         }
-                      })
+
                     }}>
                       <LinkIcon />
                     </IconButton>}
                   {
                     data?.transaction?.id &&
-                    formData.who_member_id &&
-                    data?.transaction?.who_member_id !== formData.who_member_id &&
+                    (formData.who_member_id || formData.training_where_id) &&
+                    ((!formData.training_where_id && data?.transaction?.who_member_id !== formData.who_member_id) ||
+                      (!formData.who_member_id && data?.transaction?.training_where_id !== formData.training_where_id)
+                    ) &&
+                    ((formData.who_member_id != null) !== (formData.training_where_id != null)) &&
                     data?.transaction?.tokens?.length === 0 &&
                     !data?.transaction?.credit &&
                     !data?.transaction?.membership &&
                     <IconButton
                     title="Reprocess this transaction now that who has been set."
                     sx={{ color: "#0000EE;" }}
-                    onClick={async () => {
-                      await reprocessTranactionMutate({
-                        variables: {
-                          id: data?.transaction?.id,
-                          who_member_id: formData.who_member_id
-                        }
-                      })
+                        onClick={async () => {
+                      if(formData.who_member_id) {
+                        await reprocessTranactionMutate({
+                          variables: {
+                            id: data?.transaction?.id,
+                            who_member_id: formData.who_member_id
+                          }
+                        })
+                      } else if (formData.training_where_id){
+                        await reprocessTranactionWithVenueMutate({
+                          variables: {
+                            id: data?.transaction?.id,
+                            training_where_id: formData.training_where_id
+                          }
+                        })
+                      }
                       refetch();
                     }}>
                     <SyncIcon />
@@ -373,8 +440,19 @@ export const Transaction = () => {
               }}
               label="Who"
               required
-              error={has(errors, "who") || has(errors, "who_member_id")}
-              helperText={[...get(errors, "who", []), get(errors, "who_member_id", [])].join(' ')}
+              error={has(errors, "who") ||
+                has(errors, "who_member_id") ||
+                has(whoErrors, "gocardless_name") ||
+                has(errors, "gocardless_name") ||
+                has(errors, "training_where_id")
+              }
+              helperText={[
+                ...get(errors, "who", []),
+                ...get(errors, "who_member_id", []),
+                ...get(whoErrors, "gocardless_name", []),
+                ...get(errors, "gocardless_name", []),
+                ...get(errors, "training_where_id", [])
+              ].join(' ')}
               />
             }
             filterOptions={(options, params) => {
@@ -399,19 +477,29 @@ export const Transaction = () => {
                 setFormData({
                   ...formData,
                   who: newValue.who,
-                  who_member_id: null
+                  who_member_id: null,
+                  training_where_id: null
                 })
               } else if (newValue?.who_member_id) {
                 setFormData({
                   ...formData,
                   who: newValue.label,
+                  training_where_id: null,
                   who_member_id: newValue.who_member_id
+                })
+              } else if (newValue?.training_where_id) {
+                setFormData({
+                  ...formData,
+                  who: newValue.label,
+                  who_member_id: null,
+                  training_where_id: newValue.training_where_id
                 })
               } else {
                 setFormData({
                   ...formData,
                   who: null,
-                  who_member_id: null
+                  who_member_id: null,
+                  training_where_id: null
                 })
               }
             }}
