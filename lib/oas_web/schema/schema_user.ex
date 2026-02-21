@@ -36,7 +36,7 @@ defmodule OasWeb.Schema.SchemaUser do
           email: Map.get(context, :current_member, %{}) |> Map.get(:email),
           is_admin: Map.get(context, :current_member, %{}) |> Map.get(:is_admin),
           is_reviewer: Map.get(context, :current_member, %{}) |> Map.get(:is_reviewer),
-          membership_status: Oas.Attendance.check_membership(Map.get(context, :current_member, %{})),
+          membership_status: Oas.Attendance.check_membership(Map.get(context, :current_member, %{})) |> elem(1),
           logout_link: Map.get(context, :logout_link, %{})
         }}
       end
