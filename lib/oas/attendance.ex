@@ -150,7 +150,8 @@ defmodule Oas.Attendance do
             ),
             %{
               now: now,
-              attendance: attendance
+              attendance: attendance,
+              disable_warning_emails: training.disable_warning_emails
             }
           )
         else
@@ -159,13 +160,15 @@ defmodule Oas.Attendance do
       token -> use_token(token, attendance.id, training.when)
     end
 
-    # Depricated, is not send from deduct_credit
-    Task.Supervisor.start_child(
-      Oas.TaskSupervisor,
-      fn ->
-        Oas.TokenMailer.maybe_send_warnings_email(member)
-      end
-    )
+    # Depricated, is now sent from deduct_credit
+    if training.disable_warning_emails != true do
+      Task.Supervisor.start_child(
+        Oas.TaskSupervisor,
+        fn ->
+          Oas.TokenMailer.maybe_send_warnings_email(member)
+        end
+      )
+    end
 
     {:ok, %{
       success: true,

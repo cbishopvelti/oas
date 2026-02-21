@@ -43,6 +43,7 @@ export const Training = () => {
         commitment,
         limit,
         exempt_membership_count,
+        disable_warning_emails,
         training_where {
           id,
           name,

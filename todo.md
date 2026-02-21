@@ -105,4 +105,5 @@ Add attendee limit. ✅
 Exempt membership count when calculating if user has become full member ✅
 Show user their membership status. ✅
 Better nfc/qrcode trainings on same day attendance resolution. ✅
-Create page for lidia.
+Create page for Sjefs visit.
+Disable warning emails option for specific trainings. ✅

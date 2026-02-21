@@ -48,6 +48,7 @@ defmodule OasWeb.Schema.SchemaTraining do
     field :end_time, :string
     field :limit, :integer
     field :exempt_membership_count, :boolean
+    field :disable_warning_emails, :boolean
   end
 
   object :training_queries do
@@ -130,6 +131,7 @@ defmodule OasWeb.Schema.SchemaTraining do
       arg :booking_offset, :string
       arg :end_time, :string
       arg :exempt_membership_count, :boolean
+      arg :disable_warning_emails, :boolean
       resolve fn _, args, _ ->
         %{training_tags: training_tags, training_where: training_where} = args
 
@@ -157,7 +159,7 @@ defmodule OasWeb.Schema.SchemaTraining do
         %Oas.Trainings.Training{}
           |> Ecto.Changeset.cast(args, [:when, :notes, :commitment,
             :start_time, :booking_offset, :end_time, :limit,
-            :exempt_membership_count
+            :exempt_membership_count, :disable_warning_emails
             ])
           |> Oas.Trainings.Training.validate_time()
           |> Ecto.Changeset.put_assoc(
@@ -181,6 +183,7 @@ defmodule OasWeb.Schema.SchemaTraining do
       arg :end_time, :string
       arg :limit, :integer
       arg :exempt_membership_count, :boolean
+      arg :disable_warning_emails, :boolean
       resolve fn _, args, _ ->
         when1 = Date.from_iso8601!(args.when)
         args = %{args | when: when1}
@@ -202,7 +205,7 @@ defmodule OasWeb.Schema.SchemaTraining do
         toSave = training
           |> Ecto.Changeset.cast(args, [:when, :notes, :commitment,
           :start_time, :booking_offset, :end_time, :limit,
-          :exempt_membership_count
+          :exempt_membership_count, :disable_warning_emails
           ], empty_values: [[], nil] ++ Ecto.Changeset.empty_values())
           |> Oas.Trainings.Training.validate_time()
           |> Ecto.Changeset.put_assoc(

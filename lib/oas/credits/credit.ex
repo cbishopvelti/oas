@@ -209,10 +209,11 @@ defmodule Oas.Credits.Credit do
     }
   end
 
-  def deduct_credit(from, member, amount, opts = %{now: now} \\ %{
+  def deduct_credit(from, member, amount, opts = %{now: now, disable_warning_emails: disable_warning_emails} \\ %{
     now: Date.utc_today(),
     changeset: false,
-    attendance: nil
+    attendance: nil,
+    disable_warning_emails: false
   }) do
     if Decimal.positive?(amount) do
       raise "Oas.Credits.Credit.deduct_credit amount is positive"
@@ -239,15 +240,17 @@ defmodule Oas.Credits.Credit do
       who_member_id: member.id
     })
 
-    Task.Supervisor.start_child(
-      Oas.TaskSupervisor,
-      fn ->
-        Process.sleep(120_000)
-        # Process.sleep(2) # DEBUG ONLY
-        # Oas.TokenMailer.maybe_send_credits_warning(member)
-        Oas.TokenMailer.warning_email(member, %{attendance: opts.attendance})
-      end
-    )
+    if disable_warning_emails != true do
+      Task.Supervisor.start_child(
+        Oas.TaskSupervisor,
+        fn ->
+          Process.sleep(120_000)
+          # Process.sleep(2) # DEBUG ONLY
+          # Oas.TokenMailer.maybe_send_credits_warning(member)
+          Oas.TokenMailer.warning_email(member, %{attendance: opts.attendance})
+        end
+      )
+    end
 
     if (opts |> Map.get(:changeset, false)) do
       out_changeset

@@ -106,7 +106,7 @@ export const TrainingForm = ({id, data, config, refetch}) => {
   const [updateMutation, {error: error2}] = useMutation(gql`
     mutation ($id: Int!, $when: String!, $training_tags: [TrainingTagArg]!, $training_where: TrainingWhereArg!, $notes: String, $commitment: Boolean,
       $start_time: String, $booking_offset: String, $end_time: String, $limit: Int,
-      $exempt_membership_count: Boolean
+      $exempt_membership_count: Boolean, $disable_warning_emails: Boolean
     ){
       update_training (
         when: $when,
@@ -119,7 +119,8 @@ export const TrainingForm = ({id, data, config, refetch}) => {
         booking_offset: $booking_offset,
         end_time: $end_time,
         limit: $limit,
-        exempt_membership_count: $exempt_membership_count
+        exempt_membership_count: $exempt_membership_count,
+        disable_warning_emails: $disable_warning_emails
       ) {
         id
       }
@@ -205,36 +206,6 @@ export const TrainingForm = ({id, data, config, refetch}) => {
           />
       </FormControl>
 
-      <FormControl fullWidth sx={{ mt: 2, mb: 2 }}>
-        <TextField
-          id="limit"
-          label="Limit"
-          value={get(formData, "limit", '') || ''}
-          onChange={
-            onChange({formData, setFormData, key: "limit"})
-          }
-          InputLabelProps={{
-            shrink: true
-          }}
-          error={has(errors, "limit")}
-          helperText={get(errors, "limit", []).join(" ")}
-          />
-      </FormControl>
-      <FormControl fullWidth sx={{ mt: 2, mb: 2 }}>
-        <FormControlLabel
-          control={
-            <Switch
-              checked={get(formData, 'exempt_membership_count', false) || false}
-              onChange={(event) => {
-                onChange({formData, setFormData, key: 'exempt_membership_count', isCheckbox: true})(event)
-              }}
-              />
-          }
-          label="Exempt from membership count"
-          title="This training will not count towards a users trainings before they must become a full members"
-          />
-      </FormControl>
-
       <FormControl fullWidth sx={{mt: 2, mb: 2}}>
         <TextField
           id="notes"
@@ -272,6 +243,51 @@ export const TrainingForm = ({id, data, config, refetch}) => {
 
       {!get(formData, 'commitment', false) && <TrainingFormTime formData={formData} setFormData={setFormData} errors={errors} />}
 
+      <FormControl fullWidth sx={{ mt: 2, mb: 2 }}>
+        <TextField
+          id="limit"
+          label="Limit"
+          value={get(formData, "limit", '') || ''}
+          onChange={
+            onChange({formData, setFormData, key: "limit"})
+          }
+          InputLabelProps={{
+            shrink: true
+          }}
+          error={has(errors, "limit")}
+          helperText={get(errors, "limit", []).join(" ")}
+          />
+      </FormControl>
+
+      <FormControl fullWidth sx={{ mt: 2, mb: 2 }}>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={get(formData, 'exempt_membership_count', false) || false}
+              onChange={(event) => {
+                onChange({formData, setFormData, key: 'exempt_membership_count', isCheckbox: true})(event)
+              }}
+              />
+          }
+          label="Exempt from membership count"
+          title="This training will not count towards a users trainings before they must become a full members"
+          />
+      </FormControl>
+
+    <FormControl fullWidth sx={{ mt: 2, mb: 2 }}>
+      <FormControlLabel
+        control={
+          <Switch
+            checked={get(formData, 'disable_warning_emails', false) || false}
+            onChange={(event) => {
+              onChange({formData, setFormData, key: 'disable_warning_emails', isCheckbox: true})(event)
+            }}
+          />
+        }
+        label="Disable warning emails"
+        title="This will stop any emails that attending this event might trigger."
+        />
+    </FormControl>
 
       <FormControl fullWidth sx={{mt: 2, mb: 2}}>
         <Button onClick={save(formData)}>Save</Button>

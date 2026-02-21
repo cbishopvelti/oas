@@ -10,6 +10,7 @@ defmodule Oas.Trainings.Training do
     field :end_time, :time
     field :limit, :integer
     field :exempt_membership_count, :boolean
+    field :disable_warning_emails, :boolean
 
     has_many :attendance, Oas.Trainings.Attendance
     many_to_many :training_tags, Oas.Trainings.TrainingTags,
