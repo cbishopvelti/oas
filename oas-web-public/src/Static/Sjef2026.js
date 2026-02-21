@@ -16,7 +16,7 @@ export const Sjef2026 = () => {
 
   return <div>
     <h1>Sjef workshop 2026</h1>
-    <p>Sjef be teaching in Oxford on the 3rd (Good Friday) and 4th (Saturday) of April. He is a renowend acrobat, take this rare opertunity sponge up his abilities. Spaces are limited.</p>
+    <p>Sjef be teaching in Oxford on the 3rd (Good Friday) and 4th (Saturday) of April. He is a renowned acrobat, take this rare opportunity sponge up his abilities. Spaces are limited.</p>
     <h3>Timetable</h3>
     <p>
       Friday the 3rd will be hosted at the <a href="https://oldschoolhouseoxford.org/">Old Schoolhouse</a>:
@@ -35,12 +35,13 @@ export const Sjef2026 = () => {
       Saturday the 4th will be hosted at the <a href="https://www.thetenth.co.uk/">Marston Scout hall</a>:
     </p>
     <ul>
-      <li>10.00-10.45: Warm-up and handstands</li>
-      <li>10.45-12.15: Standing F2H entries and exits</li>
+      <li>10.00-10.15: Warm-up</li>
+      <li>10.15-10.45: Handstands</li>
+      <li>10.45-12.15: Standing H2H</li>
       <li>12.15-13.15: Lunch</li>
-      <li>13.15-14.45: Reverse H2H</li>
-      <li>14.45-16.15: Dynamic trios: swings</li>
-      <li>16.15-18.00: Jam/Special requests</li>
+      <li>13.15-14.45: Dutch Icarian</li>
+      <li>14.45-16.15: Dynamic trios: tempo</li>
+      <li>16.15-18.00: Jab/Special requests</li>
     </ul>
 
     <h3>Pricing</h3>
