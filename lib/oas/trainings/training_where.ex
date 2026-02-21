@@ -132,7 +132,7 @@ defmodule Oas.Trainings.TrainingWhere do
     |> Enum.sort_by(fn %{when: when1} -> when1 end, :asc)
 
     out = both |> Enum.reduce({Decimal.new("0"), []}, fn %Oas.Transactions.Transaction{} = trans, {total, rows} ->
-        amount = trans.amount |> Decimal.mult("-1")
+        amount = trans.amount
         acc_amount = Decimal.add(amount, total)
         {acc_amount, [{acc_amount, amount, %{
           what: trans.what,

@@ -14,7 +14,7 @@ export const VenueAccount = () => {
     training_where_id = parseInt(training_where_id);
   }
 
-  const { data } = useQuery(gql`
+  const { data, refetch } = useQuery(gql`
     query($training_where_id: Int!) {
       training_where(id: $training_where_id){
         name,
@@ -34,6 +34,10 @@ export const VenueAccount = () => {
       training_where_id: training_where_id
     }
   })
+
+  useEffect(() => {
+    refetch()
+  }, [])
 
   useEffect(() => {
     setTitle(`Liability to ${get(data, 'training_where.name', '')}: ${get(data, 'training_where.account_liability', '')}`);

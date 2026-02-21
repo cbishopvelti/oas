@@ -90,6 +90,7 @@ export const Venue = () => {
       setFormData(defaultData)
     }
   }, [id])
+
   useEffect(() => {
     if (get(data, "training_where")) {
       setFormData({
