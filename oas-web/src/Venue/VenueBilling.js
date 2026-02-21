@@ -18,7 +18,7 @@ export const VenueBilling = ({
         setFormData((formData) => {
           return {
             ...formData,
-            [`${prefix}billing_type`]: event.target.value,
+            [`${prefix}billing_type`]: event.target.value || null,
             [`${prefix}billing_config`]: null
           }
         })
@@ -51,14 +51,16 @@ export const VenueBilling = ({
 
   {get(formData, `${prefix}billing_type`) === "PER_HOUR" &&
     <FormControl fullWidth sx={margin}>
-      <TextField
-        id="billing_config"
-        label="Amount per Hour"
-        required
-        inputMode="numeric"
-        pattern="[0-9\.]*"
-        value={get(formData, `${prefix}billing_config.per_hour`, "") || ''}
-        onChange={onChange({ formData, setFormData, key: `${prefix}billing_config.per_hour` })}
+        <TextField
+          id="billing_config"
+          label="Amount per Hour"
+          required
+          inputMode="numeric"
+          pattern="[0-9\.]*"
+          value={get(formData, `${prefix}billing_config.per_hour`, "") || ''}
+          onChange={(event) => {
+            onChange({ formData, setFormData, key: `${prefix}billing_config.per_hour` })(event.target.value)
+          }}
         error={has(errors, `${prefix}billing_config`)}
         helperText={get(errors, `${prefix}billing_config`, []).join(" ")}
       />

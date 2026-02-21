@@ -126,6 +126,10 @@ export const Venue = () => {
       "billing_config",
       (get(variables, "billing_config") && JSON.stringify(get(variables, "billing_config"))) || null)
     toSave = set(toSave, "limit", variables.limit ? parseInt(variables.limit) : null)
+    toSave = {
+      ...toSave,
+      ...(toSave.billing_type === "" ? { billing_type: null } : {})
+    }
 
     const { data, errors } = await mutate({
       variables: toSave
