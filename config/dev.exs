@@ -3,7 +3,8 @@ import Config
 config :oas, Oas.Repo,
   database: "/home/chris/oas-dev-dbs/prod-backup-2026-01-07T17:10:06.700840Z.db",
   backup_database: "./dbs/sqlite-backup",
-  log: :debug
+  # log: :debug
+  log: false
 
 config :oas, Oas.Repo.Replica1,
   database: System.get_env("DB_FILE_REPLICA_1") || "./dbs/sqlite-dev-replica-1.db"

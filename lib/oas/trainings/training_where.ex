@@ -108,6 +108,9 @@ defmodule Oas.Trainings.TrainingWhere do
     training.venue_billing_config["per_attendee"]
     |> Decimal.mult(training.attendance |> length())
   end
+  def get_billing_for_training(%{venue_billing_type: :fixed} = training) do
+    training.venue_billing_config["fixed"]
+  end
 
   # Oas.Trainings.TrainingWhere.get_account_liability(2)
   def get_account_liability(id) do

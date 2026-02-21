@@ -126,9 +126,12 @@ Time fields should still be displayed in comittment mode if venue billing is ena
 
 Transactions directly link to a venue via join table ✅
 
-Show a venues accounts
+Show a venues accounts ✅
 
 Add into the Annual report
+- Expenses ✅
+- Liabilities ✅
+- Receivables ✅
 
 Test reccuring training creation ✅
 
@@ -140,4 +143,4 @@ Make gocardless link table. ✅
 Loads of queries when opening a transaction page ✅
 Validate Transactions can't have training_where_id and who_member_id both set. ✅
 
-Credits Menue
+Credits Menue ✅
