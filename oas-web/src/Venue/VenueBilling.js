@@ -24,7 +24,6 @@ export const VenueBilling = ({
         })
       }}
       error={has(errors, `${prefix}billing_type`)}
-      helperText={get(errors, `${prefix}billing_type`, []).join(" ")}
     >
       <MenuItem value="">None</MenuItem>
       <MenuItem value="PER_HOUR">Per hour</MenuItem>
