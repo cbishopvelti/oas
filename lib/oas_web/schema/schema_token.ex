@@ -1,4 +1,5 @@
 import Ecto.Query, only: [from: 2]
+
 defmodule OasWeb.Schema.SchemaToken do
   use Absinthe.Schema.Notation
 
@@ -8,12 +9,14 @@ defmodule OasWeb.Schema.SchemaToken do
     field :used_on, :string
     field :member_id, :integer
     field :value, :float
+
     field :member, :member do
-      resolve fn parent, _, _ ->
+      resolve(fn parent, _, _ ->
         member = Oas.Repo.one!(Ecto.assoc(parent, :member))
         {:ok, member}
-      end
+      end)
     end
+
     field :transaction, :transaction
     field :attendance, :member_attendance_attendance
   end
@@ -21,8 +24,9 @@ defmodule OasWeb.Schema.SchemaToken do
   object :public_member do
     field :id, :integer
     field :name, :string
+
     field :member_status, :member_status do
-      resolve &OasWeb.Schema.SchemaMember.member_status_resolver/3
+      resolve(&OasWeb.Schema.SchemaMember.member_status_resolver/3)
     end
   end
 
@@ -59,156 +63,198 @@ defmodule OasWeb.Schema.SchemaToken do
 
   object :token_queries do
     field :tokens, list_of(:token) do
-      arg :member_id, :integer
-      arg :transaction_id, :integer
-      resolve fn
+      arg(:member_id, :integer)
+      arg(:transaction_id, :integer)
+
+      resolve(fn
         _, %{member_id: _, transaction_id: _}, _ ->
           {:error, "member_id and transaction_id can not both be set"}
+
         _, %{transaction_id: transaction_id}, _ ->
-          query = from(
-            t in Oas.Tokens.Token,
-            select: t,
-            where: t.transaction_id == ^transaction_id,
-            order_by: [desc: t.expires_on, desc: t.id],
-            preload: [:transaction, attendance: [:training]]
-          )
+          query =
+            from(
+              t in Oas.Tokens.Token,
+              select: t,
+              where: t.transaction_id == ^transaction_id,
+              order_by: [desc: t.expires_on, desc: t.id],
+              preload: [:transaction, attendance: [:training]]
+            )
+
           result = Oas.Repo.all(query)
           {:ok, result |> Enum.map(fn r -> Map.put(r, :value, Decimal.to_float(r.value)) end)}
+
         _, %{member_id: member_id}, _ ->
-          query = from(
-            t in Oas.Tokens.Token,
-            select: t,
-            where: t.member_id == ^member_id,
-            order_by: [desc: t.expires_on, desc: t.id],
-            preload: [:transaction, attendance: [:training]]
-          )
+          query =
+            from(
+              t in Oas.Tokens.Token,
+              select: t,
+              where: t.member_id == ^member_id,
+              order_by: [desc: t.expires_on, desc: t.id],
+              preload: [:transaction, attendance: [:training]]
+            )
+
           result = Oas.Repo.all(query)
           {:ok, result |> Enum.map(fn r -> Map.put(r, :value, Decimal.to_float(r.value)) end)}
-      end
+      end)
     end
 
     field :public_bacs, type: list_of(:string) do
-      arg :email, non_null(:string)
-      resolve fn _, %{email: email}, _ ->
+      arg(:email, non_null(:string))
 
-        member = from(
-          m in Oas.Members.Member,
-          where: m.email == ^email
-        ) |> Oas.Repo.one
+      resolve(fn _, %{email: email}, _ ->
+        member =
+          from(
+            m in Oas.Members.Member,
+            where: m.email == ^email
+          )
+          |> Oas.Repo.one()
+
         case member do
           nil ->
             {:error, "Member not found"}
+
           _ ->
-            config = from(cc in Oas.Config.Config, select: cc) |> Oas.Repo.one
+            config = from(cc in Oas.Config.Config, select: cc) |> Oas.Repo.one()
             {:ok, String.split(config.bacs || "", "\n", trim: true)}
         end
-      end
+      end)
     end
 
     field :public_config_tokens, type: :public_config_tokens do
-      resolve fn _, _, _ ->
-        token_expiry_days = from(con in Oas.Config.Config,
-          select: con.token_expiry_days
-        ) |> Oas.Repo.one
+      resolve(fn _, _, _ ->
+        token_expiry_days =
+          from(con in Oas.Config.Config,
+            select: con.token_expiry_days
+          )
+          |> Oas.Repo.one()
 
-        tokens = from(tok in Oas.Config.Tokens,
-          order_by: [asc: tok.quantity]
-        ) |> Oas.Repo.all
+        tokens =
+          from(tok in Oas.Config.Tokens,
+            order_by: [asc: tok.quantity]
+          )
+          |> Oas.Repo.all()
 
-        last_transaction = from(tra in Oas.Transactions.Transaction,
-          select: max(tra.when)
-        ) |> Oas.Repo.one
+        last_transaction =
+          from(tra in Oas.Transactions.Transaction,
+            select: max(tra.when)
+          )
+          |> Oas.Repo.one()
 
-        {:ok, %{
-          last_transaction_when: last_transaction,
-          token_expiry_days: token_expiry_days,
-          tokens: tokens |> Enum.map(fn item = %{value: value} ->
-            %{item | value: value |> Decimal.to_float }
-          end)
-        }}
-      end
+        {:ok,
+         %{
+           last_transaction_when: last_transaction,
+           token_expiry_days: token_expiry_days,
+           tokens:
+             tokens
+             |> Enum.map(fn item = %{value: value} ->
+               %{item | value: value |> Decimal.to_float()}
+             end)
+         }}
+      end)
     end
 
     field :public_member, type: :public_member do
-      arg :email, non_null(:string)
-      resolve fn _, %{email: email}, _ ->
-        member = from(m in Oas.Members.Member,
-          where: m.email == ^email
-        ) |> Oas.Repo.one
+      arg(:email, non_null(:string))
+
+      resolve(fn _, %{email: email}, _ ->
+        member =
+          from(m in Oas.Members.Member,
+            where: m.email == ^email
+          )
+          |> Oas.Repo.one()
 
         case member do
           nil ->
             {:error, "Member not found"}
+
           member ->
-            {:ok,
-              member
-            }
+            {:ok, member}
         end
-      end
+      end)
     end
 
     field :public_tokens, type: list_of(:public_token) do
-      arg :email, non_null(:string)
-      resolve fn _, %{email: email}, _ ->
-        member = from(
-          m in Oas.Members.Member,
-          where: m.email == ^email
-        ) |> Oas.Repo.one
+      arg(:email, non_null(:string))
+
+      resolve(fn _, %{email: email}, _ ->
+        member =
+          from(
+            m in Oas.Members.Member,
+            where: m.email == ^email
+          )
+          |> Oas.Repo.one()
+
         case member do
           nil ->
             {:error, "Member not found"}
-          _ ->
-            tokens = from(to in Oas.Tokens.Token,
-              left_join: m in assoc(to, :member),
-              left_join: tr in assoc(to, :transaction),
-              left_join: mftr in assoc(tr, :member),
-              left_join: att in assoc(to, :attendance),
-              left_join: train in assoc(att, :training),
-              where: (m.email == ^email or mftr.email == ^email),
-              select: {to, m, mftr, train},
-              order_by: [desc_nulls_first: train.when, desc: to.expires_on, desc: to.id]
-            ) |> Oas.Repo.all
-            |> Enum.map(fn ({to, m, m_tr, train}) ->
-              Map.put(to, :member, m)
-              |> Map.put(:tr_member, m_tr)
-              |> (&(case train do
-                %{when: when1} -> Map.put(&1, :training_date, Map.get(train, :when, when1))
-                _ -> &1
-              end)).()
 
-            end)
+          _ ->
+            tokens =
+              from(to in Oas.Tokens.Token,
+                left_join: m in assoc(to, :member),
+                left_join: tr in assoc(to, :transaction),
+                left_join: mftr in assoc(tr, :member),
+                left_join: att in assoc(to, :attendance),
+                left_join: train in assoc(att, :training),
+                where: m.email == ^email or mftr.email == ^email,
+                select: {to, m, mftr, train},
+                order_by: [desc_nulls_first: train.when, desc: to.expires_on, desc: to.id]
+              )
+              |> Oas.Repo.all()
+              |> Enum.map(fn {to, m, m_tr, train} ->
+                Map.put(to, :member, m)
+                |> Map.put(:tr_member, m_tr)
+                |> (&(case train do
+                        %{when: when1} ->
+                          Map.put(&1, :training_date, Map.get(train, :when, when1))
+
+                        _ ->
+                          &1
+                      end)).()
+              end)
 
             {:ok, tokens}
         end
-      end
+      end)
     end
 
     field :public_outstanding_attendance, type: list_of(:public_attendance) do
-      arg :email, non_null(:string)
-      resolve fn _, %{email: email}, _ ->
-        trainings = from(
-          tr in Oas.Trainings.Training,
-          preload: :training_where,
-          inner_join: at in assoc(tr, :attendance),
-          left_join: cr in assoc(at, :credit),
-          inner_join: m in assoc(at, :member),
-          left_join: to in assoc(at, :token),
-          where: is_nil(to.id) and m.email == ^email and is_nil(cr.id),
-          order_by: [desc: tr.when]
-        ) |> Oas.Repo.all
+      arg(:email, non_null(:string))
+
+      resolve(fn _, %{email: email}, _ ->
+        trainings =
+          from(
+            tr in Oas.Trainings.Training,
+            preload: :training_where,
+            inner_join: at in assoc(tr, :attendance),
+            left_join: cr in assoc(at, :credit),
+            inner_join: m in assoc(at, :member),
+            left_join: to in assoc(at, :token),
+            where: is_nil(to.id) and m.email == ^email and is_nil(cr.id),
+            order_by: [desc: tr.when]
+          )
+          |> Oas.Repo.all()
 
         {:ok, trainings}
-      end
+      end)
     end
   end
 
   object :token_mutations do
     field :add_tokens, type: :add_tokens do
-      arg :transaction_id, :integer
-      arg :member_id, :integer
-      arg :amount, :integer
-      arg :value, :float
-      resolve fn _, %{amount: amount, transaction_id: transaction_id, member_id: member_id, value: value}, _ ->
+      arg(:transaction_id, :integer)
+      arg(:member_id, :integer)
+      arg(:amount, :integer)
+      arg(:value, :float)
+
+      resolve(fn _,
+                 %{
+                   amount: amount,
+                   transaction_id: transaction_id,
+                   member_id: member_id,
+                   value: value
+                 },
+                 _ ->
         Oas.Attendance.add_tokens(%{
           member_id: member_id,
           transaction_id: transaction_id,
@@ -216,37 +262,41 @@ defmodule OasWeb.Schema.SchemaToken do
           when1: Oas.Repo.get!(Oas.Transactions.Transaction, transaction_id).when,
           value: value
         })
+
         {:ok, %{amount: amount}}
-      end
+      end)
     end
+
     field :delete_tokens, type: :success do
-      arg :token_id, non_null(:integer)
-      resolve fn _, %{token_id: token_id}, _ ->
+      arg(:token_id, non_null(:integer))
+
+      resolve(fn _, %{token_id: token_id}, _ ->
         token = Oas.Repo.get!(Oas.Tokens.Token, token_id)
         # The relationship should probably have been the other way around
-        if (token.attendance_id != nil) do
+        if token.attendance_id != nil do
           {:error, "Token has been used"}
         else
           Oas.Repo.delete(token)
           {:ok, %{success: true}}
         end
-      end
+      end)
     end
 
     field :transfer_token, type: :token do
-      arg :token_id, non_null(:integer)
-      arg :member_id, non_null(:integer)
-      resolve fn _, %{token_id: token_id, member_id: member_id}, _ ->
+      arg(:token_id, non_null(:integer))
+      arg(:member_id, non_null(:integer))
+
+      resolve(fn _, %{token_id: token_id, member_id: member_id}, _ ->
         token = Oas.Repo.get!(Oas.Tokens.Token, token_id)
-        if (token.attendance_id != nil) do
+
+        if token.attendance_id != nil do
           {:error, "Token has been used"}
         else
           token = Oas.Attendance.transfer_token(%{token: token, member_id: member_id})
 
           {:ok, token}
         end
-      end
+      end)
     end
   end
-
 end

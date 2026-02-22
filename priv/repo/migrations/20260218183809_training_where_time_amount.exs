@@ -2,7 +2,6 @@ defmodule Oas.Repo.Migrations.TrainingWhereTimeAmount do
   use Ecto.Migration
 
   def change do
-
     alter table(:trainings) do
       add :limit, :integer, null: true
       add :exempt_membership_count, :boolean, null: true

@@ -44,7 +44,9 @@ config :oas, OasWeb.Endpoint,
   ]
 
 config :oas, Oas.Mailer, adapter: Swoosh.Adapters.Local
-config :oas, Oas.TokenMailer, adapter: Swoosh.Adapters.Local,
+
+config :oas, Oas.TokenMailer,
+  adapter: Swoosh.Adapters.Local,
   from: {"OAS", "chris@oxfordshireacrosociety.co.uk"}
 
 # config :oas, Oas.Mailer,
@@ -80,7 +82,6 @@ config :oas, Oas.TokenMailer, adapter: Swoosh.Adapters.Local,
 #     depth: 99,
 #     server_name_indication: 'smtp.gmail.com'
 #   ]
-
 
 # ## SSL Support
 #
@@ -119,7 +120,6 @@ config :oas, OasWeb.Endpoint,
 
 # Do not include metadata nor timestamps in development logs
 config :logger, :console, format: "[$level] $message\n", level: :debug
-
 
 # Set a higher stacktrace during development. Avoid configuring such
 # in production as building large stacktraces may be expensive.

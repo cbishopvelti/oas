@@ -15,22 +15,27 @@ defmodule Oas.Trainings.RecurringServer do
   def maybe_create_event(training_where_time, when1) do
     training_where = training_where_time.training_where
     # Check in-memory first (based on what we just fetched)
-    case Enum.any?(training_where.trainings, fn %{when: when2} -> when1 == when2 end)
-      or Enum.any?(training_where.training_deleted, fn %{when: when2} -> when1 == when2 end)
-    do
+    case Enum.any?(training_where.trainings, fn %{when: when2} -> when1 == when2 end) or
+           Enum.any?(training_where.training_deleted, fn %{when: when2} -> when1 == when2 end) do
       true ->
         nil
+
       false ->
         %Oas.Trainings.Training{}
-        |> Ecto.Changeset.cast(%{
-          when: when1,
-          notes: nil,
-          commitment: false,
-          limit: Map.get(training_where_time, :limit) ||
-            Map.get(training_where, :limit)
-        }, [:when, :notes, :commitment, :limit])
+        |> Ecto.Changeset.cast(
+          %{
+            when: when1,
+            notes: nil,
+            commitment: false,
+            limit:
+              Map.get(training_where_time, :limit) ||
+                Map.get(training_where, :limit)
+          },
+          [:when, :notes, :commitment, :limit]
+        )
         |> Ecto.Changeset.put_assoc(:training_where, training_where)
-        |> Oas.Repo.insert() # This might raise if a DB Unique Index is hit
+        # This might raise if a DB Unique Index is hit
+        |> Oas.Repo.insert()
     end
   end
 
@@ -59,6 +64,7 @@ defmodule Oas.Trainings.RecurringServer do
         case Integer.mod(recurring_time.day_of_week - Date.day_of_week(now), 7) do
           0 ->
             time_to_compare = recurring_time.end_time || recurring_time.start_time
+
             if Time.compare(now_time, time_to_compare) in [:gt, :eq] do
               {:ok, {recurring_time, Date.shift(now, day: 7)}}
             else
@@ -80,13 +86,16 @@ defmodule Oas.Trainings.RecurringServer do
           {:ok, {recurring_time, when1}} ->
             # Attempt to create the event
             maybe_create_event(recurring_time, when1)
+
           _ ->
             :ok
         end)
       end)
     rescue
       e ->
-        Logger.warning("RecurringServer: DB Transaction failed (likely race condition), but rescheduling anyway. Error: #{inspect(e)}")
+        Logger.warning(
+          "RecurringServer: DB Transaction failed (likely race condition), but rescheduling anyway. Error: #{inspect(e)}"
+        )
     catch
       :exit, _reason ->
         Logger.warning("RecurringServer: DB Transaction exited, rescheduling anyway.")
@@ -99,10 +108,13 @@ defmodule Oas.Trainings.RecurringServer do
 
   defp schedule_next_run(events) do
     events
-    |> Enum.sort_by(fn {_, {recurring_time, when1}} ->
-      time_to_compare = recurring_time.end_time || recurring_time.start_time
-      NaiveDateTime.new!(when1, time_to_compare)
-    end, {:asc, NaiveDateTime})
+    |> Enum.sort_by(
+      fn {_, {recurring_time, when1}} ->
+        time_to_compare = recurring_time.end_time || recurring_time.start_time
+        NaiveDateTime.new!(when1, time_to_compare)
+      end,
+      {:asc, NaiveDateTime}
+    )
     |> List.first()
     |> case do
       nil ->

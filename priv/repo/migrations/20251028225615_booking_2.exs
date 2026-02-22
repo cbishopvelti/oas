@@ -3,15 +3,15 @@ defmodule Oas.Repo.Migrations.Booking2 do
 
   def change do
     alter table(:trainings) do
-
       add :commitment, :boolean, null: true
     end
 
-    alter table (:attendance) do
+    alter table(:attendance) do
       add :dedub_training_member, :int, null: false, default: 1
     end
 
-    execute("
+    execute(
+      "
       WITH NumberedDuplicates as (
         SELECT
           id,
@@ -24,7 +24,9 @@ defmodule Oas.Repo.Migrations.Booking2 do
       SET dedub_training_member = NumberedDuplicates.row_num
       FROM NumberedDuplicates
       WHERE attendance.id = NumberedDuplicates.id;
-    ", "SELECT true")
+    ",
+      "SELECT true"
+    )
 
     create unique_index(:attendance, [:training_id, :member_id, :dedub_training_member])
   end

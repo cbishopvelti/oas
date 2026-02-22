@@ -16,7 +16,6 @@ defmodule Oas.Llm.LangChainLlm do
     })
   end
 
-
   defp day_name(1), do: "Monday"
   defp day_name(2), do: "Tuesday"
   defp day_name(3), do: "Wednesday"
@@ -25,43 +24,46 @@ defmodule Oas.Llm.LangChainLlm do
   defp day_name(6), do: "Saturday"
   defp day_name(7), do: "Sunday"
 
-
   @impl true
   def init(init_args) do
     # IO.inspect(self(), label: "301 LangChainLlm init")
     callbacks = %{
       on_llm_new_delta: fn chain, deltas ->
-        if ((deltas |> length) > 0) do
+        if deltas |> length > 0 do
           GenServer.cast(
             init_args.parent_pid,
             {:broadcast_from,
-              {
-                "delta",
-                deltas
-                |> MessageDelta.merge_deltas()
-                |> (&(Map.put(&1, :content, MessageDelta.content_to_string(&1)))).()
-                |> Map.put(:metadata, %{
-                  index: chain.messages |> length()
-                })
-            } }
+             {
+               "delta",
+               deltas
+               |> MessageDelta.merge_deltas()
+               |> (&Map.put(&1, :content, MessageDelta.content_to_string(&1))).()
+               |> Map.put(:metadata, %{
+                 index: chain.messages |> length()
+               })
+             }}
           )
         end
-
       end,
       on_message_processed: fn chain, %Message{} = message ->
         # IO.inspect(message, label: "306 on_message_processed")
         # IO.inspect(1, label: "306.1 on_message_processed")
-        message = message |> Map.put(
-          :metadata,
-          (message.metadata || %{}) |> Map.put(:index, (chain.messages |> length) - 1)
-        )
+        message =
+          message
+          |> Map.put(
+            :metadata,
+            (message.metadata || %{}) |> Map.put(:index, (chain.messages |> length) - 1)
+          )
+
         GenServer.cast(
           init_args.parent_pid,
-          {:broadcast_from, {
-            "message",
-            message
-          }}
+          {:broadcast_from,
+           {
+             "message",
+             message
+           }}
         )
+
         nil
       end
     }
@@ -81,7 +83,11 @@ defmodule Oas.Llm.LangChainLlm do
           member: init_args.member
         }
       })
-      |> LLMChain.add_message(Message.new_system!("Todays date: #{Date.utc_today()} and today is #{Date.day_of_week(Date.utc_today()) |> day_name}"))
+      |> LLMChain.add_message(
+        Message.new_system!(
+          "Todays date: #{Date.utc_today()} and today is #{Date.day_of_week(Date.utc_today()) |> day_name}"
+        )
+      )
       |> then(fn chain ->
         case Oas.Repo.one!(from c in Oas.Config.ConfigLlm, select: c.context) do
           "" -> chain
@@ -91,20 +97,23 @@ defmodule Oas.Llm.LangChainLlm do
       |> LLMChain.add_callback(callbacks)
       |> LLMChain.add_tools(Oas.Llm.Tools.get_tools())
 
-
-
-    chain = if (!is_nil(init_args.member) && init_args.member |> Map.has_key?(:name)) do
-      LLMChain.add_message(chain, Message.new_system!("The users name is: " <> init_args.member.name))
-    else
-      LLMChain.add_message(chain, Message.new_system!("The user is anonymous"))
-    end
+    chain =
+      if !is_nil(init_args.member) && init_args.member |> Map.has_key?(:name) do
+        LLMChain.add_message(
+          chain,
+          Message.new_system!("The users name is: " <> init_args.member.name)
+        )
+      else
+        LLMChain.add_message(chain, Message.new_system!("The user is anonymous"))
+      end
 
     chain = chain |> LLMChain.add_messages(init_args.messages |> Enum.reverse())
 
-    {:ok, %{
-      parent_pid: init_args.parent_pid,
-      chain: chain
-    }}
+    {:ok,
+     %{
+       parent_pid: init_args.parent_pid,
+       chain: chain
+     }}
   end
 
   # init
@@ -113,26 +122,30 @@ defmodule Oas.Llm.LangChainLlm do
     %{
       content:
         case message.content do
-          nil -> nil
-          content -> content |> Enum.map(fn item ->
-            %{
-              content: item.content,
-              type: item.type
-            }
-          end)
-        end,
-        # message.content
-        # |> Enum.filter(fn
-        #   %ContentPart{type: :text} ->
-        #     true
+          nil ->
+            nil
 
-        #   _x ->
-        #     false
-        # end)
-        # |> Enum.map(fn %ContentPart{type: :text, content: content} ->
-        #   content
-        # end)
-        # |> List.first(),
+          content ->
+            content
+            |> Enum.map(fn item ->
+              %{
+                content: item.content,
+                type: item.type
+              }
+            end)
+        end,
+      # message.content
+      # |> Enum.filter(fn
+      #   %ContentPart{type: :text} ->
+      #     true
+
+      #   _x ->
+      #     false
+      # end)
+      # |> Enum.map(fn %ContentPart{type: :text, content: content} ->
+      #   content
+      # end)
+      # |> List.first(),
       # presence_id: (message.metadata || %{}) |> Map.get(:presence_id, nil),
       role: message.role,
       metadata: message.metadata
@@ -141,24 +154,28 @@ defmodule Oas.Llm.LangChainLlm do
 
   @impl true
   def handle_cast({:prompt, message}, state) do
-
     case state.chain
-      |> LLMChain.add_message(message)
-      |> LLMChain.run(mode: :while_needs_response)
-    do
+         |> LLMChain.add_message(message)
+         |> LLMChain.run(mode: :while_needs_response) do
       {:ok, chain} ->
         {:noreply, %{state | chain: chain}}
+
       {:error, _chain, %{message: message, type: _type} = _error} ->
         {:stop, {:llm_error, message}, state}
+
       _other ->
         {:stop, :normal, state}
     end
   end
+
   def handle_cast({:message, message}, state) do
-    chain = state.chain
-    |> LLMChain.add_message(message)
+    chain =
+      state.chain
+      |> LLMChain.add_message(message)
+
     {:noreply, %{state | chain: chain}}
   end
+
   def handle_cast(message, state) do
     IO.inspect(message, label: "307 UNKNOWN handle_cast, message")
     {:noreply, state}

@@ -24,13 +24,13 @@ defmodule Oas.Repo do
   #   end
   # end
 
-
   # Oas.Repo.is_backup_file_valid("./dbs/sqlite-backup-2025-10-20T13:47:51.342997Z.db")
   def is_backup_file_valid(path) do
     case Exqlite.Basic.open(path) do
       {:ok, conn} ->
         try do
-          with {:ok, _a, %{rows: [_row]}, _b} <- Exqlite.Basic.exec(conn, "SELECT * FROM config_config WHERE TRUE") do
+          with {:ok, _a, %{rows: [_row]}, _b} <-
+                 Exqlite.Basic.exec(conn, "SELECT * FROM config_config WHERE TRUE") do
             true
           else
             _ -> false
@@ -38,17 +38,17 @@ defmodule Oas.Repo do
         after
           Exqlite.Basic.close(conn)
         end
-      {:error, _} -> false
+
+      {:error, _} ->
+        false
     end
   end
 
   # Oas.Repo.backup()
   def backup() do
-    %{pid: _pid } = Ecto.Adapter.lookup_meta(Oas.Repo.get_dynamic_repo())
+    %{pid: _pid} = Ecto.Adapter.lookup_meta(Oas.Repo.get_dynamic_repo())
 
-    {:ok, conn} = Exqlite.Sqlite3.open(
-      Application.get_env(:oas, Oas.Repo)[:database]
-    )
+    {:ok, conn} = Exqlite.Sqlite3.open(Application.get_env(:oas, Oas.Repo)[:database])
 
     when1 = DateTime.utc_now() |> DateTime.to_iso8601()
 
@@ -58,7 +58,7 @@ defmodule Oas.Repo do
     {:ok, data} = Exqlite.Sqlite3.serialize(conn)
 
     data
-    |> (&(IO.binwrite(file, &1))).()
+    |> (&IO.binwrite(file, &1)).()
 
     File.close(file)
     Exqlite.Sqlite3.close(conn)
@@ -69,26 +69,33 @@ defmodule Oas.Repo do
       System.halt(1)
     end
 
-    config = from(
-      c in Oas.Config.Config,
-      limit: 1
-    ) |> Oas.Repo.one!()
-    name = "oas" <> "-" <> when1 <> ".db"
-    if (config.backup_recipient) do
-      from = Application.get_env(:oas, Oas.TokenMailer)[:from]
-      email = Swoosh.Email.new()
-      |> Swoosh.Email.to({"backup_recipient", config.backup_recipient})
-      |> Swoosh.Email.from(from)
-      |> Swoosh.Email.subject("OAS backup")
-      |> Swoosh.Email.text_body("Backup database\n")
-      |> Swoosh.Email.attachment(
-        Swoosh.Attachment.new(
-          {:data, data},
-          filename: name,
-          content_type: "application/octet-stream"
-          # type: :inline
-        )
+    config =
+      from(
+        c in Oas.Config.Config,
+        limit: 1
       )
+      |> Oas.Repo.one!()
+
+    name = "oas" <> "-" <> when1 <> ".db"
+
+    if config.backup_recipient do
+      from = Application.get_env(:oas, Oas.TokenMailer)[:from]
+
+      email =
+        Swoosh.Email.new()
+        |> Swoosh.Email.to({"backup_recipient", config.backup_recipient})
+        |> Swoosh.Email.from(from)
+        |> Swoosh.Email.subject("OAS backup")
+        |> Swoosh.Email.text_body("Backup database\n")
+        |> Swoosh.Email.attachment(
+          Swoosh.Attachment.new(
+            {:data, data},
+            filename: name,
+            content_type: "application/octet-stream"
+            # type: :inline
+          )
+        )
+
       Oas.Mailer.deliver(email)
     end
   end

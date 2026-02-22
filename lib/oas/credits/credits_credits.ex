@@ -6,7 +6,4 @@ defmodule Oas.Credits.CreditsCredits do
     belongs_to :uses, Oas.Credits.Credit
     belongs_to :used_for, Oas.Credits.Credit
   end
-
-
-
 end

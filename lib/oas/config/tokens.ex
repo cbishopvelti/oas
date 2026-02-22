@@ -13,6 +13,7 @@ defmodule Oas.Config.Tokens do
     from(ct in Oas.Config.Tokens,
       order_by: [asc: :value],
       limit: 1
-    ) |> Oas.Repo.one!()
+    )
+    |> Oas.Repo.one!()
   end
 end

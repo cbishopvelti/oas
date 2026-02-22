@@ -22,18 +22,23 @@ defmodule Oas.Members.Membership do
   end
 
   def add_membership(membership_period, member, %{now: now}) do
-    changeset = %Oas.Members.Membership{}
-    |> changeset(%{
-      member_id: member.id,
-      membership_period_id: membership_period.id
-    })
+    changeset =
+      %Oas.Members.Membership{}
+      |> changeset(%{
+        member_id: member.id,
+        membership_period_id: membership_period.id
+      })
 
-    changeset = if (!member.honorary_member) do
-      changeset
-      |> Oas.Credits.Credit.deduct_credit(member, Decimal.sub(0, membership_period.value), %{now: now, changeset: true})
-    else
-      changeset
-    end
+    changeset =
+      if !member.honorary_member do
+        changeset
+        |> Oas.Credits.Credit.deduct_credit(member, Decimal.sub(0, membership_period.value), %{
+          now: now,
+          changeset: true
+        })
+      else
+        changeset
+      end
 
     Oas.Repo.insert(changeset)
     nil
@@ -41,36 +46,46 @@ defmodule Oas.Members.Membership do
 
   def maybe_delete_membership(training, member) do
     # Get current membership periods which this training is in
-    membership_periods = from(mp in Oas.Members.MembershipPeriod,
-      inner_join: ms in assoc(mp, :memberships),
-      where: ms.member_id == ^member.id and
-        mp.from <= ^training.when and mp.to >= ^training.when,
-      preload: [memberships: ms]
-    ) |> Oas.Repo.all
-
-    total_attendance = from(a in Oas.Trainings.Attendance,
-      join: m in assoc(a, :member),
-      where: m.id == ^member.id,
-      select: count(m.id)
-    ) |> Oas.Repo.one
-
-    config = from(c in Oas.Config.Config, select: c) |> Oas.Repo.one
-    membership_periods |> Enum.map(fn membership_period ->
-      # Does this member have any other trainings in that membership_period period?
-      other_trainings_in_period = from(
-        t in Oas.Trainings.Training,
-        inner_join: a in assoc(t, :attendance),
-        where: t.id != ^training.id and a.member_id == ^member.id and
-          t.when >= ^membership_period.from and t.when <= ^membership_period.to
+    membership_periods =
+      from(mp in Oas.Members.MembershipPeriod,
+        inner_join: ms in assoc(mp, :memberships),
+        where:
+          ms.member_id == ^member.id and
+            mp.from <= ^training.when and mp.to >= ^training.when,
+        preload: [memberships: ms]
       )
-      |> Oas.Repo.all
+      |> Oas.Repo.all()
+
+    total_attendance =
+      from(a in Oas.Trainings.Attendance,
+        join: m in assoc(a, :member),
+        where: m.id == ^member.id,
+        select: count(m.id)
+      )
+      |> Oas.Repo.one()
+
+    config = from(c in Oas.Config.Config, select: c) |> Oas.Repo.one()
+
+    membership_periods
+    |> Enum.map(fn membership_period ->
+      # Does this member have any other trainings in that membership_period period?
+      other_trainings_in_period =
+        from(
+          t in Oas.Trainings.Training,
+          inner_join: a in assoc(t, :attendance),
+          where:
+            t.id != ^training.id and a.member_id == ^member.id and
+              t.when >= ^membership_period.from and t.when <= ^membership_period.to
+        )
+        |> Oas.Repo.all()
 
       # If there are other trainings in that membership period, don't delete the membership
-      total_attendance = total_attendance - 1 # This is called before this attendance has been deleted.
-      if (
-        other_trainings_in_period |> length() > 0 and # true
-        total_attendance > config.temporary_trainings # false Not a temporary member
-      ) do
+      # This is called before this attendance has been deleted.
+      total_attendance = total_attendance - 1
+      # true
+      # false Not a temporary member
+      if other_trainings_in_period |> length() > 0 and
+           total_attendance > config.temporary_trainings do
         nil
       else
         [_membership] = membership_period.memberships

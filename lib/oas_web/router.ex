@@ -72,7 +72,11 @@ defmodule OasWeb.Router do
     get "/members/reset_password", MemberResetPasswordController, :new
     post "/members/reset_password", MemberResetPasswordController, :create
     get "/members/reset_password/:token", MemberResetPasswordController, :edit
-    get "/members/reset_password_login_redirect/:token", MemberResetPasswordController, :edit_login_redirect
+
+    get "/members/reset_password_login_redirect/:token",
+        MemberResetPasswordController,
+        :edit_login_redirect
+
     put "/members/reset_password/:token", MemberResetPasswordController, :update
   end
 
@@ -119,15 +123,16 @@ defmodule OasWeb.Router do
         conn
       end
     end
+
     def absinthe_before_send(conn, _) do
       conn
     end
 
     forward "/graphiql",
-      Absinthe.Plug.GraphiQL,
-      schema: OasWeb.Schema,
-      socket: OasWeb.UserSocket,
-      interface: :simple,
-      default_url: "http://localhost:4000/api/graphql"
+            Absinthe.Plug.GraphiQL,
+            schema: OasWeb.Schema,
+            socket: OasWeb.UserSocket,
+            interface: :simple,
+            default_url: "http://localhost:4000/api/graphql"
   end
 end

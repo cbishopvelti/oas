@@ -13,7 +13,6 @@ config :oas, Oas.Repo,
   database: System.get_env("DB_FILE") || "/dbs/sqlite-prod.db",
   backup_database: "/dbs/sqlite-backup"
 
-
 # Do not print debug messages in production
 config :logger, level: :info
 

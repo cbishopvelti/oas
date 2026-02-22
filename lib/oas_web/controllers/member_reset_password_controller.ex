@@ -32,10 +32,16 @@ defmodule OasWeb.MemberResetPasswordController do
 
   def edit_login_redirect(conn, _prams) do
     # Write redirect cookie
-    conn |> Plug.Conn.put_resp_cookie(OasWeb.CallbackPathPlug.callback_path_cookie(), %{
-      callback_path: "/bookings", # TODO change to
-      callback_domain: "public_url"
-    }, OasWeb.CallbackPathPlug.callback_path_options())
+    conn
+    |> Plug.Conn.put_resp_cookie(
+      OasWeb.CallbackPathPlug.callback_path_cookie(),
+      %{
+        # TODO change to
+        callback_path: "/bookings",
+        callback_domain: "public_url"
+      },
+      OasWeb.CallbackPathPlug.callback_path_options()
+    )
     |> render(
       "edit.html",
       changeset: Members.change_member_password(conn.assigns.member)
@@ -54,9 +60,9 @@ defmodule OasWeb.MemberResetPasswordController do
           inserted_member
         } do
           {%{
-            callback_path: _callback_path,
-            callback_domain: _callback_domain
-          }, member} ->
+             callback_path: _callback_path,
+             callback_domain: _callback_domain
+           }, member} ->
             # login
             OasWeb.MemberAuth.log_in_member(
               conn,
@@ -64,12 +70,12 @@ defmodule OasWeb.MemberResetPasswordController do
               member_params
               |> Map.put("remember_me", "true")
             )
+
           _ ->
             conn
             |> put_flash(:info, "Password reset successfully.")
             |> redirect(to: Routes.member_session_path(conn, :new))
         end
-
 
       {:error, changeset} ->
         render(conn, "edit.html", changeset: changeset)

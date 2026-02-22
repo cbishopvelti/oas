@@ -168,7 +168,8 @@ defmodule Oas.Members do
   """
   def deliver_update_email_instructions(%Member{} = member, current_email, update_email_url_fun)
       when is_function(update_email_url_fun, 1) do
-    {encoded_token, member_token} = MemberToken.build_email_token(member, "change:#{current_email}")
+    {encoded_token, member_token} =
+      MemberToken.build_email_token(member, "change:#{current_email}")
 
     Repo.insert!(member_token)
     MemberNotifier.deliver_update_email_instructions(member, update_email_url_fun.(encoded_token))
@@ -264,7 +265,11 @@ defmodule Oas.Members do
     else
       {encoded_token, member_token} = MemberToken.build_email_token(member, "confirm")
       Repo.insert!(member_token)
-      MemberNotifier.deliver_confirmation_instructions(member, confirmation_url_fun.(encoded_token))
+
+      MemberNotifier.deliver_confirmation_instructions(
+        member,
+        confirmation_url_fun.(encoded_token)
+      )
     end
   end
 
@@ -305,7 +310,11 @@ defmodule Oas.Members do
       when is_function(reset_password_url_fun, 1) do
     {encoded_token, member_token} = MemberToken.build_email_token(member, "reset_password")
     Repo.insert!(member_token)
-    MemberNotifier.deliver_reset_password_instructions(member, reset_password_url_fun.(encoded_token))
+
+    MemberNotifier.deliver_reset_password_instructions(
+      member,
+      reset_password_url_fun.(encoded_token)
+    )
   end
 
   @doc """
@@ -355,17 +364,22 @@ defmodule Oas.Members do
   # ONLY moves attendance, USE WITH CARE
   # Oas.Members.merge_members!(106, 111)
   def merge_members!(from_id, to_id) do
-    result = Ecto.Query.from(t in Oas.Trainings.Training,
+    result =
+      Ecto.Query.from(t in Oas.Trainings.Training,
+        join: a in assoc(t, :attendance),
+        join: m in assoc(a, :member),
+        where: m.id == ^from_id,
+        select: {t, a}
+      )
+      |> Repo.all()
 
-      join: a in assoc(t, :attendance),
-      join: m in assoc(a, :member),
-      where: m.id == ^from_id,
-      select: {t, a}
-    ) |> Repo.all()
-
-    result |> Enum.map(fn {training, attendance} ->
+    result
+    |> Enum.map(fn {training, attendance} ->
       Oas.Attendance.delete_attendance(%{attendance_id: attendance.id})
-      Oas.Attendance.add_attendance(%{member_id: to_id, training_id: training.id}, %{inserted_by_member_id: 1})
+
+      Oas.Attendance.add_attendance(%{member_id: to_id, training_id: training.id}, %{
+        inserted_by_member_id: 1
+      })
     end)
   end
 end

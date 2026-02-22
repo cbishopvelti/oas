@@ -27,21 +27,21 @@ config :oas, OasWeb.Endpoint,
 # For production it's recommended to configure a different adapter
 # at the `config/runtime.exs`.
 # config :oas, Oas.Mailer, adapter: Swoosh.Adapters.Local
-config :oas, Oas.Mailer, adapter: Swoosh.Adapters.SMTP,
+config :oas, Oas.Mailer,
+  adapter: Swoosh.Adapters.SMTP,
   relay: "smtp.gmail.com",
   username: "chrisjbishop155",
   port: 587,
   password: "***REMOVED***",
   auth: :always
 
-config :oas, Oas.TokenMailer,
-  adapter: Swoosh.Adapters.Local
-  # adapter: Swoosh.Adapters.SMTP,
-  # relay: "smtp.gmail.com",
-  # username: "chrisjbishop155",
-  # port: 587,
-  # password: "***REMOVED***",
-  # auth: :always
+config :oas, Oas.TokenMailer, adapter: Swoosh.Adapters.Local
+# adapter: Swoosh.Adapters.SMTP,
+# relay: "smtp.gmail.com",
+# username: "chrisjbishop155",
+# port: 587,
+# password: "***REMOVED***",
+# auth: :always
 
 # Swoosh API client is needed for adapters other than SMTP.
 # config :swoosh, :api_client, false

@@ -1,4 +1,5 @@
-  import Ecto.Query, only: [from: 2]
+import Ecto.Query, only: [from: 2]
+
 defmodule OasWeb.Schema.SchemaConfig do
   use Absinthe.Schema.Notation
 
@@ -43,172 +44,232 @@ defmodule OasWeb.Schema.SchemaConfig do
 
   object :config_queries do
     field :config_token, :config_token do
-      arg :token_quantity, non_null(:integer)
-      resolve fn _, %{token_quantity: token_quantity}, _ ->
-        result = from(ct in Oas.Config.Tokens, where: ct.quantity <= ^token_quantity, order_by: [desc: ct.quantity], limit: 1)
-          |> Oas.Repo.one
+      arg(:token_quantity, non_null(:integer))
+
+      resolve(fn _, %{token_quantity: token_quantity}, _ ->
+        result =
+          from(ct in Oas.Config.Tokens,
+            where: ct.quantity <= ^token_quantity,
+            order_by: [desc: ct.quantity],
+            limit: 1
+          )
+          |> Oas.Repo.one()
+
         {:ok, result}
-      end
+      end)
     end
+
     field :config_tokens, list_of(:config_token) do
-      resolve fn _, _, _ ->
-        results = from(ct in Oas.Config.Tokens, select: ct, order_by: [asc: ct.quantity])
-          |> Oas.Repo.all
+      resolve(fn _, _, _ ->
+        results =
+          from(ct in Oas.Config.Tokens, select: ct, order_by: [asc: ct.quantity])
+          |> Oas.Repo.all()
 
         {:ok, results}
-      end
+      end)
     end
+
     field :config_config, :config_config do
-      resolve fn _, _, _ ->
-        result = from(cc in Oas.Config.Config, select: cc)
-          |> Oas.Repo.one
+      resolve(fn _, _, _ ->
+        result =
+          from(cc in Oas.Config.Config, select: cc)
+          |> Oas.Repo.one()
 
         {:ok, result}
-      end
+      end)
     end
+
     field :public_config_config, :public_config_config do
-      resolve fn _, _, _ ->
-        result = from(cc in Oas.Config.Config, select: cc)
-          |> Oas.Repo.one
+      resolve(fn _, _, _ ->
+        result =
+          from(cc in Oas.Config.Config, select: cc)
+          |> Oas.Repo.one()
 
         {:ok, result}
-      end
+      end)
     end
+
     field :public_config_llm, :public_config_llm do
-      resolve fn _, _, _ ->
-        result = from(cc in Oas.Config.ConfigLlm, select: cc)
-          |> Oas.Repo.one
+      resolve(fn _, _, _ ->
+        result =
+          from(cc in Oas.Config.ConfigLlm, select: cc)
+          |> Oas.Repo.one()
 
         {:ok, result}
-      end
+      end)
     end
+
     field :config_llm, :config_llm do
-      resolve fn _, _, _ ->
-        result = from(cl in Oas.Config.ConfigLlm,
-          select: cl
-        )
-        |> Oas.Repo.one()
+      resolve(fn _, _, _ ->
+        result =
+          from(cl in Oas.Config.ConfigLlm,
+            select: cl
+          )
+          |> Oas.Repo.one()
+
         {:ok, result}
-      end
+      end)
     end
   end
 
   object :config_mutations do
     field :save_config_token, :config_token do
-      arg :quantity, non_null(:integer)
-      arg :value, non_null(:string)
-      resolve fn _, args, _ ->
+      arg(:quantity, non_null(:integer))
+      arg(:value, non_null(:string))
+
+      resolve(fn _, args, _ ->
         %Oas.Config.Tokens{}
         |> Ecto.Changeset.cast(args, [:quantity, :value])
-        |> Oas.Repo.insert
-        |> OasWeb.Schema.SchemaUtils.handle_error
-      end
+        |> Oas.Repo.insert()
+        |> OasWeb.Schema.SchemaUtils.handle_error()
+      end)
     end
+
     field :delete_config_token, :success do
-      arg :id, non_null(:integer)
-      resolve fn _, %{id: id}, _ ->
-        Oas.Repo.get!(Oas.Config.Tokens, id) |>
-          Oas.Repo.delete!
+      arg(:id, non_null(:integer))
+
+      resolve(fn _, %{id: id}, _ ->
+        Oas.Repo.get!(Oas.Config.Tokens, id)
+        |> Oas.Repo.delete!()
 
         {:ok, %{success: true}}
-      end
+      end)
     end
+
     field :save_config_config, :config_config do
-      arg :token_expiry_days, :integer
-      arg :temporary_trainings, :integer
-      arg :bacs, :string
-      arg :content, :string
-      arg :enable_booking, :boolean
-      arg :name, :string
+      arg(:token_expiry_days, :integer)
+      arg(:temporary_trainings, :integer)
+      arg(:bacs, :string)
+      arg(:content, :string)
+      arg(:enable_booking, :boolean)
+      arg(:name, :string)
       # arg :gocardless_id, :string
       # arg :gocardless_key, :string
       # arg :gocardless_account_id, :string
-      arg :credits, :boolean
-      arg :backup_recipient, :string
-      resolve fn _, args, _ ->
+      arg(:credits, :boolean)
+      arg(:backup_recipient, :string)
 
-        result = from(cc in Oas.Config.Config, select: cc)
-        |> Oas.Repo.one
-        |> Ecto.Changeset.cast(args, [
-          :token_expiry_days, :temporary_trainings,
-          :enable_booking, :name,
-          # :gocardless_id, :gocardless_key, :gocardless_account_id,
-          :credits, :backup_recipient
-        ], empty_values: [[], ""])
-        |> Ecto.Changeset.validate_format(:backup_recipient, ~r/@/)
-        |> Oas.Repo.update
-        |> OasWeb.Schema.SchemaUtils.handle_error
+      resolve(fn _, args, _ ->
+        result =
+          from(cc in Oas.Config.Config, select: cc)
+          |> Oas.Repo.one()
+          |> Ecto.Changeset.cast(
+            args,
+            [
+              :token_expiry_days,
+              :temporary_trainings,
+              :enable_booking,
+              :name,
+              # :gocardless_id, :gocardless_key, :gocardless_account_id,
+              :credits,
+              :backup_recipient
+            ],
+            empty_values: [[], ""]
+          )
+          |> Ecto.Changeset.validate_format(:backup_recipient, ~r/@/)
+          |> Oas.Repo.update()
+          |> OasWeb.Schema.SchemaUtils.handle_error()
 
         result
-      end
+      end)
     end
+
     field :save_config_content, :config_config do
-      arg :bacs, non_null(:string)
-      arg :content, non_null(:string)
-      resolve fn _, args, _ ->
-        result = from(cc in Oas.Config.Config, select: cc)
-        |> Oas.Repo.one
-        |> Ecto.Changeset.cast(args, [
-          :bacs, :content
-        ], empty_values: [[], ""])
-        |> Oas.Repo.update
-        |> OasWeb.Schema.SchemaUtils.handle_error
+      arg(:bacs, non_null(:string))
+      arg(:content, non_null(:string))
+
+      resolve(fn _, args, _ ->
+        result =
+          from(cc in Oas.Config.Config, select: cc)
+          |> Oas.Repo.one()
+          |> Ecto.Changeset.cast(
+            args,
+            [
+              :bacs,
+              :content
+            ],
+            empty_values: [[], ""]
+          )
+          |> Oas.Repo.update()
+          |> OasWeb.Schema.SchemaUtils.handle_error()
 
         result
-      end
+      end)
     end
+
     field :save_config_gocardless, :config_config do
-      arg :gocardless_enabled, :boolean
-      arg :gocardless_id, :string
-      arg :gocardless_key, :string
-      arg :gocardless_account_id, :string
-      resolve fn _, args, _ ->
-        result = from(cc in Oas.Config.Config, select: cc)
-        |> Oas.Repo.one
-        |> Ecto.Changeset.cast(args, [
-          :gocardless_enabled, :gocardless_id, :gocardless_key, :gocardless_account_id
-        ], empty_values: [[], ""])
-        |> Oas.Repo.update
-        |> OasWeb.Schema.SchemaUtils.handle_error
+      arg(:gocardless_enabled, :boolean)
+      arg(:gocardless_id, :string)
+      arg(:gocardless_key, :string)
+      arg(:gocardless_account_id, :string)
+
+      resolve(fn _, args, _ ->
+        result =
+          from(cc in Oas.Config.Config, select: cc)
+          |> Oas.Repo.one()
+          |> Ecto.Changeset.cast(
+            args,
+            [
+              :gocardless_enabled,
+              :gocardless_id,
+              :gocardless_key,
+              :gocardless_account_id
+            ],
+            empty_values: [[], ""]
+          )
+          |> Oas.Repo.update()
+          |> OasWeb.Schema.SchemaUtils.handle_error()
 
         Oas.Gocardless.Supervisor.restart()
 
         result
-      end
+      end)
     end
 
     field :global_warnings_clear, list_of(:global_warning) do
-      arg :key, non_null(:string)
-      resolve fn _, %{key: key}, _ ->
+      arg(:key, non_null(:string))
+
+      resolve(fn _, %{key: key}, _ ->
         :ets.delete(:global_warnings, String.to_existing_atom(key))
-        items = :ets.tab2list(:global_warnings)
-        |> Enum.map(fn {key, warning} ->
-          %{
-            key: key,
-            warning: warning
-          }
-        end)
+
+        items =
+          :ets.tab2list(:global_warnings)
+          |> Enum.map(fn {key, warning} ->
+            %{
+              key: key,
+              warning: warning
+            }
+          end)
 
         {:ok, items}
-      end
+      end)
     end
+
     field :save_config_llm, :config_llm do
-      arg :chat_enabled, non_null(:boolean)
-      arg :llm_enabled, non_null(:boolean)
-      arg :context, non_null(:string)
-      resolve fn _, %{context: context, chat_enabled: chat_enabled, llm_enabled: llm_enabled}, _ ->
-        result = from(cl in Oas.Config.ConfigLlm, select: cl)
-        |> Oas.Repo.one()
-        |> Ecto.Changeset.cast(%{
-          context: context,
-          chat_enabled: chat_enabled,
-          llm_enabled: llm_enabled
-        }, [:context, :chat_enabled, :llm_enabled], empty_values: [])
-        |> Oas.Repo.update
-        |> OasWeb.Schema.SchemaUtils.handle_error()
+      arg(:chat_enabled, non_null(:boolean))
+      arg(:llm_enabled, non_null(:boolean))
+      arg(:context, non_null(:string))
+
+      resolve(fn _,
+                 %{context: context, chat_enabled: chat_enabled, llm_enabled: llm_enabled},
+                 _ ->
+        result =
+          from(cl in Oas.Config.ConfigLlm, select: cl)
+          |> Oas.Repo.one()
+          |> Ecto.Changeset.cast(
+            %{
+              context: context,
+              chat_enabled: chat_enabled,
+              llm_enabled: llm_enabled
+            },
+            [:context, :chat_enabled, :llm_enabled],
+            empty_values: []
+          )
+          |> Oas.Repo.update()
+          |> OasWeb.Schema.SchemaUtils.handle_error()
 
         result
-      end
+      end)
     end
   end
 
@@ -219,25 +280,36 @@ defmodule OasWeb.Schema.SchemaConfig do
 
   object :config_subscriptions do
     field :global_warnings, list_of(:global_warning) do
-      config fn _args, _ ->
+      config(fn _args, _ ->
         # Send any existing errors
         spawn(fn ->
           items = :ets.tab2list(:global_warnings)
-          Absinthe.Subscription.publish(OasWeb.Endpoint, items |> Enum.map(fn {key, warning} ->
-            %{
-              key: key,
-              warning: warning
-            }
-          end), [global_warnings: "*"])
+
+          Absinthe.Subscription.publish(
+            OasWeb.Endpoint,
+            items
+            |> Enum.map(fn {key, warning} ->
+              %{
+                key: key,
+                warning: warning
+              }
+            end),
+            global_warnings: "*"
+          )
         end)
+
         {:ok, topic: "*"}
-      end
-      trigger :global_warnings_clear, topic: fn _args ->
-        "*"
-      end
-      resolve fn args, _, _ ->
+      end)
+
+      trigger(:global_warnings_clear,
+        topic: fn _args ->
+          "*"
+        end
+      )
+
+      resolve(fn args, _, _ ->
         {:ok, args}
-      end
+      end)
     end
   end
 

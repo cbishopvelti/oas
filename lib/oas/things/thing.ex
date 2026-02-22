@@ -1,4 +1,3 @@
-
 defmodule Oas.Things.Thing do
   use Ecto.Schema
 

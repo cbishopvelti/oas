@@ -5,7 +5,10 @@ defmodule OasWeb.MemberSessionController do
   alias OasWeb.MemberAuth
 
   def new(conn, _params) do
-    render(conn, "new.html", error_message: nil, public_url: Application.fetch_env!(:oas, :public_url))
+    render(conn, "new.html",
+      error_message: nil,
+      public_url: Application.fetch_env!(:oas, :public_url)
+    )
   end
 
   def create(conn, %{"member" => member_params}) do
@@ -15,7 +18,10 @@ defmodule OasWeb.MemberSessionController do
       MemberAuth.log_in_member(conn, member, member_params)
     else
       # In order to prevent user enumeration attacks, don't disclose whether the email is registered.
-      render(conn, "new.html", error_message: "Invalid email or password", public_url: Application.fetch_env!(:oas, :public_url))
+      render(conn, "new.html",
+        error_message: "Invalid email or password",
+        public_url: Application.fetch_env!(:oas, :public_url)
+      )
     end
   end
 

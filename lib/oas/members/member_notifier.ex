@@ -42,20 +42,21 @@ defmodule Oas.Members.MemberNotifier do
   """
   def deliver_reset_password_instructions(member, url) do
     # IO.puts("000")
-    _result = deliver(member.email, "Reset password instructions", """
+    _result =
+      deliver(member.email, "Reset password instructions", """
 
-    ==============================
+      ==============================
 
-    Hi #{member.email},
+      Hi #{member.email},
 
-    You can reset your password by visiting the URL below:
+      You can reset your password by visiting the URL below:
 
-    #{url}
+      #{url}
 
-    If you didn't request this change, please ignore this.
+      If you didn't request this change, please ignore this.
 
-    ==============================
-    """)
+      ==============================
+      """)
   end
 
   @doc """

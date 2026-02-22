@@ -8,16 +8,23 @@ defmodule Oas.Trainings.TrainingWhere do
     field :limit, :integer
 
     has_many :trainings, Oas.Trainings.Training, foreign_key: :training_where_id
-    has_many :training_where_time, Oas.Trainings.TrainingWhereTime, foreign_key: :training_where_id
+
+    has_many :training_where_time, Oas.Trainings.TrainingWhereTime,
+      foreign_key: :training_where_id
+
     has_many :training_deleted, Oas.Trainings.TrainingDeleted, foreign_key: :training_where_id
+    has_many :receivables, Oas.Trainings.TrainingWhereReceivable, foreign_key: :training_where_id
 
     timestamps()
   end
 
-  defp validate_credit_amount (changeset) do
+  defp validate_credit_amount(changeset) do
     cond do
-      Decimal.to_float(get_field(changeset, :credit_amount)) < 0 -> add_error(changeset, :credit_amount, "Amount must be positive.")
-      true -> changeset
+      Decimal.to_float(get_field(changeset, :credit_amount)) < 0 ->
+        add_error(changeset, :credit_amount, "Amount must be positive.")
+
+      true ->
+        changeset
     end
   end
 

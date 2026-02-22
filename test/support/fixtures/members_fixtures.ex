@@ -4,7 +4,9 @@ defmodule Oas.MembersFixtures do
   entities via the `Oas.Members` context.
   """
 
-  def unique_member_email, do: "member#{System.unique_integer()}#{System.unique_integer()}@example.com"
+  def unique_member_email,
+    do: "member#{System.unique_integer()}#{System.unique_integer()}@example.com"
+
   def valid_member_password, do: "hello world!"
 
   def valid_member_attributes(attrs \\ %{}) do

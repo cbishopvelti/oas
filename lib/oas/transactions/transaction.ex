@@ -12,8 +12,12 @@ defmodule Oas.Transactions.Transaction do
     field :my_reference, :string
     field :amount, :decimal
     field :not_transaction, :boolean
+
     many_to_many :transaction_tags, Oas.Transactions.TransactionTags,
-      join_through: "transaction_transaction_tags", join_keys: [transaction_id: :id, transaction_tag_id: :id], on_replace: :delete
+      join_through: "transaction_transaction_tags",
+      join_keys: [transaction_id: :id, transaction_tag_id: :id],
+      on_replace: :delete
+
     field :bank_details, :string
     field :notes, :string
 
@@ -36,19 +40,39 @@ defmodule Oas.Transactions.Transaction do
     end
   end
 
-  defp validate_amount (changeset) do
+  defp validate_amount(changeset) do
     cond do
-      get_field(changeset, :type) == "INCOMING" and Decimal.to_float(get_field(changeset, :amount)) < 0 -> add_error(changeset, :amount, "Incoming transaction must be positive")
-      get_field(changeset, :type) == "OUTGOING" and Decimal.to_float(get_field(changeset, :amount)) >= 0 -> add_error(changeset, :amount, "Outgoing transaction must be negative")
-      true -> changeset
+      get_field(changeset, :type) == "INCOMING" and
+          Decimal.to_float(get_field(changeset, :amount)) < 0 ->
+        add_error(changeset, :amount, "Incoming transaction must be positive")
+
+      get_field(changeset, :type) == "OUTGOING" and
+          Decimal.to_float(get_field(changeset, :amount)) >= 0 ->
+        add_error(changeset, :amount, "Outgoing transaction must be negative")
+
+      true ->
+        changeset
     end
   end
 
   def changeset(transaction, params \\ %{}) do
     transaction
-    |> cast(params, [:what, :when, :who, :who_member_id,
-      :type, :amount, :bank_details, :notes,
-      :their_reference, :my_reference], empty_values: [[], nil])
+    |> cast(
+      params,
+      [
+        :what,
+        :when,
+        :who,
+        :who_member_id,
+        :type,
+        :amount,
+        :bank_details,
+        :notes,
+        :their_reference,
+        :my_reference
+      ],
+      empty_values: [[], nil]
+    )
     |> validate_required([:what, :when, :who, :type, :amount])
     |> validate_type
     |> validate_amount

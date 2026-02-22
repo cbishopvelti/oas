@@ -7,9 +7,7 @@ defmodule Oas do
   if it comes from the database, an external API or others.
   """
 
-
   def setAdmin do
-
     toSave = %Oas.Members.Member{
       password: "test2",
       email: "test2@test.com",
@@ -21,14 +19,14 @@ defmodule Oas do
   end
 
   def testEmail do
-    email = Swoosh.Email.new()
-    |> Swoosh.Email.to({"chris", "chrisjbishop155@hotmail.com"})
-    |> Swoosh.Email.from({"chris", "chris@oxfordshireacrosociety.co.uk"})
-    |> Swoosh.Email.subject("OAS test")
-    # |> Swoosh.Email.html_body("<h1>Hello World</h1>")
-    |> Swoosh.Email.text_body("Hello World\n")
+    email =
+      Swoosh.Email.new()
+      |> Swoosh.Email.to({"chris", "chrisjbishop155@hotmail.com"})
+      |> Swoosh.Email.from({"chris", "chris@oxfordshireacrosociety.co.uk"})
+      |> Swoosh.Email.subject("OAS test")
+      # |> Swoosh.Email.html_body("<h1>Hello World</h1>")
+      |> Swoosh.Email.text_body("Hello World\n")
 
     Oas.Mailer.deliver(email)
   end
-
 end

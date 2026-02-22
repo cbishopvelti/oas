@@ -17,25 +17,34 @@ defmodule Oas.Members.MembershipPeriod do
   end
 
   def getThisOrNextMembershipPeriod(when1, who_member_id, amount) do
-    query = from(mp in Oas.Members.MembershipPeriod,
-      as: :membership_periods,
-      where: ((mp.from <= ^when1 and ^when1 <= mp.to and mp.value == ^amount )
-        or (mp.from <= ^Date.add(when1, 31) and  ^when1 <= mp.to and mp.value == ^amount )),
-      order_by: [asc: mp.from],
-      limit: 1
-    ) |> (&(
-      case who_member_id do
-        nil -> &1
-        who_member_id -> where(&1, [mp], not(exists(from(
-          m in Oas.Members.Member,
-          inner_join: mp in assoc(m, :membership_periods),
-          where: m.id == ^who_member_id and mp.id == parent_as(:membership_periods).id
-        ))))
-      end
-    )).()
+    query =
+      from(mp in Oas.Members.MembershipPeriod,
+        as: :membership_periods,
+        where:
+          (mp.from <= ^when1 and ^when1 <= mp.to and mp.value == ^amount) or
+            (mp.from <= ^Date.add(when1, 31) and ^when1 <= mp.to and mp.value == ^amount),
+        order_by: [asc: mp.from],
+        limit: 1
+      )
+      |> (&(case who_member_id do
+              nil ->
+                &1
 
-    out = query |> Oas.Repo.one
+              who_member_id ->
+                where(
+                  &1,
+                  [mp],
+                  not exists(
+                    from(
+                      m in Oas.Members.Member,
+                      inner_join: mp in assoc(m, :membership_periods),
+                      where: m.id == ^who_member_id and mp.id == parent_as(:membership_periods).id
+                    )
+                  )
+                )
+            end)).()
+
+    out = query |> Oas.Repo.one()
     out
   end
-
 end

@@ -16,8 +16,6 @@
 #     {:ok, model_info} = Bumblebee.load_model({:hf, "Lihuchen/pearl_small"})
 #     {:ok, tokenizer} = Bumblebee.load_tokenizer({:hf, "Lihuchen/pearl_small"})
 
-
-
 #     # https://github.com/lexmag/simetric
 #     # https://github.com/patrickdet/fuzzy_compare
 

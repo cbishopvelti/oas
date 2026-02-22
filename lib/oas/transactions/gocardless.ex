@@ -13,8 +13,6 @@ defmodule Oas.Transactions.Gocardless do
   def changeset(gocardless, params \\ %{}) do
     gocardless
     |> cast(params, [:transaction_iid, :gocardless_data, :warnings], empty_values: [[], nil])
-    |> Ecto.Changeset.unique_constraint(
-      :transaction_iid
-    )
+    |> Ecto.Changeset.unique_constraint(:transaction_iid)
   end
 end

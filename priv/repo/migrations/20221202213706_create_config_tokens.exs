@@ -19,19 +19,21 @@ defmodule Oas.Repo.Migrations.CreateConfigTokens do
     Oas.Repo.insert(%Oas.Config.Tokens{
       value: 5,
       quantity: 1
-    });
+    })
+
     Oas.Repo.insert(%Oas.Config.Tokens{
       value: 4.5,
       quantity: 10
-    });
+    })
+
     Oas.Repo.insert(%Oas.Config.Tokens{
       value: 4.5,
       quantity: 20
-    });
+    })
 
     Oas.Repo.insert(%Oas.Config.Config{
       token_expiry_days: 365
-    });
+    })
   end
 
   def down do

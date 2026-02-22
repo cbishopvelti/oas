@@ -223,7 +223,9 @@ defmodule Oas.MembersTest do
     end
 
     test "does not update email if member email changed", %{member: member, token: token} do
-      assert Members.update_member_email(%{member | email: "current@example.com"}, token) == :error
+      assert Members.update_member_email(%{member | email: "current@example.com"}, token) ==
+               :error
+
       assert Repo.get!(Member, member.id).email == member.email
       assert Repo.get_by(MemberToken, member_id: member.id)
     end
@@ -488,7 +490,9 @@ defmodule Oas.MembersTest do
     end
 
     test "updates the password", %{member: member} do
-      {:ok, updated_member} = Members.reset_member_password(member, %{password: "new valid password"})
+      {:ok, updated_member} =
+        Members.reset_member_password(member, %{password: "new valid password"})
+
       assert is_nil(updated_member.password)
       assert Members.get_member_by_email_and_password(member.email, "new valid password")
     end

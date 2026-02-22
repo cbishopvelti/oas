@@ -13,8 +13,12 @@ defmodule Oas.Trainings.Training do
     field :disable_warning_emails, :boolean
 
     has_many :attendance, Oas.Trainings.Attendance
+
     many_to_many :training_tags, Oas.Trainings.TrainingTags,
-      join_through: "training_training_tags", join_keys: [training_id: :id, training_tag_id: :id], on_replace: :delete
+      join_through: "training_training_tags",
+      join_keys: [training_id: :id, training_tag_id: :id],
+      on_replace: :delete
+
     field :notes, :string
 
     timestamps()
@@ -22,12 +26,18 @@ defmodule Oas.Trainings.Training do
 
   def validate_time(changeset) do
     case Ecto.Changeset.get_field(changeset, :booking_offset) do
-      nil -> changeset
+      nil ->
+        changeset
+
       duration ->
         changeset = Ecto.Changeset.validate_required(changeset, :start_time)
+
         case Duration.from_iso8601(duration) do
-          {:ok, _} -> changeset
-          {:error, error} -> Ecto.Changeset.add_error(changeset, :booking_offset, error |> to_string())
+          {:ok, _} ->
+            changeset
+
+          {:error, error} ->
+            Ecto.Changeset.add_error(changeset, :booking_offset, error |> to_string())
         end
     end
   end

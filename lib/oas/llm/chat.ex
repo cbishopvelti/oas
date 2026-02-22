@@ -1,4 +1,3 @@
-
 defmodule Oas.Llm.Chat do
   use Ecto.Schema
 

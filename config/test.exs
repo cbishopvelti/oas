@@ -21,7 +21,7 @@ config :oas, Oas.Repo,
 # you can enable the server option below.
 config :oas, OasWeb.Endpoint,
   http: [ip: {127, 0, 0, 1}, port: 4002],
-  secret_key_base: "***REMOVED***",
+  secret_key_base: "6wXQb14AQy7OdLnCqFecdSojsiNJCyovZqpPm5HszCLRhOUYPbhaCTm4IIjTqCA9",
   server: false
 
 # In test we don't send emails.

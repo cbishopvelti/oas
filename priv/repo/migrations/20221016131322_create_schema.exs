@@ -22,6 +22,7 @@ defmodule Oas.Repo.Migrations.CreateSchema do
       add :name, :string
       timestamps()
     end
+
     create unique_index(:transaction_tags, [:name])
 
     create table(:transaction_transaction_tags) do
@@ -45,13 +46,15 @@ defmodule Oas.Repo.Migrations.CreateSchema do
     create table(:memberships) do
       add :transaction_id, references(:transactions, on_delete: :restrict), null: true
       add :member_id, references(:members, on_delete: :restrict), null: false
-      add :membership_period_id, references(:membership_periods, on_delete: :restrict), null: false
+
+      add :membership_period_id, references(:membership_periods, on_delete: :restrict),
+        null: false
 
       add :notes, :string, null: true
       timestamps()
     end
-    create unique_index(:memberships, [:member_id, :membership_period_id])
 
+    create unique_index(:memberships, [:member_id, :membership_period_id])
 
     # EO Membership
 
@@ -61,14 +64,19 @@ defmodule Oas.Repo.Migrations.CreateSchema do
 
       timestamps()
     end
+
     create unique_index(:training_where, [:name])
 
     create table(:trainings) do
       add :when, :date, null: false
-      add :training_where_id, references(
-        :training_where,
-        on_delete: :restrict
-      ), null: false
+
+      add :training_where_id,
+          references(
+            :training_where,
+            on_delete: :restrict
+          ),
+          null: false
+
       timestamps()
     end
 
@@ -88,10 +96,14 @@ defmodule Oas.Repo.Migrations.CreateSchema do
       add :member_id, references(:members, on_delete: :restrict), null: false
       timestamps()
     end
+
     # EO TRANINGS
 
     create table(:tokens) do
-      add :transaction_id, references(:transactions, on_delete: :restrict), null: true, on_delete: :restrict
+      add :transaction_id, references(:transactions, on_delete: :restrict),
+        null: true,
+        on_delete: :restrict
+
       add :member_id, references(:members, on_delete: :restrict), null: false
       add :used_on, :date, null: true
       add :expires_on, :date, null: false

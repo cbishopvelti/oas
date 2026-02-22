@@ -5,6 +5,7 @@ defmodule Oas.Repo.Migrations.GocardlessTransactions do
     alter table(:members) do
       add :gocardless_name, :string, null: true
     end
+
     create unique_index(:members, [:gocardless_name])
 
     create table(:gocardless_transaction_iids) do
@@ -13,8 +14,8 @@ defmodule Oas.Repo.Migrations.GocardlessTransactions do
       add :warnings, :text, null: true
       add :gocardless_data, :text, null: true
     end
+
     create unique_index(:gocardless_transaction_iids, [:transaction_iid])
     create unique_index(:gocardless_transaction_iids, [:transaction_id])
-
   end
 end

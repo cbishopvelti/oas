@@ -22,7 +22,9 @@ defmodule Oas.Members.Member do
 
     has_one :member_details, Oas.Members.MemberDetails, on_replace: :nilify
 
-    many_to_many :membership_periods, Oas.Members.MembershipPeriod, join_through: Oas.Members.Membership
+    many_to_many :membership_periods, Oas.Members.MembershipPeriod,
+      join_through: Oas.Members.Membership
+
     has_many :memberships, Oas.Members.Membership
 
     has_many :tokens, Oas.Tokens.Token
@@ -33,19 +35,32 @@ defmodule Oas.Members.Member do
 
   defp validate_name(changeset) do
     name = changeset |> get_field(:name) |> String.downcase()
-    config = from(
-      c in Oas.Config.Config,
-      limit: 1
-    ) |> Oas.Repo.one!()
 
-    count = from(m in Oas.Members.Member,
-      where: fragment("lower(?)", m.name) ==  ^name,
-      select: count(m.id)
-    ) |> Oas.Repo.one!
+    config =
+      from(
+        c in Oas.Config.Config,
+        limit: 1
+      )
+      |> Oas.Repo.one!()
+
+    count =
+      from(m in Oas.Members.Member,
+        where: fragment("lower(?)", m.name) == ^name,
+        select: count(m.id)
+      )
+      |> Oas.Repo.one!()
 
     case count do
-      0 -> changeset
-      _ -> changeset |> add_error(:name, "Name already exists, don't fill this form in again, please contact " <> (config.name || "support"))
+      0 ->
+        changeset
+
+      _ ->
+        changeset
+        |> add_error(
+          :name,
+          "Name already exists, don't fill this form in again, please contact " <>
+            (config.name || "support")
+        )
     end
   end
 
@@ -68,7 +83,16 @@ defmodule Oas.Members.Member do
   """
   def registration_changeset(member, attrs, opts \\ []) do
     member
-    |> cast(attrs, [:email, :password, :name, :is_active, :is_admin, :is_reviewer, :bank_account_name, :gocardless_name])
+    |> cast(attrs, [
+      :email,
+      :password,
+      :name,
+      :is_active,
+      :is_admin,
+      :is_reviewer,
+      :bank_account_name,
+      :gocardless_name
+    ])
     |> validate_required([:name])
     |> validate_name()
     |> validate_email()
@@ -77,7 +101,16 @@ defmodule Oas.Members.Member do
 
   def changeset(member, attrs, _opts \\ []) do
     member
-    |> cast(attrs, [:email, :name, :is_active, :is_admin, :is_reviewer, :honorary_member, :bank_account_name, :gocardless_name])
+    |> cast(attrs, [
+      :email,
+      :name,
+      :is_active,
+      :is_admin,
+      :is_reviewer,
+      :honorary_member,
+      :bank_account_name,
+      :gocardless_name
+    ])
     |> validate_required([:name])
     |> validate_email()
     |> unique_constraint(:gocardless_name)

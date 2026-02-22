@@ -34,7 +34,10 @@ defmodule OasWeb.MemberSettingsControllerTest do
 
       assert redirected_to(new_password_conn) == Routes.member_settings_path(conn, :edit)
       assert get_session(new_password_conn, :member_token) != get_session(conn, :member_token)
-      assert Phoenix.Flash.get(new_password_conn.assigns.flash, :info) =~ "Password updated successfully"
+
+      assert Phoenix.Flash.get(new_password_conn.assigns.flash, :info) =~
+               "Password updated successfully"
+
       assert Members.get_member_by_email_and_password(member.email, "new valid password")
     end
 
@@ -101,7 +104,12 @@ defmodule OasWeb.MemberSettingsControllerTest do
       %{token: token, email: email}
     end
 
-    test "updates the member email once", %{conn: conn, member: member, token: token, email: email} do
+    test "updates the member email once", %{
+      conn: conn,
+      member: member,
+      token: token,
+      email: email
+    } do
       conn = get(conn, Routes.member_settings_path(conn, :confirm_email, token))
       assert redirected_to(conn) == Routes.member_settings_path(conn, :edit)
       assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "Email changed successfully"
@@ -110,13 +118,18 @@ defmodule OasWeb.MemberSettingsControllerTest do
 
       conn = get(conn, Routes.member_settings_path(conn, :confirm_email, token))
       assert redirected_to(conn) == Routes.member_settings_path(conn, :edit)
-      assert Phoenix.Flash.get(conn.assigns.flash, :error) =~ "Email change link is invalid or it has expired"
+
+      assert Phoenix.Flash.get(conn.assigns.flash, :error) =~
+               "Email change link is invalid or it has expired"
     end
 
     test "does not update email with invalid token", %{conn: conn, member: member} do
       conn = get(conn, Routes.member_settings_path(conn, :confirm_email, "oops"))
       assert redirected_to(conn) == Routes.member_settings_path(conn, :edit)
-      assert Phoenix.Flash.get(conn.assigns.flash, :error) =~ "Email change link is invalid or it has expired"
+
+      assert Phoenix.Flash.get(conn.assigns.flash, :error) =~
+               "Email change link is invalid or it has expired"
+
       assert Members.get_member_by_email(member.email)
     end
 

@@ -5,6 +5,7 @@ defmodule Oas.Tokens.TokenNotifier do
 
   def deliver(recipient, subject, body) do
     from = Application.get_env(:oas, Oas.TokenMailer)[:from]
+
     email =
       new()
       |> to(recipient)

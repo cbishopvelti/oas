@@ -15,10 +15,11 @@ defmodule Oas.Tokens.Token do
   end
 
   def getPossibleTokenAmount do
-    from(tk in Oas.Config.Tokens, select: tk,
+    from(tk in Oas.Config.Tokens,
+      select: tk,
       order_by: [desc: :value]
     )
-      |> Oas.Repo.all
+    |> Oas.Repo.all()
 
     # [{1, 5}, {10, 4.5}, {20, 4.5}]
   end

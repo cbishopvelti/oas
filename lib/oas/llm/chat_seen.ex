@@ -7,5 +7,4 @@ defmodule Oas.Llm.ChatSeen do
 
     timestamps()
   end
-
 end

@@ -18,10 +18,13 @@ defmodule OasWeb.Endpoint do
   socket "/live", Phoenix.LiveView.Socket, websocket: [connect_info: [session: @session_options]]
   socket "/socket", OasWeb.UserSocket, longpoll: false
   socket "/public_socket", OasWeb.PublicSocket, longpoll: false
-    # websocket: [connect_info: [session: @session_options]]
+  # websocket: [connect_info: [session: @session_options]]
 
-
-  plug Corsica, max_age: 600, origins: "*", expose_headers: ~w(X-Foo), allow_headers: ["content-type"]
+  plug Corsica,
+    max_age: 600,
+    origins: "*",
+    expose_headers: ~w(X-Foo),
+    allow_headers: ["content-type"]
 
   # Serve at "/" the static files from "priv/static" directory.
   #
@@ -32,7 +35,6 @@ defmodule OasWeb.Endpoint do
     from: :oas,
     gzip: false,
     only: ~w(assets fonts images favicon.ico acroyoga_logo.ico robots.txt)
-
 
   # Code reloading can be explicitly enabled under the
   # :code_reloader configuration of your endpoint.
@@ -58,12 +60,8 @@ defmodule OasWeb.Endpoint do
   # plug Absinthe.Plug,
   #   schema: OasWeb.Schema
 
-
-
   plug Plug.MethodOverride
   plug Plug.Head
   plug Plug.Session, @session_options
   plug OasWeb.Router
-
-
 end

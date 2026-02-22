@@ -8,7 +8,6 @@ defmodule Oas.BackupJob do
   def init(state) do
     schedule()
 
-
     {:ok, state}
   end
 
@@ -21,7 +20,6 @@ defmodule Oas.BackupJob do
 
     IO.puts("EO Running backup")
 
-
     {:noreply, state}
   end
 
@@ -30,5 +28,4 @@ defmodule Oas.BackupJob do
     # Process.send_after(self(), :backup, 120_000)
     :timer.send_interval(86_400_000, :backup)
   end
-
 end

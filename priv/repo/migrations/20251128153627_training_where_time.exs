@@ -2,9 +2,7 @@ defmodule Oas.Repo.Migrations.TrainingWhereTime do
   use Ecto.Migration
 
   def change do
-
     create table(:training_where_time) do
-
       add :training_where_id, references(:training_where, on_delete: :delete_all), null: false
       add :day_of_week, :integer, null: true
       add :start_time, :time, null: true
@@ -29,6 +27,5 @@ defmodule Oas.Repo.Migrations.TrainingWhereTime do
     end
 
     create unique_index(:training_where_time, [:day_of_week, :training_where_id])
-
   end
 end

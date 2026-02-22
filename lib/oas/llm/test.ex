@@ -21,23 +21,22 @@ defmodule Oas.Llm.TestA do
     {:noreply, state}
   end
 
-  def handle_info(message, state ) do
+  def handle_info(message, state) do
     IO.inspect(message, label: "THIS SHOULD HAPPEN")
     {:noreply, state}
   end
+
   def terminate(reason, _state) do
     IO.inspect(reason, label: "maybe should happen")
   end
 end
 
 defmodule Oas.Llm.TestB do
-
   def start_link() do
     GenServer.start_link(__MODULE__, %{})
   end
 
   def init(state) do
-
     {:ok, state}
   end
 

@@ -13,7 +13,7 @@ defmodule OasWeb.Channels.LlmChannelPresence do
 
   def add_topic(presences, topic) do
     presences
-    |> Enum.map(fn ({k, v}) ->
+    |> Enum.map(fn {k, v} ->
       {
         topic <> ":" <> k,
         v
@@ -25,7 +25,6 @@ defmodule OasWeb.Channels.LlmChannelPresence do
   end
 
   def handle_metas(topic, %{joins: joins, leaves: leaves}, presences, state) do
-
     if presences |> Enum.empty?() do
       OasWeb.Endpoint.broadcast!(topic, "presence_empty", nil)
     end
@@ -34,6 +33,7 @@ defmodule OasWeb.Channels.LlmChannelPresence do
       joins: joins |> add_topic(topic),
       leaves: leaves |> add_topic(topic)
     })
+
     {:ok, state}
   end
 end

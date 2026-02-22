@@ -1,4 +1,3 @@
-
 defmodule Oas.Llm.ChatMembers do
   use Ecto.Schema
 
@@ -10,5 +9,4 @@ defmodule Oas.Llm.ChatMembers do
 
     timestamps()
   end
-
 end
