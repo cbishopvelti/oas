@@ -13,7 +13,7 @@ defmodule OasWeb.MemberSessionControllerTest do
       response = html_response(conn, 200)
       assert response =~ "<h1>Log in</h1>"
       assert response =~ "Register</a>"
-      assert response =~ "Forgot your password?</a>"
+      assert response =~ "Forgotten your password?</a>"
     end
 
     test "redirects if already logged in", %{conn: conn, member: member} do
