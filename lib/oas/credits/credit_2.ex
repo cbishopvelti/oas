@@ -45,7 +45,7 @@ defmodule Oas.Credits.Credit2 do
         active_ledger |> Enum.filter(fn
           %{expires_on: nil} -> true
           %{expires_on: expires_on} ->
-            Date.compare(expires_on, opts.now) == :gt
+            Date.compare(expires_on, opts.now || Date.utc_today()) == :gt
         end),
         Decimal.new("0"),
         fn %{amount: amount}, acc -> Decimal.add(acc, amount) end
