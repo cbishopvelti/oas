@@ -93,11 +93,13 @@ export const TrainingForm = ({id, data, config, refetch}) => {
   const [ insertMutation, {error: error1} ] = useMutation(gql`
     mutation ($when: String!, $training_tags: [TrainingTagArg]!, $training_where: TrainingWhereArg!, $notes: String, $commitment: Boolean,
       $start_time: String, $booking_offset: String, $end_time: String, $limit: Int,
-      $exempt_membership_count: Boolean
+      $exempt_membership_count: Boolean,
+      $disable_warning_emails: Boolean
     ) {
       insert_training (when: $when, training_tags: $training_tags, training_where: $training_where, notes: $notes, commitment: $commitment,
         start_time: $start_time, booking_offset: $booking_offset, end_time: $end_time, limit: $limit,
-        exempt_membership_count: $exempt_membership_count
+        exempt_membership_count: $exempt_membership_count,
+        disable_warning_emails: $disable_warning_emails
       ) {
         id
       }

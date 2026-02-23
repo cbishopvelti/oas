@@ -130,6 +130,7 @@ defmodule OasWeb.Schema.SchemaTraining do
       arg :start_time, :string
       arg :booking_offset, :string
       arg :end_time, :string
+      arg :limit, :integer
       arg :exempt_membership_count, :boolean
       arg :disable_warning_emails, :boolean
       resolve fn _, args, _ ->
