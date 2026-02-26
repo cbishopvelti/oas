@@ -147,4 +147,5 @@ Credits Menue ✅
 Create page for Sjefs visit. ✅
 Disable warning emails option for specific trainings. ✅
 Fix the registration disclaimer.
-Check booking search params on the training-venue branch
+Check booking search params on the training-venue branch ✅
+Allow trainings to override amount
