@@ -11,6 +11,7 @@ defmodule Oas.Trainings.Training do
     field :end_time, :time
     field :limit, :integer
     field :exempt_membership_count, :boolean
+    field :disable_warning_emails, :boolean
 
     field :venue_billing_type, Ecto.Enum, values: [:per_hour, :per_attendee, :fixed]
     field :venue_billing_config, :map

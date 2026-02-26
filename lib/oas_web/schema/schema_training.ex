@@ -66,6 +66,7 @@ defmodule OasWeb.Schema.SchemaTraining do
     field :venue_billing_config, :json
     field :limit, :integer
     field :exempt_membership_count, :boolean
+    field :disable_warning_emails, :boolean
   end
 
   object :training_queries do
@@ -192,7 +193,9 @@ defmodule OasWeb.Schema.SchemaTraining do
       arg :end_time, :string
       arg :venue_billing_type, :billing_type, default_value: nil
       arg :venue_billing_config, :json, default_value: nil
+      arg :limit, :integer
       arg :exempt_membership_count, :boolean
+      arg :disable_warning_emails, :boolean
       resolve fn _, args, _ ->
         %{training_tags: training_tags, training_where: training_where} = args
 
@@ -228,7 +231,8 @@ defmodule OasWeb.Schema.SchemaTraining do
             :start_time, :booking_offset, :end_time,
             :venue_billing_type, :venue_billing_config,
             :limit,
-            :exempt_membership_count
+            :exempt_membership_count,
+            :disable_warning_emails
             ])
           |> Oas.Trainings.Training.validate_time()
           |> Oas.Trainings.Training.validate_billing()
@@ -255,6 +259,7 @@ defmodule OasWeb.Schema.SchemaTraining do
       arg :venue_billing_config, :json, default_value: nil
       arg :limit, :integer
       arg :exempt_membership_count, :boolean
+      arg :disable_warning_emails, :boolean
       resolve fn _, args, _ ->
         when1 = Date.from_iso8601!(args.when)
         args = %{args | when: when1}
@@ -279,7 +284,8 @@ defmodule OasWeb.Schema.SchemaTraining do
             :start_time, :booking_offset, :end_time,
             :venue_billing_type, :venue_billing_config,
             :limit,
-            :exempt_membership_count
+            :exempt_membership_count,
+            :disable_warning_emails
           ], empty_values: [[], nil] ++ Ecto.Changeset.empty_values())
           |> Oas.Trainings.Training.validate_time()
           |> Oas.Trainings.Training.validate_billing()

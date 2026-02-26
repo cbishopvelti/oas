@@ -19,6 +19,7 @@ import Cookies from "js-cookie";
 import * as AbsintheSocket from "@absinthe/socket";
 import { createAbsintheSocketLink } from "@absinthe/socket-apollo-link";
 import { LlmHistory } from './Llm/LlmHistory';
+import { Sjef2026 } from './Static/Sjef2026';
 
 const router = createBrowserRouter([
   {
@@ -64,6 +65,11 @@ const router = createBrowserRouter([
         id: "llm-history",
         path: "llm-history",
         element: <LlmHistory />
+      },
+      {
+        id: "sjef2026",
+        path: "sjef-2026",
+        element: <Sjef2026 />
       }
     ],
   },

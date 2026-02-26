@@ -1,15 +1,20 @@
 import Ecto.Query, only: [from: 2]
 
 defmodule Oas.Credits.Credit2 do
-  def get_credit_amount(%{member_id: member_id}, opts \\ %{now: Date.utc_today()} ) do
-    credits = from(c in Oas.Credits.Credit,
-      where: c.who_member_id == ^member_id and c.when <= ^opts.now,
+  def get_credit_amount(%{member_id: member_id}, opts \\ %{now: nil} ) do
+    base_query = from(c in Oas.Credits.Credit,
+      where: c.who_member_id == ^member_id,
       preload: [:transaction, :debit, :credit, :membership, :attendance],
-      # order_by: [asc: coalesce(c.expires_on, c.when), asc_nulls_first: c.expires_on, asc: c.id]
-      # order_by: [asc_nulls_last: c.expires_on, asc: c.when, asc: c.id]
       order_by: [asc: c.when, asc: c.id]
     )
-    |> Oas.Repo.all()
+
+        # Conditionally add the `when <= now` filter
+    query = case Map.get(opts, :now) do
+      nil -> base_query
+      now -> from(c in base_query, where: c.when <= ^now)
+    end
+
+    credits = query |> Oas.Repo.all()
 
     {credits, total} = process_credits(credits, opts)
     {
@@ -40,7 +45,7 @@ defmodule Oas.Credits.Credit2 do
         active_ledger |> Enum.filter(fn
           %{expires_on: nil} -> true
           %{expires_on: expires_on} ->
-            Date.compare(expires_on, opts.now) == :gt
+            Date.compare(expires_on, opts.now || Date.utc_today()) == :gt
         end),
         Decimal.new("0"),
         fn %{amount: amount}, acc -> Decimal.add(acc, amount) end

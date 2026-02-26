@@ -45,8 +45,11 @@ export const CreditWarning = ({
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setParams({ ...omit(params, "error") })
-    }, 120_00);
+      const newParams = new URLSearchParams(params);
+      newParams.delete("error");
+
+      setParams(newParams)
+    }, 120_000);
 
     return () => clearTimeout(timer);
   }, []);

@@ -107,7 +107,8 @@ export const TrainingForm = ({
       $booking_offset: String, $end_time: String, $venue_billing_type: BillingType,
       $venue_billing_config: Json,
       $limit: Int,
-      $exempt_membership_count: Boolean
+      $exempt_membership_count: Boolean,
+      $disable_warning_emails: Boolean
     ) {
       insert_training (
         when: $when,
@@ -121,7 +122,8 @@ export const TrainingForm = ({
         venue_billing_type: $venue_billing_type,
         venue_billing_config: $venue_billing_config,
         limit: $limit,
-        exempt_membership_count: $exempt_membership_count
+        exempt_membership_count: $exempt_membership_count,
+        disable_warning_emails: $disable_warning_emails
       ) {
         id
       }
@@ -133,7 +135,8 @@ export const TrainingForm = ({
       $start_time: String, $booking_offset: String, $end_time: String,
       $venue_billing_type: BillingType, $venue_billing_config: Json,
       $limit: Int,
-      $exempt_membership_count: Boolean
+      $exempt_membership_count: Boolean,
+      $disable_warning_emails: Boolean
     ){
       update_training (
         when: $when,
@@ -148,7 +151,8 @@ export const TrainingForm = ({
         venue_billing_type: $venue_billing_type,
         venue_billing_config: $venue_billing_config,
         limit: $limit,
-        exempt_membership_count: $exempt_membership_count
+        exempt_membership_count: $exempt_membership_count,
+        disable_warning_emails: $disable_warning_emails
       ) {
         id
       }
@@ -240,36 +244,6 @@ export const TrainingForm = ({
           />
       </FormControl>
 
-      <FormControl fullWidth sx={{ mt: 2, mb: 2 }}>
-        <TextField
-          id="limit"
-          label="Limit"
-          value={get(formData, "limit", '') || ''}
-          onChange={
-            onChange({formData, setFormData, key: "limit"})
-          }
-          InputLabelProps={{
-            shrink: true
-          }}
-          error={has(errors, "limit")}
-          helperText={get(errors, "limit", []).join(" ")}
-          />
-      </FormControl>
-      <FormControl fullWidth sx={{ mt: 2, mb: 2 }}>
-        <FormControlLabel
-          control={
-            <Switch
-              checked={get(formData, 'exempt_membership_count', false) || false}
-              onChange={(event) => {
-                onChange({formData, setFormData, key: 'exempt_membership_count', isCheckbox: true})(event)
-              }}
-              />
-          }
-          label="Exempt from membership count"
-          title="This training will not count towards a users trainings before they must become a full members"
-          />
-      </FormControl>
-
       <FormControl fullWidth sx={{mt: 2, mb: 2}}>
         <TextField
           id="notes"
@@ -305,13 +279,13 @@ export const TrainingForm = ({
         />
     </FormControl>}
 
-    {(!get(formData, 'commitment', false) || formData.training_where?.billing_type === "PER_HOUR") && <TrainingFormTime
+    <TrainingFormTime
       data={data}
       formData={formData}
       setFormData={setFormData}
       errors={errors}
       trainingWhereTime={trainingWhereTime}
-    />}
+    />
 
     <TrainingFormBilling
       data={data}
@@ -321,24 +295,65 @@ export const TrainingForm = ({
       trainingWhereTime={trainingWhereTime}
       attendanceAcc={attendanceAcc}
     />
-    {/* {get(data, 'training.training_where.billing_type', false) && <>
-      <FormControl fullWidth sx={{ mt: 2, mb: 2 }}>
-        <FormControlLabel
-          control={
-            <Switch
-              checked={get(formData, "venue_billing_type", false) || false}
-              onChange={onChange({ formData: formData, setFormData, key: "venue_billing_type", isCheckbox: true })}
-            />}
-          label="Venue billing enabled"
-          title="If this event will be added to the venues billing account."
-        />
-      </FormControl>
 
-      <FormControl fullWidth sx={{mt: 2, mb: 2}}>
-        <Button onClick={save(formData)}>Save</Button>
-      </FormControl>
-    </>
-    }*/}
+    <FormControl fullWidth sx={{ mt: 2, mb: 2 }}>
+      <TextField
+        id="limit"
+        label="Limit"
+        value={get(formData, "limit", '') || ''}
+        onChange={
+          onChange({formData, setFormData, key: "limit"})
+        }
+        InputLabelProps={{
+          shrink: true
+        }}
+        error={has(errors, "limit")}
+        helperText={get(errors, "limit", []).join(" ")}
+        />
+    </FormControl>
+{/*
+    <FormControl fullWidth sx={{ mt: 2, mb: 2 }}>
+      <FormControlLabel
+        control={
+          <Switch
+            checked={get(formData, "venue_billing_type", false) || false}
+            onChange={onChange({ formData: formData, setFormData, key: "venue_billing_type", isCheckbox: true })}
+          />
+        }
+        label="Venue billing enabled"
+        title="If this event will be added to the venues billing account."
+      />
+    </FormControl>*/}
+
+    <FormControl fullWidth sx={{ mt: 2, mb: 2 }}>
+      <FormControlLabel
+        control={
+          <Switch
+            checked={get(formData, 'exempt_membership_count', false) || false}
+            onChange={(event) => {
+              onChange({formData, setFormData, key: 'exempt_membership_count', isCheckbox: true})(event)
+            }}
+          />
+        }
+        label="Exempt from membership count"
+        title="This training will not count towards a users trainings before they must become a full members"
+      />
+    </FormControl>
+
+    <FormControl fullWidth sx={{ mt: 2, mb: 2 }}>
+      <FormControlLabel
+        control={
+          <Switch
+            checked={get(formData, 'disable_warning_emails', false) || false}
+            onChange={(event) => {
+              onChange({formData, setFormData, key: 'disable_warning_emails', isCheckbox: true})(event)
+            }}
+          />
+        }
+        label="Disable warning emails"
+        title="This will stop any emails that attending this event might trigger."
+        />
+    </FormControl>
 
     <FormControl fullWidth sx={{mt: 2, mb: 2}}>
       <Button onClick={save(formData)}>Save</Button>
