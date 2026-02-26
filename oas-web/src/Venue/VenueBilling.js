@@ -57,9 +57,7 @@ export const VenueBilling = ({
           inputMode="numeric"
           pattern="[0-9\.]*"
           value={get(formData, `${prefix}billing_config.per_hour`, "") || ''}
-          onChange={(event) => {
-            onChange({ formData, setFormData, key: `${prefix}billing_config.per_hour` })(event.target.value)
-          }}
+          onChange={onChange({ formData, setFormData, key: `${prefix}billing_config.per_hour` })}
         error={has(errors, `${prefix}billing_config`)}
         helperText={get(errors, `${prefix}billing_config`, []).join(" ")}
       />

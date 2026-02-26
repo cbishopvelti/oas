@@ -51,6 +51,7 @@ export const TrainingFormBilling = ({
           venue_billing_config: get(venueData, "training_where.billing_config")
         }
       })
+      setBillingEnabled(true)
     } else {
       setFormData((formData) => {
         return {
@@ -59,15 +60,17 @@ export const TrainingFormBilling = ({
           venue_billing_config: null
         }
       })
+      setBillingEnabled(false)
     }
   }
   useEffect(() => { // venue_billing_type changed to null, so billing enabled false
-    if (!get(formData, "venue_billing_type")) {
+    if (get(formData, "venue_billing_type") === null) {
       setBillingEnabled(false)
     } else {
       setBillingEnabled(true)
     }
   }, [get(formData, "venue_billing_type")])
+
   useEffect(() => { // Venue changed, set config to the new venue
     if (get(formData, "training_where.id") !== get(data, "training.training_where.id")) {
       setFormData((formData) => {
