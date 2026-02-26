@@ -108,3 +108,4 @@ Better nfc/qrcode trainings on same day attendance resolution. ✅
 Create page for Sjefs visit. ✅
 Disable warning emails option for specific trainings. ✅
 Fix the registration disclaimer.
+Check booking search params on the training-venue branch

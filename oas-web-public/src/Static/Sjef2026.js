@@ -18,11 +18,15 @@ export const Sjef2026 = () => {
     <h1 style={{textAlign: "center"}}>Easter Acro Workshops with Sjef Baas</h1>
     <p style={{textAlign: "center"}}>Oxford, 3rd (Good Friday) and 4th (Saturday) of April 2026</p>
     <p>This Easter we are hosting a two-day workshop delivered by Sjef Baas.</p>
-    <p>Sjef came across circus when he was 9 years old and never looked back. Growing up in the Netherlands, he learned from all the best Dutch teachers. He has been a circus acro teacher himself for 10+ years now, sharing his expertise and lifelong fascination with movement and balance.</p>
+    <p>Sjef has been a circus acro teacher for 15 years and has a lifelong fascination with movement and balance. Especially when you can suspend your balance point somewhere between you and your partner, that’s the stuff of magic!
+      Growing up in the Netherlands, Sjef learnt from all the best Dutch teachers and developed his own style, fully within the Dutch acro tradition. His biggest passion in acro is finding that one little thing stopping a trick from working and seeing everything slide into place.</p>
+
+    <p>Spaces are limited.</p>
 
     <div style={{ display: 'flex', alignItems: 'flex-start', flexWrap: 'wrap', gap: '20px' }}>
-      <div style={{ flex: 1, minWidth: '300px' }}>
+      <div style={{ flex: 1, minWidth: '350px' }}>
         <h3>Schedule</h3>
+        <h4>Friday</h4>
         <ul>
           <li>10.00-10.30: Warm-up</li>
           <li>10.30-11.00: Handstands</li>
@@ -34,6 +38,7 @@ export const Sjef2026 = () => {
           <li>Social</li>
         </ul>
 
+        <h4>Saturday</h4>
         <ul>
           <li>10.00-10.15: Warm-up</li>
           <li>10.15-10.45: Handstands</li>
@@ -54,14 +59,14 @@ export const Sjef2026 = () => {
         </ul>
       </div>
       <div style={{ flex: 1, display: 'flex', justifyContent: 'center', minWidth: '300px' }}>
-        <img src={sjefImage} style={{ maxWidth: '100%', height: '500px', objectFit: 'contain' }} alt="Sjef" />
+        <img src={sjefImage} style={{ maxWidth: '100%', height: '600px', objectFit: 'contain' }} alt="Sjef" />
       </div>
     </div>
 
     <h3>Booking</h3>
     <p>
       Please fill out our <a href="/register">registration form</a>, then select the days you wish to attend from our <a href="/bookings">bookings page</a> (Ignore the amount of credits displayed as charged – it will be manually modified by an admin).
-       Then pay the expected price to the OAS bank (you received the details at registration).
+       Then pay the expected price to the OAS bank account (you received the details at registration).
     </p>
     <p>
       Unfortunately, we will not be able to issue refunds in case of cancellations, but ticket swaps will be possible at individual request.
