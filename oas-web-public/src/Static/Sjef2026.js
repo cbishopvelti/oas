@@ -50,12 +50,22 @@ export const Sjef2026 = () => {
           <li>Social</li>
         </ul>
         <h3>Tickets</h3>
+        {new Date() < new Date('2026-03-19')  && <><h4>Earlybird (purchased on or before 18/3/2026)</h4>
         <ul>
           <li>Both days: 40 GBP</li>
           <li>One day: 25 GBP</li>
           {get(data, "user.membership_status") === "MEMBER" && <li>Both days as OAS full member: 25 GBP</li>}
           {get(data, "user.membership_status") === "MEMBER" && <li>One day as OAS full member: 15 GBP</li>}
+          </ul>
+        </>
+        }
 
+        {new Date() < new Date('2026-03-19') && <h4>Prices after 18/3/2026</h4>}
+        <ul>
+          <li>Both days: 50 GBP</li>
+          <li>One day: 30 GBP</li>
+          {get(data, "user.membership_status") === "MEMBER" && <li>Both days as OAS full member: 30 GBP</li>}
+          {get(data, "user.membership_status") === "MEMBER" && <li>One day as OAS full member: 20 GBP</li>}
         </ul>
       </div>
       <div style={{ flex: 1, display: 'flex', justifyContent: 'center', minWidth: '300px' }}>
