@@ -90,104 +90,104 @@ export const Llm = () => {
   }, [setMessages, whoIdObj])
 
   useEffect(() => {
+    if (!outletContext.phoenixSocket) return;
+
     let channel
-    (async () => {
-      const phoenixSocket = await outletContext.phoenixSocketPromise
-      channel = phoenixSocket.channel(`llm:${id}`, {})
-      let presence = new Presence(channel)
+    const phoenixSocket = outletContext.phoenixSocket
+    channel = phoenixSocket.channel(`llm:${id}`, {})
+    let presence = new Presence(channel)
 
-      let accData = "";
-      channel.on("delta", (data) => {
-        if (data.content) {
-          accData = accData + data.content
-        }
-        setIsStreamFinished(data.done)
-        if (data.status === "complete") {
-          pushMessage({
-            role: "assistent",
-            content: accData,
-            metadata: data.metadata
-          })
-          setDisableInput(false);
-          accData = ""
-        }
-        // setOutputKey(v4())
-        setOutput(accData)
-      })
-
-      channel.on("message", (message) => {
-        setDisableInput(false)
-        if (message.content?.length === 0) {
-          // Probably a tool call
-          return;
-        }
-        setMessages((messages) => {
-          const index = findIndex(messages, (mess) => mess.metadata.index === message.metadata.index)
-          let out;
-          if (message.metadata.index === undefined || index === -1) {
-
-            out = [message, ...messages]
-          } else {
-            out = messages
-          }
-
-          return out
+    let accData = "";
+    channel.on("delta", (data) => {
+      if (data.content) {
+        accData = accData + data.content
+      }
+      setIsStreamFinished(data.done)
+      if (data.status === "complete") {
+        pushMessage({
+          role: "assistent",
+          content: accData,
+          metadata: data.metadata
         })
+        setDisableInput(false);
+        accData = ""
+      }
+      // setOutputKey(v4())
+      setOutput(accData)
+    })
+
+    channel.on("message", (message) => {
+      setDisableInput(false)
+      if (message.content?.length === 0) {
+        // Probably a tool call
+        return;
+      }
+      setMessages((messages) => {
+        const index = findIndex(messages, (mess) => mess.metadata.index === message.metadata.index)
+        let out;
+        if (message.metadata.index === undefined || index === -1) {
+
+          out = [message, ...messages]
+        } else {
+          out = messages
+        }
+
+        return out
       })
-      channel.on("message_error", ({ error, prompt }) => {
-        setMessages((messages) => {
-          const index = findIndex(messages, (message) => message.content[0].content === prompt)
-          return messages.toSpliced(index, 1, {
-            content: [
-              {
-                content: error,
-              }
-            ],
-            role: "assistent"
-          })
-        })
-      })
-      channel.on("messages", ({messages, who_am_i, participants}) => {
-        setWhoIdObj(who_am_i)
-        setParticipants(participants)
-        setMessages(
-          messages.map((message) => {
-            return {
-              ...message,
-              ...(isMe(message, who_am_i) ? { isMe: true } : {})
+    })
+    channel.on("message_error", ({ error, prompt }) => {
+      setMessages((messages) => {
+        const index = findIndex(messages, (message) => message.content[0].content === prompt)
+        return messages.toSpliced(index, 1, {
+          content: [
+            {
+              content: error,
             }
-          })
-        )
-      })
-      channel.on("participants", ({participants}) => {
-
-        setParticipants(participants)
-      })
-      // from other clients
-      channel.on("prompt", (prompt) => {
-        setMessages((messages ) => [prompt, ...messages])
-      })
-
-      presence.onSync(() => {
-        setPresenceState(Object.entries(presence.state).map(([k, v]) => { return {presence_id: k, metas: v.metas} }))
-      })
-
-      channel
-        .join()
-        .receive("ok", (resp) => {
+          ],
+          role: "assistent"
         })
-        .receive("error", (resp) => {
-          console.error("error", resp)
+      })
+    })
+    channel.on("messages", ({messages, who_am_i, participants}) => {
+      setWhoIdObj(who_am_i)
+      setParticipants(participants)
+      setMessages(
+        messages.map((message) => {
+          return {
+            ...message,
+            ...(isMe(message, who_am_i) ? { isMe: true } : {})
+          }
         })
-      setChannel(channel)
-    })()
+      )
+    })
+    channel.on("participants", ({participants}) => {
+
+      setParticipants(participants)
+    })
+    // from other clients
+    channel.on("prompt", (prompt) => {
+      setMessages((messages ) => [prompt, ...messages])
+    })
+
+    presence.onSync(() => {
+      setPresenceState(Object.entries(presence.state).map(([k, v]) => { return {presence_id: k, metas: v.metas} }))
+    })
+
+    channel
+      .join()
+      .receive("ok", (resp) => {
+      })
+      .receive("error", (resp) => {
+        console.error("error", resp)
+      })
+    setChannel(channel)
 
 
     return () => {
       setChannel(undefined)
       channel && channel.leave()
     }
-  }, [id])
+  }, [id, outletContext.phoenixSocket])
 
   useEffect(() => {
     const meIndex = findIndex(participants, (participant) => participant.id == whoIdObj.presence_id)

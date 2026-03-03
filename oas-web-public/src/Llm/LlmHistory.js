@@ -51,47 +51,46 @@ export const LlmHistory = () => {
   const [outletContext] = useOutletContext();
 
   useEffect(() => {
+    if (!outletContext.phoenixSocket) return;
     let channel;
-    (async () => {
-      const phoenixSocket = await outletContext.phoenixSocketPromise
-      channel = phoenixSocket.channel(`history`, {})
-      const presence = new Presence(channel)
+    const phoenixSocket = outletContext.phoenixSocket
+    channel = phoenixSocket.channel(`history`, {})
+    const presence = new Presence(channel)
 
-      channel.on("history", ({history}) => {
-        setHistory(history);
+    channel.on("history", ({history}) => {
+      setHistory(history);
+    })
+    channel.on("new_history", (new_history) => {
+      setHistory((history) => {
+        const index = findIndex(history, ({id}) => id === new_history.id)
+
+        return [
+          new_history,
+          ...(index !== -1 ? history.toSpliced(index, 1 ) : history)
+        ]
       })
-      channel.on("new_history", (new_history) => {
-        setHistory((history) => {
-          const index = findIndex(history, ({id}) => id === new_history.id)
+    })
 
-          return [
-            new_history,
-            ...(index !== -1 ? history.toSpliced(index, 1 ) : history)
-          ]
-        })
+    presence.onSync(() => {
+      setPresence({
+        ...presence.state
       })
+    })
 
-      presence.onSync(() => {
-        setPresence({
-          ...presence.state
-        })
+    channel
+      .join()
+      .receive("ok", (resp) => {
       })
-
-      channel
-        .join()
-        .receive("ok", (resp) => {
-        })
-        .receive("error", (resp) => {
-          console.error("error", resp)
-        })
-      setChannel(channel)
-    })()
+      .receive("error", (resp) => {
+        console.error("error", resp)
+      })
+    setChannel(channel)
 
     return () => {
       setChannel(undefined)
       channel && channel.leave()
     }
-  }, [])
+  }, [outletContext.phoenixSocket])
 
   const mergeHistoryAndPresence = (history, presence) => {
     return map(history, (histor) => {

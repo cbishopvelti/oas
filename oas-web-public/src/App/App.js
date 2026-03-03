@@ -54,12 +54,23 @@ function App() {
 
   const enableBooking = get(data, 'public_config_config.enable_booking', false);
 
-  let [{ promise: phoenixSocketPromise, resolve: phoenixSocketResolve, reject: phoenixSocketReject }]
-    = useState(Promise.withResolvers());
+  const [phoenixSocket, setPhoenixSocket] = useState(undefined)
+
+  useEffect(() => {
+    setOutletContext((old) => ({
+      ...old,
+      phoenixSocket
+    }))
+  }, [phoenixSocket])
+
+  const refetchUser = () => {
+    refetch()
+  }
 
   const [outletContext, setOutletContext] = useState({
-    refetchUser: refetch,
-    phoenixSocketPromise
+    refetchUser: refetchUser,
+    // phoenixSocketPromise
+    phoenixSocket
   });
   useEffect(() => {
     refetch();
@@ -86,8 +97,6 @@ function App() {
   }
 
   const drawerWidth = 244;
-
-
 
   return (
     <div className="App">
@@ -153,7 +162,7 @@ function App() {
                 href={`${process.env.REACT_APP_SERVER_URL}/members/log_in?callback_path=${encodeURIComponent("/bookings")}&callback_domain=public_url`}>My Bookings</a>
             </MenuItem>}
 
-            {get(data, 'public_config_llm.chat_enabled', false) && <MenuChat phoenixSocketResolve={phoenixSocketResolve} phoenixSocketReject={phoenixSocketReject} />}
+            {get(data, 'public_config_llm.chat_enabled', false) && <MenuChat phoenixSocket={phoenixSocket} setPhoenixSocket={setPhoenixSocket} user={get(data, 'user')} />}
 
             {(get(data, 'user.is_admin') || get(data, 'user.is_reviewer')) && <MenuItem onClick={onClick} sx={{ padding: 0 }}>
               <a style={{
