@@ -9,6 +9,7 @@
   /* position: relative; */
   height: 100vh;
   position: sticky;
+  overflow-y: scroll;
   top: 0;
 }
 
