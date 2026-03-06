@@ -11,6 +11,7 @@ export const Sjef2026 = () => {
         name,
         membership_status
       }
+      public_bacs
     }
   `)
 
@@ -76,8 +77,11 @@ export const Sjef2026 = () => {
     <h3>Booking</h3>
     <p>
       Please fill out our <a href="/register">registration form</a>, then select the days you wish to attend from our <a href="/bookings">bookings page</a> (Ignore the amount of credits displayed as charged – it will be manually modified by an admin).
-       Then pay the expected price to the OAS bank account (you received the details at registration).
+       Then pay the expected price to the OAS bank account{get(data, "public_bacs") ? ":" : " (you will recieve the details after registering)."}
     </p>
+    {get(data, "public_bacs") && <pre>
+      {get(data, 'public_bacs', []).map((item, i) => <span key={i}>{item}<br/></ span>)}
+    </pre>}
     <p>
       Unfortunately, we will not be able to issue refunds in case of cancellations, but ticket swaps will be possible at individual request.
     </p>
