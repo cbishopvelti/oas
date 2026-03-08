@@ -141,8 +141,30 @@ defmodule OasWeb.Schema.SchemaCredits do
           [:amount]
         )
         |> Oas.Repo.update()
-        {:ok, %{sucess: true}}
+        {:ok, %{success: true}}
       end
     end
+
+    field :new_credit_amount, type: :success do
+      arg :member_id, non_null(:integer)
+      arg :attendance_id, non_null(:integer)
+      arg :amount, non_null(:string)
+      resolve fn _, args, _ ->
+        %{sign: -1} = amount = Decimal.new(args.amount)
+
+        %Oas.Credits.Credit{}
+        |> Ecto.Changeset.cast(%{
+          what: "Attendance (admin added)",
+          amount: amount,
+          when: Date.utc_today(),
+          who_member_id: args.member_id,
+          attendance_id: args.attendance_id
+        }, [:what, :amount, :when, :who_member_id, :attendance_id])
+        |> Oas.Repo.insert()
+
+        {:ok, %{success: true}}
+      end
+    end
+
   end
 end

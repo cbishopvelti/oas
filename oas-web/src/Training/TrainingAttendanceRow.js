@@ -61,19 +61,39 @@ export const TrainingAttendanceRow = ({
   const expires = canUndo(attendance, config);
 
   const [mutation] = useMutation(gql`
-    mutation($amount: String!, $id: Int!) {
+    mutation($amount: String!, $id: Int) {
       save_credit_amount(amount: $amount, id: $id) {
         success
       }
     }
   `)
-  const saveNewAmount = async () => {
-    await mutation({
-      variables: {
-        amount: newAmount,
-        id: attendance.credit.id
+
+  const [mutationNewCredits] = useMutation(gql`
+    mutation($amount: String!, $member_id: Int!, $attendance_id: Int!) {
+      new_credit_amount(amount: $amount, member_id: $member_id, attendance_id: $attendance_id) {
+        success
       }
-    })
+    }
+  `)
+
+  const saveNewAmount = async () => {
+    if (attendance.credit?.id) {
+      await mutation({
+        variables: {
+          amount: newAmount,
+          id: attendance.credit.id
+        }
+      })
+    } else {
+      console.log("006 attendance", attendance)
+      await mutationNewCredits({
+        variables: {
+          amount: newAmount,
+          member_id: attendance.member.id,
+          attendance_id: attendance.id
+        }
+      })
+    }
     setNewAmount(null);
     refetch()
   }
@@ -92,7 +112,7 @@ export const TrainingAttendanceRow = ({
           type="text"
           inputMode="numeric"
           pattern="[\-0-9\.]*"
-          value={isString(newAmount) ? newAmount : attendance?.credit?.amount}
+          value={(isString(newAmount) ? newAmount : attendance?.credit?.amount) || ""}
           onChange={(event) => {
             setNewAmount(event.target.value)
           }}
