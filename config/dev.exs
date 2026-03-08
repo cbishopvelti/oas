@@ -2,7 +2,8 @@ import Config
 
 config :oas, Oas.Repo,
   # database: "/home/chris/oas-dev-dbs/prod-backup-2026-01-07T17:10:06.700840Z.db",
-  database: "dbs/oas-2026-03-01T10_31_53.410897Z.db",
+  # database: "dbs/oas-2026-03-01T10_31_53.410897Z.db",
+  database: "dbs/oas-2026-03-08T08_30_38.455090Z.db",
   backup_database: "./dbs/sqlite-backup",
   log: false
 
