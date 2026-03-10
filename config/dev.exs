@@ -5,6 +5,7 @@ config :oas, Oas.Repo,
   # database: "dbs/oas-2026-03-01T10_31_53.410897Z.db",
   database: "dbs/oas-2026-03-08T08_30_38.455090Z.db",
   backup_database: "./dbs/sqlite-backup",
+  # log: :debug
   log: false
 
 config :oas, Oas.Repo.Replica1,

@@ -11,11 +11,11 @@ import { useMatches } from 'react-router-dom';
 
 
 export const MenuMember = () => {
-  
+
   const matches = useMatches();
 
 
-  const memberIds = ["members", "member-tokens", "member-id", "member-membership-periods", "member-transactions", "membership-period-members", "member-attendance"];
+  const memberIds = ["members", "member-tokens", "member-id", "member-membership-periods", "member-transactions", "membership-period-members", "member-attendance", "member-credits"];
   const newMemberIds = ['member']
   const allIds = [...memberIds, ...newMemberIds];
   const forceIds = [...newMemberIds];

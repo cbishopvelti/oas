@@ -11,6 +11,7 @@ import { AnnualReceivables } from './Annual/Receivables';
 import { AnnualExpenses } from './Annual/Expenses';
 import { AnnualLiabilities } from './Annual/Liabilities';
 import { AnnualBalance } from './Annual/Balance'
+import { VenueFilter } from '../Venue/VenueFilter';
 
 const onChange = ({formData, setFormData, key}) => (event) => {
   setFormData({
@@ -31,8 +32,12 @@ export const AnalysisAnnual = () => {
   })
 
   const { data, refetch } = useQuery(gql`
-    query ($from: String!, $to: String!, $transaction_tags: [TransactionTagArg]) {
-      analysis_annual(from: $from, to: $to, transaction_tags: $transaction_tags) {
+    query ($from: String!, $to: String!, $transaction_tags: [TransactionTagArg]
+      $venues: [VenueArg]
+    ) {
+      analysis_annual(from: $from, to: $to, transaction_tags: $transaction_tags,
+        venues: $venues
+      ) {
         annual_income {
           total,
           tagged {
@@ -43,7 +48,12 @@ export const AnalysisAnnual = () => {
         annual_receivables {
           tokens,
           credits,
-          total
+          total,
+          venues,
+          venues_tagged {
+            tag_names,
+            amount
+          }
         },
         annual_expenses {
           total,
@@ -53,6 +63,11 @@ export const AnalysisAnnual = () => {
           }
         },
         annual_liabilities {
+          venues_tagged {
+            tag_names,
+            amount
+          },
+          venues,
           credits,
           total
         },
@@ -97,6 +112,9 @@ export const AnalysisAnnual = () => {
       </FormControl>
       <FormControl sx={{minWidth: 256}}>
         <TransactionTags formData={filterData} setFormData={setFilterData} filterMode={true} />
+      </FormControl>
+      <FormControl sx={{ minWidth: 256 }}>
+        <VenueFilter formData={filterData} setFormData={setFilterData} />
       </FormControl>
     </Box>
 

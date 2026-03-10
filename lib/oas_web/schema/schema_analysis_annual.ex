@@ -4,6 +4,11 @@ defmodule OasWeb.Schema.SchemaAnalysisAnnual do
   use Absinthe.Schema.Notation
   require Logger
 
+  input_object :venue_arg do
+    field :id, non_null(:integer)
+    field :name, :string
+  end
+
   object :tagged do
     field :tag_names, list_of(:string)
     field :amount, :float
@@ -18,8 +23,12 @@ defmodule OasWeb.Schema.SchemaAnalysisAnnual do
     field :tokens, :float
     field :credits, :float
     field :total, :float
+    field :venues, :float
+    field :venues_tagged, list_of(:tagged)
   end
   object :annual_liabilities do
+    field :venues_tagged, list_of(:tagged)
+    field :venues, :float
     field :credits, :float
     field :total, :float
   end
@@ -42,26 +51,74 @@ defmodule OasWeb.Schema.SchemaAnalysisAnnual do
       resolve fn parent, _, _ ->
         credits = Oas.Credits.Credit.get_global_credits_to(Date.from_iso8601!(parent.to))
 
+        # Venues
+        {venues_total, venues} = Oas.Repo.all(Oas.Trainings.TrainingWhere)
+        |> Enum.map(fn training_where ->
+          {acc, _} = Oas.Trainings.TrainingWhere.get_account_liability(training_where.id)
+          {acc, training_where}
+        end)
+        |> Enum.filter(fn {amount, _} ->
+          Decimal.compare(amount, "0") == :gt
+        end)
+        |> Enum.reduce({Decimal.new("0"), %{}}, fn ({amount, venue}, {total, tagged}) ->
+          inter_tags = if (MapSet.member?(parent.venues, venue |> Map.take([:id, :name]) ) ) do
+            MapSet.new([venue.name])
+          else
+            MapSet.new()
+          end
+
+          {
+            Decimal.add(total, amount),
+            tagged |> Map.put(
+              inter_tags,
+              amount
+            )
+          }
+        end)
+        # EO Venues
+
         {:ok, %{
+          venues: venues_total |> Decimal.to_float(),
+          venues_tagged: venues
+            |> Map.to_list()
+            |> Enum.map(fn {k, v} ->
+              %{
+                tag_names: MapSet.to_list(k),
+                amount: Decimal.to_float(v) |> Float.round(2)
+              }
+            end),
           credits: credits,
-          total: credits
+          total: credits + (venues_total |> Decimal.to_float())
         }}
       end
     end
     field :annual_expenses, :annual_income do
       resolve fn parent, _, _ ->
         {total, tagged} = from(t in Oas.Transactions.Transaction,
-          preload: [:transaction_tags],
+          preload: [:transaction_tags, :training_where],
           where: t.when >= ^parent.from and t.when <= ^parent.to and t.amount < ^0
         )
         |> Oas.Repo.all()
         |> Enum.reduce({Decimal.new("0"), %{}}, fn (
-          %{amount: amount, transaction_tags: transaction_tags},
+          %{
+            amount: amount,
+            transaction_tags: transaction_tags,
+            training_where: training_where
+          },
           {total, tagged}
         ) ->
           amount = Decimal.abs(amount)
           my_tags = transaction_tags |> Enum.map(fn %{name: name} -> name end) |> MapSet.new()
+
+          # venues
           inter_tags = MapSet.intersection(my_tags, parent.transaction_tags)
+          inter_tags = if ( !is_nil(training_where) and MapSet.member?(parent.venues, training_where |> Map.take([:id, :name]) ) ) do
+            MapSet.put(inter_tags, training_where.name )
+          else
+            inter_tags
+          end
+          # oe venues
+
           {Decimal.add(total, amount),
             tagged |> Map.put(
               inter_tags,
@@ -101,10 +158,46 @@ defmodule OasWeb.Schema.SchemaAnalysisAnnual do
 
         total = Decimal.add(tokens, Decimal.from_float(credits))
 
+        # Venues
+        {venues_total, venues} = Oas.Repo.all(Oas.Trainings.TrainingWhere)
+        |> Enum.map(fn training_where ->
+          {acc, _} = Oas.Trainings.TrainingWhere.get_account_liability(training_where.id)
+          {acc, training_where}
+        end)
+        |> Enum.filter(fn {amount, _} ->
+          Decimal.compare(amount, "0") == :lt
+        end)
+        |> Enum.reduce({Decimal.new("0"), %{}}, fn ({amount, venue}, {total, tagged}) ->
+          amount = Decimal.mult(amount, "-1")
+          inter_tags = if (MapSet.member?(parent.venues, venue |> Map.take([:id, :name]) ) ) do
+            MapSet.new([venue.name])
+          else
+            MapSet.new()
+          end
+
+          {
+            Decimal.add(total, amount),
+            tagged |> Map.put(
+              inter_tags,
+              amount
+            )
+          }
+        end)
+        # EO Venues
+
         {:ok, %{
+          venues: venues_total |> Decimal.to_float(),
+          venues_tagged: venues
+            |> Map.to_list()
+            |> Enum.map(fn {k, v} ->
+              %{
+                tag_names: MapSet.to_list(k),
+                amount: Decimal.to_float(v) |> Float.round(2)
+              }
+            end),
           tokens: tokens |> Decimal.to_float(),
           credits: credits,
-          total: total |> Decimal.to_float()
+          total: Decimal.add(venues_total, total) |> Decimal.to_float()
         }}
       end
     end
@@ -242,12 +335,15 @@ defmodule OasWeb.Schema.SchemaAnalysisAnnual do
       arg :from, non_null(:string)
       arg :to, non_null(:string)
       arg :transaction_tags, list_of(:transaction_tag_arg)
+      arg :venues, list_of(:venue_arg)
       resolve fn _, %{from: from, to: to} = args, _ ->
         transaction_tags = Map.get(args, :transaction_tags, [])
+        venues = Map.get(args, :venues, [])
         {:ok, %{
           from: from,
           to: to,
-          transaction_tags: MapSet.new(transaction_tags |> Enum.map(fn %{name: name} -> name end))
+          transaction_tags: MapSet.new(transaction_tags |> Enum.map(fn %{name: name} -> name end)),
+          venues: MapSet.new(venues)
         }}
       end
     end

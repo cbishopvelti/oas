@@ -49,6 +49,7 @@ import { Things } from './Things/Things';
 import { ConfigContent } from './Config/ConfigContent'
 import { ConfigGocardless } from './Config/ConfigGocardless';
 import { PendingTransactions } from './Money/PendingTransactions';
+import { VenueAccount } from './Venue/VenueAccount';
 
 const router = createBrowserRouter([
   {
@@ -219,6 +220,11 @@ const router = createBrowserRouter([
         id: "venue-time",
         path: "venue-time/:training_where_id/:id?",
         element: <VenueTime />
+      },
+      {
+        id: "venue-account",
+        path: "venue-account/:training_where_id",
+        element: <VenueAccount />
       },
       {
         id: "things",
