@@ -6,8 +6,8 @@ defmodule Oas.Gocardless.GocardlessEcto do
 	  field :name, :string
 		field :type, Ecto.Enum, values: [:member, :training_where]
 
-    has_one :member, Oas.Members.Member, on_replace: :nilify
-    has_one :training_where, Oas.Trainings.TrainingWhere
+    has_one :member, Oas.Members.Member, on_replace: :nilify, foreign_key: :gocardless_id
+    has_one :training_where, Oas.Trainings.TrainingWhere, foreign_key: :gocardless_id
 
     timestamps()
   end

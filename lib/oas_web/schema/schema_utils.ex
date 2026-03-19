@@ -20,7 +20,7 @@ defmodule OasWeb.Schema.SchemaUtils do
           Map.get(changes, assoc, %{errors: []}).errors
 
         outError = errors
-        |> Enum.map(fn {key, {value, options}} = error ->
+        |> Enum.map(fn {key, {value, options}} ->
           string_key = case Keyword.has_key?(options, :id) do
             true -> Atom.to_string(key) <> "-" <> (Keyword.get(options, :id) |> to_string())
             false -> Atom.to_string(key)
@@ -35,7 +35,8 @@ defmodule OasWeb.Schema.SchemaUtils do
     end
   end
 
-  defp handle_errors_with_assoc_rec(%{errors: errors, changes: changes}, prefix \\ "") do
+  defp handle_errors_with_assoc_rec(changeset, prefix \\ "")
+  defp handle_errors_with_assoc_rec(%{errors: errors, changes: changes}, prefix) do
 
     changes_errors = changes
       |> Map.to_list()

@@ -67,6 +67,7 @@ defmodule OasWeb.Schema.SchemaTraining do
     field :limit, :integer
     field :exempt_membership_count, :boolean
     field :disable_warning_emails, :boolean
+    field :credit_amount, :string
   end
 
   object :training_queries do
@@ -168,8 +169,8 @@ defmodule OasWeb.Schema.SchemaTraining do
         |> Oas.Repo.get(args |> Map.get(:training_id))
         |> Oas.Repo.preload(:attendance)
 
-        out = Oas.Trainings.TrainingWhere.get_billing_amount(%{
-          training: training,
+        out = Oas.Trainings.TrainingWhere.get_billing_for_training(%{
+          venue_billing_type: training |> Map.get(:venue_billing_type) || training_where |> Map.get(:billing_type),
           training_where: training_where,
           start_time: args |> Map.get(:start_time),
           end_time: args |> Map.get(:end_time)
@@ -196,6 +197,7 @@ defmodule OasWeb.Schema.SchemaTraining do
       arg :limit, :integer
       arg :exempt_membership_count, :boolean
       arg :disable_warning_emails, :boolean
+      arg :credit_amount, :string
       resolve fn _, args, _ ->
         %{training_tags: training_tags, training_where: training_where} = args
 
@@ -232,7 +234,8 @@ defmodule OasWeb.Schema.SchemaTraining do
             :venue_billing_type, :venue_billing_config,
             :limit,
             :exempt_membership_count,
-            :disable_warning_emails
+            :disable_warning_emails,
+            :credit_amount
             ])
           |> Oas.Trainings.Training.validate_time()
           |> Oas.Trainings.Training.validate_billing()
@@ -260,6 +263,7 @@ defmodule OasWeb.Schema.SchemaTraining do
       arg :limit, :integer
       arg :exempt_membership_count, :boolean
       arg :disable_warning_emails, :boolean
+      arg :credit_amount, :string
       resolve fn _, args, _ ->
         when1 = Date.from_iso8601!(args.when)
         args = %{args | when: when1}
@@ -285,7 +289,8 @@ defmodule OasWeb.Schema.SchemaTraining do
             :venue_billing_type, :venue_billing_config,
             :limit,
             :exempt_membership_count,
-            :disable_warning_emails
+            :disable_warning_emails,
+            :credit_amount
           ], empty_values: [[], nil] ++ Ecto.Changeset.empty_values())
           |> Oas.Trainings.Training.validate_time()
           |> Oas.Trainings.Training.validate_billing()

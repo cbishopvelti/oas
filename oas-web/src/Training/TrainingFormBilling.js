@@ -64,7 +64,7 @@ export const TrainingFormBilling = ({
     }
   }
   useEffect(() => { // venue_billing_type changed to null, so billing enabled false
-    if (get(formData, "venue_billing_type") === null) {
+    if (get(formData, "venue_billing_type") === null || get(formData, "venue_billing_type") === undefined) {
       setBillingEnabled(false)
     } else {
       setBillingEnabled(true)

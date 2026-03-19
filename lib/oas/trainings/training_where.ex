@@ -131,7 +131,7 @@ defmodule Oas.Trainings.TrainingWhere do
     both = (trainings ++ transactions)
     |> Enum.sort_by(fn %{when: when1} -> when1 end, :asc)
 
-    out = both |> Enum.reduce({Decimal.new("0"), []}, fn %Oas.Transactions.Transaction{} = trans, {total, rows} ->
+    out = both |> Enum.reduce({Decimal.new("0"), []}, fn %Oas.Transactions.Transaction{} = trans, {total, _rows} ->
         amount = trans.amount
         acc_amount = Decimal.add(amount, total)
         {acc_amount, [{acc_amount, amount, %{

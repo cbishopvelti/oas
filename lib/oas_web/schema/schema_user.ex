@@ -184,10 +184,9 @@ defmodule OasWeb.Schema.SchemaUser do
   object :user_subscriptions do
     field :user_attendance_attendance, :success do
       config fn _args, context ->
-        # IO.inspect(context, label: "509 context")
         topic = context |> Map.get(:context) |> Map.get(:current_member) |> Map.get(:id)
 
-        {:ok, topic: [context |> Map.get(:context) |> Map.get(:current_member) |> Map.get(:id), "global"]}
+        {:ok, topic: [topic, "global"]}
       end
 
       trigger [

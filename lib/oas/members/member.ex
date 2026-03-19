@@ -29,7 +29,7 @@ defmodule Oas.Members.Member do
     has_many :tokens, Oas.Tokens.Token
     has_many :transactions, Oas.Transactions.Transaction, foreign_key: :who_member_id
 
-    belongs_to :gocardless, Oas.Gocardless.GocardlessEcto, on_replace: :delete
+    belongs_to :gocardless, Oas.Gocardless.GocardlessEcto, on_replace: :delete, foreign_key: :gocardless_id
 
     timestamps()
   end

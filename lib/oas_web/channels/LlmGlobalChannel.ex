@@ -107,7 +107,7 @@ defmodule OasWeb.Channels.LlmGlobalChannel do
           ),
           order_by: [desc: c.updated_at, asc: mj.id]
         ) |> Oas.Repo.all()
-        |> Enum.map(fn %{topic: topic, chat: chat, members: members} ->
+        |> Enum.map(fn %{topic: topic, chat: _chat, members: members} ->
           first_member_not_us = members |> Enum.drop_while(fn %{id: id} -> id == member.id end) |> List.first() || %{
             name: "Alone"
           }

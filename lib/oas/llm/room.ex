@@ -5,9 +5,9 @@ defmodule Oas.Llm.Room do
   use GenServer
 
 
-  defp truncate() do
-    Oas.Repo.delete_all(Oas.Llm.Chat)
-  end
+  # defp truncate() do
+  #   Oas.Repo.delete_all(Oas.Llm.Chat)
+  # end
 
   def start(topic, {pid, channel_context}) do
     name = {:via, Registry, {OasWeb.Channels.LlmRegistry, topic}}
@@ -234,7 +234,7 @@ defmodule Oas.Llm.Room do
   def handle_info({_ref, {:llm_client_async_start, _pid}}, state) do
     {:noreply, state}
   end
-  def handle_info(message, state) do
+  def handle_info(_message, state) do
     {:noreply, state}
   end
 

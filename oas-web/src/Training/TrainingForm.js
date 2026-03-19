@@ -27,7 +27,8 @@ export const TrainingForm = ({
   const { data: trainingWhere } = useQuery(gql`
     query($id: Int!) {
       training_where(id: $id) {
-        limit
+        limit,
+        credit_amount
       }
     }
   `, {
@@ -44,6 +45,7 @@ export const TrainingForm = ({
         booking_offset,
         end_time,
         limit
+        credit_amount
       }
     }
   `, {
@@ -62,6 +64,10 @@ export const TrainingForm = ({
       limit: data?.training?.limit ||
         trainingWhereTime?.training_where_time_by_date?.limit ||
         trainingWhere?.training_where?.limit ||
+        null,
+      credit_amount: data?.training?.credit_amount ||
+        trainingWhereTime?.training_where_time_by_date?.credit_amount ||
+        trainingWhere?.training_where?.credit_amount ||
         null
     }))
   }, [trainingWhereTime, trainingWhere])
@@ -108,7 +114,8 @@ export const TrainingForm = ({
       $venue_billing_config: Json,
       $limit: Int,
       $exempt_membership_count: Boolean,
-      $disable_warning_emails: Boolean
+      $disable_warning_emails: Boolean,
+      $credit_amount: String
     ) {
       insert_training (
         when: $when,
@@ -123,7 +130,8 @@ export const TrainingForm = ({
         venue_billing_config: $venue_billing_config,
         limit: $limit,
         exempt_membership_count: $exempt_membership_count,
-        disable_warning_emails: $disable_warning_emails
+        disable_warning_emails: $disable_warning_emails,
+        credit_amount: $credit_amount
       ) {
         id
       }
@@ -136,7 +144,8 @@ export const TrainingForm = ({
       $venue_billing_type: BillingType, $venue_billing_config: Json,
       $limit: Int,
       $exempt_membership_count: Boolean,
-      $disable_warning_emails: Boolean
+      $disable_warning_emails: Boolean,
+      $credit_amount: String
     ){
       update_training (
         when: $when,
@@ -152,7 +161,8 @@ export const TrainingForm = ({
         venue_billing_config: $venue_billing_config,
         limit: $limit,
         exempt_membership_count: $exempt_membership_count,
-        disable_warning_emails: $disable_warning_emails
+        disable_warning_emails: $disable_warning_emails,
+        credit_amount: $credit_amount
       ) {
         id
       }
@@ -256,6 +266,25 @@ export const TrainingForm = ({
           }
           error={has(errors, "notes")}
           helperText={get(errors, "notes", []).join(" ")}
+          />
+      </FormControl>
+
+      <FormControl fullWidth sx={{mt: 2, mb: 2}}>
+        <TextField
+          required
+          id="credit-amount"
+          label="Credit amount"
+          value={get(formData, "credit_amount", '')}
+          onChange={
+            onChange({formData, setFormData, key: "credit_amount"})
+          }
+          InputLabelProps={{
+            shrink: true,
+          }}
+          inputMode="numeric"
+          pattern="[0-9\.]*"
+          error={has(errors, "credit_amount")}
+          helperText={get(errors, "credit_amount", []).join(" ")}
           />
       </FormControl>
 

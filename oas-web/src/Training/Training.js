@@ -59,7 +59,8 @@ export const Training = () => {
         attendance,
         start_time,
         booking_offset,
-        end_time
+        end_time,
+        credit_amount
       }
     }
   `, {
