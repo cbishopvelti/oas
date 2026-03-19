@@ -13,13 +13,29 @@ defmodule OasWeb.Schema.SchemaTraining do
     field :limit, :integer
   end
 
+  enum :billing_type do
+    value :per_attendee, as: :per_attendee
+    value :per_hour, as: :per_hour
+    value :fixed, as: :fixed
+  end
+
   object :training_where do
     field :id, :integer
     field :name, :string
     field :credit_amount, :string
+    field :gocardless_name, :string
+    field :billing_type, :billing_type
+    field :billing_config, :json
     field :limit, :integer
     field :trainings, list_of(:training)
     field :training_where_time, list_of(:training_where_time)
+    field :account_liability, :string do
+      resolve fn %{id: id}, _, _ ->
+        {total, _} = Oas.Trainings.TrainingWhere.get_account_liability(id)
+
+        {:ok, total}
+      end
+    end
   end
   input_object :training_where_arg do
     field :id, :integer
@@ -46,6 +62,8 @@ defmodule OasWeb.Schema.SchemaTraining do
     field :start_time, :string
     field :booking_offset, :string
     field :end_time, :string
+    field :venue_billing_type, :billing_type
+    field :venue_billing_config, :json
     field :limit, :integer
     field :exempt_membership_count, :boolean
     field :disable_warning_emails, :boolean
@@ -67,6 +85,11 @@ defmodule OasWeb.Schema.SchemaTraining do
         |> Oas.Repo.preload(:attendance)
         |> (&(%{ &1 | attendance: length(&1.attendance) })).()
 
+        result = case result.training_where |> Oas.Repo.preload(:gocardless) do
+          nil -> result
+          gc -> result |> Map.put(:gocardless_name, gc.name)
+        end
+
         {:ok, result}
       end
     end
@@ -83,7 +106,7 @@ defmodule OasWeb.Schema.SchemaTraining do
       }, _ ->
 
         results = from(t in Oas.Trainings.Training,
-          preload: [:training_where],
+          preload: [training_where: [:gocardless]],
           left_join: a in assoc(t, :attendance),
           group_by: [t.id],
           select: %{training: t, attendance: count(a.id)},
@@ -94,7 +117,14 @@ defmodule OasWeb.Schema.SchemaTraining do
             t.when >= ^from and t.when <= ^to and
             ((0 == ^length(training_where)) or  w.id in ^(training_where |> Enum.map(fn %{id: id} -> id end)))
         ) |> Oas.Repo.all
-        |> Enum.map(fn %{training: t, attendance: a} -> %{t | attendance: a} end)
+        |> Enum.map(fn %{training: t, attendance: a} ->
+          t = case t.training_where.gocardless do
+            nil -> t
+            gc -> t |> Map.put(:gocardless_name, gc.name)
+          end
+
+          %{t | attendance: a}
+        end)
 
         {:ok, results}
       end
@@ -109,12 +139,43 @@ defmodule OasWeb.Schema.SchemaTraining do
       resolve fn _,_,_ ->
         result = from(w in Oas.Trainings.TrainingWhere,
           select: w,
-          preload: [:trainings],
+          preload: [:trainings, :gocardless],
           order_by: [desc: w.id]
         )
         |> Oas.Repo.all()
+        |> Enum.map(fn training_where ->
+          case training_where.gocardless do
+            nil -> training_where
+            gc -> training_where |> Map.put(:gocardless_name, gc.name)
+          end
+        end)
 
         {:ok, result}
+      end
+    end
+    field :training_billing_amount, :string do
+      arg :training_id, :integer
+      arg :training_where_id, non_null(:integer)
+      arg :start_time, :string
+      arg :end_time, :string
+      resolve fn _, args, _ ->
+
+
+        training_where = Oas.Trainings.TrainingWhere
+        |> Oas.Repo.get!(args |> Map.get(:training_where_id))
+
+        training = Oas.Trainings.Training
+        |> Oas.Repo.get(args |> Map.get(:training_id))
+        |> Oas.Repo.preload(:attendance)
+
+        out = Oas.Trainings.TrainingWhere.get_billing_amount(%{
+          training: training,
+          training_where: training_where,
+          start_time: args |> Map.get(:start_time),
+          end_time: args |> Map.get(:end_time)
+        })
+
+        {:ok, out}
       end
     end
   end
@@ -130,6 +191,8 @@ defmodule OasWeb.Schema.SchemaTraining do
       arg :start_time, :string
       arg :booking_offset, :string
       arg :end_time, :string
+      arg :venue_billing_type, :billing_type, default_value: nil
+      arg :venue_billing_config, :json, default_value: nil
       arg :limit, :integer
       arg :exempt_membership_count, :boolean
       arg :disable_warning_emails, :boolean
@@ -156,13 +219,23 @@ defmodule OasWeb.Schema.SchemaTraining do
 
         when1 = Date.from_iso8601!(args.when)
         args = %{args | when: when1 }
+        |> case do
+          %{venue_billing_enabled: true} = args ->
+            args |> Map.put(:venue_billing_config, Map.get(training_where, :billing_config))
+          _ ->
+            args
+        end
 
         %Oas.Trainings.Training{}
           |> Ecto.Changeset.cast(args, [:when, :notes, :commitment,
-            :start_time, :booking_offset, :end_time, :limit,
-            :exempt_membership_count, :disable_warning_emails
+            :start_time, :booking_offset, :end_time,
+            :venue_billing_type, :venue_billing_config,
+            :limit,
+            :exempt_membership_count,
+            :disable_warning_emails
             ])
           |> Oas.Trainings.Training.validate_time()
+          |> Oas.Trainings.Training.validate_billing()
           |> Ecto.Changeset.put_assoc(
             :training_tags,
             training_tags
@@ -182,6 +255,8 @@ defmodule OasWeb.Schema.SchemaTraining do
       arg :start_time, :string
       arg :booking_offset, :string
       arg :end_time, :string
+      arg :venue_billing_type, :billing_type, default_value: nil
+      arg :venue_billing_config, :json, default_value: nil
       arg :limit, :integer
       arg :exempt_membership_count, :boolean
       arg :disable_warning_emails, :boolean
@@ -189,7 +264,8 @@ defmodule OasWeb.Schema.SchemaTraining do
         when1 = Date.from_iso8601!(args.when)
         args = %{args | when: when1}
         training = Oas.Repo.get!(Oas.Trainings.Training, args.id)
-          |> Oas.Repo.preload(:training_tags) |> Oas.Repo.preload(:training_where)
+          |> Oas.Repo.preload(:training_tags)
+          |> Oas.Repo.preload(:training_where)
 
         %{training_tags: training_tags, training_where: training_where} = args
         training_tags = training_tags
@@ -205,10 +281,14 @@ defmodule OasWeb.Schema.SchemaTraining do
 
         toSave = training
           |> Ecto.Changeset.cast(args, [:when, :notes, :commitment,
-          :start_time, :booking_offset, :end_time, :limit,
-          :exempt_membership_count, :disable_warning_emails
+            :start_time, :booking_offset, :end_time,
+            :venue_billing_type, :venue_billing_config,
+            :limit,
+            :exempt_membership_count,
+            :disable_warning_emails
           ], empty_values: [[], nil] ++ Ecto.Changeset.empty_values())
           |> Oas.Trainings.Training.validate_time()
+          |> Oas.Trainings.Training.validate_billing()
           |> Ecto.Changeset.put_assoc(
             :training_tags,
             training_tags
@@ -262,7 +342,6 @@ defmodule OasWeb.Schema.SchemaTraining do
               )) and w.id == ^training.training_where.id
             )  |> Oas.Repo.delete_all
         end
-
 
         # EO deleting
         out

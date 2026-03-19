@@ -10,7 +10,7 @@ const filter = createFilterOptions();
 
 const canAutoTag = (formData, tagName) => {
   if (get(formData, "who") && !get(formData, "who_member_id") &&
-    !includes(["Gocardless", "Credits", "Tokens", "Membership"], tagName)
+    !includes(["Gocardless", "Credits", "Tokens", "Membership", "Venue"], tagName)
   ) {
     return true
   }

@@ -16,7 +16,6 @@ defmodule Oas.Members.Member do
     field :is_reviewer, :boolean
     field :is_active, :boolean
     field :bank_account_name, :string
-    field :gocardless_name, :string
     field :honorary_member, :boolean
     has_many :attendance, Oas.Trainings.Attendance
 
@@ -29,6 +28,8 @@ defmodule Oas.Members.Member do
 
     has_many :tokens, Oas.Tokens.Token
     has_many :transactions, Oas.Transactions.Transaction, foreign_key: :who_member_id
+
+    belongs_to :gocardless, Oas.Gocardless.GocardlessEcto, on_replace: :delete
 
     timestamps()
   end
@@ -119,8 +120,8 @@ defmodule Oas.Members.Member do
     ])
     |> validate_required([:name])
     |> validate_email()
-    |> unique_constraint(:gocardless_name)
     |> unique_constraint(:bank_account_name)
+    |> unique_constraint(:name, name: :gocardless_name_index)
   end
 
   def validate_email(changeset) do
