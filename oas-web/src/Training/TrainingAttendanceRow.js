@@ -61,7 +61,7 @@ export const TrainingAttendanceRow = ({
   const expires = canUndo(attendance, config);
 
   const [mutation] = useMutation(gql`
-    mutation($amount: String!, $id: Int) {
+    mutation($amount: String!, $id: Int!) {
       save_credit_amount(amount: $amount, id: $id) {
         success
       }
@@ -100,9 +100,9 @@ export const TrainingAttendanceRow = ({
 
   return <>
     <StyledTableRow className={`${attendance.errors && 'errors'} ${attendance.warnings && 'warnings'}`} key={attendance.id}>
-      <TableCell>{attendance.member.id}</TableCell>
       <TableCell>{attendance.id}</TableCell>
       <TableCell>{attendance.member.name}</TableCell>
+      <TableCell>{attendance.member.email}</TableCell>
       {/* <TableCell>{attendance.member.email}</TableCell> */}
       <TableCell>{attendance.member.member_status}</TableCell>
       <TableCell sx={{...(attendance.member.token_count < 0 ? {color: "red"} : {})}}>{attendance.member.token_count}</TableCell>
