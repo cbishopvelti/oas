@@ -11,7 +11,7 @@ defmodule Oas.Trainings.TrainingWhere do
 
     field :billing_type, Ecto.Enum, values: [:per_hour, :per_attendee, :fixed]
     field :billing_config, :map
-    belongs_to :gocardless, Oas.Gocardless.GocardlessEcto
+    belongs_to :gocardless, Oas.Gocardless.GocardlessEcto, foreign_key: :gocardless_id
     has_many :transactions, Oas.Transactions.Transaction
 
     has_many :trainings, Oas.Trainings.Training, foreign_key: :training_where_id

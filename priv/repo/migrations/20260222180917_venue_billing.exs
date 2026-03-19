@@ -26,6 +26,7 @@ defmodule Oas.Repo.Migrations.VenueBilling do
       end
 
       alter table(:trainings) do
+        add :credit_amount, :decimal, null: true
         add :venue_billing_type, :string, null: true
         add :venue_billing_config, :map, null: true, default: nil
       end
@@ -83,6 +84,7 @@ defmodule Oas.Repo.Migrations.VenueBilling do
       drop table(:transactions_training_wheres)
 
       alter table(:trainings) do
+        remove :credit_amount
         remove :venue_billing_type
         remove :venue_billing_config
       end
