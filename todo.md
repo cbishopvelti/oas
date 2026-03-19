@@ -148,4 +148,14 @@ Create page for Sjefs visit. ✅
 Disable warning emails option for specific trainings. ✅
 Fix the registration disclaimer.
 Check booking search params on the training-venue branch ✅
-Allow trainings to override amount
+Allow trainings to override amount. ✅
+
+Test
+
+### Pricing
+
+Create Pricing table
+pricing UI
+Create pricing instance (with is_active)
+Add pricing_instance_id to events
+Display price in public UI.
