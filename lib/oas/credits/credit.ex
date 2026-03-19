@@ -266,7 +266,7 @@ defmodule Oas.Credits.Credit do
         from,
         member,
         amount,
-        opts = %{now: now, disable_warning_emails: disable_warning_emails} \\ %{
+        opts = %{now: now} \\ %{
           now: Date.utc_today(),
           changeset: false,
           attendance: nil,
@@ -276,6 +276,8 @@ defmodule Oas.Credits.Credit do
     if Decimal.positive?(amount) do
       raise "Oas.Credits.Credit.deduct_credit amount is positive"
     end
+
+    disable_warning_emails = Map.get(opts, :disable_warning_emails, false)
 
     {from, name} =
       case from do

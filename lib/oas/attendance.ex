@@ -241,13 +241,13 @@ defmodule Oas.Attendance do
     ) |> Oas.Repo.one
 
     if (Kernel.and(debtAttendances > 0, creditTokens > 0)) do
-      raise "There are both debtAttendances and creditTokens. This should not happen"
+      raise "There are both debtAttendances and creditTokens for #{member_id}. This should not happen"
     end
 
     case {debtAttendances, creditTokens} do
       {x, 0} -> -x
       {0, x} -> x
-      # {x, y} -> -x
+      {x, y} -> y - x
     end
   end
 

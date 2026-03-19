@@ -15,8 +15,8 @@ import { Socket as PhoenixSocket, Presence } from "phoenix";
 import { usePrevious } from './utils';
 
 export const MenuChat = ({
-  phoenixSocketResolve,
-  phoenixSocketReject
+  setPhoenixSocket: setPhoenixSocketState,
+  user
 }) => {
 
   const matches = useMatches();
@@ -32,15 +32,14 @@ export const MenuChat = ({
   const forceActive = some(matches, ({id}) => includes(forceIds, id));
   const [open, setOpen] = useState(active);
 
-  // const [phoenixSocket, setPhoenixSocket] = useState(undefined);
-
+  // const [phoenixSocketState, setPhoenixSocketState] = useState(undefined);
 
   useEffect(() => {
     let isActive = true;
 
     const phoenixSocket = new PhoenixSocket(`${process.env["REACT_APP_SERVER_URL"].replace(/^http/, "ws")}/public_socket`, {
-      reconnectAfterMs: (() => 120_000),
-     	rejoinAfterMs: (() => 120_000),
+      // reconnectAfterMs: (() => 120_000),
+     	// rejoinAfterMs: (() => 120_000),
       params: () => {
         if (Cookies.get("oas_key")) {
           return { cookie: Cookies.get("oas_key") };
@@ -50,15 +49,16 @@ export const MenuChat = ({
       }
     });
     phoenixSocket.connect()
+    setPhoenixSocketState(phoenixSocket)
 
     phoenixSocket.onError(() => {
       if (!isActive) return;
-      phoenixSocketReject(new Error("Failed to open socket"))
+      console.error("Failed to open socket")
+      // phoenixSocketReject(new Error("Failed to open socket"))
     })
     phoenixSocket.onOpen(() => {
       if (!isActive) return;
       console.log("phoenixSocket onOpen")
-      phoenixSocketResolve(phoenixSocket)
     })
 
     let channel = phoenixSocket.channel(`global`, {})
@@ -87,7 +87,7 @@ export const MenuChat = ({
         console.warn("003 phoenixSocket disconnect")
       });
     }
-  }, [])
+  }, [user])
 
   useEffect(() => {
     if (matches === prevMatches) { // Same route, do nothing

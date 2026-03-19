@@ -88,7 +88,7 @@ defmodule OasWeb.Schema.SchemaToken do
     end
 
     field :public_bacs, type: list_of(:string) do
-      arg :email, non_null(:string)
+      arg :email, :string
       resolve fn _, %{email: email}, _ ->
 
         member = from(
@@ -102,6 +102,12 @@ defmodule OasWeb.Schema.SchemaToken do
             config = from(cc in Oas.Config.Config, select: cc) |> Oas.Repo.one
             {:ok, String.split(config.bacs || "", "\n", trim: true)}
         end
+
+        _, _, %{context: %{current_member: _current_member}} ->
+          config = from(cc in Oas.Config.Config, select: cc) |> Oas.Repo.one
+          {:ok, String.split(config.bacs || "", "\n", trim: true)}
+        _, _, _ ->
+          {:error, "Member not found"}
       end
     end
 

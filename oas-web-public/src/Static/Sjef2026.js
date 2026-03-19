@@ -11,6 +11,7 @@ export const Sjef2026 = () => {
         name,
         membership_status
       }
+      public_bacs
     }
   `)
 
@@ -50,12 +51,22 @@ export const Sjef2026 = () => {
           <li>Social</li>
         </ul>
         <h3>Tickets</h3>
+        {new Date() < new Date('2026-03-19')  && <><h4>Earlybird (purchased on or before 18/3/2026)</h4>
         <ul>
           <li>Both days: 40 GBP</li>
           <li>One day: 25 GBP</li>
           {get(data, "user.membership_status") === "MEMBER" && <li>Both days as OAS full member: 25 GBP</li>}
           {get(data, "user.membership_status") === "MEMBER" && <li>One day as OAS full member: 15 GBP</li>}
+          </ul>
+        </>
+        }
 
+        {new Date() < new Date('2026-03-19') && <h4>Prices after 18/3/2026</h4>}
+        <ul>
+          <li>Both days: 50 GBP</li>
+          <li>One day: 30 GBP</li>
+          {get(data, "user.membership_status") === "MEMBER" && <li>Both days as OAS full member: 30 GBP</li>}
+          {get(data, "user.membership_status") === "MEMBER" && <li>One day as OAS full member: 20 GBP</li>}
         </ul>
       </div>
       <div style={{ flex: 1, display: 'flex', justifyContent: 'center', minWidth: '300px' }}>
@@ -66,8 +77,11 @@ export const Sjef2026 = () => {
     <h3>Booking</h3>
     <p>
       Please fill out our <a href="/register">registration form</a>, then select the days you wish to attend from our <a href="/bookings">bookings page</a> (Ignore the amount of credits displayed as charged – it will be manually modified by an admin).
-       Then pay the expected price to the OAS bank account (you received the details at registration).
+       Then pay the expected price to the OAS bank account{get(data, "public_bacs") ? ":" : " (you will recieve the details after registering)."}
     </p>
+    {get(data, "public_bacs") && <pre>
+      {get(data, 'public_bacs', []).map((item, i) => <span key={i}>{item}<br/></ span>)}
+    </pre>}
     <p>
       Unfortunately, we will not be able to issue refunds in case of cancellations, but ticket swaps will be possible at individual request.
     </p>

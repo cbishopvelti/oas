@@ -33,22 +33,34 @@ defmodule OasWeb.Channels.LlmGlobalChannel do
     case socket.assigns |> Map.get(:current_member) do
       nil -> # they're anonymous, so no notifications
         :ok
-      %{is_admin: true} = member -> # They're an admin, so get all single chats I haven't seen
+      %{is_admin: true} = member -> # We're an admin, so get all single chats I haven't seen
 
+        # 1. Seen query for the current member
         seen_query = from(s in Oas.Llm.ChatSeen, where: s.member_id == ^member.id)
 
         # 2. Count of members per chat
         member_count_query = from(mj in Oas.Llm.ChatMembers,
-            group_by: mj.chat_id,
-            select: %{chat_id: mj.chat_id, count: count(mj.member_id)})
+          group_by: mj.chat_id,
+          select: %{chat_id: mj.chat_id, count: count(mj.member_id)}
+        )
 
+        # 3. Query to find the latest time any admin has seen a chat
+        member_schema = member.__struct__ # Gets the underlying Member schema dynamically
+        admin_seen_query = from(s in Oas.Llm.ChatSeen,
+          join: m in ^member_schema, on: s.member_id == m.id,
+          where: m.is_admin == true,
+          group_by: s.chat_id,
+          select: %{chat_id: s.chat_id, last_seen_at: max(s.updated_at)}
+        )
+
+        # 4. Main query
         unread = from(c in Oas.Llm.Chat,
           left_join: s in subquery(seen_query), on: s.chat_id == c.id,
           left_join: mc in subquery(member_count_query), on: mc.chat_id == c.id,
+          left_join: admin_seen in subquery(admin_seen_query), on: admin_seen.chat_id == c.id, # Join the admin subquery
           join: mj in assoc(c, :chat_members),
           join: m in assoc(mj, :member),
           preload: [:chat_seen, members: m],
-          where: true,
           where: (
             (coalesce(mc.count, 0) == 1 or m.id == ^member.id) # Only one member or we're in the chat
             and (
@@ -58,6 +70,9 @@ defmodule OasWeb.Channels.LlmGlobalChannel do
                   fragment("coalesce(json_extract(?, '$.messages[0].metadata.member.id'), -1)", c.chat) != ^member.id
                 )
               )
+            )
+            and ( # Filter out if an admin has seen the latest version
+              is_nil(admin_seen.chat_id) or admin_seen.last_seen_at < c.updated_at
             )
           ),
           order_by: [desc: c.updated_at, asc: mj.id]
