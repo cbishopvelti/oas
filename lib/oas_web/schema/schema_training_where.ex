@@ -100,7 +100,6 @@ defmodule OasWeb.Schema.SchemaTrainingWhere do
 
         training_where
         |> Oas.Trainings.TrainingWhere.changeset(args)
-        |> dbg
         |> (&(case &1 do
           %{data: %{id: nil}} -> Oas.Repo.insert(&1)
           %{data: %{id: _}} -> Oas.Repo.update(&1)
