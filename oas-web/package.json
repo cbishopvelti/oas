@@ -19,6 +19,7 @@
     "apexcharts": "^4.5.0",
     "apollo-absinthe-upload-link": "^1.7.0",
     "apollo-upload-client": "^17.0.0",
+    "blockly": "^12.5.0",
     "graphql": "^15.0.2",
     "graphql-ws": "^5.16.2",
     "js-cookie": "^3.0.5",
@@ -30,8 +31,8 @@
     "react-apexcharts": "^1.4.0",
     "react-app-rewired": "^2.2.1",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^6.30.2",
     "react-qr-code": "^2.0.18",
+    "react-router-dom": "^6.30.2",
     "react-scripts": "5.0.1",
     "web-vitals": "^2.1.4"
   },

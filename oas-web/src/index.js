@@ -50,6 +50,8 @@ import { ConfigContent } from './Config/ConfigContent'
 import { ConfigGocardless } from './Config/ConfigGocardless';
 import { PendingTransactions } from './Money/PendingTransactions';
 import { VenueAccount } from './Venue/VenueAccount';
+import { Pricing } from './Pricing/Pricing';
+import { PricingInstance } from './Pricing/PricingInstance';
 
 const router = createBrowserRouter([
   {
@@ -238,6 +240,22 @@ const router = createBrowserRouter([
         id: "thing-id",
         path: "thing/:id",
         element: <Thing />
+      }, {
+        id: "pricing",
+        path: "pricing",
+        element: <Pricing />
+      }, {
+        id: "pricing-id",
+        path: "pricing/:id",
+        element: <Pricing />
+      }, {
+        id: "pricing-instance",
+        path: "pricing-instance",
+        element: <PricingInstance />
+      }, {
+        id: "pricing-instance-id",
+        path: "pricing-instance/:id",
+        element: <PricingInstance />
       }
     ],
   },

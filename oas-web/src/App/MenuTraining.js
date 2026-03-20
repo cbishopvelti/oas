@@ -11,13 +11,14 @@ import { useMatches } from 'react-router-dom';
 
 
 export const MenuTraining = () => {
-  
+
   const matches = useMatches();
 
-  const trainingIds = ["training-id", "trainings", "member-attendance"];
+  const trainingIds = ["training-id", "trainings", "member-attendance", "pricing", "pricing-id", "pricing-instance", "pricing-instance-id"];
   const newTrainingIds = ['training'];
+  const pricingIds = ["pricing", "pricing-id"]
   const allIds = [...trainingIds, ...newTrainingIds];
-  const forceIds = [...newTrainingIds];
+  const forceIds = [...newTrainingIds, ...pricingIds];
 
   const active = some(matches, ({id}) => includes(allIds, id));
   const forceActive = some(matches, ({id}) => includes(forceIds, id));
@@ -44,6 +45,7 @@ export const MenuTraining = () => {
     return false;
   }
 
+
   return <>
     <MenuItem
       component={CustomLink(trainingIds)} end to={`/trainings`}>
@@ -63,6 +65,40 @@ export const MenuTraining = () => {
         >
         <ListItemText>New Training</ListItemText>
       </MenuItem>
+
+      <MenuItem
+        sx={{ml:2}}
+        component={CustomLink([ "pricing-id"])}
+        to={`/pricings`}
+        end
+        >
+          <ListItemText>Pricings</ListItemText>
+      </MenuItem>
+      <MenuItem
+        sx={{ml:2}}
+        component={NavLink}
+        to={`/pricing`}
+        end
+        >
+          <ListItemText>New Pricing</ListItemText>
+      </MenuItem>
+
+      <MenuItem
+        sx={{ml: 2}}
+        component={CustomLink(["pricing-instance-id"])}
+        to={`/pricing-instances`}
+        end>
+          <ListItemText>Pricing Instances</ListItemText>
+      </MenuItem>
+      <MenuItem
+        sx={{ml: 2}}
+        component={NavLink}
+        to={"/pricing-instance"}
+        end
+        >
+        <ListItemText>New Pricing Instance</ListItemText>
+      </MenuItem>
+
     </Collapse>
   </>
 }

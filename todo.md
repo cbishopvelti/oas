@@ -156,6 +156,15 @@ Test
 
 Create Pricing table
 pricing UI
+pricings list
+Move pricing to it's own "bundle" sub menu.
+Add is_active to existing trainings.
+Validate is_active is the same for event and bundle.
+Changing pricing_instance to Active will change all child trainingcs to active.
 Create pricing instance (with is_active)
 Add pricing_instance_id to events
 Display price in public UI.
+Blockly input, events, user attendance.
+Setup test env, abstract out the ngix conf and run in it's own container.
+Test what happens when an x_member joins an event with membership check disabled.
+Test that a temp member on their final count doesn't become a full member with membership check disabled.

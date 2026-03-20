@@ -8,13 +8,16 @@ defmodule Oas.Repo.Migrations.Pricing do
       add :blockly_conf, :map, null: true, default: nil
       timestamps()
     end
+    create unique_index(:pricings, [:name])
 
     create table(:pricing_instances) do
       add :is_active, :boolean, default: false
+      add :name, :string, null: false
       add :blockly_conf, :map, null: true, default: nil
       add :pricing_id, references(:pricings, on_delete: :restrict), null: false
       timestamps()
     end
+    create unique_index(:pricing_instances, [:name])
 
     alter table(:trainings) do
       add :is_active, :boolean, default: true
