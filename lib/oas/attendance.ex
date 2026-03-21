@@ -64,6 +64,7 @@ defmodule Oas.Attendance do
     training_where = training |> Map.get(:training_where) || %{}
     training_where_time = (training_where || %{}) |> Map.get(:training_where_time) |> List.first() || %{}
 
+    (training  |> Map.get(:credit_amount)) ||
     (training_where_time |> Map.get(:credit_amount)) ||
     (training_where |> Map.get(:credit_amount)) ||
     Oas.Config.Tokens.get_min_token().value
@@ -84,10 +85,6 @@ defmodule Oas.Attendance do
       where: tr.id == ^training_id
     ) |> Oas.Repo.one!()
 
-    # training = Oas.Repo.get!(Oas.Trainings.Training, training_id)
-    # |> Oas.Repo.preload(:training_where)
-
-    # now = Date.utc_today()
     now = training.when
 
     member = Oas.Repo.get!(Oas.Members.Member, member_id)

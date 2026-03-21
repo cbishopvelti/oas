@@ -154,31 +154,6 @@ defmodule OasWeb.Schema.SchemaTraining do
         {:ok, result}
       end
     end
-    field :training_billing_amount, :string do
-      arg :training_id, :integer
-      arg :training_where_id, non_null(:integer)
-      arg :start_time, :string
-      arg :end_time, :string
-      resolve fn _, args, _ ->
-
-
-        training_where = Oas.Trainings.TrainingWhere
-        |> Oas.Repo.get!(args |> Map.get(:training_where_id))
-
-        training = Oas.Trainings.Training
-        |> Oas.Repo.get(args |> Map.get(:training_id))
-        |> Oas.Repo.preload(:attendance)
-
-        out = Oas.Trainings.TrainingWhere.get_billing_for_training(%{
-          venue_billing_type: training |> Map.get(:venue_billing_type) || training_where |> Map.get(:billing_type),
-          training_where: training_where,
-          start_time: args |> Map.get(:start_time),
-          end_time: args |> Map.get(:end_time)
-        })
-
-        {:ok, out}
-      end
-    end
   end
 
   object :training_mutations do
