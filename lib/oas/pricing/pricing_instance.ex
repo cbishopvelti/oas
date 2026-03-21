@@ -10,6 +10,7 @@ defmodule Oas.Pricing.PricingInstance do
     field :blockly_conf, :map
 
     belongs_to :pricing, Oas.Pricing.PricingInstance
+    has_many :trainings, Oas.Trainings.Training
 
     timestamps()
   end

@@ -8,6 +8,7 @@ import { useEffect, useRef } from "react";
 import { BBlockly } from "./Blockly";
 import * as Blockly from "blockly";
 import { parseErrors } from "../utils/util";
+import { PricingInstanceEvents } from './PricingInstanceEvents';
 
 export const PricingInstance = () => {
   let { id } = useParams();
@@ -53,7 +54,7 @@ export const PricingInstance = () => {
     }))
   }, [formData.pricing])
 
-  const {data} = useQuery(gql`
+  const {data, refetch: refetchPricingInstance} = useQuery(gql`
     query($id: Int!) {
       pricing_instance(id: $id){
         id,
@@ -62,6 +63,10 @@ export const PricingInstance = () => {
         pricing {
           id,
           name
+        }
+        trainings {
+          id,
+          when
         }
         blockly_conf
       }
@@ -187,6 +192,11 @@ export const PricingInstance = () => {
         Save
       </Button>
     </FormControl>
+
+    {id && data?.pricing_instance && <PricingInstanceEvents
+      pricingInstance={data.pricing_instance}
+      refetch={refetchPricingInstance}
+      />}
 
   </Box>
 }

@@ -13,6 +13,7 @@ defmodule Oas.Trainings.Training do
     field :exempt_membership_count, :boolean
     field :disable_warning_emails, :boolean
     field :credit_amount, :decimal
+    field :is_active, :boolean
 
     field :venue_billing_type, Ecto.Enum, values: [:per_hour, :per_attendee, :fixed]
     field :venue_billing_config, :map
@@ -21,6 +22,8 @@ defmodule Oas.Trainings.Training do
     many_to_many :training_tags, Oas.Trainings.TrainingTags,
       join_through: "training_training_tags", join_keys: [training_id: :id, training_tag_id: :id], on_replace: :delete
     field :notes, :string
+
+    belongs_to :pricing_instance, Oas.Pricing.PricingInstance
 
     timestamps()
   end
@@ -96,6 +99,42 @@ defmodule Oas.Trainings.Training do
     case Decimal.cast(val) do
       {:ok, decimal} -> {:ok, decimal}
       :error -> :invalid
+    end
+  end
+
+
+  @doc "Assigns a pricing instance to a training with specific business rules."
+  def assign_pricing_changeset(training, pricing_instance) do
+    training
+    |> change()
+    |> put_change(:pricing_instance_id, pricing_instance.id)
+    |> validate_active_states_match(pricing_instance)
+    |> validate_no_existing_different_pricing()
+  end
+
+  # Rule 1: The is_active states must match
+  defp validate_active_states_match(changeset, pricing_instance) do
+    # get_field looks at the current struct data OR any pending changes
+    training_active = get_field(changeset, :is_active)
+
+    if training_active != pricing_instance.is_active do
+      add_error(changeset, :pricing_instance_id, "is_active state must match the training's state")
+    else
+      changeset
+    end
+  end
+
+  # Rule 2: Cannot overwrite an existing, different pricing instance
+  defp validate_no_existing_different_pricing(changeset) do
+    existing_id = changeset.data.pricing_instance_id
+    new_id = get_change(changeset, :pricing_instance_id)
+
+    # If the training already has an ID, and we are trying to change it to a NEW one, fail.
+    # (If existing_id is nil, or if they are just passing the same ID again, it passes).
+    if existing_id != nil and new_id != nil and existing_id != new_id do
+      add_error(changeset, :pricing_instance_id, "training already has a different pricing instance assigned")
+    else
+      changeset
     end
   end
 end
