@@ -60,7 +60,7 @@ Blockly.defineBlocksWithJsonArray([
     "output": "UserProperty",
     "tooltip": "Select the users membership status"
   }, {
-    "type": "data_user_credits",
+    "type": "data_user_credit_amount",
     "colour": '#9370DB',
     "message0": "Credits",
     "output": "UserProperty",
@@ -76,16 +76,20 @@ Blockly.defineBlocksWithJsonArray([
         "name": "NAME",
         "options": [
           [
-            "FULL_MUMBER",
-            "FULL_MEMBER"
+            "full_member",
+            "full_member"
           ],
           [
-            "TEMP_MEMBER",
-            "TEMP_MEMBER"
+            "temporary_member",
+            "temporary_member"
           ],
           [
-            "X_MEMBER",
-            "X_MEMBER"
+            "not_member",
+            "not_member"
+          ],
+          [
+            "x_member",
+            "x_member"
           ]
         ]
       },
@@ -104,7 +108,37 @@ Blockly.defineBlocksWithJsonArray([
 luaGenerator.forBlock['set_total_price'] = function(block, generator) {
   const price = generator.valueToCode(block, 'PRICE', luaGenerator.ORDER_NONE) || '0';
 
-  return `total_price = ${price}\n`;
+  return `return ${price}\n`;
+};
+
+luaGenerator.forBlock["data_user"] = function(block, generator) {
+  // 1. Grab the property string from the connected block (e.g., "membership_status")
+  // We use ORDER_HIGH because we are about to attach it to an object with dot notation
+  const propertyCode = generator.valueToCode(block, 'user_var', luaGenerator.ORDER_HIGH);
+
+  // 2. If the user hasn't plugged anything in yet, just return 'user' (or nil)
+  if (!propertyCode) {
+    return ['user', luaGenerator.ORDER_ATOMIC];
+  }
+
+  // 3. Combine them to create standard Lua table access (e.g., user.membership_status)
+  const code = `user.${propertyCode}`;
+
+  // 4. Return the tuple
+  return [code, luaGenerator.ORDER_HIGH];
+};
+
+luaGenerator.forBlock["data_user_member_status"] = function(block, generator) {
+  return ['membership_status', luaGenerator.ORDER_ATOMIC];
+};
+
+luaGenerator.forBlock["data_user_credit_amount"] = function(block, generator) {
+  return ['credit_amount', luaGenerator.ORDER_ATOMIC];
+};
+
+luaGenerator.forBlock["membership_const"] = function(block, generator) {
+  const dropdownValue = block.getFieldValue('NAME');
+  return [`"${dropdownValue}"`, luaGenerator.ORDER_ATOMIC];
 };
 
 Blockly.Blocks['data_user_member_status'].init = function () {
@@ -116,7 +150,7 @@ Blockly.Blocks['data_user_member_status'].init = function () {
 
   this.valueType = "Membership";
 };
-Blockly.Blocks['data_user_credits'].init = function () {
+Blockly.Blocks['data_user_credit_amount'].init = function () {
   this.jsonInit({
     "message0": "Credits",
     "output": "UserProperty",
@@ -148,7 +182,7 @@ export const BBlockly = ({
             contents: [
               { kind: 'block', type: 'data_user'},
               { kind: 'block', type: 'data_user_member_status'},
-              { kind: 'block', type: 'data_user_credits'},
+              { kind: 'block', type: 'data_user_credit_amount'},
               { kind: 'block', type: 'membership_const'}
             ]
           },

@@ -69,7 +69,8 @@ defmodule Oas.MixProject do
       {:mock, "~> 0.3.9"},
       {:ollama, "0.9.0"},
       {:langchain, "~> 0.4.0"},
-      {:tz, "~> 0.28"}
+      {:tz, "~> 0.28"},
+      {:lua, "~> 0.4.0"}
     ]
   end
 

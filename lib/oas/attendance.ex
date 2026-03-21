@@ -81,7 +81,7 @@ defmodule Oas.Attendance do
           tr.when
         ),
       left_join: att in assoc(tr, :attendance),
-      preload: [:attendance, training_where: {tw, [training_where_time: twt]}],
+      preload: [:attendance, :pricing_instance, training_where: {tw, [training_where_time: twt]}],
       where: tr.id == ^training_id
     ) |> Oas.Repo.one!()
 
@@ -139,19 +139,21 @@ defmodule Oas.Attendance do
     case get_unsued_token_result do
       nil -> # User has no tokens, use credits instead
         if (config.credits) do
-          Oas.Credits.Credit.deduct_credit(
-            attendance,
-            member,
-            Decimal.sub(
-              0,
-              get_training_credit_amount(training)
-            ),
-            %{
-              now: now,
-              attendance: attendance,
-              disable_warning_emails: training.disable_warning_emails
-            }
-          )
+          Oas.Pricing.CalcAttendance.apply(training, attendance, member)
+
+          # Oas.Credits.Credit.deduct_credit(
+          #   attendance,
+          #   member,
+          #   Decimal.sub(
+          #     0,
+          #     Oas.Pricing.CalcAttendance.calculate(training, member, %{now: now})
+          #   ),
+          #   %{
+          #     now: now,
+          #     attendance: attendance,
+          #     disable_warning_emails: training.disable_warning_emails
+          #   }
+          # )
         else
           nil
         end

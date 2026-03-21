@@ -104,6 +104,7 @@ export const PricingInstance = () => {
     try {
       const blockly_conf = Blockly.serialization.workspaces.save(primaryWorkspace.current);
       const blockly_lua = luaGenerator.workspaceToCode(primaryWorkspace.current);
+      console.log("001", blockly_lua)
 
       await mutation({
         variables: {

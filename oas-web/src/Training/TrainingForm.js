@@ -27,6 +27,7 @@ export const TrainingForm = ({
   const { data: trainingWhere } = useQuery(gql`
     query($id: Int!) {
       training_where(id: $id) {
+        id,
         limit,
         credit_amount
       }
@@ -274,7 +275,7 @@ export const TrainingForm = ({
           required
           id="credit-amount"
           label="Credit amount"
-          value={get(formData, "credit_amount", '')}
+          value={get(formData, "credit_amount", '') || ''}
           onChange={
             onChange({formData, setFormData, key: "credit_amount"})
           }

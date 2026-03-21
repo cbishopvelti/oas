@@ -140,7 +140,7 @@ defmodule OasWeb.Schema.SchemaUser do
                 atte.inserted_by_member_id == ^member_id and atte.member_id == ^member_id
                 and (
                   ((is_nil(trai.commitment) or trai.commitment == false) and trai.when >= ^Date.utc_today)
-                  or (trai.when == ^Date.utc_today and atte.inserted_at < ^DateTime.add(now, 60))
+                  or (trai.when >= ^Date.utc_today and atte.inserted_at < ^DateTime.add(now, 60))
                 )
             ) |> Oas.Repo.one
 
