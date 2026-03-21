@@ -79,6 +79,7 @@ defmodule OasWeb.Schema.SchemaPricing do
       arg :name, non_null(:string)
       arg :is_active, :boolean
       arg :blockly_conf, :json
+      arg :blockly_lua, non_null(:string)
       arg :pricing_id, non_null(:integer)
       resolve fn _, args, _ ->
 

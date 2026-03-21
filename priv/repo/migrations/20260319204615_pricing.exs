@@ -14,6 +14,7 @@ defmodule Oas.Repo.Migrations.Pricing do
       add :is_active, :boolean, default: false
       add :name, :string, null: false
       add :blockly_conf, :map, null: true, default: nil
+      add :blockly_lua, :string, null: true
       add :pricing_id, references(:pricings, on_delete: :restrict), null: false
       timestamps()
     end

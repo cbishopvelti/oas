@@ -59,6 +59,7 @@ defmodule Oas.Attendance do
     nil
   end
 
+  @deprecated "User Oas.Pricing.CalcPricing.calculate"
   defp get_training_credit_amount(training) do
     training_where = training |> Map.get(:training_where) || %{}
     training_where_time = (training_where || %{}) |> Map.get(:training_where_time) |> List.first() || %{}

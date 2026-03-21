@@ -8,6 +8,7 @@ defmodule Oas.Pricing.PricingInstance do
     field :name, :string
     field :is_active, :boolean
     field :blockly_conf, :map
+    field :blockly_lua, :string
 
     belongs_to :pricing, Oas.Pricing.PricingInstance
     has_many :trainings, Oas.Trainings.Training
@@ -17,7 +18,7 @@ defmodule Oas.Pricing.PricingInstance do
 
   def changeset(pricing, attrs) do
     pricing
-    |> cast(attrs, [:name, :blockly_conf, :is_active, :pricing_id])
+    |> cast(attrs, [:name, :blockly_conf, :blockly_lua, :is_active, :pricing_id])
     |> validate_required([:name])
     |> unique_constraint(:name)
   end

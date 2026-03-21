@@ -9,6 +9,7 @@ import { BBlockly } from "./Blockly";
 import * as Blockly from "blockly";
 import { parseErrors } from "../utils/util";
 import { PricingInstanceEvents } from './PricingInstanceEvents';
+import { luaGenerator } from 'blockly/lua';
 
 export const PricingInstance = () => {
   let { id } = useParams();
@@ -84,13 +85,16 @@ export const PricingInstance = () => {
   }, [data])
 
   const [mutation, {error: mutationError}] = useMutation(gql`
-    mutation ($id: Int, $name: String!, $is_active: Boolean!, $pricing_id: Int!, $blockly_conf: Json!) {
+    mutation ($id: Int, $name: String!, $is_active: Boolean!, $pricing_id: Int!, $blockly_conf: Json!,
+      $blockly_lua: String!
+    ) {
       pricing_instance (
         id: $id,
         name: $name,
         is_active: $is_active,
         pricing_id: $pricing_id,
         blockly_conf: $blockly_conf
+        blockly_lua: $blockly_lua
       ) {
         id
       }
@@ -99,19 +103,22 @@ export const PricingInstance = () => {
   const save = async () => {
     try {
       const blockly_conf = Blockly.serialization.workspaces.save(primaryWorkspace.current);
+      const blockly_lua = luaGenerator.workspaceToCode(primaryWorkspace.current);
+
       await mutation({
         variables: {
           ...pick(formData, ["name", "id"]),
           is_active: formData.is_active|| false,
           pricing_id: formData.pricing.id,
-          blockly_conf: JSON.stringify(blockly_conf, null, 2)
+          blockly_conf: JSON.stringify(blockly_conf, null, 2),
+          blockly_lua: blockly_lua
         }
       })
-      // if (!id) {
-      //   navigate(`/pricing/${get(data, "pricing.id")}`);
-      // } else {
-      //   refetch();
-      // }
+      if (!id) {
+        navigate(`/pricing/${get(data, "pricing.id")}`);
+      } else {
+        refetch();
+      }
     } catch (error) {
       console.error(error)
     }

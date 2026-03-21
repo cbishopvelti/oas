@@ -4,6 +4,7 @@ import * as Blockly from 'blockly';
 import 'blockly/blocks';
 import * as En from 'blockly/msg/en';
 import 'blockly/javascript';
+import { luaGenerator } from 'blockly/lua';
 
 Blockly.setLocale(En);
 Blockly.Extensions.register('dynamic_user_output', function () {
@@ -99,6 +100,12 @@ Blockly.defineBlocksWithJsonArray([
     "inputsInline": true
   }
 ]);
+
+luaGenerator.forBlock['set_total_price'] = function(block, generator) {
+  const price = generator.valueToCode(block, 'PRICE', luaGenerator.ORDER_NONE) || '0';
+
+  return `total_price = ${price}\n`;
+};
 
 Blockly.Blocks['data_user_member_status'].init = function () {
   this.jsonInit({
@@ -255,7 +262,7 @@ export const BBlockly = ({
         ]
       },
       trashcan: false,
-      move: { scrollbars: true, drag: true, wheel: true }
+      move: { scrollbars: true, drag: true, wheel: false }
     });
     workspace.addChangeListener(Blockly.Events.disableOrphans);
 
