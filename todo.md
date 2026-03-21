@@ -170,5 +170,8 @@ Test what happens when an x_member joins an event with membership check disabled
 Test that a temp member on their final count doesn't become a full member with membership check disabled.
 Transactionise add_attendance
 Warning emails after joining multiple events at once.
+Subscriptions should fire on all modified prices.
+Display public price.
+Recalculate price on delete_attendance.
 
 In master, check bug with TrainingAttendance.js setTotalCredits; credit may be null, if perhapse they're still paying with tokens

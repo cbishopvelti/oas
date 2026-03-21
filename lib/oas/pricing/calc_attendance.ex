@@ -24,8 +24,32 @@ defmodule Oas.Pricing.CalcAttendance do
     {_member, membership_status} = Oas.Attendance.check_membership(member)
     membership_status = if membership_status in [:honorary_member, :member], do: :full_member, else: membership_status
 
+    {trainings, attending} = from(t in Oas.Trainings.Training,
+      left_join: a in assoc(t, :attendance), on: a.member_id == ^member.id,
+      preload: [training_where: [:training_where_time], attendance: a],
+      where: t.pricing_instance_id == ^training.pricing_instance_id
+    ) |> Oas.Repo.all()
+    |> Enum.with_index()
+    |> Enum.map(fn ({training, index}) ->
+
+      {
+        training |> calculate_without_pricing() |> Decimal.to_float(),
+        if(training.attendance != [], do: (index + 1) / 1, else: nil)
+      }
+    end)
+    |> Enum.unzip()
+    attending = Enum.reject(attending, &is_nil/1)
+
+    dbg(trainings)
+    dbg(attending)
+
+    IO.inspect(lua_code, label: "005")
+    # "return #user.attending == #training and 30 or 25\n"
+
     {[result], _} = Lua.new()
     |> Lua.set!([:user, :membership_status], membership_status)
+    |> Lua.set!([:user, :attending], attending)
+    |> Lua.set!([:trainings], trainings)
     |> Lua.eval!(lua_code)
 
     training_spread = from(t in Oas.Trainings.Training,
@@ -39,7 +63,7 @@ defmodule Oas.Pricing.CalcAttendance do
       raise "This user is already in this training somehow?"
     end
 
-    amount = Decimal.from_float(result) |> Decimal.round(2, :down)
+    amount = Decimal.new(result) |> Decimal.round(2, :down)
 
     [ first_item_amount | item_amounts] = distribute_amount([training | training_spread] |> length(), amount)
     # Insert this attendance,
@@ -72,9 +96,10 @@ defmodule Oas.Pricing.CalcAttendance do
         [:amount]
       )
       |> Oas.Repo.update()
-    end)
 
-    IO.inspect(result, label: "002")
+      Absinthe.Subscription.publish(OasWeb.Endpoint, %{success: true}, user_attendance_attendance: member.id)
+      Absinthe.Subscription.publish(OasWeb.Endpoint, %{id: training.id}, attendance_attendance: training.id)
+    end)
   end
 
   defp distribute_amount(length, %Decimal{coef: coef} = amount)

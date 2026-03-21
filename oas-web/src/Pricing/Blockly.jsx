@@ -55,19 +55,13 @@ Blockly.defineBlocksWithJsonArray([
   },
   {
     "type": "data_user_member_status",
-    "colour": '#9370DB',
-    "message0": "Membership",
-    "output": "UserProperty",
-    "tooltip": "Select the users membership status"
-  }, {
-    "type": "data_user_credit_amount",
-    "colour": '#9370DB',
-    "message0": "Credits",
-    "output": "UserProperty",
-    "tooltip": "Select the users remaining credits/debts"
+    // "colour": '#9370DB',
+    // "message0": "Membership",
+    // "output": "UserProperty",
+    // "tooltip": "Select the users membership status"
   }, {
     "type": "membership_const",
-    "tooltip": "",
+    "tooltip": "Membership constent",
     "helpUrl": "",
     "message0": "%1 %2",
     "args0": [
@@ -102,6 +96,15 @@ Blockly.defineBlocksWithJsonArray([
     "output": "Membership",
     "colour": '#9370DB',
     "inputsInline": true
+  },
+  {
+    "type": "data_user_attending"
+  }, {
+    "type": "data_trainings",
+    "output": "Array",
+    "colour": "#9370DB",
+    "message0": "Trainings",
+    "tooltip": "Array of trainings in this price instance, the value is the base credit amount for that training"
   }
 ]);
 
@@ -128,13 +131,7 @@ luaGenerator.forBlock["data_user"] = function(block, generator) {
   return [code, luaGenerator.ORDER_HIGH];
 };
 
-luaGenerator.forBlock["data_user_member_status"] = function(block, generator) {
-  return ['membership_status', luaGenerator.ORDER_ATOMIC];
-};
 
-luaGenerator.forBlock["data_user_credit_amount"] = function(block, generator) {
-  return ['credit_amount', luaGenerator.ORDER_ATOMIC];
-};
 
 luaGenerator.forBlock["membership_const"] = function(block, generator) {
   const dropdownValue = block.getFieldValue('NAME');
@@ -145,20 +142,34 @@ Blockly.Blocks['data_user_member_status'].init = function () {
   this.jsonInit({
     "message0": "Membership",
     "output": "UserProperty",
+    "colour": "#9370DB",
     "tooltip": "Select the users membership status"
   });
 
   this.valueType = "Membership";
 };
-Blockly.Blocks['data_user_credit_amount'].init = function () {
-  this.jsonInit({
-    "message0": "Credits",
-    "output": "UserProperty",
-    "tooltip": "Select the users remaining credits/debts"
-  });
-
-  this.valueType = "Number";
+luaGenerator.forBlock["data_user_member_status"] = function(block, generator) {
+  return ['membership_status', luaGenerator.ORDER_ATOMIC];
 };
+
+// Filled with the indexs
+Blockly.Blocks['data_user_attending'].init = function () {
+  this.jsonInit({
+    "message0": "Attending",
+    "tooltip": "Array of user attendancies for this event, values are the keys of trainings (1 indexed)",
+    "colour": "#9370DB",
+    "output": "UserProperty"
+  })
+  this.valueType = "Array"
+}
+luaGenerator.forBlock["data_user_attending"] = function(block, generator) {
+  return ['attending', luaGenerator.ORDER_ATOMIC]
+}
+
+luaGenerator.forBlock["data_trainings"] = function(block, generator) {
+  return ['trainings', luaGenerator.ORDER_ATOMIC]
+}
+
 
 export const BBlockly = ({
   blockly_conf,
@@ -182,8 +193,10 @@ export const BBlockly = ({
             contents: [
               { kind: 'block', type: 'data_user'},
               { kind: 'block', type: 'data_user_member_status'},
-              { kind: 'block', type: 'data_user_credit_amount'},
-              { kind: 'block', type: 'membership_const'}
+              { kind: 'block', type: 'data_user_attending'},
+              { kind: 'block', type: 'membership_const'},
+              { kind: 'block', type: 'data_trainings'}
+
             ]
           },
           { kind: 'sep' },
