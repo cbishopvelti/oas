@@ -175,3 +175,6 @@ Display public price.
 Recalculate price on delete_attendance.
 
 In master, check bug with TrainingAttendance.js setTotalCredits; credit may be null, if perhapse they're still paying with tokens
+```setTotalCredits(Math.abs(sumBy(attendance, ({credit}) =>  credit ? parseFloat(credit.amount) : 0)))```
+Commitment mode can edit, schema_user.ex 148
+```or (trai.when >= ^Date.utc_today and atte.inserted_at < ^DateTime.add(now, 60))```
