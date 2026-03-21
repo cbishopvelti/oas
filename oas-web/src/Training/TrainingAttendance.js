@@ -83,7 +83,7 @@ export const TrainingAttendance = ({trainingId, setAttendance, setTotalCredits})
 
   useEffect(() => {
     setAttendance(attendance.length)
-    setTotalCredits(Math.abs(sumBy(attendance, ({credit}) => parseFloat(credit.amount))))
+    setTotalCredits(Math.abs(sumBy(attendance, ({credit}) =>  credit ? parseFloat(credit.amount) : 0)))
   }, [attendance])
 
   const attendanceMembers = chain(get(data, 'attendance', []))
