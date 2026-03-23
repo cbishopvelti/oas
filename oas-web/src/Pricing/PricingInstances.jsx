@@ -1,36 +1,46 @@
+import { useParams } from "react-router-dom";
 import { gql, useMutation, useQuery } from "@apollo/client"
 import { TableCell, TableContainer, TableHead, TableRow, Table, TableBody, IconButton } from "@mui/material"
 import { get } from "lodash"
 import EditIcon from '@mui/icons-material/Edit';
-import { Link, useOutletContext } from "react-router-dom";
+import { Link } from "react-router-dom";
 import DeleteIcon from '@mui/icons-material/Delete';
 import { StyledTableRow } from '../utils/util';
 import { useEffect } from "react";
-import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
+import { useOutletContext } from "react-router-dom";
 
 
-export const Pricings = () => {
+
+export const PricingInstances = () => {
+  let { pricing_id } = useParams();
   const { setTitle } = useOutletContext();
+  if (pricing_id) {
+    pricing_id = parseInt(pricing_id);
+  }
 
   useEffect(() => {
-    setTitle("Pricings");
+    setTitle("Pricing Instances");
   }, [])
 
   const { data, refetch } = useQuery(gql`
-    query {
-      pricings {
+    query($pricing_id: Int) {
+      pricing_instances (pricing_id: $pricing_id) {
         id,
         name
       }
     }
-  `)
+  `, {
+    variables: {
+      pricing_id
+    }
+  })
   useEffect(() => {
     refetch()
   }, [])
 
   const [deleteMutation, {error}] = useMutation(gql`
     mutation ($id: Int!) {
-      pricing_delete(id: $id) {
+      pricing_instance_delete(id: $id) {
         success
       }
     }
@@ -58,26 +68,23 @@ export const Pricings = () => {
         </TableRow>
       </TableHead>
       <TableBody>
-        {get(data, "pricings", []).map((pricing, i) => {
-          const thisError = (error?.graphQLErrors || []).find(({id}) => id === pricing.id)?.message
+        {get(data, "pricing_instances", []).map((pricing_instance, i) => {
+          const thisError = (error?.graphQLErrors || []).find(({id}) => id === pricing_instance.id)?.message
           return [<TableRow key={i}>
-            <TableCell>{pricing.id}</TableCell>
-            <TableCell>{pricing.name}</TableCell>
+            <TableCell>{pricing_instance.id}</TableCell>
+            <TableCell>{pricing_instance.name}</TableCell>
             <TableCell>
-              <IconButton title={`Got to instances of ${pricing.name}`} component={Link} to={`/pricing-instances/${pricing.id}`}>
-                <FitnessCenterIcon />
-              </IconButton>
-              <IconButton title={`Edit ${pricing.name}`} component={Link} to={`/pricing/${pricing.id}`}>
+              <IconButton title={`Edit ${pricing_instance.name}`} component={Link} to={`/pricing-instance/${pricing_instance.id}`}>
                 <EditIcon />
               </IconButton>
-              {<IconButton title={`Delete ${pricing.name}`} onClick={onDelete(pricing.id)}>
+              {<IconButton title={`Delete ${pricing_instance.name}`} onClick={onDelete(pricing_instance.id)}>
                 <DeleteIcon sx={{ color: 'red' }} />
               </IconButton>}
             </TableCell>
           </TableRow>,
-          ...(thisError ? [<StyledTableRow className="errors" key={`row-error-${pricing.id}`}>
+          ...(thisError ? [<StyledTableRow className="errors" key={`row-error-${pricing_instance.id}`}>
             <TableCell colSpan={3}>
-               Delete failed: {thisError}
+                Delete failed: {thisError}
             </TableCell>
           </StyledTableRow>] : [])
           ]

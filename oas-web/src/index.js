@@ -53,6 +53,7 @@ import { VenueAccount } from './Venue/VenueAccount';
 import { Pricing } from './Pricing/Pricing';
 import { PricingInstance } from './Pricing/PricingInstance';
 import { Pricings } from './Pricing/Pricings';
+import { PricingInstances } from './Pricing/PricingInstances';
 
 const router = createBrowserRouter([
   {
@@ -261,6 +262,14 @@ const router = createBrowserRouter([
         id: "pricings",
         path: "pricings",
         element: <Pricings />
+      }, {
+        id: "pricing-instances",
+        path: "pricing-instances",
+        element: <PricingInstances />
+      }, {
+        id: "pricing-instances-pricing-id",
+        path: "pricing-instances/:pricing_id",
+        element: <PricingInstances />
       }
     ],
   },

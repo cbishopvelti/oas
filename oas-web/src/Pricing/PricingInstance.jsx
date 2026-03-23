@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from "react-router-dom"
+import { useNavigate, useParams, useOutletContext } from "react-router-dom"
 import { Autocomplete, Box, FormControl, TextField,
   Switch, FormControlLabel, Button } from "@mui/material";
 import { find, get, has, omit, pick, take } from 'lodash';
@@ -19,6 +19,7 @@ export const PricingInstance = () => {
   const [formData, setFormData] = useState({})
   const primaryWorkspace = useRef(null);
   const navigate = useNavigate();
+  const { setTitle } = useOutletContext();
 
   const onChange = (key, { isCheckbox } = {isCheckbox: false}) => (event) => {
     if (isCheckbox) {
@@ -129,6 +130,14 @@ export const PricingInstance = () => {
   const errors = parseErrors([
     ...get(mutationError, "graphQLErrors", []),
   ])
+
+  useEffect(() => {
+    if (!id) {
+      setTitle("New Pricing Instance");
+    } else {
+      setTitle(`Editing Pricing Instance: ${get(data, 'pricing.name', id)}`);
+    }
+  }, [id, data, setTitle]);
 
   return <Box sx={{m: 2}}>
     <FormControl fullWidth sx={{mt: 2, mb: 2}}>

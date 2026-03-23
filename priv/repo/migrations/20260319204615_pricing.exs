@@ -22,7 +22,7 @@ defmodule Oas.Repo.Migrations.Pricing do
 
     alter table(:trainings) do
       add :is_active, :boolean, default: true
-      add :pricing_instance_id, references(:pricing_instances, on_delete: :nilify_all), null: true
+      add :pricing_instance_id, references(:pricing_instances, on_delete: :restrict), null: true
     end
 
     execute "UPDATE trainings SET is_active = true", "SELECT 1"

@@ -51,6 +51,27 @@ defmodule OasWeb.Schema.SchemaPricing do
         {:ok, pricing_instance}
       end
     end
+
+    field :pricing_instances, list_of(:pricing_instance) do
+      arg :pricing_id, :integer
+      resolve fn _, args, _ ->
+        import Ecto.Query
+
+        query = from(Oas.Pricing.PricingInstance,
+          where: true,
+          order_by: [desc: :updated_at]
+        )
+
+        case Map.get(args, :pricing_id, nil) do
+          nil -> query
+          id  -> where(query, [p], p.pricing_id == ^id)
+        end
+
+        out = query |> Oas.Repo.all()
+
+        {:ok, out}
+      end
+    end
   end
 
   object :pricing_mutations do
@@ -94,6 +115,31 @@ defmodule OasWeb.Schema.SchemaPricing do
             case e do
               %Ecto.ConstraintError{type: :foreign_key} ->
                 {:error, %{id: id, message: "This pricing is used by a pricing intsance"}}
+              _ -> reraise e, __STACKTRACE__
+            end
+        end
+      end
+    end
+
+    field :pricing_instance_delete, :success do
+      arg :id, :integer
+      resolve fn _, %{id: id}, _ ->
+        import Ecto.Changeset
+        pricing = Oas.Repo.get!(Oas.Pricing.PricingInstance, id)
+
+        try do
+          pricing
+          |> change()
+          |> Ecto.Changeset.no_assoc_constraint(
+            :trainings
+          )
+          |> Oas.Repo.delete()
+          {:ok, %{success: true}}
+        rescue
+          e in Ecto.ConstraintError ->
+            case e do
+              %Ecto.ConstraintError{type: :foreign_key} ->
+                {:error, %{id: id, message: "This pricing instance is used by one or more trainings"}}
               _ -> reraise e, __STACKTRACE__
             end
         end

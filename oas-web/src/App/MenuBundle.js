@@ -13,14 +13,11 @@ export const MenuBundle = () => {
 
   const pricing = ["pricing", "pricing-id"]
   const pricingIntsance = ["pricing-instance", "pricing-instance-id"]
-  const allIds = [...pricing, ...pricingIntsance, "pricings"];
+  const allIds = [...pricing, ...pricingIntsance, "pricings", "pricing-instances", "pricing-instances-pricing-id"];
 
   const forceActive = some(matches, ({ id }) => includes(allIds, id));
   const active = some(matches, ({ id }) => includes(allIds, id));
   const [open, setOpen] = useState(active);
-
-  console.log("001 active", active)
-  console.log("002 matches", matches)
 
   useEffect(() => {
     if (!active) {
@@ -45,7 +42,7 @@ export const MenuBundle = () => {
 
   return <>
     <MenuItem
-      component={CustomLink(allIds)} end to={`/pricing_instances`}>
+      component={CustomLink(allIds)} end to={`/pricing-instances`}>
       <ListItemText>Bundles</ListItemText>
       <IconButton onClick={handleOpen}>
         {
@@ -73,7 +70,7 @@ export const MenuBundle = () => {
 
       <MenuItem
         sx={{ml: 2}}
-        component={CustomLink(["pricing-instance-id"])}
+        component={CustomLink(["pricing-instance-id", "pricing-instances-pricing-id"])}
         to={`/pricing-instances`}
         end>
           <ListItemText>Pricing Instances</ListItemText>
