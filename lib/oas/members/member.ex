@@ -97,8 +97,7 @@ defmodule Oas.Members.Member do
       :is_active,
       :is_admin,
       :is_reviewer,
-      :bank_account_name,
-      :gocardless_name
+      :bank_account_name
     ])
     |> validate_required([:name])
     |> validate_name()

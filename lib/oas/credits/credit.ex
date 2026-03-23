@@ -309,6 +309,7 @@ defmodule Oas.Credits.Credit do
         fn ->
           Process.sleep(120_000)
           # Process.sleep(10_000) # DEBUG ONLY
+          # Process.sleep(2_000)# DEBUG ONLY
           # Oas.TokenMailer.maybe_send_credits_warning(member)
           Oas.TokenMailer.warning_email(member, %{attendance: opts.attendance})
         end

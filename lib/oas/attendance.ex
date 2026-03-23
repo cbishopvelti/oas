@@ -108,7 +108,7 @@ defmodule Oas.Attendance do
         limit: 1
       ) |> Oas.Repo.one!()
 
-      if config.credits do # Membership
+      if config.credits and training.exempt_membership_count != true do # Membership
         add_attendance_membership(
           training,
           member,
@@ -377,7 +377,7 @@ defmodule Oas.Attendance do
           Map.put(member, :warnings, [member.name <> " is an x-member" | Map.get(member, :warnings, []) ]),
           :x_member
         }
-      result > config.temporary_trainings ->
+      result > config.temporary_trainings -> # This doesn't happen any more, as users are promoted to members automatically pay via credits on their account.
         {
           Map.put(member, :warnings, [member.name <> " has attended " <> to_string(result)
             <> " session"
