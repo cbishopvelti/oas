@@ -166,8 +166,8 @@ Add pricing_instance_id to events ✅
 Display price in public UI. ✅
 Blockly input, events, user attendance. ✅
 Setup test env, abstract out the ngix conf and run in it's own container.
-Test what happens when an x_member joins an event with membership check disabled.
-Test that a temp member on their final count doesn't become a full member with membership check disabled.
+Test what happens when an x_member joins an event with membership check disabled. ✅
+Test that a temp member on their final count doesn't become a full member with membership check disabled. ✅
 Transactionise add_attendance ✅
 Subscriptions should fire on all modified prices. ✅
 Display public price. ✅
