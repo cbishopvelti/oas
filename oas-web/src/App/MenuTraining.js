@@ -66,38 +66,6 @@ export const MenuTraining = () => {
         <ListItemText>New Training</ListItemText>
       </MenuItem>
 
-      <MenuItem
-        sx={{ml:2}}
-        component={CustomLink([ "pricing-id"])}
-        to={`/pricings`}
-        end
-        >
-          <ListItemText>Pricings</ListItemText>
-      </MenuItem>
-      <MenuItem
-        sx={{ml:2}}
-        component={NavLink}
-        to={`/pricing`}
-        end
-        >
-          <ListItemText>New Pricing</ListItemText>
-      </MenuItem>
-
-      <MenuItem
-        sx={{ml: 2}}
-        component={CustomLink(["pricing-instance-id"])}
-        to={`/pricing-instances`}
-        end>
-          <ListItemText>Pricing Instances</ListItemText>
-      </MenuItem>
-      <MenuItem
-        sx={{ml: 2}}
-        component={NavLink}
-        to={"/pricing-instance"}
-        end
-        >
-        <ListItemText>New Pricing Instance</ListItemText>
-      </MenuItem>
 
     </Collapse>
   </>

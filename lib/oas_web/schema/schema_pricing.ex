@@ -82,18 +82,31 @@ defmodule OasWeb.Schema.SchemaPricing do
       arg :blockly_lua, non_null(:string)
       arg :pricing_id, non_null(:integer)
       resolve fn _, args, _ ->
+        Oas.Repo.transaction(fn ->
+          pricing = case Map.get(args, :id) do
+            nil -> %Oas.Pricing.PricingInstance{}
+            id -> Oas.Repo.get!(Oas.Pricing.PricingInstance, id)
+          end
 
-        pricing = case Map.get(args, :id) do
-          nil -> %Oas.Pricing.PricingInstance{}
-          id -> Oas.Repo.get!(Oas.Pricing.PricingInstance, id)
-        end
+          pricing = pricing
+          |> Oas.Pricing.PricingInstance.changeset(args)
+          |> (&(case &1 do
+            %{data: %{id: nil}} -> Oas.Repo.insert(&1)
+            %{data: %{id: _}} -> Oas.Repo.update(&1)
+          end)).()
 
-        pricing
-        |> Oas.Pricing.PricingInstance.changeset(args)
-        |> (&(case &1 do
-          %{data: %{id: nil}} -> Oas.Repo.insert(&1)
-          %{data: %{id: _}} -> Oas.Repo.update(&1)
-        end)).()
+          case pricing do
+            {:ok, pric} ->
+              Oas.Repo.update_all(
+                from(t in Oas.Trainings.Training, where: t.pricing_instance_id == ^pric.id),
+                set: [is_active: pric.is_active]
+              )
+              Oas.Repo.preload(pric, :trainings)
+            {:error, changeset} ->
+              Oas.Repo.rollback(changeset)
+              {:error, changeset}
+          end
+        end)
         |> OasWeb.Schema.SchemaUtils.handle_error
       end
     end

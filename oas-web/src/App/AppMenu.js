@@ -22,6 +22,7 @@ import { MenuAnalysis } from './MenuAnalysis';
 import { MenuVenue } from './MenuVenue';
 import { MenuThing } from './MenuThing';
 import { MenuConfig } from './MenuConfig';
+import { MenuBundle } from './MenuBundle';
 
 
 export const AppMenu = ({ setOpen }) => {
@@ -89,6 +90,8 @@ export const AppMenu = ({ setOpen }) => {
       <ListItemText>Trainings</ListItemText>
     </MenuItem> */}
     <MenuTraining />
+
+    <MenuBundle />
 
     <MenuVenue />
 
