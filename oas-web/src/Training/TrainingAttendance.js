@@ -8,12 +8,13 @@ import { Box, FormControl, Autocomplete, TextField, Button,   Table,
   IconButton
 } from "@mui/material"
 import { useQuery, gql, useMutation, useSubscription } from '@apollo/client'
-import { differenceBy, get, chain } from 'lodash';
+import { differenceBy, get, chain, join, sum, sumBy } from 'lodash';
 import { Link } from 'react-router-dom'
 import { TrainingAttendanceRow } from './TrainingAttendanceRow';
+import CopyAllIcon from '@mui/icons-material/CopyAll';
 
 
-export const TrainingAttendance = ({trainingId, setAttendance}) => {
+export const TrainingAttendance = ({trainingId, setAttendance, setTotalCredits}) => {
 
   const [addAttendance, setAddAttendance] = useState({})
   const [error, setError] = useState(false)
@@ -82,6 +83,7 @@ export const TrainingAttendance = ({trainingId, setAttendance}) => {
 
   useEffect(() => {
     setAttendance(attendance.length)
+    setTotalCredits(Math.abs(sumBy(attendance, ({credit}) =>  credit ? parseFloat(credit.amount) : 0)))
   }, [attendance])
 
   const attendanceMembers = chain(get(data, 'attendance', []))
@@ -94,6 +96,17 @@ export const TrainingAttendance = ({trainingId, setAttendance}) => {
     attendanceMembers,
     'id'
   );
+
+  const copyAll = () => {
+    navigator.clipboard.writeText(
+      join(
+        attendance.map((dat) =>
+          dat.member.email
+        ),
+        ', '
+      )
+    )
+  }
 
   useEffect(() => {
     refetch()
@@ -182,9 +195,14 @@ export const TrainingAttendance = ({trainingId, setAttendance}) => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Member Id</TableCell>
               <TableCell>Attendance Id</TableCell>
               <TableCell>Name</TableCell>
+              <TableCell>
+                Email
+                <IconButton title="Copy emails" onClick={copyAll}>
+                  <CopyAllIcon />
+                </IconButton>
+              </TableCell>
               {/* <TableCell>Email</TableCell> */}
               <TableCell>Status</TableCell>
               <TableCell>Tokens</TableCell>

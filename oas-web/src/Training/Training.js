@@ -25,6 +25,7 @@ export const Training = () => {
     id = parseInt(id)
   }
   const [attendance, setAttendance] = useReactState(0);
+  const [totalCredits, setTotalCredits] = useReactState(0);
 
   const {data: config} = useQuery(gql`
     query {
@@ -71,9 +72,9 @@ export const Training = () => {
     if (!id) {
       setTitle("New Training");
     } else {
-      setTitle(`Editing Training: ${get(data, 'training.training_where.name', id)} on ${get(data, 'training.when', '')}: ${attendance || parent_attendance}`)
+      setTitle(`Editing Training: ${get(data, 'training.training_where.name', id)} on ${get(data, 'training.when', '')}: ${attendance || parent_attendance}, ${totalCredits} credits`)
     }
-  }, [get(data, 'training.training_where.name'), attendance, parent_attendance])
+  }, [get(data, 'training.training_where.name'), attendance, parent_attendance, totalCredits])
 
   const [{value}, setValue] = useState({value: (!id ? '1' : '2')}, {id: `trainings-tabs-${id}`});
 
@@ -92,7 +93,7 @@ export const Training = () => {
         </TabPanel>
         {id &&
           <TabPanel value={'2'} sx={{width: '100%'}}>
-            <TrainingAttendance setAttendance={setAttendance} trainingId={id} />
+            <TrainingAttendance setAttendance={setAttendance} setTotalCredits={setTotalCredits} trainingId={id} />
           </TabPanel>
         }
       </TabContext>
