@@ -61,7 +61,7 @@ export const TrainingAttendanceRow = ({
   const expires = canUndo(attendance, config);
 
   const [mutation] = useMutation(gql`
-    mutation($amount: String!, $id: Int) {
+    mutation($amount: String!, $id: Int!) {
       save_credit_amount(amount: $amount, id: $id) {
         success
       }
