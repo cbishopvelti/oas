@@ -1,6 +1,6 @@
 import Ecto.Query, only: [from: 2]
 defmodule OasWeb.Schema.SchemaPricing do
-  alias Mix.Tasks.Absinthe.Schema.Json
+  # alias Mix.Tasks.Absinthe.Schema.Json
   use Absinthe.Schema.Notation
 
   object :pricing do

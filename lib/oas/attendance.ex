@@ -59,17 +59,6 @@ defmodule Oas.Attendance do
     nil
   end
 
-  @deprecated "User Oas.Pricing.CalcPricing.calculate"
-  defp get_training_credit_amount(training) do
-    training_where = training |> Map.get(:training_where) || %{}
-    training_where_time = (training_where || %{}) |> Map.get(:training_where_time) |> List.first() || %{}
-
-    (training  |> Map.get(:credit_amount)) ||
-    (training_where_time |> Map.get(:credit_amount)) ||
-    (training_where |> Map.get(:credit_amount)) ||
-    Oas.Config.Tokens.get_min_token().value
-  end
-
   def add_attendance(%{member_id: member_id, training_id: training_id}, %{inserted_by_member_id: inserted_by_member_id}) do
 
     training = from(tr in Oas.Trainings.Training,
@@ -140,20 +129,6 @@ defmodule Oas.Attendance do
       nil -> # User has no tokens, use credits instead
         if (config.credits) do
           Oas.Pricing.CalcAttendance.apply(training, attendance, member)
-
-          # Oas.Credits.Credit.deduct_credit(
-          #   attendance,
-          #   member,
-          #   Decimal.sub(
-          #     0,
-          #     Oas.Pricing.CalcAttendance.calculate(training, member, %{now: now})
-          #   ),
-          #   %{
-          #     now: now,
-          #     attendance: attendance,
-          #     disable_warning_emails: training.disable_warning_emails
-          #   }
-          # )
         else
           nil
         end
@@ -179,51 +154,70 @@ defmodule Oas.Attendance do
   end
 
   def delete_attendance(%{attendance_id: attendance_id}) do
-    attendance = from(att in Oas.Trainings.Attendance,
-      preload: [:token, :member, training: [:attendance]],
-      where: att.id == ^attendance_id
-    ) |> Oas.Repo.one!()
+    # Wrap in transact, which automatically commits on {:ok, result}
+    # and rolls back on {:error, reason}
+    result = Oas.Repo.transact(fn ->
+      attendance = from(att in Oas.Trainings.Attendance,
+        preload: [:token, :member, training: [:pricing_instance, attendance: [:credit]]],
+        where: att.id == ^attendance_id
+      ) |> Oas.Repo.one!()
 
-    if (attendance.token != nil) do
-      debtAttendance = from(a in Oas.Trainings.Attendance,
-        left_join: to in assoc(a, :token), on: to.member_id == ^attendance.member.id,
-        inner_join: tr in assoc(a, :training),
-        left_join: c in assoc(a, :credit),
-        preload: [training: tr],
-        where: a.member_id == ^attendance.member.id and is_nil(to.id) and is_nil(c.id),
-        select: a,
-        order_by: [asc: tr.when, asc: tr.id],
-        limit: 1
-      ) |> Oas.Repo.one
+      if attendance.token != nil do
+        debtAttendance = from(a in Oas.Trainings.Attendance,
+          left_join: to in assoc(a, :token), on: to.member_id == ^attendance.member.id,
+          inner_join: tr in assoc(a, :training),
+          left_join: c in assoc(a, :credit),
+          preload: [training: tr],
+          where: a.member_id == ^attendance.member.id and is_nil(to.id) and is_nil(c.id),
+          select: a,
+          order_by: [asc: tr.when, asc: tr.id],
+          limit: 1
+        ) |> Oas.Repo.one()
 
-      case debtAttendance do
-        nil ->
-          attendance.token |>
-            Ecto.Changeset.cast(%{used_on: nil, attendance_id: nil}, [:used_on, :attendance_id])
-            |> Oas.Repo.update!
-        %{id: id, training: %{when: _when1}} ->
-          attendance.token |>
-            Ecto.Changeset.cast(%{used_on: get_used_on(attendance.training.when), attendance_id: id}, [:used_on, :attendance_id])
-            |> Oas.Repo.update!
+        case debtAttendance do
+          nil ->
+            attendance.token
+            |> Ecto.Changeset.cast(%{used_on: nil, attendance_id: nil}, [:used_on, :attendance_id])
+            |> Oas.Repo.update!()
+
+          %{id: id, training: %{when: _when1}} ->
+            attendance.token
+            |> Ecto.Changeset.cast(%{used_on: get_used_on(attendance.training.when), attendance_id: id}, [:used_on, :attendance_id])
+            |> Oas.Repo.update!()
+        end
       end
+
+      # Maybe delete membership
+      Oas.Members.Membership.maybe_delete_membership(
+        attendance.training,
+        attendance.member
+      )
+
+      # Delete the actual attendance
+      Oas.Repo.delete!(attendance)
+
+      # Calculate the pricing spread
+      Oas.Pricing.CalcAttendance.apply_delete(attendance.training, attendance, attendance.member)
+
+      # Return an :ok tuple so `transact` knows to commit!
+      {:ok, attendance}
+    end)
+
+    # Handle the result outside the transaction
+    case result do
+      {:ok, attendance} ->
+        # The DB committed successfully! Now it is safe to publish the spaces.
+        Oas.Trainings.Attendance.maybe_publish_spaces(attendance.training)
+
+        {:ok, %{
+          success: true,
+          training_id: attendance.training_id,
+          member_id: attendance.member_id
+        }}
+
+      {:error, reason} ->
+        {:error, reason}
     end
-
-    # Maybe delete membership
-    Oas.Members.Membership.maybe_delete_membership(
-      attendance.training,
-      attendance.member
-    )
-    # EO maybe delete membership
-
-    Oas.Repo.delete!(attendance)
-
-    Oas.Trainings.Attendance.maybe_publish_spaces(attendance.training)
-
-    {:ok, %{
-      success: true,
-      training_id: attendance.training_id,
-      member_id: attendance.member_id
-    }}
   end
 
   def get_token_amount(%{member_id: member_id}) do

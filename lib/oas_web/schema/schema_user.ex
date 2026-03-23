@@ -23,6 +23,7 @@ defmodule OasWeb.Schema.SchemaUser do
     field :inserted_at, :string
     field :commitment, :boolean
     field :full, :boolean
+    field :price, :string
   end
 
   object :user_queries do
@@ -43,7 +44,7 @@ defmodule OasWeb.Schema.SchemaUser do
     end
 
     field :user_bookings, list_of(:user_bookings) do
-      resolve fn _, _, %{context: %{current_member: %{id: id}}} ->
+      resolve fn _, _, %{context: %{current_member: member}} ->
 
         attendance_counts =
           from a in Oas.Trainings.Attendance,
@@ -51,12 +52,12 @@ defmodule OasWeb.Schema.SchemaUser do
             select: %{training_id: a.training_id, count: count(a.id)}
 
         result = from(trai in Oas.Trainings.Training,
-          left_join: atte in assoc(trai, :attendance), on: atte.training_id == trai.id and atte.member_id == ^id,
+          left_join: atte in assoc(trai, :attendance), on: atte.training_id == trai.id and atte.member_id == ^member.id,
           left_join: memb in assoc(atte, :member),
           left_join: ac in subquery(attendance_counts), on: ac.training_id == trai.id,
-          preload: [training_where: [:training_where_time], attendance: {atte, [member: memb]}],
+          preload: [:pricing_instance, training_where: [:training_where_time], attendance: {atte, [:credit, member: memb]}],
           where: trai.when >= ^Date.utc_today() and
-          (memb.id == ^id or is_nil(memb.id)),
+          (memb.id == ^member.id or is_nil(memb.id)),
           order_by: [asc: trai.when, desc: trai.id],
 
           select: {trai, coalesce(ac.count, 0)}
@@ -95,7 +96,19 @@ defmodule OasWeb.Schema.SchemaUser do
             full: case Map.get(booking, :limit) do
               nil -> false
               tr_limit -> limit >= tr_limit
+            end,
+            price: case booking do
+              # Already attending, so show the amount paid.
+              %{attendance: [%{ credit: %{amount: amount} }]} ->
+                Decimal.abs(amount)
+              # Not attending, to calculate the price
+              booking ->
+                Oas.Pricing.CalcAttendance.calculate_price(booking, member, distribution_mode: :remaining)
+                |> List.first()
+                |> elem(1)
+                |> Decimal.to_string()
             end
+
           }
         end)
 

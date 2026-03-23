@@ -104,9 +104,8 @@ export const PricingInstance = () => {
     try {
       const blockly_conf = Blockly.serialization.workspaces.save(primaryWorkspace.current);
       const blockly_lua = luaGenerator.workspaceToCode(primaryWorkspace.current);
-      console.log("001", blockly_lua)
 
-      await mutation({
+      const { data } = await mutation({
         variables: {
           ...pick(formData, ["name", "id"]),
           is_active: formData.is_active|| false,
@@ -116,7 +115,7 @@ export const PricingInstance = () => {
         }
       })
       if (!id) {
-        navigate(`/pricing/${get(data, "pricing.id")}`);
+        navigate(`/pricing-instance/${get(data, "pricing_instance.id")}`);
       } else {
         refetch();
       }

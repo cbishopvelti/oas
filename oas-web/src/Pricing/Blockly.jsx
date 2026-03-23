@@ -5,6 +5,8 @@ import 'blockly/blocks';
 import * as En from 'blockly/msg/en';
 import 'blockly/javascript';
 import { luaGenerator } from 'blockly/lua';
+import '@blockly/field-date';
+
 
 Blockly.setLocale(En);
 Blockly.Extensions.register('dynamic_user_output', function () {
@@ -105,8 +107,26 @@ Blockly.defineBlocksWithJsonArray([
     "colour": "#9370DB",
     "message0": "Trainings",
     "tooltip": "Array of trainings in this price instance, the value is the base credit amount for that training"
+  }, {
+    type: "when_date",
+    message0: "%1",
+    args0: [
+      {
+        type: "field_date",
+        name: "when",
+        // date: '2020-02-20',
+      }
+    ],
+    "output": "Date",
+    "colour": '#9370DB',
+  }, {
+    type: "when_now",
+    message0: "today",
+    "output": "Date",
+    "colour": '#9370DB',
   }
 ]);
+
 
 luaGenerator.forBlock['set_total_price'] = function(block, generator) {
   const price = generator.valueToCode(block, 'PRICE', luaGenerator.ORDER_NONE) || '0';
@@ -170,6 +190,14 @@ luaGenerator.forBlock["data_trainings"] = function(block, generator) {
   return ['trainings', luaGenerator.ORDER_ATOMIC]
 }
 
+luaGenerator.forBlock["when_now"] = function(block, generator) {
+  return['now', luaGenerator.ORDER_ATOMIC]
+}
+
+luaGenerator.forBlock["when_date"] = function(block, generator) {
+  const dateValue = block.getFieldValue('when');
+  return [`"${dateValue}"`, luaGenerator.ORDER_ATOMIC];
+}
 
 export const BBlockly = ({
   blockly_conf,
@@ -195,7 +223,9 @@ export const BBlockly = ({
               { kind: 'block', type: 'data_user_member_status'},
               { kind: 'block', type: 'data_user_attending'},
               { kind: 'block', type: 'membership_const'},
-              { kind: 'block', type: 'data_trainings'}
+              { kind: 'block', type: 'data_trainings'},
+              { kind: 'block', type: 'when_date'},
+              { kind: 'block', type: 'when_now'}
 
             ]
           },
@@ -223,7 +253,7 @@ export const BBlockly = ({
               { kind: 'block', type: 'controls_whileUntil' },
               { kind: 'block', type: 'controls_for' },
               { kind: 'block', type: 'controls_forEach' },
-              { kind: 'block', type: 'controls_flow_statements' }
+              { kind: 'block', type: 'controls_flow_statements' },
             ]
           },
           {
