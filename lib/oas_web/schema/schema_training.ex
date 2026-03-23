@@ -68,6 +68,7 @@ defmodule OasWeb.Schema.SchemaTraining do
     field :exempt_membership_count, :boolean
     field :disable_warning_emails, :boolean
     field :credit_amount, :string
+    field :is_active, :boolean
   end
 
   object :training_queries do
@@ -173,6 +174,7 @@ defmodule OasWeb.Schema.SchemaTraining do
       arg :exempt_membership_count, :boolean
       arg :disable_warning_emails, :boolean
       arg :credit_amount, :string
+      arg :is_active, :boolean
       resolve fn _, args, _ ->
         %{training_tags: training_tags, training_where: training_where} = args
 
@@ -210,7 +212,8 @@ defmodule OasWeb.Schema.SchemaTraining do
             :limit,
             :exempt_membership_count,
             :disable_warning_emails,
-            :credit_amount
+            :credit_amount,
+            :is_active
             ])
           |> Oas.Trainings.Training.validate_time()
           |> Oas.Trainings.Training.validate_billing()
@@ -239,6 +242,7 @@ defmodule OasWeb.Schema.SchemaTraining do
       arg :exempt_membership_count, :boolean
       arg :disable_warning_emails, :boolean
       arg :credit_amount, :string
+      arg :is_active, :boolean
       resolve fn _, args, _ ->
         when1 = Date.from_iso8601!(args.when)
         args = %{args | when: when1}
@@ -265,7 +269,8 @@ defmodule OasWeb.Schema.SchemaTraining do
             :limit,
             :exempt_membership_count,
             :disable_warning_emails,
-            :credit_amount
+            :credit_amount,
+            :is_active
           ], empty_values: [[], nil] ++ Ecto.Changeset.empty_values())
           |> Oas.Trainings.Training.validate_time()
           |> Oas.Trainings.Training.validate_billing()

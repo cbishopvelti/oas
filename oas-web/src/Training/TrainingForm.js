@@ -21,9 +21,9 @@ export const TrainingForm = ({
   const defaultData = {
     when: moment().format("YYYY-MM-DD"),
     training_tags: [],
+    is_active: true
   }
   const [formData, setFormData] = useState(defaultData);
-
   const { data: trainingWhere } = useQuery(gql`
     query($id: Int!) {
       training_where(id: $id) {
@@ -116,7 +116,8 @@ export const TrainingForm = ({
       $limit: Int,
       $exempt_membership_count: Boolean,
       $disable_warning_emails: Boolean,
-      $credit_amount: String
+      $credit_amount: String,
+      $is_active: Boolean
     ) {
       insert_training (
         when: $when,
@@ -132,7 +133,8 @@ export const TrainingForm = ({
         limit: $limit,
         exempt_membership_count: $exempt_membership_count,
         disable_warning_emails: $disable_warning_emails,
-        credit_amount: $credit_amount
+        credit_amount: $credit_amount,
+        is_active: $is_active
       ) {
         id
       }
@@ -147,6 +149,7 @@ export const TrainingForm = ({
       $exempt_membership_count: Boolean,
       $disable_warning_emails: Boolean,
       $credit_amount: String
+      $is_active: Boolean
     ){
       update_training (
         when: $when,
@@ -164,6 +167,7 @@ export const TrainingForm = ({
         exempt_membership_count: $exempt_membership_count,
         disable_warning_emails: $disable_warning_emails,
         credit_amount: $credit_amount
+        is_active: $is_active
       ) {
         id
       }
@@ -237,6 +241,21 @@ export const TrainingForm = ({
           setFormData={setFormData}
         />
       </FormControl> */}
+      <FormControl fullWidth sx={{ mt: 2, mb: 2 }}>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={get(formData, "is_active", true)}
+              onChange={(event) => {
+                onChange({formData, setFormData, key: "is_active", isCheckbox: true})(event)
+              }}
+              />
+          }
+          label="Is active"
+          title="Is this training active."
+          />
+      </FormControl>
+
       <FormControl fullWidth sx={{mt: 2, mb: 2}}>
         <TextField
           required

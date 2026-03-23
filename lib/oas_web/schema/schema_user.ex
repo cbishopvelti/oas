@@ -57,6 +57,7 @@ defmodule OasWeb.Schema.SchemaUser do
           left_join: ac in subquery(attendance_counts), on: ac.training_id == trai.id,
           preload: [:pricing_instance, training_where: [:training_where_time], attendance: {atte, [:credit, member: memb]}],
           where: trai.when >= ^Date.utc_today() and
+          trai.is_active == true and
           (memb.id == ^member.id or is_nil(memb.id)),
           order_by: [asc: trai.when, desc: trai.id],
 
@@ -126,10 +127,15 @@ defmodule OasWeb.Schema.SchemaUser do
         case config.enable_booking do
           true ->
             try do
-              Oas.Attendance.add_attendance(
-                %{training_id: training_id, member_id: member_id},
-                %{inserted_by_member_id: member_id}
-              )
+              case Oas.Repo.get!(Oas.Trainings.Training, training_id).is_active do
+                true ->
+                  Oas.Attendance.add_attendance(
+                    %{training_id: training_id, member_id: member_id},
+                    %{inserted_by_member_id: member_id}
+                  )
+                false ->
+                  {:error, "This event isn't active"}
+              end
             catch
               error -> error
             end

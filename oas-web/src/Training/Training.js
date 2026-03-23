@@ -60,7 +60,8 @@ export const Training = () => {
         start_time,
         booking_offset,
         end_time,
-        credit_amount
+        credit_amount,
+        is_active
       }
     }
   `, {
