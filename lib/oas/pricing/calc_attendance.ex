@@ -183,6 +183,9 @@ defmodule Oas.Pricing.CalcAttendance do
     end)
   end
 
+  defp distribute_amount(length, %Decimal{coef: 0} = zero) do
+    List.duplicate(zero, length)
+  end
   defp distribute_amount(length, %Decimal{coef: coef} = amount)
     when is_integer(length) and length > 0 and is_integer(coef) do
 

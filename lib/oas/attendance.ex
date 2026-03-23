@@ -60,97 +60,100 @@ defmodule Oas.Attendance do
   end
 
   def add_attendance(%{member_id: member_id, training_id: training_id}, %{inserted_by_member_id: inserted_by_member_id}) do
+    transaction_result = Oas.Repo.transact(fn ->
+      training = from(tr in Oas.Trainings.Training,
+        left_join: tw in assoc(tr, :training_where),
+        left_join: twt in assoc(tw, :training_where_time), on: twt.training_where_id == tw.id and
+          twt.day_of_week == fragment(
+            "CASE CAST(strftime('%w', ?) AS INTEGER) WHEN 0 THEN 7 ELSE CAST(strftime('%w', ?) AS INTEGER) END",
+            tr.when,
+            tr.when
+          ),
+        left_join: att in assoc(tr, :attendance),
+        preload: [:attendance, :pricing_instance, training_where: {tw, [training_where_time: twt]}],
+        where: tr.id == ^training_id
+      ) |> Oas.Repo.one!()
 
-    training = from(tr in Oas.Trainings.Training,
-      left_join: tw in assoc(tr, :training_where),
-      left_join: twt in assoc(tw, :training_where_time), on: twt.training_where_id == tw.id and
-        twt.day_of_week == fragment(
-          "CASE CAST(strftime('%w', ?) AS INTEGER) WHEN 0 THEN 7 ELSE CAST(strftime('%w', ?) AS INTEGER) END",
-          tr.when,
-          tr.when
-        ),
-      left_join: att in assoc(tr, :attendance),
-      preload: [:attendance, :pricing_instance, training_where: {tw, [training_where_time: twt]}],
-      where: tr.id == ^training_id
-    ) |> Oas.Repo.one!()
+      now = training.when
 
-    now = training.when
+      member = Oas.Repo.get!(Oas.Members.Member, member_id)
+      |> Oas.Repo.preload([
+        membership_periods: from(
+          mp in Oas.Members.MembershipPeriod,
+          where: mp.from <= ^training.when and mp.to >= ^training.when
+        )
+      ])
 
-    member = Oas.Repo.get!(Oas.Members.Member, member_id)
-    |> Oas.Repo.preload([
-      membership_periods: from(
-        mp in Oas.Members.MembershipPeriod,
-        where: mp.from <= ^training.when and mp.to >= ^training.when
-      )
-    ])
+      inserted_by_member = Oas.Repo.get!(Oas.Members.Member, inserted_by_member_id)
 
-    inserted_by_member = Oas.Repo.get!(Oas.Members.Member, inserted_by_member_id)
+      attendance = case %Oas.Trainings.Attendance{}
+        |> Ecto.Changeset.cast(%{
+          member_id: member_id,
+          training_id: training_id,
+          inserted_by_member_id: inserted_by_member_id,
+        }, [:member_id, :training_id, :inserted_by_member_id])
+        |> Ecto.Changeset.unique_constraint([:training_id, :member_id, :dedub_training_member])
+        |> Oas.Trainings.Attendance.validate_limit(training, inserted_by_member)
+        |> Oas.Trainings.Attendance.maybe_publish_full(training)
+        |> Oas.Repo.insert()
+      do
+        {:ok, attendance} -> attendance
+        {:error, errors} -> Oas.Repo.rollback(errors)
+      end
 
-    # FIX DEBT
-    # attendance = %Oas.Trainings.Attendance{
-    #   member_id: member_id,
-    #   training_id: training_id,
-    #   inserted_by_member_id: inserted_by_member_id,
-    # }
+      get_unsued_token_result = get_unused_token(member_id)
 
-    attendance = case %Oas.Trainings.Attendance{}
-      |> Ecto.Changeset.cast(%{
-        member_id: member_id,
-        training_id: training_id,
-        inserted_by_member_id: inserted_by_member_id,
-      }, [:member_id, :training_id, :inserted_by_member_id])
-      |> Ecto.Changeset.unique_constraint([:training_id, :member_id, :dedub_training_member])
-      |> Oas.Trainings.Attendance.validate_limit(training, inserted_by_member)
-      |> Oas.Trainings.Attendance.maybe_publish_full(training)
-      |> Oas.Repo.insert()
-    do
-      {:ok, attendance} -> attendance
+      config = from(
+        c in Oas.Config.Config,
+        limit: 1
+      ) |> Oas.Repo.one!()
+
+      if config.credits do # Membership
+        add_attendance_membership(
+          training,
+          member,
+          %{now: now}
+        )
+      end
+
+      case get_unsued_token_result do
+        nil -> # User has no tokens, use credits instead
+          if config.credits do
+            Oas.Pricing.CalcAttendance.apply(training, attendance, member)
+          else
+            nil
+          end
+        token -> use_token(token, attendance.id, training.when)
+      end
+
+      # THE FIX: Wrap the return map in an :ok tuple so `transact` accepts it
+      {:ok, %{attendance: attendance, training: training, member: member}}
+    end)
+
+    # Evaluate the transaction result
+    case transaction_result do
+      # Note: transact strips the outer ok tuple of the lambda and replaces it,
+      # so transaction_result will still match exactly like this:
+      {:ok, %{attendance: attendance, training: training, member: member}} ->
+        if training.disable_warning_emails != true do
+          Task.Supervisor.start_child(
+            Oas.TaskSupervisor,
+            fn ->
+              Oas.TokenMailer.maybe_send_warnings_email(member)
+            end
+          )
+        end
+
+        {:ok, %{
+          success: true,
+          id: attendance.id,
+          training_id: training_id,
+          member_id: member_id
+        }}
+
       {:error, errors} ->
         throw OasWeb.Schema.SchemaUtils.handle_error({:error, errors})
     end
-
-
-    get_unsued_token_result = get_unused_token(member_id)
-
-    config = from(
-      c in Oas.Config.Config,
-      limit: 1
-    ) |> Oas.Repo.one!()
-
-    if config.credits do # Membership
-      add_attendance_membership(
-        training,
-        member,
-        %{now: now}
-      )
-    end
-
-    case get_unsued_token_result do
-      nil -> # User has no tokens, use credits instead
-        if (config.credits) do
-          Oas.Pricing.CalcAttendance.apply(training, attendance, member)
-        else
-          nil
-        end
-      token -> use_token(token, attendance.id, training.when)
-    end
-
-    # Depricated, is now sent from deduct_credit
-    if training.disable_warning_emails != true do
-      Task.Supervisor.start_child(
-        Oas.TaskSupervisor,
-        fn ->
-          Oas.TokenMailer.maybe_send_warnings_email(member)
-        end
-      )
-    end
-
-    {:ok, %{
-      success: true,
-      id: attendance.id,
-      training_id: training_id,
-      member_id: member_id
-    }}
   end
 
   def delete_attendance(%{attendance_id: attendance_id}) do
