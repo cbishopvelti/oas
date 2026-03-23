@@ -74,6 +74,31 @@ defmodule OasWeb.Schema.SchemaThing do
       end
     end
 
+    field :thing_delete, type: :success do
+      arg :id, non_null(:integer)
+      resolve fn _, %{id: id}, _ ->
+        import Ecto.Changeset
+        thing = Oas.Repo.get!(Oas.Things.Thing, id)
+
+        try do
+          thing
+          |> change()
+          |> Ecto.Changeset.no_assoc_constraint(
+            :credits
+          )
+          |> Oas.Repo.delete()
+          {:ok, %{success: true}}
+        rescue
+          e in Ecto.ConstraintError ->
+            case e do
+              %Ecto.ConstraintError{type: :foreign_key} ->
+                {:error, %{id: id, message: "This Thing has credits assigned against it"}}
+              _ -> reraise e, __STACKTRACE__
+            end
+        end
+      end
+    end
+
     field :thing_delete_debit, type: :success do
       arg :credit_id, non_null(:integer)
       resolve fn _, %{credit_id: credit_id}, _ ->

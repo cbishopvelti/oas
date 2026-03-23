@@ -52,6 +52,7 @@ import { PendingTransactions } from './Money/PendingTransactions';
 import { VenueAccount } from './Venue/VenueAccount';
 import { Pricing } from './Pricing/Pricing';
 import { PricingInstance } from './Pricing/PricingInstance';
+import { Pricings } from './Pricing/Pricings';
 
 const router = createBrowserRouter([
   {
@@ -256,6 +257,10 @@ const router = createBrowserRouter([
         id: "pricing-instance-id",
         path: "pricing-instance/:id",
         element: <PricingInstance />
+      }, {
+        id: "pricings",
+        path: "pricings",
+        element: <Pricings />
       }
     ],
   },

@@ -13,11 +13,14 @@ export const MenuBundle = () => {
 
   const pricing = ["pricing", "pricing-id"]
   const pricingIntsance = ["pricing-instance", "pricing-instance-id"]
-  const allIds = [...pricing, ...pricingIntsance];
+  const allIds = [...pricing, ...pricingIntsance, "pricings"];
 
   const forceActive = some(matches, ({ id }) => includes(allIds, id));
   const active = some(matches, ({ id }) => includes(allIds, id));
   const [open, setOpen] = useState(active);
+
+  console.log("001 active", active)
+  console.log("002 matches", matches)
 
   useEffect(() => {
     if (!active) {

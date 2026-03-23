@@ -8,6 +8,8 @@ defmodule Oas.Pricing.Pricing do
     field :name, :string
     field :blockly_conf, :map
 
+    has_many :pricing_instances, Oas.Pricing.PricingInstance
+
     timestamps()
   end
 

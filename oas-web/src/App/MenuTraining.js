@@ -14,11 +14,10 @@ export const MenuTraining = () => {
 
   const matches = useMatches();
 
-  const trainingIds = ["training-id", "trainings", "member-attendance", "pricing", "pricing-id", "pricing-instance", "pricing-instance-id"];
+  const trainingIds = ["training-id", "trainings", "member-attendance"];
   const newTrainingIds = ['training'];
-  const pricingIds = ["pricing", "pricing-id"]
   const allIds = [...trainingIds, ...newTrainingIds];
-  const forceIds = [...newTrainingIds, ...pricingIds];
+  const forceIds = [...newTrainingIds];
 
   const active = some(matches, ({id}) => includes(allIds, id));
   const forceActive = some(matches, ({id}) => includes(forceIds, id));

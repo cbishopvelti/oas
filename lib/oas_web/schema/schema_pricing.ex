@@ -30,6 +30,7 @@ defmodule OasWeb.Schema.SchemaPricing do
 
     field :pricings, list_of(:pricing) do
       resolve fn _, _, _ ->
+
         out = from(Oas.Pricing.Pricing,
           where: true,
           order_by: [desc: :updated_at]
@@ -71,6 +72,31 @@ defmodule OasWeb.Schema.SchemaPricing do
           %{data: %{id: _}} -> Oas.Repo.update(&1)
         end)).()
         |> OasWeb.Schema.SchemaUtils.handle_error
+      end
+    end
+
+    field :pricing_delete, :success do
+      arg :id, :integer
+      resolve fn _, %{id: id}, _ ->
+        import Ecto.Changeset
+        pricing = Oas.Repo.get!(Oas.Pricing.Pricing, id)
+
+        try do
+          pricing
+          |> change()
+          |> Ecto.Changeset.no_assoc_constraint(
+            :pricing_instances
+          )
+          |> Oas.Repo.delete()
+          {:ok, %{success: true}}
+        rescue
+          e in Ecto.ConstraintError ->
+            case e do
+              %Ecto.ConstraintError{type: :foreign_key} ->
+                {:error, %{id: id, message: "This pricing is used by a pricing intsance"}}
+              _ -> reraise e, __STACKTRACE__
+            end
+        end
       end
     end
 
