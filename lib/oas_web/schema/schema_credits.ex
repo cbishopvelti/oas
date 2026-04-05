@@ -134,13 +134,18 @@ defmodule OasWeb.Schema.SchemaCredits do
       resolve fn _, args, _ ->
         %{sign: -1} = amount = Decimal.new(args.amount)
 
-        Oas.Repo.get!(Oas.Credits.Credit, args.id)
+        credit = Oas.Repo.get!(Oas.Credits.Credit, args.id)
+        |> Oas.Repo.preload(:attendance)
         |> Ecto.Changeset.cast(%{
           amount: amount
         },
           [:amount]
         )
-        |> Oas.Repo.update()
+        |> Oas.Repo.update!()
+
+        Absinthe.Subscription.publish(OasWeb.Endpoint, %{success: true}, user_attendance_attendance: credit.who_member_id)
+        Absinthe.Subscription.publish(OasWeb.Endpoint, %{id: credit.attendance.training_id}, attendance_attendance: credit.attendance.training_id)
+
         {:ok, %{success: true}}
       end
     end

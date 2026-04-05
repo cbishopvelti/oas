@@ -50,12 +50,14 @@ export const TrainingAttendance = ({trainingId, setAttendance, setTotalCredits})
       inserted_at,
       inserted_by_member_id,
       training {
+        id,
         when,
         commitment
       },
       booking_cutoff
     },
     config_config {
+      id,
       enable_booking
     }
   }`, {

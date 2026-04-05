@@ -2,19 +2,20 @@ import { gql, useQuery, useMutation } from "@apollo/client";
 import { FormControl, TextField, Box, Button,
   Stack, Alert, Autocomplete, Tabs, Tab,
   TableHead, TableContainer, TableCell, TableRow, Table,
-  TableBody, IconButton} from "@mui/material";
+  TableBody, IconButton, Select, InputLabel, MenuItem} from "@mui/material";
 import TabContext from '@mui/lab/TabContext';
 import TabList from '@mui/lab/TabList';
 import TabPanel from '@mui/lab/TabPanel';
 import { useEffect, useState as useReactState } from "react";
 // import { useState } from "../utils/useState";
 import moment from "moment";
-import { get, omit, has, pick } from 'lodash'
+import { get, omit, has, pick, set, cloneDeep } from 'lodash'
 import { useNavigate, useParams, useOutletContext, Link } from "react-router-dom";
 import { parseErrors } from "../utils/util";
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { dayToString } from "./VenueTime";
+import { VenueBilling } from "./VenueBilling";
 
 
 export const Venue = () => {
@@ -32,11 +33,25 @@ export const Venue = () => {
   }
   const [attendance, setAttendance] = useReactState(0);
 
-  const onChange = ({formData, setFormData, key}) => (event) => {
-    setFormData({
-      ...formData,
-      [key]: !event.target.value ? undefined : event.target.value
-    })
+  const onChange = ({ formData, setFormData, key }) => (event) => {
+    if (key === "billing_type" && !event.target.value) {
+      formData = {
+        ...formData,
+        "gocardless_name": null
+      }
+    }
+    // Clear form data
+    if (key === "billing_type" && event.target.value !== formData.billing_type) {
+      formData = {
+        ...formData,
+        "billing_config": null
+      }
+    }
+
+
+    setFormData(
+      set(cloneDeep(formData), key, !event.target.value ? null : event.target.value)
+    )
   }
 
   const {data, refetch} = useQuery(gql`
@@ -45,6 +60,9 @@ export const Venue = () => {
         id,
         name,
         credit_amount,
+        billing_type,
+        billing_config,
+        gocardless_name,
         limit,
         training_where_time {
           id,
@@ -72,6 +90,7 @@ export const Venue = () => {
       setFormData(defaultData)
     }
   }, [id])
+
   useEffect(() => {
     if (get(data, "training_where")) {
       setFormData({
@@ -81,9 +100,15 @@ export const Venue = () => {
     }
   }, [data])
 
-  const [mutate, {error}] = useMutation(gql`
-    mutation($id: Int, $name: String!, $credit_amount: String!, $limit: Int) {
-      training_where(id: $id, name: $name, credit_amount: $credit_amount, limit: $limit) {
+  const [mutate, {error, reset}] = useMutation(gql`
+    mutation($id: Int, $name: String!, $credit_amount: String!,
+      $billing_type: BillingType, $gocardless_name: String, $billing_config: Json,
+      $limit: Int
+    ) {
+      training_where(id: $id, name: $name, credit_amount: $credit_amount,
+        billing_type: $billing_type, gocardless_name: $gocardless_name, billing_config: $billing_config,
+        limit: $limit
+      ) {
         id
       }
     }
@@ -96,14 +121,20 @@ export const Venue = () => {
       ...formData
     }
 
-    console.log("005", variables)
+    let toSave = pick(variables, ["id", 'name', 'credit_amount', "billing_type", "billing_config"])
+    toSave = set(
+      toSave,
+      "billing_config",
+      (get(variables, "billing_config") && JSON.stringify(get(variables, "billing_config"))) || null)
+    toSave = set(toSave, "limit", variables.limit ? parseInt(variables.limit) : null)
+    toSave = {
+      ...toSave,
+      ...(toSave.billing_type === "" ? { billing_type: null } : {})
+    }
+
     const { data, errors } = await mutate({
-      variables: {
-        ...pick(variables, ["id", 'name', 'credit_amount']),
-        limit: variables.limit ? parseInt(variables.limit) : null
-      }
+      variables: toSave
     });
-    console.log("006", errors)
 
     setFormData({
       ...formData,
@@ -117,8 +148,11 @@ export const Venue = () => {
       navigate(`/venue/${get(data, 'training_where.id')}`)
     }
   }
-
   const errors = parseErrors(error?.graphQLErrors);
+
+  useEffect(() => {
+    reset()
+  }, [id])
 
   const [deleteTrainingWhereTimeMutation] = useMutation(gql`
     mutation($id: Int!) {
@@ -191,6 +225,8 @@ export const Venue = () => {
           helperText={get(errors, "limit", []).join(" ")}
           />
       </FormControl>
+
+      <VenueBilling formData={formData} setFormData={setFormData} errors={errors} onChange={onChange} prefix={""} />
 
       <FormControl fullWidth sx={{m: 2}}>
         <Button onClick={save(formData)}>Save</Button>

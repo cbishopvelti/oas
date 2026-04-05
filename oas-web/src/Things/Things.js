@@ -20,6 +20,7 @@ import { Link, useOutletContext } from "react-router-dom";
 import { StyledTableRow } from '../utils/util';
 import moment from 'moment';
 import { useState } from '../utils/useState';
+import EditIcon from '@mui/icons-material/Edit';
 
 export const Things = () => {
   const { setTitle } = useOutletContext();
@@ -49,7 +50,7 @@ export const Things = () => {
 
   const [deleteMutation, {error}] = useMutation(gql`
     mutation($id: Int!) {
-      delete_training_where(id: $id) {
+      thing_delete(id: $id) {
         success
       }
     }
@@ -93,7 +94,7 @@ export const Things = () => {
                     <TableCell>{thing.when}</TableCell>
                     <TableCell>
                       <IconButton title={`Edit ${thing.name}`} component={Link} to={`/thing/${thing.id}`}>
-                        <FitnessCenterIcon />
+                        <EditIcon />
                       </IconButton>
                       {<IconButton title={`Delete ${thing.id}`} onClick={deleteThingClick(thing.id)}>
                         <DeleteIcon sx={{ color: 'red' }} />
@@ -101,7 +102,7 @@ export const Things = () => {
                     </TableCell>
                   </TableRow>,
                   ...(thisError ? [<StyledTableRow className="errors" key={`row-error-${thing.id}`}>
-                    <TableCell colSpan={4}>
+                    <TableCell colSpan={5}>
                        Delete failed: {thisError}
                     </TableCell>
                   </StyledTableRow>] : [])

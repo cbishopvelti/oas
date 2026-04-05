@@ -59,171 +59,168 @@ defmodule Oas.Attendance do
     nil
   end
 
-  defp get_training_credit_amount(training) do
-    training_where = training |> Map.get(:training_where) || %{}
-    training_where_time = (training_where || %{}) |> Map.get(:training_where_time) |> List.first() || %{}
-
-    (training_where_time |> Map.get(:credit_amount)) ||
-    (training_where |> Map.get(:credit_amount)) ||
-    Oas.Config.Tokens.get_min_token().value
-  end
-
   def add_attendance(%{member_id: member_id, training_id: training_id}, %{inserted_by_member_id: inserted_by_member_id}) do
+    transaction_result = Oas.Repo.transact(fn ->
+      training = from(tr in Oas.Trainings.Training,
+        left_join: tw in assoc(tr, :training_where),
+        left_join: twt in assoc(tw, :training_where_time), on: twt.training_where_id == tw.id and
+          twt.day_of_week == fragment(
+            "CASE CAST(strftime('%w', ?) AS INTEGER) WHEN 0 THEN 7 ELSE CAST(strftime('%w', ?) AS INTEGER) END",
+            tr.when,
+            tr.when
+          ),
+        left_join: att in assoc(tr, :attendance),
+        preload: [:attendance, :pricing_instance, training_where: {tw, [training_where_time: twt]}],
+        where: tr.id == ^training_id
+      ) |> Oas.Repo.one!()
 
-    training = from(tr in Oas.Trainings.Training,
-      left_join: tw in assoc(tr, :training_where),
-      left_join: twt in assoc(tw, :training_where_time), on: twt.training_where_id == tw.id and
-        twt.day_of_week == fragment(
-          "CASE CAST(strftime('%w', ?) AS INTEGER) WHEN 0 THEN 7 ELSE CAST(strftime('%w', ?) AS INTEGER) END",
-          tr.when,
-          tr.when
-        ),
-      left_join: att in assoc(tr, :attendance),
-      preload: [:attendance, training_where: {tw, [training_where_time: twt]}],
-      where: tr.id == ^training_id
-    ) |> Oas.Repo.one!()
+      now = training.when
 
-    # training = Oas.Repo.get!(Oas.Trainings.Training, training_id)
-    # |> Oas.Repo.preload(:training_where)
+      member = Oas.Repo.get!(Oas.Members.Member, member_id)
+      |> Oas.Repo.preload([
+        membership_periods: from(
+          mp in Oas.Members.MembershipPeriod,
+          where: mp.from <= ^training.when and mp.to >= ^training.when
+        )
+      ])
 
-    # now = Date.utc_today()
-    now = training.when
+      inserted_by_member = Oas.Repo.get!(Oas.Members.Member, inserted_by_member_id)
 
-    member = Oas.Repo.get!(Oas.Members.Member, member_id)
-    |> Oas.Repo.preload([
-      membership_periods: from(
-        mp in Oas.Members.MembershipPeriod,
-        where: mp.from <= ^training.when and mp.to >= ^training.when
-      )
-    ])
+      attendance = case %Oas.Trainings.Attendance{}
+        |> Ecto.Changeset.cast(%{
+          member_id: member_id,
+          training_id: training_id,
+          inserted_by_member_id: inserted_by_member_id,
+        }, [:member_id, :training_id, :inserted_by_member_id])
+        |> Ecto.Changeset.unique_constraint([:training_id, :member_id, :dedub_training_member])
+        |> Oas.Trainings.Attendance.validate_limit(training, inserted_by_member)
+        |> Oas.Trainings.Attendance.maybe_publish_full(training)
+        |> Oas.Repo.insert()
+      do
+        {:ok, attendance} -> attendance
+        {:error, errors} -> Oas.Repo.rollback(errors)
+      end
 
-    inserted_by_member = Oas.Repo.get!(Oas.Members.Member, inserted_by_member_id)
+      get_unsued_token_result = get_unused_token(member_id)
 
-    # FIX DEBT
-    # attendance = %Oas.Trainings.Attendance{
-    #   member_id: member_id,
-    #   training_id: training_id,
-    #   inserted_by_member_id: inserted_by_member_id,
-    # }
+      config = from(
+        c in Oas.Config.Config,
+        limit: 1
+      ) |> Oas.Repo.one!()
 
-    attendance = case %Oas.Trainings.Attendance{}
-      |> Ecto.Changeset.cast(%{
-        member_id: member_id,
-        training_id: training_id,
-        inserted_by_member_id: inserted_by_member_id,
-      }, [:member_id, :training_id, :inserted_by_member_id])
-      |> Ecto.Changeset.unique_constraint([:training_id, :member_id, :dedub_training_member])
-      |> Oas.Trainings.Attendance.validate_limit(training, inserted_by_member)
-      |> Oas.Trainings.Attendance.maybe_publish_full(training)
-      |> Oas.Repo.insert()
-    do
-      {:ok, attendance} -> attendance
+      if config.credits and training.exempt_membership_count != true do # Membership
+        add_attendance_membership(
+          training,
+          member,
+          %{now: now}
+        )
+      end
+
+      case get_unsued_token_result do
+        nil -> # User has no tokens, use credits instead
+          if config.credits do
+            Oas.Pricing.CalcAttendance.apply(training, attendance, member)
+          else
+            nil
+          end
+        token -> use_token(token, attendance.id, training.when)
+      end
+
+      # THE FIX: Wrap the return map in an :ok tuple so `transact` accepts it
+      {:ok, %{attendance: attendance, training: training, member: member}}
+    end)
+
+    # Evaluate the transaction result
+    case transaction_result do
+      # Note: transact strips the outer ok tuple of the lambda and replaces it,
+      # so transaction_result will still match exactly like this:
+      {:ok, %{attendance: attendance, training: training, member: member}} ->
+        if training.disable_warning_emails != true do
+          Task.Supervisor.start_child(
+            Oas.TaskSupervisor,
+            fn ->
+              Oas.TokenMailer.maybe_send_warnings_email(member)
+            end
+          )
+        end
+
+        {:ok, %{
+          success: true,
+          id: attendance.id,
+          training_id: training_id,
+          member_id: member_id
+        }}
+
       {:error, errors} ->
         throw OasWeb.Schema.SchemaUtils.handle_error({:error, errors})
     end
-
-
-    get_unsued_token_result = get_unused_token(member_id)
-
-    config = from(
-      c in Oas.Config.Config,
-      limit: 1
-    ) |> Oas.Repo.one!()
-
-    if config.credits do # Membership
-      add_attendance_membership(
-        training,
-        member,
-        %{now: now}
-      )
-    end
-
-    case get_unsued_token_result do
-      nil -> # User has no tokens, use credits instead
-        if (config.credits) do
-          Oas.Credits.Credit.deduct_credit(
-            attendance,
-            member,
-            Decimal.sub(
-              0,
-              get_training_credit_amount(training)
-            ),
-            %{
-              now: now,
-              attendance: attendance,
-              disable_warning_emails: training.disable_warning_emails
-            }
-          )
-        else
-          nil
-        end
-      token -> use_token(token, attendance.id, training.when)
-    end
-
-    # Depricated, is now sent from deduct_credit
-    if training.disable_warning_emails != true do
-      Task.Supervisor.start_child(
-        Oas.TaskSupervisor,
-        fn ->
-          Oas.TokenMailer.maybe_send_warnings_email(member)
-        end
-      )
-    end
-
-    {:ok, %{
-      success: true,
-      id: attendance.id,
-      training_id: training_id,
-      member_id: member_id
-    }}
   end
 
   def delete_attendance(%{attendance_id: attendance_id}) do
-    attendance = from(att in Oas.Trainings.Attendance,
-      preload: [:token, :member, training: [:attendance]],
-      where: att.id == ^attendance_id
-    ) |> Oas.Repo.one!()
+    # Wrap in transact, which automatically commits on {:ok, result}
+    # and rolls back on {:error, reason}
+    result = Oas.Repo.transact(fn ->
+      attendance = from(att in Oas.Trainings.Attendance,
+        preload: [:token, :member, training: [:pricing_instance, attendance: [:credit]]],
+        where: att.id == ^attendance_id
+      ) |> Oas.Repo.one!()
 
-    if (attendance.token != nil) do
-      debtAttendance = from(a in Oas.Trainings.Attendance,
-        left_join: to in assoc(a, :token), on: to.member_id == ^attendance.member.id,
-        inner_join: tr in assoc(a, :training),
-        left_join: c in assoc(a, :credit),
-        preload: [training: tr],
-        where: a.member_id == ^attendance.member.id and is_nil(to.id) and is_nil(c.id),
-        select: a,
-        order_by: [asc: tr.when, asc: tr.id],
-        limit: 1
-      ) |> Oas.Repo.one
+      if attendance.token != nil do
+        debtAttendance = from(a in Oas.Trainings.Attendance,
+          left_join: to in assoc(a, :token), on: to.member_id == ^attendance.member.id,
+          inner_join: tr in assoc(a, :training),
+          left_join: c in assoc(a, :credit),
+          preload: [training: tr],
+          where: a.member_id == ^attendance.member.id and is_nil(to.id) and is_nil(c.id),
+          select: a,
+          order_by: [asc: tr.when, asc: tr.id],
+          limit: 1
+        ) |> Oas.Repo.one()
 
-      case debtAttendance do
-        nil ->
-          attendance.token |>
-            Ecto.Changeset.cast(%{used_on: nil, attendance_id: nil}, [:used_on, :attendance_id])
-            |> Oas.Repo.update!
-        %{id: id, training: %{when: _when1}} ->
-          attendance.token |>
-            Ecto.Changeset.cast(%{used_on: get_used_on(attendance.training.when), attendance_id: id}, [:used_on, :attendance_id])
-            |> Oas.Repo.update!
+        case debtAttendance do
+          nil ->
+            attendance.token
+            |> Ecto.Changeset.cast(%{used_on: nil, attendance_id: nil}, [:used_on, :attendance_id])
+            |> Oas.Repo.update!()
+
+          %{id: id, training: %{when: _when1}} ->
+            attendance.token
+            |> Ecto.Changeset.cast(%{used_on: get_used_on(attendance.training.when), attendance_id: id}, [:used_on, :attendance_id])
+            |> Oas.Repo.update!()
+        end
       end
+
+      # Maybe delete membership
+      Oas.Members.Membership.maybe_delete_membership(
+        attendance.training,
+        attendance.member
+      )
+
+      # Delete the actual attendance
+      Oas.Repo.delete!(attendance)
+
+      # Calculate the pricing spread
+      Oas.Pricing.CalcAttendance.apply_delete(attendance.training, attendance, attendance.member)
+
+      # Return an :ok tuple so `transact` knows to commit!
+      {:ok, attendance}
+    end)
+
+    # Handle the result outside the transaction
+    case result do
+      {:ok, attendance} ->
+        # The DB committed successfully! Now it is safe to publish the spaces.
+        Oas.Trainings.Attendance.maybe_publish_spaces(attendance.training)
+
+        {:ok, %{
+          success: true,
+          training_id: attendance.training_id,
+          member_id: attendance.member_id
+        }}
+
+      {:error, reason} ->
+        {:error, reason}
     end
-
-    # Maybe delete membership
-    Oas.Members.Membership.maybe_delete_membership(
-      attendance.training,
-      attendance.member
-    )
-    # EO maybe delete membership
-
-    Oas.Repo.delete!(attendance)
-
-    Oas.Trainings.Attendance.maybe_publish_spaces(attendance.training)
-
-    {:ok, %{
-      success: true,
-      training_id: attendance.training_id,
-      member_id: attendance.member_id
-    }}
   end
 
   def get_token_amount(%{member_id: member_id}) do
@@ -380,7 +377,7 @@ defmodule Oas.Attendance do
           Map.put(member, :warnings, [member.name <> " is an x-member" | Map.get(member, :warnings, []) ]),
           :x_member
         }
-      result > config.temporary_trainings ->
+      result > config.temporary_trainings -> # This doesn't happen any more, as users are promoted to members automatically pay via credits on their account.
         {
           Map.put(member, :warnings, [member.name <> " has attended " <> to_string(result)
             <> " session"
