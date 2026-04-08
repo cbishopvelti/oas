@@ -91,6 +91,18 @@ defmodule OasWeb.Schema.SchemaConfig do
         {:ok, result}
       end
     end
+    field :global_warnings, list_of(:global_warning) do
+      resolve fn _, _, _ ->
+        items = :ets.tab2list(:global_warnings)
+        out = items |> Enum.map(fn {key, warning} ->
+            %{
+                key: key,
+                warning: warning
+            }
+          end)
+        {:ok, out}
+      end
+    end
   end
 
   object :config_mutations do
@@ -221,15 +233,15 @@ defmodule OasWeb.Schema.SchemaConfig do
     field :global_warnings, list_of(:global_warning) do
       config fn _args, _ ->
         # Send any existing errors
-        spawn(fn ->
-          items = :ets.tab2list(:global_warnings)
-          Absinthe.Subscription.publish(OasWeb.Endpoint, items |> Enum.map(fn {key, warning} ->
-            %{
-              key: key,
-              warning: warning
-            }
-          end), [global_warnings: "*"])
-        end)
+        # spawn(fn ->
+        #   items = :ets.tab2list(:global_warnings)
+        #   Absinthe.Subscription.publish(OasWeb.Endpoint, items |> Enum.map(fn {key, warning} ->
+        #     %{
+        #       key: key,
+        #       warning: warning
+        #     }
+        #   end), [global_warnings: "*"])
+        # end)
         {:ok, topic: "*"}
       end
       trigger :global_warnings_clear, topic: fn _args ->

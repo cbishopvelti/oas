@@ -231,7 +231,7 @@ defmodule Oas.Gocardless.Transactions do
     else
       get_transactions_file(file_path)
     end
-    # transactions = Oas.Gocardless.TransactionsMockData.get_transactions_mock_1(last_transaction) # DEBUG ONLY, change to get_transactions_real()
+    # transactions = Oas.Gocardless.TransactionsMockData.get_transactions_mock_unauth(last_transaction) # DEBUG ONLY, change to get_transactions_real()
 
     case transactions do
       {:ok, transactions, headers} ->

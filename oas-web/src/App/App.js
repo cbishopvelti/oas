@@ -21,29 +21,57 @@ const DrawerHeader = styled('div')(({ theme }) => ({
 }));
 
 const DrawerBar = ({ title, components, setComponents }) => {
-  const matches = useMatches();
+    const matches = useMatches();
 
-  const {loading, data} = useSubscription(gql`
-    subscription {
-      global_warnings {
-        key,
-        warning
-      }
-    }
-  `)
+    const { data, subscribeToMore } = useQuery(gql`
+        query {
+            global_warnings {
+                key, warning
+            }
+        }
+    `)
 
-  const [ mutate ] = useMutation(gql`
-    mutation($key: String!) {
-      global_warnings_clear(key: $key) {
-        key,
-        warning
-      }
-    }
-  `)
+    useEffect(() => {
+        // 3. Set up the subscription
+        const unsubscribe = subscribeToMore({
+            document: gql`
+                subscription OnWarningsUpdate {
+                    global_warnings {
+                        key
+                        warning
+                    }
+                }
+            `,
+            updateQuery: (prev, { subscriptionData }) => {
+                // If there's no new data, return the previous cache state
+                if (!subscriptionData.data) return prev;
 
-  useEffect(() => {
-    setComponents([])
-  }, [ matches ])
+                const updatedWarnings = subscriptionData.data.global_warnings;
+                return {
+                    ...prev,
+                    global_warnings: updatedWarnings
+                };
+            }
+        });
+
+        // Clean up the subscription when the component unmounts
+        return () => unsubscribe();
+    }, [subscribeToMore]);
+
+    const [mutate] = useMutation(gql`
+        mutation($key: String!) {
+        global_warnings_clear(key: $key) {
+            key,
+            warning
+        }
+        }
+    `)
+
+
+    useEffect(() => {
+        setComponents([])
+    }, [ matches ])
+
 
   return <Box sx={{ minHeight: "48px", display: "flex", justifyContent: "space-between", width: "100%", mr: "16px"}}>
     <Box sx={{pt: '15px'}}>
