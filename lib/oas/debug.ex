@@ -5,12 +5,12 @@ defmodule Oas.Debug do
 
   # Oas.Debug.force_delete_transaction(556)
   def force_delete_transaction(transaction_id) do
-    tokens = from(t in Oas.Tokens.Token,
+    _tokens = from(t in Oas.Tokens.Token,
       where: t.transaction_id == ^transaction_id
     ) # |> Oas.Repo.all()
     |> Oas.Repo.delete_all()
 
-    credits = from(c in Oas.Credits.Credit,
+    _credits = from(c in Oas.Credits.Credit,
       where: c.transaction_id == ^transaction_id
     ) # |> Oas.Repo.all()
     |> Oas.Repo.delete_all()

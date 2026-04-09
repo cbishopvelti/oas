@@ -14,12 +14,13 @@ export const MenuVenue = () => {
 
   const matches = useMatches();
 
-  const venueIds = ["venue-id", "venues", "venue-time"];
+  const venueIds = ["venue-id", "venues", "venue-time", "venue-account"];
   const newVenueIds = ['venue'];
-  const allIds = [...venueIds, ...newVenueIds];
-  const forceIds = [...newVenueIds];
+  const venueAccount = ['venue-account']
+  const allIds = [...venueIds, ...newVenueIds, ...venueAccount];
+  const forceIds = [...newVenueIds, ...venueAccount];
 
-  const active = some(matches, ({id}) => includes(allIds, id));
+  const active = some(matches, ({ id }) => includes(allIds, id));
   const forceActive = some(matches, ({id}) => includes(forceIds, id));
   const [open, setOpen] = useState(active);
 

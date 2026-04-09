@@ -11,7 +11,7 @@ import { useMatches } from 'react-router-dom';
 
 
 export const MenuTraining = () => {
-  
+
   const matches = useMatches();
 
   const trainingIds = ["training-id", "trainings", "member-attendance"];
@@ -44,6 +44,7 @@ export const MenuTraining = () => {
     return false;
   }
 
+
   return <>
     <MenuItem
       component={CustomLink(trainingIds)} end to={`/trainings`}>
@@ -63,6 +64,8 @@ export const MenuTraining = () => {
         >
         <ListItemText>New Training</ListItemText>
       </MenuItem>
+
+
     </Collapse>
   </>
 }

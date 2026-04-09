@@ -20,6 +20,7 @@ import { Link, useOutletContext } from "react-router-dom";
 import { StyledTableRow } from '../utils/util';
 import moment from 'moment';
 import { useState } from '../utils/useState';
+import TollIcon from '@mui/icons-material/Toll';
 
 export const Venues = () => {
   const { setTitle } = useOutletContext();
@@ -92,6 +93,9 @@ export const Venues = () => {
                     <TableCell>{training_where.name}</TableCell>
                     <TableCell>{training_where.credit_amount}</TableCell>
                     <TableCell>
+                      <IconButton title={`Venues account`} component={Link} to={`/venue-account/${training_where.id}`}>
+                        <TollIcon />
+                      </IconButton>
                       <IconButton title={`Edit ${training_where.name}`} component={Link} to={`/venue/${training_where.id}`}>
                         <EditIcon />
                       </IconButton>

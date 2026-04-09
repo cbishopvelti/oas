@@ -14,6 +14,19 @@ export const AnnualReceivables = ({data}) => {
     <TableContainer>
       <Table>
         <TableBody>
+          { data?.venues !== 0 && <>
+              {(data?.venues_tagged || []).map(({ tag_names, amount }, i) => {
+                return <TableRow key={i}>
+                  <TableCell>{(tag_names).join(", ") || "Other Venues"}</TableCell>
+                  <TableCell>{amount}</TableCell>
+                </TableRow>
+              })}
+              <TableRow>
+                <TableCell>Venues</TableCell>
+                <TableCell>{data?.venues}</TableCell>
+              </TableRow>
+            </>
+          }
           <TableRow>
             <TableCell>Credits</TableCell>
             <TableCell>{ data?.credits }</TableCell>

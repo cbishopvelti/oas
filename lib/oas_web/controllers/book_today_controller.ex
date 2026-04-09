@@ -35,7 +35,7 @@ defmodule OasWeb.BookTodayController do
         |> List.first()
 
         case candidates do
-          {_dist, [{_dist, training}]} -> {:ok, training}
+          {dist, [{dist, training}]} -> {:ok, training}
           {_dist, dist_trainings} ->
             candidates = dist_trainings |> Enum.map(fn {_dist, training} ->
               training

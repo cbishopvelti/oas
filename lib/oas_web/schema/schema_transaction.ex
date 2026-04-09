@@ -37,6 +37,7 @@ defmodule OasWeb.Schema.SchemaTransaction do
     field :what, :string
     field :who, :string
     field :who_member_id, :integer
+    field :training_where_id, :integer
     field :type, :string
     field :bank_details, :string
     field :notes, :string
@@ -253,6 +254,7 @@ defmodule OasWeb.Schema.SchemaTransaction do
       arg :when, non_null(:string)
       arg :who, :string
       arg :who_member_id, :integer
+      arg :training_where_id, :integer
       arg :type, non_null(:string)
       arg :amount, non_null(:float)
       arg :bank_details, :string
@@ -395,13 +397,49 @@ defmodule OasWeb.Schema.SchemaTransaction do
         out_transaction = transaction
         |> Ecto.Changeset.cast(%{
           who: member.name,
+          training_where_id: nil,
           who_member_id: who_member_id
-        }, [:who, :who_member_id])
+        }, [:who, :who_member_id, :training_where_id])
 
         out_transaction = out_transaction
         |> Oas.Gocardless.TransactionsCredits.generate_transaction_credits_2(%{
           transaction_tags: transaction.transaction_tags |> Enum.map(fn %{name: name} -> name end)
         })
+
+        out_transaction |> Oas.Repo.update!()
+
+        {:ok, %{success: true}}
+      end
+    end
+
+    field :reprocess_transaction_with_training_where, :success do
+      arg :id, non_null(:integer)
+      arg :training_where_id, non_null(:integer)
+      resolve fn _, %{id: id, training_where_id: training_where_id}, _ ->
+        training_where = Oas.Repo.get!(Oas.Trainings.TrainingWhere, training_where_id)
+
+        transaction = Oas.Repo.get!(Oas.Transactions.Transaction, id)
+        |> Oas.Repo.preload(:credit)
+        |> Oas.Repo.preload(:tokens)
+        |> Oas.Repo.preload(:membership)
+        |> Oas.Repo.preload(:transaction_tags)
+
+        if (transaction.credit != nil || transaction.credit != nil || transaction.tokens != []) do
+          raise "This transaciton already has credit or tokens or membership"
+        end
+        out_transaction = transaction
+        |> Ecto.Changeset.cast(%{
+          who: training_where.name,
+          training_where_id: training_where_id,
+          who_member_id: nil
+        }, [:who, :training_where_id, :who_member_id])
+
+        tags = Map.get(transaction, :transaction_tags, []) |> Enum.map(fn %{name: name} -> %{name: name} end)
+
+        out_transaction = out_transaction |>
+        Oas.Transactions.TransactionTags.doTransactionTags(
+          %{transaction_tags: [ %{name: "Venue"} | tags]}
+        )
 
         out_transaction |> Oas.Repo.update!()
 
