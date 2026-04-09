@@ -1,4 +1,5 @@
 import Ecto.Query, only: [from: 2]
+alias Ecto.Multi
 
 defmodule OasWeb.Schema.SchemaTrainingWhere do
   use Absinthe.Schema.Notation
@@ -78,32 +79,69 @@ defmodule OasWeb.Schema.SchemaTrainingWhere do
       arg :billing_config, :json, default_value: nil
       arg :limit, :integer
       resolve fn _, args, _ ->
+        training_where =
+          case args do
+            %{id: id} ->
+                Oas.Repo.get(Oas.Trainings.TrainingWhere, id)
+                |> Oas.Repo.preload(:gocardless)
+            _ ->
+                %Oas.Trainings.TrainingWhere{}
+          end
 
-        args = case Map.get(args, :gocardless_name) do
-          nil -> args |> Map.put(:gocardless, nil)
-          gcn -> args |> Map.put(:gocardless, %{
-            name: gcn,
-            type: :member
-          })
+        # 1. Flag if we need to sweep up the record later
+        needs_deletion? =
+            case Map.fetch(args, :gocardless_name) do
+            {:ok, gcn} when gcn in [nil, ""] -> true
+            _ -> false
+            end
+
+        args =
+            case Map.fetch(args, :gocardless_name) do
+            :error ->
+                args
+
+            {:ok, gcn} when gcn in [nil, ""] ->
+                # Nilify triggers the schema to drop the foreign key cleanly
+                Map.put(args, :gocardless, nil)
+
+            {:ok, gcn} ->
+                gocardless_params = %{name: gcn, type: :training_where}
+
+                gocardless_params =
+                if training_where.gocardless && training_where.gocardless.id do
+                    Map.put(gocardless_params, :id, training_where.gocardless.id)
+                else
+                    gocardless_params
+                end
+
+                Map.put(args, :gocardless, gocardless_params)
+            end
+
+        changeset = Oas.Trainings.TrainingWhere.changeset(training_where, args)
+
+        # 2. Use Ecto.Multi to sequence the disconnect -> delete
+        Multi.new()
+        |> Multi.insert_or_update(:training_where, changeset)
+        |> Multi.run(:delete_gocardless, fn repo, _changes ->
+            if needs_deletion? && training_where.gocardless do
+            # Now that TrainingWhere has dropped the ID, we can safely delete
+            repo.delete(training_where.gocardless)
+            else
+            {:ok, nil}
+            end
+        end)
+        |> Oas.Repo.transaction()
+        |> case do
+            # 3. Format the response to fit your existing pipeline
+            {:ok, %{training_where: updated_tw}} ->
+            {:ok, updated_tw}
+
+            {:error, :training_where, failed_changeset, _} ->
+            {:error, failed_changeset}
+
+            {:error, :delete_gocardless, failed_changeset, _} ->
+            {:error, failed_changeset}
         end
-
-        training_where = case args do
-          %{id: id} -> Oas.Repo.get(Oas.Trainings.TrainingWhere, id)
-            |> Oas.Repo.preload(:gocardless)
-          _ -> %Oas.Trainings.TrainingWhere{}
-        end
-
-        args = case !is_nil(training_where.gocardless) and Map.has_key?(training_where.gocardless, :id) and !is_nil(args.gocardless) do
-          true -> args |> put_in([:gocardless, :id], training_where.gocardless.id)
-          false -> args
-        end
-
-        training_where
-        |> Oas.Trainings.TrainingWhere.changeset(args)
-        |> (&(case &1 do
-          %{data: %{id: nil}} -> Oas.Repo.insert(&1)
-          %{data: %{id: _}} -> Oas.Repo.update(&1)
-        end)).()
         |> OasWeb.Schema.SchemaUtils.handle_errors_with_assoc()
       end
     end

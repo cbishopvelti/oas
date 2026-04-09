@@ -121,7 +121,7 @@ export const Venue = () => {
       ...formData
     }
 
-    let toSave = pick(variables, ["id", 'name', 'credit_amount', "billing_type", "billing_config"])
+    let toSave = pick(variables, ["id", 'name', 'credit_amount', "billing_type", "billing_config", "gocardless_name"])
     toSave = set(
       toSave,
       "billing_config",
