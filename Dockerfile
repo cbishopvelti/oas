@@ -1,7 +1,7 @@
 # docker build . -t chrisjbishop155/oas:latest
 # docker push chrisjbishop155/oas:latest
 
-from elixir:1.14.1
+FROM elixir:1.14.1
 
 RUN apt-get update
 
