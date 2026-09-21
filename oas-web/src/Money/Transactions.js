@@ -49,7 +49,24 @@ const rerun_time = (transactionData) => {
   return `, Next import run: ${moment(get(transactionData, "gocardless_trans_status.next_run"), "HH:mm:ss.SSSSSS").format("HHmm")}`
 }
 
+const GocardlessImportStopped = ({ transactionData }) => {
+  return <div style={{ color: "red" }}>
+    Gocardless import stopped
+    {get(transactionData, "gocardless_trans_status.stopped_reason") &&
+      <span>: {get(transactionData, "gocardless_trans_status.stopped_reason")}</span>}
+  </div>
+}
+
 const GocardlessImportCountdownComponent = ({
+  transactionData
+}) => {
+  if (!get(transactionData, "gocardless_trans_status.next_run")) {
+    return <GocardlessImportStopped transactionData={transactionData} />
+  }
+  return <GocardlessImportCountdownTimer transactionData={transactionData} />
+}
+
+const GocardlessImportCountdownTimer = ({
   transactionData
 }) => {
   let when = moment(get(transactionData, "gocardless_trans_status.next_run"), "HH:mm:ss.SSSSSS")
@@ -146,7 +163,8 @@ export const Transactions = () => {
     gocardless_trans_status {
       next_run,
       success_on,
-      failed_on
+      failed_on,
+      stopped_reason
     }
   }`, {
     variables: {
@@ -178,7 +196,7 @@ export const Transactions = () => {
     } else {
       setTitle(`Transactions: ${transactionCount} (${round(counts.incoming, 2)}, ${round(counts.outgoing, 2)}, ${round(counts.incoming + counts.outgoing, 2)})`);
     }
-    if (get(transactionData, "gocardless_trans_status.next_run")) {
+    if (get(transactionData, "gocardless_trans_status")) {
       setComponents([GocardlessImportCountdown(transactionData)])
     }
   }, [get(memberData, 'member.name'), transactions, transactionData])

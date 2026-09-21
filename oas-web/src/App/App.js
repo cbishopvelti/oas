@@ -23,7 +23,18 @@ const DrawerHeader = styled('div')(({ theme }) => ({
 const DrawerBar = ({ title, components, setComponents }) => {
   const matches = useMatches();
 
-  const {loading, data} = useSubscription(gql`
+  // Existing warnings (e.g. raised before this page was opened) come from the
+  // query; the subscription then delivers the full list on every change.
+  const { data: queryData } = useQuery(gql`
+    query {
+      global_warnings {
+        key,
+        warning
+      }
+    }
+  `, { fetchPolicy: "network-only" })
+
+  const { data: subscriptionData } = useSubscription(gql`
     subscription {
       global_warnings {
         key,
@@ -31,6 +42,8 @@ const DrawerBar = ({ title, components, setComponents }) => {
       }
     }
   `)
+
+  const global_warnings = get(subscriptionData, "global_warnings") || get(queryData, "global_warnings") || []
 
   const [ mutate ] = useMutation(gql`
     mutation($key: String!) {
@@ -56,8 +69,8 @@ const DrawerBar = ({ title, components, setComponents }) => {
       </Box>
     })}
 
-    {data?.global_warnings && <Box>
-      {data.global_warnings.map((warning, i) => {
+    {global_warnings.length > 0 && <Box>
+      {global_warnings.map((warning, i) => {
         return <Alert
           onClose={() => {
             mutate({

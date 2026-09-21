@@ -1,6 +1,7 @@
 import Ecto.Query, only: [from: 2]
 
 defmodule Oas.Gocardless do
+  require Logger
 
   defp get_access_token(config) do
     req_body = <<"{\"secret_id\":\"#{config.gocardless_id}\", \"secret_key\":\"#{config.gocardless_key}\"}">>
@@ -133,17 +134,49 @@ defmodule Oas.Gocardless do
     []
   end
 
-  def send_warning(key, warning) do
-    :ets.insert(:global_warnings, {key, warning})
-    items = :ets.tab2list(:global_warnings)
-
-    Absinthe.Subscription.publish(OasWeb.Endpoint, items |> Enum.map(fn {key, warning} ->
+  def list_warnings() do
+    :ets.tab2list(:global_warnings)
+    |> Enum.map(fn {key, warning} ->
       %{
         key: key,
         warning: warning
       }
-    end), [global_warnings: "*"])
+    end)
   end
+
+  def send_warning(key, warning) do
+    :ets.insert(:global_warnings, {key, warning})
+
+    Absinthe.Subscription.publish(OasWeb.Endpoint, list_warnings(), [global_warnings: "*"])
+  end
+
+  # Called from the GenServers' terminate/2 so that every crash, not just the
+  # handled 401 case, leaves a visible reason in the UI.
+  def report_stop(_server, reason) when reason in [:normal, :shutdown], do: :ok
+  def report_stop(_server, {:shutdown, _}), do: :ok
+  def report_stop(server, reason) do
+    stopped_on = DateTime.now!("Europe/London") |> Calendar.strftime("%Y-%m-%d %H:%M:%S")
+    Logger.error("Gocardless #{inspect(server)} stopped: #{format_exit_reason(reason)}")
+
+    send_warning(:gocardless_stopped, "Gocardless #{inspect(server)} stopped on #{stopped_on}: #{format_exit_reason(reason)}")
+    Absinthe.Subscription.publish(OasWeb.Endpoint, %{}, gocardless_trans_status: "*")
+  end
+
+  def stopped_reason() do
+    case :ets.lookup(:global_warnings, :gocardless_stopped) do
+      [{_, reason}] -> reason
+      [] ->
+        case :ets.lookup(:global_warnings, :gocardless_get_accounts) do
+          [{_, reason}] -> reason
+          [] -> nil
+        end
+    end
+  end
+
+  def format_exit_reason({%{__struct__: mod} = ex, _stacktrace}) when is_exception(ex) do
+    "#{inspect(mod)}: #{Exception.message(ex)}"
+  end
+  def format_exit_reason(reason), do: inspect(reason)
 
   def delete_warning(key) do
     :ets.delete(:global_warnings, key)

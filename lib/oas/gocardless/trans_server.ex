@@ -85,6 +85,11 @@ defmodule Oas.Gocardless.TransServer do
   end
 
   @impl true
+  def terminate(reason, _state) do
+    Oas.Gocardless.report_stop(__MODULE__, reason)
+  end
+
+  @impl true
   def handle_call(:status, _from, state) do
 
     case Map.get(state, :timer_ref, nil) do
