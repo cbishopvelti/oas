@@ -50,7 +50,8 @@ defmodule Oas.CreditUseTest do
     assert Decimal.eq?(out.refunds, "4.5")
     assert Decimal.eq?(out.other, "1")
     assert Decimal.eq?(out.transfers, "7")
-    assert Decimal.eq?(out.total, "44.5")
+    # Transfers are not "used", so they are excluded from the total
+    assert Decimal.eq?(out.total, "37.5")
 
     # Inclusive boundaries
     out = Oas.Credits.Credit.get_credit_use(~D[2024-12-31], ~D[2026-01-01])

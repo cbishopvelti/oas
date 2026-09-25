@@ -194,7 +194,8 @@ defmodule Oas.Credits.Credit do
 
   @doc """
   Credits spent between `from` and `to` (inclusive), grouped by what they were
-  spent on. Amounts are returned as positive Decimals.
+  spent on. Amounts are returned as positive Decimals. `transfers` (credits
+  moved to another member) is reported but not included in `total`.
   """
   def get_credit_use(from, to) do
     rows =
@@ -236,7 +237,15 @@ defmodule Oas.Credits.Credit do
         end
       )
 
-    Map.put(totals, :total, totals |> Map.values() |> Enum.reduce(zero, &Decimal.add/2))
+    # Transfers move credits between members without using them, so they are
+    # reported separately and left out of the total.
+    total =
+      totals
+      |> Map.delete(:transfers)
+      |> Map.values()
+      |> Enum.reduce(zero, &Decimal.add/2)
+
+    Map.put(totals, :total, total)
   end
 
   def deduct_debit(ledger, debit, opts \\ %{now: Date.utc_today()})

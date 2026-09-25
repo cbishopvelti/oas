@@ -7,7 +7,6 @@ const rows = [
   { key: 'membership', label: 'Membership' },
   { key: 'attendance', label: 'Attendance' },
   { key: 'things', label: 'Things' },
-  { key: 'transfers', label: 'Transfers to members', hideIfZero: true },
   { key: 'refunds', label: 'Refunds', hideIfZero: true },
   { key: 'other', label: 'Other', hideIfZero: true },
 ]
@@ -31,6 +30,11 @@ export const AnnualCreditUse = ({ data }) => {
           <TableRow>
             <TableCell>Total</TableCell>
             <TableCell>{data?.total}</TableCell>
+          </TableRow>
+          {/* Not included in the total: credits moved between members, not used */}
+          <TableRow>
+            <TableCell>Transfers between members</TableCell>
+            <TableCell>{data?.transfers}</TableCell>
           </TableRow>
         </TableBody>
       </Table>
