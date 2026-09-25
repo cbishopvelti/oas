@@ -11,6 +11,7 @@ import { AnnualReceivables } from './Annual/Receivables';
 import { AnnualExpenses } from './Annual/Expenses';
 import { AnnualLiabilities } from './Annual/Liabilities';
 import { AnnualBalance } from './Annual/Balance'
+import { AnnualCreditUse } from './Annual/CreditUse';
 import { VenueFilter } from '../Venue/VenueFilter';
 
 const onChange = ({formData, setFormData, key}) => (event) => {
@@ -71,6 +72,15 @@ export const AnalysisAnnual = () => {
           credits,
           total
         },
+        annual_credit_use {
+          membership,
+          attendance,
+          things,
+          transfers,
+          refunds,
+          other,
+          total
+        },
         annual_balance
       },
     }
@@ -123,6 +133,7 @@ export const AnalysisAnnual = () => {
       <AnnualReceivables data={data?.analysis_annual.annual_receivables} />
       <AnnualExpenses data={data?.analysis_annual.annual_expenses} />
       <AnnualLiabilities data={data?.analysis_annual.annual_liabilities} />
+      <AnnualCreditUse data={data?.analysis_annual?.annual_credit_use} />
       <AnnualBalance balance={data?.analysis_annual.annual_balance} />
     </Box>
   </Box>

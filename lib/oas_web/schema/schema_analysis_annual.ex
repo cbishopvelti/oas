@@ -33,6 +33,16 @@ defmodule OasWeb.Schema.SchemaAnalysisAnnual do
     field :total, :float
   end
 
+  object :annual_credit_use do
+    field :membership, :float
+    field :attendance, :float
+    field :things, :float
+    field :transfers, :float
+    field :refunds, :float
+    field :other, :float
+    field :total, :float
+  end
+
   object :annual do
     field :annual_balance, :float do
       resolve fn parent, _, _ ->
@@ -43,6 +53,18 @@ defmodule OasWeb.Schema.SchemaAnalysisAnnual do
         )
         |> (&(Oas.Repo.one(&1) || Decimal.new(0))).()
         |> Decimal.to_float()
+
+        {:ok, out}
+      end
+    end
+    field :annual_credit_use, :annual_credit_use do
+      resolve fn parent, _, _ ->
+        out =
+          Oas.Credits.Credit.get_credit_use(
+            Date.from_iso8601!(parent.from),
+            Date.from_iso8601!(parent.to)
+          )
+          |> Map.new(fn {k, v} -> {k, v |> Decimal.to_float() |> Float.round(2)} end)
 
         {:ok, out}
       end

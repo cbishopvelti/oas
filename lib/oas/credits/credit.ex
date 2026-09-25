@@ -192,6 +192,53 @@ defmodule Oas.Credits.Credit do
     |> Enum.sum()
   end
 
+  @doc """
+  Credits spent between `from` and `to` (inclusive), grouped by what they were
+  spent on. Amounts are returned as positive Decimals.
+  """
+  def get_credit_use(from, to) do
+    rows =
+      from(c in Oas.Credits.Credit,
+        where: c.amount < 0 and c.when >= ^from and c.when <= ^to
+      )
+      |> Oas.Repo.all()
+
+    # A transfer to another member is a negative credit that the receiving
+    # member's positive credit points at via credit_id.
+    transfer_ids =
+      from(d in Oas.Credits.Credit,
+        inner_join: c in assoc(d, :credit),
+        where: c.amount < 0 and c.when >= ^from and c.when <= ^to,
+        distinct: true,
+        select: c.id
+      )
+      |> Oas.Repo.all()
+      |> MapSet.new()
+
+    zero = Decimal.new("0")
+
+    totals =
+      rows
+      |> Enum.reduce(
+        %{membership: zero, attendance: zero, things: zero, transfers: zero, refunds: zero, other: zero},
+        fn credit, acc ->
+          key =
+            cond do
+              credit.membership_id != nil -> :membership
+              credit.attendance_id != nil -> :attendance
+              credit.thing_id != nil -> :things
+              MapSet.member?(transfer_ids, credit.id) -> :transfers
+              credit.transaction_id != nil -> :refunds
+              true -> :other
+            end
+
+          Map.update!(acc, key, &Decimal.add(&1, Decimal.abs(credit.amount)))
+        end
+      )
+
+    Map.put(totals, :total, totals |> Map.values() |> Enum.reduce(zero, &Decimal.add/2))
+  end
+
   def deduct_debit(ledger, debit, opts \\ %{now: Date.utc_today()})
 
   def deduct_debit([], debit, _opts) do
