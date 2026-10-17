@@ -39,11 +39,13 @@ const canUndo = (attendance, {enable_booking}) => {
     return moment(attendance.booking_cutoff)
   }
 
+  // inserted_at is a naive UTC timestamp from the server, so parse it as UTC
+  const insertedAt = moment.utc(attendance.inserted_at).local();
   if (
-    (moment(attendance.inserted_at).isSame(attendance.training.when, 'day') || attendance.training.commitment) &&
-    moment().isBefore(moment(attendance.inserted_at).add(60, 'seconds'))
+    (insertedAt.isSame(attendance.training.when, 'day') || attendance.training.commitment) &&
+    moment().isBefore(insertedAt.clone().add(60, 'seconds'))
   ) {
-    return moment(attendance.inserted_at).add(60, 'seconds')
+    return insertedAt.clone().add(60, 'seconds')
   }
   return false;
 }

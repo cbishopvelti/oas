@@ -68,7 +68,7 @@ defmodule OasWeb.Schema.SchemaUser do
             id: Map.get(booking, :id),
             where: Map.get(booking, :training_where) |> Map.get(:name),
             when: Map.get(booking, :when),
-            start_time: Map.get(training_where_time || %{}, :start_time, nil),
+            start_time: booking.start_time || Map.get(training_where_time || %{}, :start_time, nil),
             booking_cutoff: Oas.Trainings.TrainingWhereTime.get_booking_cutoff(Map.get(booking, :attendance, []) |> List.first() |> case do
               nil -> nil
               x -> Map.get(x, :inserted_at)
@@ -129,8 +129,6 @@ defmodule OasWeb.Schema.SchemaUser do
       arg :attendance_id, non_null(:integer)
       resolve fn _, %{attendance_id: attendance_id}, %{context: %{current_member: %{id: member_id}}} ->
         config = from(c in Oas.Config.Config, select: c) |> Oas.Repo.one
-        now = DateTime.utc_now()
-
         case config.enable_booking do
           true ->
             result = from(atte in Oas.Trainings.Attendance,
@@ -138,31 +136,18 @@ defmodule OasWeb.Schema.SchemaUser do
               preload: [training: [training_where: [:training_where_time]]],
               where: atte.id == ^attendance_id and
                 atte.inserted_by_member_id == ^member_id and atte.member_id == ^member_id
-                and (
-                  ((is_nil(trai.commitment) or trai.commitment == false) and trai.when >= ^Date.utc_today)
-                  or (trai.when >= ^Date.utc_today and atte.inserted_at < ^DateTime.add(now, 60))
-                )
+                and trai.when >= ^Oas.Trainings.TrainingWhereTime.local_today()
             ) |> Oas.Repo.one
-
-            booking_cutoff = Oas.Trainings.TrainingWhereTime.get_booking_cutoff(
-              result.inserted_at,
-              result.training,
-              Oas.Trainings.TrainingWhereTime.find_training_where_time(
-                result.training,
-                result.training.training_where.training_where_time
-              )
-            )
 
             case result do
               nil -> {:error, "Unable to undo"}
-              %{
-                id: id,
-                inserted_at: inserted_at
-              } ->
-                if (
-                  NaiveDateTime.compare(inserted_at, booking_cutoff) == :lt  or NaiveDateTime.compare(inserted_at, booking_cutoff) == :eq or
-                  NaiveDateTime.compare(inserted_at, NaiveDateTime.shift(now, minute: 1)) == :lt or NaiveDateTime.compare(inserted_at, NaiveDateTime.shift(now, minute: 1)) == :eq
-                ) do
+              %{id: id, training: training} ->
+                training_where_time = Oas.Trainings.TrainingWhereTime.find_training_where_time(
+                  training,
+                  training.training_where.training_where_time
+                )
+
+                if Oas.Trainings.TrainingWhereTime.can_undo?(result, training, training_where_time) do
                   Oas.Attendance.delete_attendance(%{attendance_id: id})
                   {:ok, %{
                     success: true,
