@@ -119,7 +119,11 @@ defmodule Oas.Attendance do
       case get_unsued_token_result do
         nil -> # User has no tokens, use credits instead
           if config.credits do
-            Oas.Pricing.CalcAttendance.apply(training, attendance, member)
+            # A failed credit write must not leave the attendance in place
+            case Oas.Pricing.CalcAttendance.apply(training, attendance, member) do
+              {:ok, _} -> nil
+              {:error, errors} -> Oas.Repo.rollback(errors)
+            end
           else
             nil
           end
@@ -199,11 +203,11 @@ defmodule Oas.Attendance do
       # Delete the actual attendance
       Oas.Repo.delete!(attendance)
 
-      # Calculate the pricing spread
-      Oas.Pricing.CalcAttendance.apply_delete(attendance.training, attendance, attendance.member)
-
-      # Return an :ok tuple so `transact` knows to commit!
-      {:ok, attendance}
+      # Calculate the pricing spread, rolling back the delete if a credit write fails
+      with :ok <- Oas.Pricing.CalcAttendance.apply_delete(attendance.training, attendance, attendance.member) do
+        # Return an :ok tuple so `transact` knows to commit!
+        {:ok, attendance}
+      end
     end)
 
     # Handle the result outside the transaction
