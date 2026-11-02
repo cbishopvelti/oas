@@ -24,7 +24,8 @@ defmodule Oas.Pricing.CalcAttendance do
     {trainings, attending} = from(t in Oas.Trainings.Training,
       left_join: a in assoc(t, :attendance), on: a.member_id == ^member.id,
       preload: [training_where: [:training_where_time], attendance: a],
-      where: t.pricing_instance_id == ^training.pricing_instance_id
+      where: t.pricing_instance_id == ^training.pricing_instance_id,
+      order_by: [asc: t.when, asc: t.start_time, asc: t.id]
     ) |> Oas.Repo.all()
     |> Enum.with_index()
     |> Enum.map(fn ({train, index}) ->
