@@ -134,17 +134,28 @@ defmodule OasWeb.Schema.SchemaCredits do
       resolve fn _, args, _ ->
         %{sign: -1} = amount = Decimal.new(args.amount)
 
-        credit = Oas.Repo.get!(Oas.Credits.Credit, args.id)
-        |> Oas.Repo.preload(:attendance)
-        |> Ecto.Changeset.cast(%{
-          amount: amount
-        },
-          [:amount]
-        )
-        |> Oas.Repo.update!()
+        # Update and preload in one transaction so the change is only committed
+        # once everything needed afterwards has been read successfully.
+        {:ok, credit} = Oas.Repo.transaction(fn ->
+          Oas.Repo.get!(Oas.Credits.Credit, args.id)
+          |> Ecto.Changeset.cast(%{
+            amount: amount
+          },
+            [:amount]
+          )
+          |> Oas.Repo.update!()
+          |> Oas.Repo.preload(:attendance)
+        end)
 
+        # Only notify subscribers after the transaction has committed.
         Absinthe.Subscription.publish(OasWeb.Endpoint, %{success: true}, user_attendance_attendance: credit.who_member_id)
-        Absinthe.Subscription.publish(OasWeb.Endpoint, %{id: credit.attendance.training_id}, attendance_attendance: credit.attendance.training_id)
+
+        # Not every credit belongs to an attendance (e.g. transfers, memberships, things).
+        case credit.attendance do
+          %{training_id: training_id} ->
+            Absinthe.Subscription.publish(OasWeb.Endpoint, %{id: training_id}, attendance_attendance: training_id)
+          nil -> nil
+        end
 
         {:ok, %{success: true}}
       end
