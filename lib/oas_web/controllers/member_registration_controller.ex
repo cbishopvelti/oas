@@ -13,15 +13,18 @@ defmodule OasWeb.MemberRegistrationController do
   def create(conn, %{"member" => member_params}) do
     case Members.register_member(member_params) do
       {:ok, member} ->
-        {:ok, _} =
-          Members.deliver_member_confirmation_instructions(
-            member,
-            &Routes.member_confirmation_url(conn, :edit, &1)
-          )
+        # {:ok, _} =
+        #   Members.deliver_member_confirmation_instructions(
+        #     member,
+        #     &Routes.member_confirmation_url(conn, :edit, &1)
+        #   )
 
+        # conn
+        # |> put_flash(:info, "Member created successfully.")
+        # |> MemberAuth.log_in_member(member)
         conn
-        |> put_flash(:info, "Member created successfully.")
-        |> MemberAuth.log_in_member(member)
+        |> put_flash(:error, "Registration disabled, please register from the correct registration page.")
+        |> render("new.html", changeset: Members.change_member_registration(member))
 
       {:error, %Ecto.Changeset{} = changeset} ->
         render(conn, "new.html", changeset: changeset)

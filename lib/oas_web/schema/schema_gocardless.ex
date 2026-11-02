@@ -19,6 +19,7 @@ defmodule OasWeb.Schema.SchemaGocardless do
     field :next_run, :string
     field :success_on, :string
     field :failed_on, :string
+    field :stopped_reason, :string
   end
 
   object :gocardless_queries do
@@ -63,13 +64,15 @@ defmodule OasWeb.Schema.SchemaGocardless do
               |> case do
                 nil -> nil
                 x -> Calendar.strftime(x, "%Y-%m-%d %H:%M:%S")
-              end
+              end,
+            stopped_reason: nil
           }}
         else
           {:ok, %{
             next_run: nil,
             success_on: nil,
-            failed_on: "PERMANENT"
+            failed_on: "PERMANENT",
+            stopped_reason: Oas.Gocardless.stopped_reason()
           }}
         end
       end

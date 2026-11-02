@@ -55,6 +55,11 @@ defmodule Oas.Gocardless.AuthServer do
   end
 
   @impl true
+  def terminate(reason, _state) do
+    Oas.Gocardless.report_stop(__MODULE__, reason)
+  end
+
+  @impl true
   def handle_call(:get_access_token, _from, %{access_token: access_token} = state) do
     {:reply, {:ok, access_token}, state}
   end

@@ -20,6 +20,9 @@ defmodule OasWeb.MemberRegistrationControllerTest do
 
   describe "POST /members/register" do
     @tag :capture_log
+    # The default registration form was disabled ("Disable default registration
+    # form"), so this no longer registers and logs the member in.
+    @tag skip: "default registration form is disabled"
     test "creates account and logs the member in", %{conn: conn} do
       email = unique_member_email()
 
