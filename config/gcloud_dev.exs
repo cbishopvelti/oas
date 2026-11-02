@@ -29,8 +29,7 @@ config :oas, OasWeb.Endpoint,
   domain: System.get_env("DOMAIN") || ".oxfordshireacrosociety.co.uk",
   check_origin: false,
   code_reloader: true,
-  debug_errors: true,
-  secret_key_base: "***REMOVED***",
+  # secret_key_base is read from SECRET_KEY_BASE in config/runtime.exs
   watchers: [
     # Start the esbuild watcher by calling Esbuild.install_and_run(:default, args)
     esbuild: {Esbuild, :install_and_run, [:default, ~w(--sourcemap=inline --watch)]}
@@ -41,7 +40,6 @@ config :oas, Oas.Mailer,
   relay: "smtp.gmail.com",
   username: "chrisjbishop155",
   port: 587,
-  password: "***REMOVED***",
   auth: :always
 
 config :oas, Oas.TokenMailer, adapter: Swoosh.Adapters.Local

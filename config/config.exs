@@ -19,7 +19,8 @@ config :oas, OasWeb.Endpoint,
   check_origin: false,
   render_errors: [view: OasWeb.ErrorView, accepts: ~w(html json), layout: false],
   pubsub_server: Oas.PubSub,
-  live_view: [signing_salt: "******REMOVED******"]
+  # Dev/test default only. Prod-like envs must set LIVE_VIEW_SIGNING_SALT (see config/runtime.exs).
+  live_view: [signing_salt: "dev-only-lv-salt"]
 
 # Configures the mailer
 #
@@ -33,7 +34,7 @@ config :oas, Oas.Mailer, adapter: Swoosh.Adapters.SMTP,
   relay: "smtp.gmail.com",
   username: "chrisjbishop155",
   port: 587,
-  password: "***REMOVED***",
+  # password is read from SMTP_PASSWORD in config/runtime.exs
   auth: :always
 
 config :oas, Oas.TokenMailer,
@@ -42,7 +43,6 @@ config :oas, Oas.TokenMailer,
   # relay: "smtp.gmail.com",
   # username: "chrisjbishop155",
   # port: 587,
-  # password: "***REMOVED***",
   # auth: :always
 
 # Swoosh API client is needed for adapters other than SMTP.

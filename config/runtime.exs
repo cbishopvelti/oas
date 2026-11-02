@@ -13,6 +13,58 @@ if System.get_env("PHX_SERVER") && System.get_env("RELEASE_NAME") do
   config :oas, OasWeb.Endpoint, server: true
 end
 
+# Secrets are read from environment variables, never from committed config.
+# In prod-like environments (gcloud, gcloud_dev, v2_prod, v3_staging, ...)
+# the required variables must be set or boot fails with a clear error.
+# In dev, dev_mac and test they are optional and override the local defaults.
+# See "Secrets" in README.md for the full list.
+prod_like? = config_env() not in [:dev, :dev_mac, :test]
+
+env_secret = fn name, hint ->
+  case System.get_env(name) do
+    value when value in [nil, ""] ->
+      if prod_like? do
+        raise """
+        environment variable #{name} is missing (MIX_ENV=#{config_env()}).
+        #{hint}
+        """
+      end
+
+      nil
+
+    value ->
+      value
+  end
+end
+
+secret_key_base =
+  env_secret.("SECRET_KEY_BASE", "Generate one with: mix phx.gen.secret")
+
+live_view_signing_salt =
+  env_secret.("LIVE_VIEW_SIGNING_SALT", "Generate one with: mix phx.gen.secret 32")
+
+smtp_password =
+  env_secret.("SMTP_PASSWORD", "Use the Gmail app password for the SMTP account.")
+
+if secret_key_base do
+  config :oas, OasWeb.Endpoint, secret_key_base: secret_key_base
+end
+
+if live_view_signing_salt do
+  config :oas, OasWeb.Endpoint, live_view: [signing_salt: live_view_signing_salt]
+end
+
+smtp_credentials =
+  [username: System.get_env("SMTP_USERNAME"), password: smtp_password]
+  |> Enum.reject(fn {_key, value} -> value in [nil, ""] end)
+
+if smtp_credentials != [] do
+  # Merged into the adapter settings from the env config file; harmless
+  # for mailers that use the Local/Test adapter.
+  config :oas, Oas.Mailer, smtp_credentials
+  config :oas, Oas.TokenMailer, smtp_credentials
+end
+
 
 if config_env() == :prod and false do
   database_url =

@@ -22,6 +22,7 @@ docker run -it -d \
 -e REACT_APP_PUBLIC_URL="https://www.oxfordshireacrosociety.co.uk" \
 -e DOMAIN=".oxfordshireacrosociety.co.uk" \
 -e DB_FILE=/dbs/sqlite-prod.db \
+--env-file /root/oas.env \
 -e MIX_ENV=v2_prod \
 -p 80:80 -p 443:443 \
 -v /mnt/cb33437a-ff3b-43a5-ac74-23fcfb95a022/root/oas-dbs:/dbs \
@@ -52,6 +53,7 @@ docker run -it -d \
 -e REACT_APP_PUBLIC_URL="https://www.oxfordshireacrosociety.co.uk" \
 -e DOMAIN=".oxfordshireacrosociety.co.uk" \
 -e DB_FILE=/dbs/sqlite-prod.db \
+--env-file /root/oas.env \
 -e MIX_ENV=v2_prod \
 -p 80:80 -p 443:443 \
 -v /oas-dbs:/dbs \
