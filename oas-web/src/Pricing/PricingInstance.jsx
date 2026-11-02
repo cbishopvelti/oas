@@ -118,13 +118,11 @@ export const PricingInstance = () => {
       if (!id) {
         navigate(`/pricing-instance/${get(data, "pricing_instance.id")}`);
       } else {
-        refetch();
+        refetchPricingInstance();
       }
     } catch (error) {
       console.error(error)
     }
-
-    refetch();
   }
 
   const errors = parseErrors([
@@ -135,7 +133,7 @@ export const PricingInstance = () => {
     if (!id) {
       setTitle("New Pricing Instance");
     } else {
-      setTitle(`Editing Pricing Instance: ${get(data, 'pricing.name', id)}`);
+      setTitle(`Editing Pricing Instance: ${get(data, 'pricing_instance.name', id)}`);
     }
   }, [id, data, setTitle]);
 
