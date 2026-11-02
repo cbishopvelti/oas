@@ -40,7 +40,7 @@ defmodule Oas.Pricing.CalcAttendance do
     end)
     |> Enum.unzip()
     attending = Enum.reject(attending, &is_nil/1)
-    now = Date.utc_today() |> Date.to_string()
+    now = training.when |> Date.to_string()
 
     {[result], _} = Lua.new()
     |> Lua.set!([:user, :membership_status], membership_status)
