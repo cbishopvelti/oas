@@ -30,11 +30,13 @@ const canUndo = ({
     }
   }
 
+  // inserted_at is a naive UTC timestamp from the server, so parse it as UTC
+  const insertedAt = moment.utc(booking.inserted_at).local();
   if (
-    (moment(booking.inserted_at).isSame(booking.when, 'day') || booking.commitment) &&
-    moment().isBefore(moment(booking.inserted_at).add(60, 'seconds'))
+    (insertedAt.isSame(booking.when, 'day') || booking.commitment) &&
+    moment().isBefore(insertedAt.clone().add(60, 'seconds'))
   ) {
-    return moment(booking.inserted_at).add(60, 'seconds')
+    return insertedAt.clone().add(60, 'seconds')
   }
 
 

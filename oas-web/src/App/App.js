@@ -21,57 +21,42 @@ const DrawerHeader = styled('div')(({ theme }) => ({
 }));
 
 const DrawerBar = ({ title, components, setComponents }) => {
-    const matches = useMatches();
+  const matches = useMatches();
 
-    const { data, subscribeToMore } = useQuery(gql`
-        query {
-            global_warnings {
-                key, warning
-            }
-        }
-    `)
+  // Existing warnings (e.g. raised before this page was opened) come from the
+  // query; the subscription then delivers the full list on every change.
+  const { data: queryData } = useQuery(gql`
+    query {
+      global_warnings {
+        key,
+        warning
+      }
+    }
+  `, { fetchPolicy: "network-only" })
 
-    useEffect(() => {
-        // 3. Set up the subscription
-        const unsubscribe = subscribeToMore({
-            document: gql`
-                subscription OnWarningsUpdate {
-                    global_warnings {
-                        key
-                        warning
-                    }
-                }
-            `,
-            updateQuery: (prev, { subscriptionData }) => {
-                // If there's no new data, return the previous cache state
-                if (!subscriptionData.data) return prev;
+  const { data: subscriptionData } = useSubscription(gql`
+    subscription {
+      global_warnings {
+        key,
+        warning
+      }
+    }
+  `)
 
-                const updatedWarnings = subscriptionData.data.global_warnings;
-                return {
-                    ...prev,
-                    global_warnings: updatedWarnings
-                };
-            }
-        });
+  const global_warnings = get(subscriptionData, "global_warnings") || get(queryData, "global_warnings") || []
 
-        // Clean up the subscription when the component unmounts
-        return () => unsubscribe();
-    }, [subscribeToMore]);
+  const [ mutate ] = useMutation(gql`
+    mutation($key: String!) {
+      global_warnings_clear(key: $key) {
+        key,
+        warning
+      }
+    }
+  `)
 
-    const [mutate] = useMutation(gql`
-        mutation($key: String!) {
-        global_warnings_clear(key: $key) {
-            key,
-            warning
-        }
-        }
-    `)
-
-
-    useEffect(() => {
-        setComponents([])
-    }, [ matches ])
-
+  useEffect(() => {
+    setComponents([])
+  }, [ matches ])
 
   return <Box sx={{ minHeight: "48px", display: "flex", justifyContent: "space-between", width: "100%", mr: "16px"}}>
     <Box sx={{pt: '15px'}}>
@@ -84,8 +69,8 @@ const DrawerBar = ({ title, components, setComponents }) => {
       </Box>
     })}
 
-    {data?.global_warnings && <Box>
-      {data.global_warnings.map((warning, i) => {
+    {global_warnings.length > 0 && <Box>
+      {global_warnings.map((warning, i) => {
         return <Alert
           onClose={() => {
             mutate({

@@ -42,6 +42,11 @@ defmodule OasWeb.Schema.SchemaConfig do
   end
 
   object :config_queries do
+    field :global_warnings, list_of(:global_warning) do
+      resolve fn _, _, _ ->
+        {:ok, Oas.Gocardless.list_warnings()}
+      end
+    end
     field :config_token, :config_token do
       arg :token_quantity, non_null(:integer)
       resolve fn _, %{token_quantity: token_quantity}, _ ->
@@ -89,18 +94,6 @@ defmodule OasWeb.Schema.SchemaConfig do
         )
         |> Oas.Repo.one()
         {:ok, result}
-      end
-    end
-    field :global_warnings, list_of(:global_warning) do
-      resolve fn _, _, _ ->
-        items = :ets.tab2list(:global_warnings)
-        out = items |> Enum.map(fn {key, warning} ->
-            %{
-                key: key,
-                warning: warning
-            }
-          end)
-        {:ok, out}
       end
     end
   end
@@ -232,16 +225,8 @@ defmodule OasWeb.Schema.SchemaConfig do
   object :config_subscriptions do
     field :global_warnings, list_of(:global_warning) do
       config fn _args, _ ->
-        # Send any existing errors
-        # spawn(fn ->
-        #   items = :ets.tab2list(:global_warnings)
-        #   Absinthe.Subscription.publish(OasWeb.Endpoint, items |> Enum.map(fn {key, warning} ->
-        #     %{
-        #       key: key,
-        #       warning: warning
-        #     }
-        #   end), [global_warnings: "*"])
-        # end)
+        # Existing warnings are fetched by the client via the global_warnings
+        # query; publishing from here raced the subscription registration.
         {:ok, topic: "*"}
       end
       trigger :global_warnings_clear, topic: fn _args ->

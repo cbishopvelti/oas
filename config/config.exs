@@ -10,6 +10,8 @@ import Config
 config :oas,
   ecto_repos: [Oas.Repo]
 
+config :elixir, :time_zone_database, Tz.TimeZoneDatabase
+
 # Configures the endpoint
 config :oas, OasWeb.Endpoint,
   url: [host: "0.0.0.0"],

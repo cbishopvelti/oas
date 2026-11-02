@@ -16,17 +16,20 @@ export const PendingTransactions = () => {
         amount
       }
       gocardless_trans_status {
-        next_run
+        next_run,
+        success_on,
+        failed_on,
+        stopped_reason
       }
     }
   `)
 
   useEffect(() => {
     setTitle("Pending transactions")
-    if (get(data, "gocardless_trans_status.next_run")) {
+    if (get(data, "gocardless_trans_status")) {
       setComponents([GocardlessImportCountdown(data)])
     }
-  }, [get(data, "gocardless_trans_status.next_run")])
+  }, [get(data, "gocardless_trans_status")])
 
   useSubscription(gql`
     subscription {
