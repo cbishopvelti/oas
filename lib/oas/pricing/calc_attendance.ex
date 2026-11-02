@@ -9,6 +9,8 @@ defmodule Oas.Pricing.CalcAttendance do
 
       * `:distribution_mode` - Determines how the price is distributed across items.
         Accepted values are `:redistribute` (default) or `:remaining`.
+        `:remaining` puts the bundle price minus what the member has already
+        paid on this training, for showing the price before booking.
       * `:delete` - If we are deleting the training
     """
   def calculate_price(training, member, opts \\ [])
@@ -74,12 +76,10 @@ defmodule Oas.Pricing.CalcAttendance do
             [ {training, first_item_amount} | Enum.zip(training_spread, item_amounts)]
         end
       :remaining ->
-        # Get already paid for attendances
-        {with_attendance, without_attendance} = Enum.split_with(training_spread, fn
-          (%{attendance: [%{credit: _}]}) -> true
-          _ -> false
-        end)
-        {out, already_amount} = with_attendance |> Enum.map_reduce(Decimal.new("0"), fn training, acc ->
+        # Shows what booking this training would cost on top of what the member
+        # has already paid. training_spread only holds trainings this member
+        # attends with a credit (inner join), so they are all already paid for.
+        {out, already_amount} = training_spread |> Enum.map_reduce(Decimal.new("0"), fn training, acc ->
           amount = training |> Map.get(:attendance) |> List.first() |> Map.get(:credit) |> Map.get(:amount) |> Decimal.abs()
           {
             {
@@ -89,12 +89,9 @@ defmodule Oas.Pricing.CalcAttendance do
             Decimal.add(acc, amount)
           }
         end)
-        amount = Decimal.sub(amount, already_amount) # Remaining amount
 
-        # Distribute the remaining amount over this training and non attending events
-        [first_item_amount | item_amounts] = distribute_amount([training | without_attendance] |> length(), amount)
-        dist_over = [{training, first_item_amount} | Enum.zip(without_attendance, item_amounts)]
-        dist_over ++ out
+        # The whole remaining amount falls on this training
+        [{training, Decimal.sub(amount, already_amount)} | out]
     end
   end
 
