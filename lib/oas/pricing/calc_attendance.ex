@@ -63,7 +63,7 @@ defmodule Oas.Pricing.CalcAttendance do
     #   raise "This user is already in this training somehow?"
     # end
 
-    amount = Decimal.new(result) |> Decimal.round(2, :down)
+    amount = lua_result_to_decimal(result) |> Decimal.round(2, :down)
     dbg(amount)
 
     case Keyword.get(opts, :distribution_mode, :redistribute) do
@@ -139,10 +139,7 @@ defmodule Oas.Pricing.CalcAttendance do
     Enum.map(item_amounts, fn ({training, item_amount}) ->
       [attendance] = training |> Map.get(:attendance) # Should only be one
 
-      %{sign: -1} = amount = Decimal.sub(
-        0,
-        item_amount
-      )
+      amount = to_debit_amount(item_amount)
 
       attendance.credit
       |> Ecto.Changeset.cast(%{
@@ -165,10 +162,7 @@ defmodule Oas.Pricing.CalcAttendance do
 
     Enum.map(item_amounts, fn ({training, item_amount}) ->
       [attendance] = training |> Map.get(:attendance) # Should only be one
-      %{sign: -1} = amount = Decimal.sub(
-        0,
-        item_amount
-      )
+      amount = to_debit_amount(item_amount)
 
       attendance.credit
       |> Ecto.Changeset.cast(%{
@@ -181,6 +175,30 @@ defmodule Oas.Pricing.CalcAttendance do
       Absinthe.Subscription.publish(OasWeb.Endpoint, %{success: true}, user_attendance_attendance: member.id)
       Absinthe.Subscription.publish(OasWeb.Endpoint, %{id: training.id}, attendance_attendance: training.id)
     end)
+  end
+
+  @doc false
+  # The Lua script receives prices as floats (via Decimal.to_float/1), so its
+  # result is usually a float, but may be an integer or a numeric string.
+  # Decimal.new/1 does not accept floats, so convert explicitly.
+  def lua_result_to_decimal(%Decimal{} = result), do: result
+  def lua_result_to_decimal(result) when is_integer(result), do: Decimal.new(result)
+  def lua_result_to_decimal(result) when is_float(result), do: Decimal.from_float(result)
+  def lua_result_to_decimal(result) when is_binary(result), do: Decimal.new(String.trim(result))
+  def lua_result_to_decimal(result) do
+    raise ArgumentError, "Pricing Lua script must return a number, got: #{inspect(result)}"
+  end
+
+  @doc false
+  # Converts a non-negative price into the credit amount to store (negative, or
+  # zero for a free training). Decimal zero has sign 1, so a zero price can't be
+  # matched with %{sign: -1}.
+  def to_debit_amount(item_amount) do
+    if Decimal.negative?(item_amount) do
+      raise ArgumentError, "Expected a non-negative price, got: #{Decimal.to_string(item_amount)}"
+    end
+
+    Decimal.sub(0, item_amount)
   end
 
   defp distribute_amount(length, %Decimal{coef: 0} = zero) do
