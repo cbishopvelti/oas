@@ -180,8 +180,9 @@ defmodule OasWeb.Schema.SchemaMember do
       arg :member_details, :member_details_arg
       resolve fn _parent, args, _context ->
 
-        args = case Map.get(args, :gocardless_name) do
-          nil -> args |> Map.put(:gocardless, nil)
+        # A blank name (the user cleared the field) unlinks GoCardless, same as nil.
+        args = case Map.get(args, :gocardless_name) |> then(&(&1 && String.trim(&1))) do
+          gcn when gcn in [nil, ""] -> args |> Map.put(:gocardless, nil)
           gcn -> args |> Map.put(:gocardless, %{
             name: gcn,
             type: :member

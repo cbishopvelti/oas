@@ -35,4 +35,40 @@ defmodule Oas.TrainingWhereAccountTest do
     assert Enum.map(rows, fn {acc, _, _} -> Decimal.to_integer(acc) end) ==
       [5, 10, 0, 10]
   end
+
+  test "get_account_liability only counts rows up to the given date" do
+    venue = %Oas.Trainings.TrainingWhere{name: "Venue", credit_amount: Decimal.new("1")}
+      |> Oas.Repo.insert!()
+
+    for date <- [~D[2025-06-01], ~D[2026-02-01]] do
+      %Oas.Trainings.Training{training_where_id: venue.id, when: date,
+        venue_billing_type: :fixed, venue_billing_config: %{"fixed" => "10"}}
+      |> Oas.Repo.insert!()
+    end
+
+    {total, rows} = Oas.Trainings.TrainingWhere.get_account_liability(venue.id, ~D[2025-12-31])
+    assert Decimal.equal?(total, Decimal.new("10"))
+    assert length(rows) == 1
+
+    {total, _} = Oas.Trainings.TrainingWhere.get_account_liability(venue.id)
+    assert Decimal.equal?(total, Decimal.new("20"))
+  end
+
+  test "fixed billing requires a fixed amount" do
+    changeset = Oas.Trainings.TrainingWhere.changeset(%Oas.Trainings.TrainingWhere{}, %{
+      name: "Venue", credit_amount: "1", billing_type: :fixed, billing_config: %{"other" => "1"}
+    })
+    refute changeset.valid?
+    assert {"fixed amount must be set", _} = changeset.errors[:billing_config]
+
+    changeset = Oas.Trainings.TrainingWhere.changeset(%Oas.Trainings.TrainingWhere{}, %{
+      name: "Venue", credit_amount: "1", billing_type: :fixed, billing_config: %{"fixed" => "12.5"}
+    })
+    assert changeset.valid?
+
+    training_changeset = %Oas.Trainings.Training{}
+      |> Ecto.Changeset.change(%{venue_billing_type: :fixed, venue_billing_config: %{}})
+      |> Oas.Trainings.Training.validate_billing()
+    refute training_changeset.valid?
+  end
 end

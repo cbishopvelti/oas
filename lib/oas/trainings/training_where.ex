@@ -36,6 +36,7 @@ defmodule Oas.Trainings.TrainingWhere do
       case type do
         :per_attendee -> :per_attendee
         :per_hour -> :per_hour
+        :fixed -> :fixed
         _ -> nil
       end
 
@@ -47,7 +48,7 @@ defmodule Oas.Trainings.TrainingWhere do
           new_config = Map.put(config, to_string(key_to_validate), valid_decimal)
           put_change(changeset, :billing_config, new_config)
         :missing ->
-          add_error(changeset, :billing_config, "#{key_to_validate} rate must be set")
+          add_error(changeset, :billing_config, "#{key_to_validate} amount must be set")
 
         :invalid ->
           add_error(changeset, :billing_config, "#{key_to_validate} must be a valid number")
@@ -109,24 +110,29 @@ defmodule Oas.Trainings.TrainingWhere do
     |> Decimal.mult(training.attendance |> length())
   end
   def get_billing_for_training(%{venue_billing_type: :fixed} = training) do
-    training.venue_billing_config["fixed"]
+    # Older rows may have been saved before the fixed amount was validated.
+    (training.venue_billing_config || %{})["fixed"] || Decimal.new("0")
   end
 
   # Oas.Trainings.TrainingWhere.get_account_liability(2)
-  def get_account_liability(id) do
+  # Pass `to` to only include trainings and transactions on or before that date.
+  def get_account_liability(id, to \\ nil) do
 
     trainings = from(trai in Oas.Trainings.Training,
       preload: [:attendance, :training_where],
       where: trai.training_where_id == ^id and not is_nil(trai.venue_billing_type),
       order_by: [asc: trai.when]
     )
+    |> limit_to_date(to)
     |> Oas.Repo.all()
 
 
     transactions = from(tran in Oas.Transactions.Transaction,
       where: tran.training_where_id == ^id,
       order_by: [asc: tran.when]
-    ) |> Oas.Repo.all()
+    )
+    |> limit_to_date(to)
+    |> Oas.Repo.all()
 
     both = (trainings ++ transactions)
     |> Enum.sort_by(fn %{when: when1} -> when1 end, {:asc, Date})
@@ -150,5 +156,10 @@ defmodule Oas.Trainings.TrainingWhere do
     end)
 
     out
+  end
+
+  defp limit_to_date(query, nil), do: query
+  defp limit_to_date(query, to) do
+    from(r in query, where: r.when <= ^to)
   end
 end
