@@ -198,12 +198,6 @@ defmodule OasWeb.Schema.SchemaTraining do
 
         when1 = Date.from_iso8601!(args.when)
         args = %{args | when: when1 }
-        |> case do
-          %{venue_billing_enabled: true} = args ->
-            args |> Map.put(:venue_billing_config, Map.get(training_where, :billing_config))
-          _ ->
-            args
-        end
 
         %Oas.Trainings.Training{}
           |> Ecto.Changeset.cast(args, [:when, :notes, :commitment,
