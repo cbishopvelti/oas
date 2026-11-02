@@ -192,6 +192,62 @@ defmodule Oas.Credits.Credit do
     |> Enum.sum()
   end
 
+  @doc """
+  Credits spent between `from` and `to` (inclusive), grouped by what they were
+  spent on. Amounts are returned as positive Decimals. `transfers` (credits
+  moved to another member) is reported but not included in `total`.
+  """
+  def get_credit_use(from, to) do
+    rows =
+      from(c in Oas.Credits.Credit,
+        where: c.amount < 0 and c.when >= ^from and c.when <= ^to
+      )
+      |> Oas.Repo.all()
+
+    # A transfer to another member is a negative credit that the receiving
+    # member's positive credit points at via credit_id.
+    transfer_ids =
+      from(d in Oas.Credits.Credit,
+        inner_join: c in assoc(d, :credit),
+        where: c.amount < 0 and c.when >= ^from and c.when <= ^to,
+        distinct: true,
+        select: c.id
+      )
+      |> Oas.Repo.all()
+      |> MapSet.new()
+
+    zero = Decimal.new("0")
+
+    totals =
+      rows
+      |> Enum.reduce(
+        %{membership: zero, attendance: zero, things: zero, transfers: zero, refunds: zero, other: zero},
+        fn credit, acc ->
+          key =
+            cond do
+              credit.membership_id != nil -> :membership
+              credit.attendance_id != nil -> :attendance
+              credit.thing_id != nil -> :things
+              MapSet.member?(transfer_ids, credit.id) -> :transfers
+              credit.transaction_id != nil -> :refunds
+              true -> :other
+            end
+
+          Map.update!(acc, key, &Decimal.add(&1, Decimal.abs(credit.amount)))
+        end
+      )
+
+    # Transfers move credits between members without using them, so they are
+    # reported separately and left out of the total.
+    total =
+      totals
+      |> Map.delete(:transfers)
+      |> Map.values()
+      |> Enum.reduce(zero, &Decimal.add/2)
+
+    Map.put(totals, :total, total)
+  end
+
   def deduct_debit(ledger, debit, opts \\ %{now: Date.utc_today()})
 
   def deduct_debit([], debit, _opts) do
@@ -308,7 +364,8 @@ defmodule Oas.Credits.Credit do
         Oas.TaskSupervisor,
         fn ->
           Process.sleep(120_000)
-          # Process.sleep(2) # DEBUG ONLY
+          # Process.sleep(10_000) # DEBUG ONLY
+          # Process.sleep(2_000)# DEBUG ONLY
           # Oas.TokenMailer.maybe_send_credits_warning(member)
           Oas.TokenMailer.warning_email(member, %{attendance: opts.attendance})
         end

@@ -39,7 +39,7 @@ export const ThingForm = ({ id, data, refetch }) => {
   const onChange = (key) => (event) => {
     setFormData({
       ...formData,
-      [key]: !event.target.value ? undefined : event.target.value
+      [key]: !event.target.value ? null : event.target.value
     });
   };
 

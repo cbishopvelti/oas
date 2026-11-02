@@ -49,6 +49,11 @@ import { Things } from './Things/Things';
 import { ConfigContent } from './Config/ConfigContent'
 import { ConfigGocardless } from './Config/ConfigGocardless';
 import { PendingTransactions } from './Money/PendingTransactions';
+import { VenueAccount } from './Venue/VenueAccount';
+import { Pricing } from './Pricing/Pricing';
+import { PricingInstance } from './Pricing/PricingInstance';
+import { Pricings } from './Pricing/Pricings';
+import { PricingInstances } from './Pricing/PricingInstances';
 
 const router = createBrowserRouter([
   {
@@ -221,6 +226,11 @@ const router = createBrowserRouter([
         element: <VenueTime />
       },
       {
+        id: "venue-account",
+        path: "venue-account/:training_where_id",
+        element: <VenueAccount />
+      },
+      {
         id: "things",
         path: "things",
         element: <Things />
@@ -232,6 +242,34 @@ const router = createBrowserRouter([
         id: "thing-id",
         path: "thing/:id",
         element: <Thing />
+      }, {
+        id: "pricing",
+        path: "pricing",
+        element: <Pricing />
+      }, {
+        id: "pricing-id",
+        path: "pricing/:id",
+        element: <Pricing />
+      }, {
+        id: "pricing-instance",
+        path: "pricing-instance",
+        element: <PricingInstance />
+      }, {
+        id: "pricing-instance-id",
+        path: "pricing-instance/:id",
+        element: <PricingInstance />
+      }, {
+        id: "pricings",
+        path: "pricings",
+        element: <Pricings />
+      }, {
+        id: "pricing-instances",
+        path: "pricing-instances",
+        element: <PricingInstances />
+      }, {
+        id: "pricing-instances-pricing-id",
+        path: "pricing-instances/:pricing_id",
+        element: <PricingInstances />
       }
     ],
   },

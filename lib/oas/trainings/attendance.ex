@@ -15,7 +15,7 @@ defmodule Oas.Trainings.Attendance do
   end
 
 
-  def validate_limit(changeset, %{limit: nil}, inserted_by_member) do
+  def validate_limit(changeset, %{limit: nil}, _inserted_by_member) do
     changeset
   end
   def validate_limit(changeset, _training, %{is_admin: true}) do

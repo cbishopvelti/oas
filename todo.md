@@ -90,9 +90,9 @@ Throttel streaming output. [x]
 Initial message ✅
 Notify admins of when a user messages ✅
 Users should be notified of new messages from other participants ✅
-Now messages should go in the sub menu under Chat. ✅
+New messages should go in the sub menu under Chat. ✅
 Handle message seen ✅
-Check works for Anonymous users ✅
+Test works for Anonymous users ✅
 
 ### 2026-02-18
 
@@ -105,7 +105,76 @@ Add attendee limit. ✅
 Exempt membership count when calculating if user has become full member ✅
 Show user their membership status. ✅
 Better nfc/qrcode trainings on same day attendance resolution. ✅
+Create page for lidia. ✅
+
+### Venue tracking
+
+Venues should have configerable options, None, Bill per antendee, Bill per hour. ✅
+Configuration config should be stored in the venue table as jsonb ✅
+Gocardless link
+
+Trainings will have a toggle for if billing is enabled ✅
+You should be able to override Venue billing option. ✅
+Training will have an override amount. This is now the Fixed option ✅
+
+Validate per_hour that start_time and end_time are set. ✅
+
+TrainingForm: if per_hour, start_time and end time are required, unless override is set. ✅
+Venue form: All end times should be set if per_hour ✅
+
+Time fields should still be displayed in comittment mode if venue billing is enabled and billing is per_hour. ✅
+
+Transactions directly link to a venue via join table ✅
+
+Show a venues accounts ✅
+
+Add into the Annual report
+- Expenses ✅
+- Liabilities ✅
+- Receivables ✅
+
+Test reccuring training creation ✅
+
+
+Make gocardless link table. ✅
+- test registration ✅
+- venue gocardless ✅
+
+Loads of queries when opening a transaction page ✅
+Validate Transactions can't have training_where_id and who_member_id both set. ✅
+
+Credits Menue ✅
 Create page for Sjefs visit. ✅
 Disable warning emails option for specific trainings. ✅
 Fix the registration disclaimer.
-Check booking search params on the training-venue branch
+Check booking search params on the training-venue branch ✅
+Allow trainings to override amount. ✅
+
+Test
+
+### Pricing
+
+Create Pricing table ✅
+pricing UI ✅
+pricings list ✅
+Move pricing to it's own "bundle" sub menu. ✅
+Add is_active to existing trainings. ✅
+Validate is_active is the same for event and bundle. ✅
+Changing pricing_instance to Active will change all child trainingcs to active. ✅
+Create pricing instance (with is_active) ✅
+Add pricing_instance_id to events ✅
+Display price in public UI. ✅
+Blockly input, events, user attendance. ✅
+Setup test env, abstract out the ngix conf and run in it's own container.
+Test what happens when an x_member joins an event with membership check disabled. ✅
+Test that a temp member on their final count doesn't become a full member with membership check disabled. ✅
+Transactionise add_attendance ✅
+Subscriptions should fire on all modified prices. ✅
+Display public price. ✅
+Recalculate price on delete_attendance. ✅
+Test attending with normal pricing
+
+In master, check bug with TrainingAttendance.js setTotalCredits; credit may be null, if perhapse they're still paying with tokens ✅
+```setTotalCredits(Math.abs(sumBy(attendance, ({credit}) =>  credit ? parseFloat(credit.amount) : 0)))```
+Commitment mode can edit, schema_user.ex 148 ✅
+```or (trai.when >= ^Date.utc_today and atte.inserted_at < ^DateTime.add(now, 60))```

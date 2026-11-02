@@ -4,7 +4,8 @@ defmodule Oas.Repo do
   use Ecto.Repo,
     otp_app: :oas,
     # adapter: Ecto.Adapters.Postgres
-    adapter: Ecto.Adapters.SQLite3
+    adapter: Ecto.Adapters.SQLite3,
+    json_library: Jason
 
   require Logger
 

@@ -15,7 +15,8 @@ export const TrainingWhere = ({
     query {
       training_wheres {
         id,
-        name
+        name,
+        billing_type
       }
     }
   `);
@@ -30,7 +31,7 @@ export const TrainingWhere = ({
     freeSolo
     required
     value={get(formData, 'training_where.name')  || ''}
-    options={(trainingWhere || []).map(({name, id}) => ({label: name, name, id }))}
+    options={(trainingWhere || []).map(({name, id, billing_type}) => ({label: name, name, id, billing_type }))}
     renderInput={(params) => <TextField
       {...params}
       label="Venue"
@@ -60,13 +61,17 @@ export const TrainingWhere = ({
         return;
       }
 
-      const id = newValue instanceof String ? find(trainingWhere, (name) => name === newValue).id : newValue.id
+      const dat = newValue instanceof String ? find(trainingWhere, (name) => name === newValue) : newValue
 
       const objToSet = {
         ...formData,
         training_where: {
           name: newValue instanceof String ? newValue : newValue.name,
-          ...(id ? {id: id} : {} )
+          ...(dat ? {
+            id: dat.id,
+            billing_type: dat.billing_type
+          } : {}),
+
         }
       }
       setFormData(objToSet)

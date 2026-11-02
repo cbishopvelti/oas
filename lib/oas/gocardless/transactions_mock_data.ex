@@ -1,5 +1,9 @@
 defmodule Oas.Gocardless.TransactionsMockData do
 
+  def get_transactions_mock_unauth(_when) do
+    {:unauth_401, nil, "Mock error"}
+  end
+
   def get_transacitons_mock_2(_when) do
     {:ok, %{
       "last_updated" => "2025-05-20T11:28:37.788239Z",

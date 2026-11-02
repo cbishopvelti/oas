@@ -11,6 +11,8 @@ import { AnnualReceivables } from './Annual/Receivables';
 import { AnnualExpenses } from './Annual/Expenses';
 import { AnnualLiabilities } from './Annual/Liabilities';
 import { AnnualBalance } from './Annual/Balance'
+import { AnnualCreditUse } from './Annual/CreditUse';
+import { VenueFilter } from '../Venue/VenueFilter';
 
 const onChange = ({formData, setFormData, key}) => (event) => {
   setFormData({
@@ -31,8 +33,12 @@ export const AnalysisAnnual = () => {
   })
 
   const { data, refetch } = useQuery(gql`
-    query ($from: String!, $to: String!, $transaction_tags: [TransactionTagArg]) {
-      analysis_annual(from: $from, to: $to, transaction_tags: $transaction_tags) {
+    query ($from: String!, $to: String!, $transaction_tags: [TransactionTagArg]
+      $venues: [VenueArg]
+    ) {
+      analysis_annual(from: $from, to: $to, transaction_tags: $transaction_tags,
+        venues: $venues
+      ) {
         annual_income {
           total,
           tagged {
@@ -43,7 +49,12 @@ export const AnalysisAnnual = () => {
         annual_receivables {
           tokens,
           credits,
-          total
+          total,
+          venues,
+          venues_tagged {
+            tag_names,
+            amount
+          }
         },
         annual_expenses {
           total,
@@ -53,7 +64,21 @@ export const AnalysisAnnual = () => {
           }
         },
         annual_liabilities {
+          venues_tagged {
+            tag_names,
+            amount
+          },
+          venues,
           credits,
+          total
+        },
+        annual_credit_use {
+          membership,
+          attendance,
+          things,
+          transfers,
+          refunds,
+          other,
           total
         },
         annual_balance
@@ -98,6 +123,9 @@ export const AnalysisAnnual = () => {
       <FormControl sx={{minWidth: 256}}>
         <TransactionTags formData={filterData} setFormData={setFilterData} filterMode={true} />
       </FormControl>
+      <FormControl sx={{ minWidth: 256 }}>
+        <VenueFilter formData={filterData} setFormData={setFilterData} />
+      </FormControl>
     </Box>
 
     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mt: 2 }}>
@@ -105,6 +133,7 @@ export const AnalysisAnnual = () => {
       <AnnualReceivables data={data?.analysis_annual.annual_receivables} />
       <AnnualExpenses data={data?.analysis_annual.annual_expenses} />
       <AnnualLiabilities data={data?.analysis_annual.annual_liabilities} />
+      <AnnualCreditUse data={data?.analysis_annual?.annual_credit_use} />
       <AnnualBalance balance={data?.analysis_annual.annual_balance} />
     </Box>
   </Box>

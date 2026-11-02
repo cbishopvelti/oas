@@ -71,7 +71,8 @@ export const Bookings = () => {
         inserted_by_member_id,
         inserted_at,
         commitment,
-        full
+        full,
+        price
       }
     }
   `, {
@@ -138,6 +139,7 @@ export const Bookings = () => {
           <TableCell>Where</TableCell>
           <TableCell>When</TableCell>
           <TableCell>Start time</TableCell>
+          <TableCell>Price</TableCell>
           <TableCell>Actions</TableCell>
         </TableRow>
       </TableHead>
@@ -147,6 +149,7 @@ export const Bookings = () => {
             <TableCell sx={{width: "20%"}}>{training.where}</TableCell>
             <TableCell sx={{width: "20%"}}>{training.when}</TableCell>
             <TableCell sx={{ width: "20%" }}>{training.start_time && moment(training.start_time, "HH:mm:ss").format("HH:mm")}</TableCell>
+            <TableCell sx={{width: "20%"}}>{training.price}</TableCell>
             <TableCell sx={{width: "20%"}}>
               {!training.attendance_id && !training.full && <Button onClick={onAttend(training.id)} color="success" sx={{width: "100%"}}>Attend</Button>}
               {user && canUndo({user})(training) && <UndoButton
