@@ -62,10 +62,11 @@ defmodule OasWeb.Schema.SchemaPricing do
           order_by: [desc: :updated_at]
         )
 
-        case Map.get(args, :pricing_id, nil) do
-          nil -> query
-          id  -> where(query, [p], p.pricing_id == ^id)
-        end
+        query =
+          case Map.get(args, :pricing_id, nil) do
+            nil -> query
+            id  -> where(query, [p], p.pricing_id == ^id)
+          end
 
         out = query |> Oas.Repo.all()
 
