@@ -28,9 +28,6 @@ defmodule Oas.Pricing.CalcAttendance do
     ) |> Oas.Repo.all()
     |> Enum.with_index()
     |> Enum.map(fn ({train, index}) ->
-      IO.inspect(train, label: "100 -----")
-      IO.inspect(Keyword.get(opts, :delete, false), label: "100.1")
-      IO.inspect(opts, label: "100.2")
       {
         train |> calculate_without_pricing() |> Decimal.to_float(),
         # Add exsting attendances, or this training
@@ -64,7 +61,6 @@ defmodule Oas.Pricing.CalcAttendance do
     # end
 
     amount = lua_result_to_decimal(result) |> Decimal.round(2, :down)
-    dbg(amount)
 
     case Keyword.get(opts, :distribution_mode, :redistribute) do
       :redistribute ->

@@ -154,8 +154,6 @@ defmodule OasWeb.Schema.SchemaMember do
 
         token_count = Oas.Attendance.get_token_amount(%{member_id: member_id})
 
-        dbg(result)
-
         {
           :ok,
           Map.put(result, :token_count, token_count)
