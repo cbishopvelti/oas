@@ -129,16 +129,16 @@ defmodule Oas.Trainings.TrainingWhere do
     ) |> Oas.Repo.all()
 
     both = (trainings ++ transactions)
-    |> Enum.sort_by(fn %{when: when1} -> when1 end, :asc)
+    |> Enum.sort_by(fn %{when: when1} -> when1 end, {:asc, Date})
 
-    out = both |> Enum.reduce({Decimal.new("0"), []}, fn %Oas.Transactions.Transaction{} = trans, {total, _rows} ->
+    out = both |> Enum.reduce({Decimal.new("0"), []}, fn %Oas.Transactions.Transaction{} = trans, {total, rows} ->
         amount = trans.amount
         acc_amount = Decimal.add(amount, total)
         {acc_amount, [{acc_amount, amount, %{
           what: trans.what,
           when: trans.when,
           transaction_id: trans.id
-        }}]}
+        }} | rows]}
       %Oas.Trainings.Training{} = trai, {total, rows} ->
         amount = get_billing_for_training(trai)
         acc_amount = Decimal.add(total, amount)
