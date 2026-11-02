@@ -32,7 +32,8 @@ defmodule Oas.Credits2Test do
       doCredit("5", Date.new!(2025, 5, 26), member)
       doCredit("6", Date.new!(2025, 5, 27), member)
 
-      {_trans, total} = Oas.Credits.Credit2.get_credit_amount(%{member_id: member_id});
+      # Pin "now" so the credits haven't expired yet (they expire token_expiry_days after `when`)
+      {_trans, total} = Oas.Credits.Credit2.get_credit_amount(%{member_id: member_id}, %{now: Date.new!(2025, 5, 28)});
 
       assert Decimal.eq?(total, 11)
     end
