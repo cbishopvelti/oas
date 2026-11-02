@@ -49,13 +49,6 @@ export const PricingInstance = () => {
     refetch();
   }, [])
 
-  useEffect(() => {
-    setFormData((pri) => ({
-      ...pri,
-      ...pick(formData.pricing, ["name", "blockly_conf"])
-    }))
-  }, [formData.pricing])
-
   const {data, refetch: refetchPricingInstance} = useQuery(gql`
     query($id: Int!) {
       pricing_instance(id: $id){
@@ -167,7 +160,13 @@ export const PricingInstance = () => {
           const pricingsArray = get(pricingsData, "pricings", []);
           const pricing = pricingsArray.find(({ id }) => id === newValue.id);
 
-          setFormData((formData) => ({...formData, pricing: pricing}))
+          // Only a new instance starts from the template's name and blocks;
+          // an existing instance keeps its own.
+          setFormData((formData) => ({
+            ...formData,
+            ...(!id ? pick(pricing, ["name", "blockly_conf"]) : {}),
+            pricing: pricing
+          }))
         }}
       />
     </FormControl>

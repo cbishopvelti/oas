@@ -424,7 +424,7 @@ defmodule OasWeb.Schema.SchemaTransaction do
         |> Oas.Repo.preload(:membership)
         |> Oas.Repo.preload(:transaction_tags)
 
-        if (transaction.credit != nil || transaction.credit != nil || transaction.tokens != []) do
+        if (transaction.credit != nil || transaction.membership != nil || transaction.tokens != []) do
           raise "This transaciton already has credit or tokens or membership"
         end
         out_transaction = transaction

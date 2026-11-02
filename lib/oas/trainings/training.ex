@@ -72,6 +72,7 @@ defmodule Oas.Trainings.Training do
       case type do
         :per_attendee -> :per_attendee
         :per_hour -> :per_hour
+        :fixed -> :fixed
         _ -> nil
       end
 
@@ -83,7 +84,7 @@ defmodule Oas.Trainings.Training do
           new_config = Map.put(config, to_string(key_to_validate), valid_decimal)
           put_change(changeset, :venue_billing_config, new_config)
         :missing ->
-          add_error(changeset, :venue_billing_config, "#{key_to_validate} rate must be set")
+          add_error(changeset, :venue_billing_config, "#{key_to_validate} amount must be set")
 
         :invalid ->
           add_error(changeset, :venue_billing_config, "#{key_to_validate} must be a valid number")

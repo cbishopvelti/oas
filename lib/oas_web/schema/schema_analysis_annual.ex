@@ -76,7 +76,7 @@ defmodule OasWeb.Schema.SchemaAnalysisAnnual do
         # Venues
         {venues_total, venues} = Oas.Repo.all(Oas.Trainings.TrainingWhere)
         |> Enum.map(fn training_where ->
-          {acc, _} = Oas.Trainings.TrainingWhere.get_account_liability(training_where.id)
+          {acc, _} = Oas.Trainings.TrainingWhere.get_account_liability(training_where.id, Date.from_iso8601!(parent.to))
           {acc, training_where}
         end)
         |> Enum.filter(fn {amount, _} ->
@@ -183,7 +183,7 @@ defmodule OasWeb.Schema.SchemaAnalysisAnnual do
         # Venues
         {venues_total, venues} = Oas.Repo.all(Oas.Trainings.TrainingWhere)
         |> Enum.map(fn training_where ->
-          {acc, _} = Oas.Trainings.TrainingWhere.get_account_liability(training_where.id)
+          {acc, _} = Oas.Trainings.TrainingWhere.get_account_liability(training_where.id, Date.from_iso8601!(parent.to))
           {acc, training_where}
         end)
         |> Enum.filter(fn {amount, _} ->
