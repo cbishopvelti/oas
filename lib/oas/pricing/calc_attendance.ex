@@ -98,6 +98,14 @@ defmodule Oas.Pricing.CalcAttendance do
     end
   end
 
+  @doc """
+    Deducts credit for a new attendance and re-spreads the price over the member's
+    other attendances in the same pricing instance.
+
+    Returns `{:ok, attendance}` or `{:error, reason}`. Callers run this inside a
+    transaction and must roll back on error, otherwise the attendance is kept
+    without its credit.
+    """
   def apply(%{pricing_instance: nil} = training, attendance, member) do
     Oas.Credits.Credit.deduct_credit(
       attendance,
@@ -117,47 +125,43 @@ defmodule Oas.Pricing.CalcAttendance do
 
     [ first_item_amount | item_amounts] = calculate_price(training, member)
 
-    # Insert this attendance,
-    Oas.Credits.Credit.deduct_credit(
-      attendance,
-      member,
-      Decimal.sub(
-        0,
-        first_item_amount |> elem(1)
-      ),
-      %{
-        now: training.when,
-        attendance: attendance,
-        disable_warning_emails: training.disable_warning_emails
-      }
-    )
-
-    # update other attendances
-    Enum.map(item_amounts, fn ({training, item_amount}) ->
-      [attendance] = training |> Map.get(:attendance) # Should only be one
-
-      amount = to_debit_amount(item_amount)
-
-      attendance.credit
-      |> Ecto.Changeset.cast(%{
-        amount: amount
-      },
-        [:amount]
-      )
-      |> Oas.Repo.update()
-
-      Absinthe.Subscription.publish(OasWeb.Endpoint, %{success: true}, user_attendance_attendance: member.id)
-      Absinthe.Subscription.publish(OasWeb.Endpoint, %{id: training.id}, attendance_attendance: training.id)
-    end)
+    # Insert this attendance, then update other attendances
+    with {:ok, attendance} <- Oas.Credits.Credit.deduct_credit(
+           attendance,
+           member,
+           Decimal.sub(
+             0,
+             first_item_amount |> elem(1)
+           ),
+           %{
+             now: training.when,
+             attendance: attendance,
+             disable_warning_emails: training.disable_warning_emails
+           }
+         ),
+         :ok <- update_credit_amounts(item_amounts, member) do
+      {:ok, attendance}
+    end
   end
 
+  @doc """
+    Re-spreads the price over the member's remaining attendances after one is deleted.
+
+    Returns `:ok` or `{:error, reason}`; callers must roll back on error.
+    """
   def apply_delete(%{pricing_instance: nil}, _attendance, _member) do
     # Nothing, as there are no related trainings.
+    :ok
   end
   def apply_delete(training, _attendance, member) do
-    item_amounts = calculate_price(training, member, delete: true)
+    calculate_price(training, member, delete: true)
+    |> update_credit_amounts(member)
+  end
 
-    Enum.map(item_amounts, fn ({training, item_amount}) ->
+  # Updates the credit of each attendance to its new share of the price. Stops at
+  # the first failed write and returns `{:error, changeset}`.
+  defp update_credit_amounts(item_amounts, member) do
+    Enum.reduce_while(item_amounts, :ok, fn ({training, item_amount}, :ok) ->
       [attendance] = training |> Map.get(:attendance) # Should only be one
       amount = to_debit_amount(item_amount)
 
@@ -168,9 +172,15 @@ defmodule Oas.Pricing.CalcAttendance do
         [:amount]
       )
       |> Oas.Repo.update()
+      |> case do
+        {:ok, _credit} ->
+          Absinthe.Subscription.publish(OasWeb.Endpoint, %{success: true}, user_attendance_attendance: member.id)
+          Absinthe.Subscription.publish(OasWeb.Endpoint, %{id: training.id}, attendance_attendance: training.id)
+          {:cont, :ok}
 
-      Absinthe.Subscription.publish(OasWeb.Endpoint, %{success: true}, user_attendance_attendance: member.id)
-      Absinthe.Subscription.publish(OasWeb.Endpoint, %{id: training.id}, attendance_attendance: training.id)
+        {:error, changeset} ->
+          {:halt, {:error, changeset}}
+      end
     end)
   end
 
