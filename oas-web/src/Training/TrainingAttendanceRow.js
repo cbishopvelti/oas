@@ -23,6 +23,7 @@ import moment from 'moment';
 import { isString } from 'lodash';
 import SaveIcon from '@mui/icons-material/Save';
 import { useMutation, gql } from '@apollo/client';
+import { WhatsAppDebtButton } from '../Member/WhatsAppDebtButton';
 
 const canUndo = (attendance, {enable_booking}) => {
   if (!enable_booking) {
@@ -135,6 +136,7 @@ export const TrainingAttendanceRow = ({
           >
           <SaveIcon />
         </IconButton>}
+        <WhatsAppDebtButton member={attendance.member} />
         <IconButton title={`View ${attendance.member.name}'s tokens`} component={Link} to={`/member/${attendance.member.id}/tokens`}>
           <BookOnlineIcon />
         </IconButton>

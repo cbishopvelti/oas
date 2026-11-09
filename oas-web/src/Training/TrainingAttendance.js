@@ -41,7 +41,10 @@ export const TrainingAttendance = ({trainingId, setAttendance, setTotalCredits})
         email,
         token_count,
         member_status,
-        credit_amount
+        credit_amount,
+        member_details {
+          phone
+        }
       },
       credit {
         id,
