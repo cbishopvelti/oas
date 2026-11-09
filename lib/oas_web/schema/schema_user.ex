@@ -104,10 +104,11 @@ defmodule OasWeb.Schema.SchemaUser do
                 Decimal.abs(amount)
               # Not attending, to calculate the price
               booking ->
-                Oas.Pricing.CalcAttendance.calculate_price(booking, member, distribution_mode: :remaining)
-                |> List.first()
-                |> elem(1)
-                |> Decimal.to_string()
+                case Oas.Pricing.CalcAttendance.calculate_price(booking, member, distribution_mode: :remaining) do
+                  # The rule is broken, so show no price. Booking returns the error.
+                  {:error, _} -> nil
+                  [{_training, amount} | _] -> Decimal.to_string(amount)
+                end
             end
 
           }
