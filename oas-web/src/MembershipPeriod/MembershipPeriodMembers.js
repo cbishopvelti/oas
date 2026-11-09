@@ -172,7 +172,10 @@ export const MembershipPeriodMembers = () => {
             token_count,
             credit_amount,
             inserted_at,
-            member_status
+            member_status,
+            member_details {
+              phone
+            }
           }
         }
       }

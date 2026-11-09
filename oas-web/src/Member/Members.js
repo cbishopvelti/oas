@@ -77,6 +77,9 @@ export const Members = () => {
       credit_amount,
       inserted_at,
       member_status,
+      member_details {
+        phone
+      },
       tokens {
         id
       },

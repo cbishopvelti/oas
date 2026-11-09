@@ -69,7 +69,14 @@ defmodule OasWeb.Schema.SchemaMember do
     field :inserted_at, :string
     field :honorary_member, :boolean
 
-    field :member_details, :member_details
+    field :member_details, :member_details do
+      resolve fn
+        %{member_details: %Ecto.Association.NotLoaded{}} = member, _, _ ->
+          {:ok, Oas.Repo.preload(member, :member_details).member_details}
+        member, _, _ ->
+          {:ok, Map.get(member, :member_details)}
+      end
+    end
 
     field :membership_periods, list_of(:membership_period) do
       resolve fn %{id: id}, _, _ ->
@@ -127,7 +134,7 @@ defmodule OasWeb.Schema.SchemaMember do
         query = (
           from m in Oas.Members.Member,
           select: m,
-          preload: [:tokens, :gocardless],
+          preload: [:tokens, :gocardless, :member_details],
           order_by: [desc: :id]
         )
         |> (&(case show_all do

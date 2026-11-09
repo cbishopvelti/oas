@@ -23,6 +23,7 @@ import QrCode2Icon from '@mui/icons-material/QrCode2';
 import { useMutation, gql } from '@apollo/client'
 import { useState as reactUseState } from 'react';
 import QRCode from "react-qr-code";
+import { WhatsAppDebtButton } from './WhatsAppDebtButton';
 
 
 export const MembersDisplay = ({
@@ -155,6 +156,7 @@ export const MembersDisplay = ({
                 <TableCell sx={{...(member.credit_amount < 0 ? {color: "red"} : {})}}>{member.credit_amount}</TableCell>
                 <TableCell>{moment(member.inserted_at).format("DD/MM/YYYY")}</TableCell>
                 <TableCell>
+                  <WhatsAppDebtButton member={member} />
                   <IconButton title={`Login user`} onClick={showLoginQrCode(member.id, member.name)}>
                     <QrCode2Icon />
                   </IconButton>
