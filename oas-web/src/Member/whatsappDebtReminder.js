@@ -39,7 +39,6 @@ export const isInDebt = (member) => {
 
 export const buildDebtReminderMessage = (member, config = {}) => {
   const { credit, tokens } = getDebt(member);
-  const firstName = `${member?.name || ''}`.trim().split(/\s+/)[0];
   const clubName = config?.name;
 
   const owed = [];
@@ -51,8 +50,6 @@ export const buildDebtReminderMessage = (member, config = {}) => {
   }
 
   const lines = [
-    `Hi${firstName ? ` ${firstName}` : ''},`,
-    '',
     `Just a friendly reminder${clubName ? ` from ${clubName}` : ''} that your account is currently in debt: you owe ${owed.join(' and ')}.`
   ];
 
@@ -61,7 +58,6 @@ export const buildDebtReminderMessage = (member, config = {}) => {
     lines.push('', 'You can pay by bank transfer to:', bacs);
   }
 
-  lines.push('', 'Thanks!');
   return lines.join('\n');
 };
 
