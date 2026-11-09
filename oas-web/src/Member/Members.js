@@ -78,7 +78,6 @@ export const Members = () => {
       inserted_at,
       member_status,
       member_details {
-        id,
         phone
       },
       tokens {

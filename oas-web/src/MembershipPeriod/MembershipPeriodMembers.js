@@ -174,7 +174,6 @@ export const MembershipPeriodMembers = () => {
             inserted_at,
             member_status,
             member_details {
-              id,
               phone
             }
           }
