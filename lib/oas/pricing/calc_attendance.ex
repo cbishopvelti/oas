@@ -1,6 +1,15 @@
 import Ecto.Query, only: [from: 2]
 
 defmodule Oas.Pricing.CalcAttendance do
+  require Logger
+
+  # Limits for running a pricing rule. A rule that loops forever or builds huge
+  # tables must not hang or take down a member's booking.
+  @default_lua_timeout_ms 2_000
+  # In words (8 bytes each on 64-bit), so about 64MB.
+  @default_lua_max_heap_words 8_000_000
+
+  @price_error "This session's price couldn't be calculated. Please contact an admin."
 
   @doc """
     Calculates an array of prices for all items in a pricing_instance to be applied.
@@ -12,6 +21,9 @@ defmodule Oas.Pricing.CalcAttendance do
         `:remaining` puts the bundle price minus what the member has already
         paid on this training, for showing the price before booking.
       * `:delete` - If we are deleting the training
+
+    Returns a list of `{training, amount}`, or `{:error, message}` when the
+    pricing instance's Lua rule fails, times out or doesn't return a valid price.
     """
   def calculate_price(training, member, opts \\ [])
   def calculate_price(%{pricing_instance: nil} = training, _member, _opts) do
@@ -41,13 +53,28 @@ defmodule Oas.Pricing.CalcAttendance do
     attending = Enum.reject(attending, &is_nil/1)
     now = training.when |> Date.to_string()
 
-    {[result], _} = Lua.new()
-    |> Lua.set!([:user, :membership_status], membership_status)
-    |> Lua.set!([:user, :attending], attending)
-    |> Lua.set!([:trainings], trainings)
-    |> Lua.set!([:now], now)
-    |> Lua.eval!(lua_code)
+    inputs = %{
+      membership_status: membership_status,
+      attending: attending,
+      trainings: trainings,
+      now: now
+    }
 
+    case run_lua(lua_code, inputs) do
+      {:ok, amount} ->
+        spread_price(training, member, amount, opts)
+
+      {:error, reason} ->
+        Logger.error(
+          "Pricing rule failed for pricing_instance #{training.pricing_instance_id}, " <>
+            "training #{training.id}, member #{member.id}: #{reason}"
+        )
+
+        {:error, @price_error}
+    end
+  end
+
+  defp spread_price(training, member, amount, opts) do
     training_spread = from(t in Oas.Trainings.Training,
       inner_join: a in assoc(t, :attendance),
       inner_join: c in assoc(a, :credit),
@@ -63,7 +90,7 @@ defmodule Oas.Pricing.CalcAttendance do
     #   raise "This user is already in this training somehow?"
     # end
 
-    amount = lua_result_to_decimal(result) |> Decimal.round(2, :down)
+    amount = Decimal.round(amount, 2, :down)
 
     case Keyword.get(opts, :distribution_mode, :redistribute) do
       :redistribute ->
@@ -120,10 +147,9 @@ defmodule Oas.Pricing.CalcAttendance do
   end
   def apply(training, attendance, member) do
 
-    [ first_item_amount | item_amounts] = calculate_price(training, member)
-
     # Insert this attendance, then update other attendances
-    with {:ok, attendance} <- Oas.Credits.Credit.deduct_credit(
+    with [ first_item_amount | item_amounts] <- calculate_price(training, member),
+         {:ok, attendance} <- Oas.Credits.Credit.deduct_credit(
            attendance,
            member,
            Decimal.sub(
@@ -151,8 +177,10 @@ defmodule Oas.Pricing.CalcAttendance do
     :ok
   end
   def apply_delete(training, _attendance, member) do
-    calculate_price(training, member, delete: true)
-    |> update_credit_amounts(member)
+    case calculate_price(training, member, delete: true) do
+      {:error, _} = error -> error
+      item_amounts -> update_credit_amounts(item_amounts, member)
+    end
   end
 
   # Updates the credit of each attendance to its new share of the price. Stops at
@@ -179,6 +207,72 @@ defmodule Oas.Pricing.CalcAttendance do
           {:halt, {:error, changeset}}
       end
     end)
+  end
+
+  @doc """
+    Runs a pricing rule's Lua code with the given inputs, in a separate process
+    with a time limit and a memory limit.
+
+    Returns `{:ok, price}` with a non-negative `Decimal`, or `{:error, reason}`
+    when the rule doesn't compile, raises, times out, uses too much memory, or
+    doesn't return a non-negative number.
+
+    ## Options
+
+      * `:timeout` - milliseconds to wait (default from
+        `config :oas, :pricing_lua, timeout_ms:`, else #{@default_lua_timeout_ms})
+      * `:max_heap_words` - process heap limit in words (default from
+        `config :oas, :pricing_lua, max_heap_words:`, else #{@default_lua_max_heap_words})
+    """
+  def run_lua(lua_code, inputs, opts \\ [])
+  def run_lua(lua_code, _inputs, _opts) when lua_code in [nil, ""] do
+    {:error, "the pricing rule has no Lua code"}
+  end
+  def run_lua(lua_code, inputs, opts) do
+    config = Application.get_env(:oas, :pricing_lua, [])
+    timeout = Keyword.get(opts, :timeout, Keyword.get(config, :timeout_ms, @default_lua_timeout_ms))
+    max_heap_words = Keyword.get(opts, :max_heap_words, Keyword.get(config, :max_heap_words, @default_lua_max_heap_words))
+
+    task = Task.Supervisor.async_nolink(Oas.TaskSupervisor, fn ->
+      Process.flag(:max_heap_size, %{size: max_heap_words, kill: true, error_logger: false})
+      eval_lua(lua_code, inputs)
+    end)
+
+    case Task.yield(task, timeout) || Task.shutdown(task, :brutal_kill) do
+      {:ok, result} -> result
+      {:exit, :killed} -> {:error, "the pricing rule used too much memory"}
+      {:exit, reason} -> {:error, "the pricing rule crashed: #{inspect(reason)}"}
+      nil -> {:error, "the pricing rule took longer than #{timeout}ms"}
+    end
+  end
+
+  defp eval_lua(lua_code, inputs) do
+    {results, _} = Lua.new()
+    |> Lua.set!([:user, :membership_status], inputs.membership_status)
+    |> Lua.set!([:user, :attending], inputs.attending)
+    |> Lua.set!([:trainings], inputs.trainings)
+    |> Lua.set!([:now], inputs.now)
+    |> Lua.eval!(lua_code)
+
+    case results do
+      [] ->
+        {:error, "the pricing rule didn't return a price"}
+
+      [result | _] ->
+        amount = lua_result_to_decimal(result)
+
+        if Decimal.negative?(amount) do
+          {:error, "the pricing rule returned a negative price: #{Decimal.to_string(amount)}"}
+        else
+          {:ok, amount}
+        end
+    end
+  rescue
+    e in Lua.CompilerException ->
+      {:error, "the pricing rule doesn't compile: #{Exception.message(e)}"}
+
+    e ->
+      {:error, "the pricing rule failed: #{Exception.message(e)}"}
   end
 
   @doc false
