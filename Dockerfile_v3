@@ -47,6 +47,8 @@ RUN mix local.rebar --force
 ARG MIX_ENV=gcloud
 ENV MIX_ENV=${MIX_ENV}
 RUN mix compile
+# The esbuild watcher is off outside dev, so build the Phoenix JS/CSS once here
+RUN mix esbuild default --minify
 ENV ELIXIR_ERL_OPTIONS="-kernel shell_history enabled"
 
 RUN cp ./nginx/v3_nginx.conf /etc/nginx/nginx.conf
