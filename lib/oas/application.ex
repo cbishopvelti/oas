@@ -4,9 +4,12 @@ defmodule Oas.Application do
   @moduledoc false
 
   use Application
+  require Logger
 
   @impl true
   def start(_type, _args) do
+    log_config_sources()
+
     children = [
       # Start the Ecto repository
       Oas.Repo,
@@ -35,6 +38,22 @@ defmodule Oas.Application do
     opts = [strategy: :one_for_one, name: Oas.Supervisor, max_restarts: 1]
     Supervisor.start_link(children, opts)
   end
+
+  # Logs which runtime settings came from environment variables and which
+  # fell back to the config file (see config/runtime.exs). Names only.
+  defp log_config_sources do
+    case Application.get_env(:oas, :config_sources) do
+      nil ->
+        :ok
+
+      sources ->
+        Logger.info("Settings from environment: #{format_names(sources[:from_env])}")
+        Logger.info("Settings from config file: #{format_names(sources[:from_file])}")
+    end
+  end
+
+  defp format_names([]), do: "(none)"
+  defp format_names(names), do: Enum.join(names, ", ")
 
   # Tell Phoenix to update the endpoint configuration
   # whenever the application is updated.
