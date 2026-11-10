@@ -123,7 +123,7 @@ defmodule OasWeb.Schema.SchemaUser do
     field :user_add_attendance, :success do
       arg :training_id, non_null(:integer)
       resolve fn _, %{training_id: training_id}, %{context: %{current_member: %{id: member_id}}} ->
-        config = from(c in Oas.Config.Config, select: c) |> Oas.Repo.one
+        config = Oas.Settings.get_config()
 
         case config.enable_booking do
           true ->
@@ -148,7 +148,7 @@ defmodule OasWeb.Schema.SchemaUser do
     field :user_undo_attendance, :success do
       arg :attendance_id, non_null(:integer)
       resolve fn _, %{attendance_id: attendance_id}, %{context: %{current_member: %{id: member_id}}} ->
-        config = from(c in Oas.Config.Config, select: c) |> Oas.Repo.one
+        config = Oas.Settings.get_config()
         case config.enable_booking do
           true ->
             result = from(atte in Oas.Trainings.Attendance,

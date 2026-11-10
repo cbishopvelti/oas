@@ -1,5 +1,3 @@
-import Ecto.Query, only: [from: 2]
-
 defmodule Oas.Gocardless.Supervisor do
   require Logger
   use Supervisor, restart: :temporary # restart: :transient
@@ -11,10 +9,7 @@ defmodule Oas.Gocardless.Supervisor do
 
   @impl true
   def init(_init_arg) do
-    config = from(
-      c in Oas.Config.Config,
-      limit: 1
-    ) |> Oas.Repo.one!()
+    config = Oas.Settings.get_config!()
 
     children = case Application.get_env(:oas, :disable_gocardless, false) &&
       config.gocardless_enabled

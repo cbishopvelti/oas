@@ -19,7 +19,7 @@ defmodule Oas.Pricing.CreditWriteRollbackTest do
   @lua "return 10"
 
   setup do
-    from(c in Oas.Config.Config) |> Repo.update_all(set: [credits: true])
+    {:ok, _} = Oas.Settings.update_config(%{credits: true}, [:credits])
 
     member = Oas.MembersFixtures.member_fixture()
 

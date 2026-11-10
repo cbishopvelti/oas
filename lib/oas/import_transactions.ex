@@ -197,7 +197,7 @@ defmodule Oas.ImportTransactions do
   end
 
   def process(rows) do
-    config = from(c in Oas.Config.Config, limit: 1) |> Oas.Repo.one!()
+    config = Oas.Settings.get_config!()
 
     case config.credits do
       false ->

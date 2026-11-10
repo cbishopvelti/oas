@@ -54,7 +54,7 @@ defmodule Oas.Members.Membership do
       select: count(m.id)
     ) |> Oas.Repo.one
 
-    config = from(c in Oas.Config.Config, select: c) |> Oas.Repo.one
+    config = Oas.Settings.get_config()
     membership_periods |> Enum.map(fn membership_period ->
       # Does this member have any other trainings in that membership_period period?
       other_trainings_in_period = from(

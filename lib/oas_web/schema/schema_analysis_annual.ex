@@ -174,7 +174,7 @@ defmodule OasWeb.Schema.SchemaAnalysisAnnual do
             and is_nil(cre.id),
           select: count(att.id)
         ) |> Oas.Repo.one!()
-        |> Decimal.mult(Oas.Config.Tokens.get_min_token().value)
+        |> Decimal.mult(Oas.Settings.get_min_token!().value)
 
         credits = Oas.Credits.Credit.get_global_debt_to(parent.to) |> abs()
 

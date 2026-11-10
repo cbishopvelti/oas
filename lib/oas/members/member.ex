@@ -43,11 +43,7 @@ defmodule Oas.Members.Member do
         name = String.downcase(name)
 
         config =
-          from(
-            c in Oas.Config.Config,
-            limit: 1
-          )
-          |> Oas.Repo.one!()
+          Oas.Settings.get_config!()
 
         count =
           from(m in Oas.Members.Member,

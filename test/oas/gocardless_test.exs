@@ -25,8 +25,7 @@ defmodule Oas.GocardlessTest do
            refresh_access_token: fn _ -> %{access_token: "mock_token", access_expires: 86400} end
          ]}
       ]) do
-        Oas.Repo.get!(Oas.Config.Config, 1)
-        |> Ecto.Changeset.cast(
+        {:ok, _} = Oas.Settings.update_config(
           %{
             gocardless_id: "***REMOVED***",
             gocardless_key: "***REMOVED***",
@@ -34,7 +33,6 @@ defmodule Oas.GocardlessTest do
           },
           [:gocardless_id, :gocardless_key, :gocardless_account_id]
         )
-        |> Oas.Repo.update!()
 
         Oas.Gocardless.Supervisor.restart()
 

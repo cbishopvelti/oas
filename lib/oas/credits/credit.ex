@@ -64,7 +64,7 @@ defmodule Oas.Credits.Credit do
   end
 
   def doCredit(changeset, args) do
-    config = from(cc in Oas.Config.Config, select: cc) |> Oas.Repo.one()
+    config = Oas.Settings.get_config()
 
     out =
       case get_assoc(changeset, :credit) do

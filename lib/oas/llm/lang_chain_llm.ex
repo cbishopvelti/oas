@@ -1,5 +1,3 @@
-import Ecto.Query, only: [from: 2]
-
 defmodule Oas.Llm.LangChainLlm do
   alias LangChain.MessageDelta
   alias LangChain.Message
@@ -83,7 +81,7 @@ defmodule Oas.Llm.LangChainLlm do
       })
       |> LLMChain.add_message(Message.new_system!("Todays date: #{Date.utc_today()} and today is #{Date.day_of_week(Date.utc_today()) |> day_name}"))
       |> then(fn chain ->
-        case Oas.Repo.one!(from c in Oas.Config.ConfigLlm, select: c.context) do
+        case Oas.Settings.get_llm!().context do
           "" -> chain
           ctx -> LLMChain.add_message(chain, Message.new_system!(ctx))
         end

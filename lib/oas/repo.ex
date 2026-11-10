@@ -1,5 +1,3 @@
-import Ecto.Query, only: [from: 2]
-
 defmodule Oas.Repo do
   use Ecto.Repo,
     otp_app: :oas,
@@ -70,10 +68,7 @@ defmodule Oas.Repo do
       System.halt(1)
     end
 
-    config = from(
-      c in Oas.Config.Config,
-      limit: 1
-    ) |> Oas.Repo.one!()
+    config = Oas.Settings.get_config!()
     name = "oas" <> "-" <> when1 <> ".db"
     if (config.backup_recipient) do
       from = Application.get_env(:oas, Oas.TokenMailer)[:from]
