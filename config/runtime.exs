@@ -80,6 +80,18 @@ if config_env() != :test do
 
   from_env = if read_env.("MAIL_FROM_NAME"), do: from_env ++ ["MAIL_FROM_NAME"], else: from_env
 
+  # Browser origins (CORS and socket check_origin). Outside dev, only ADMIN_URL,
+  # PUBLIC_URL and the server's own host are allowed; see OasWeb.Origins.
+  # ALLOW_ANY_ORIGIN=true turns this off (escape hatch, not for normal use).
+  allow_any_origin = read_env.("ALLOW_ANY_ORIGIN") == "true"
+
+  if config_env() not in [:dev, :dev_mac] and not allow_any_origin do
+    config :oas, :restrict_origins, true
+    config :oas, OasWeb.Endpoint, check_origin: {OasWeb.Origins, :socket_allowed?, []}
+  end
+
+  from_env = if allow_any_origin, do: from_env ++ ["ALLOW_ANY_ORIGIN"], else: from_env
+
   config :oas, :config_sources,
     from_env: Enum.reverse(from_env),
     from_file: Enum.reverse(from_file)

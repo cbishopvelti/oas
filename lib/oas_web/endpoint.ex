@@ -21,7 +21,7 @@ defmodule OasWeb.Endpoint do
     # websocket: [connect_info: [session: @session_options]]
 
 
-  plug Corsica, max_age: 600, origins: "*", expose_headers: ~w(X-Foo), allow_headers: ["content-type"]
+  plug Corsica, max_age: 600, origins: {OasWeb.Origins, :cors_allowed?, []}, expose_headers: ~w(X-Foo), allow_headers: ["content-type"]
 
   # Serve at "/" the static files from "priv/static" directory.
   #
