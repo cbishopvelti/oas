@@ -97,7 +97,7 @@ defmodule Oas.Llm.Room do
   end
   def handle_info(%{event: "presence_diff", payload: %{joins: joins}}, state) do
 
-    config = from(c in Oas.Config.ConfigLlm, where: true) |> Oas.Repo.one!()
+    config = Oas.Settings.get_llm!()
 
     new_members = joins |> Enum.flat_map(fn {_k, join} ->
       join.metas

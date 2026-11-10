@@ -1,5 +1,3 @@
-import Ecto.Query, only: [from: 2]
-
 defmodule Oas.Gocardless do
   require Logger
 
@@ -36,7 +34,7 @@ defmodule Oas.Gocardless do
 
   # Oas.Gocardless.get_access_token
   def get_access_token do
-    config = from(cc in Oas.Config.Config, select: cc) |> Oas.Repo.one
+    config = Oas.Settings.get_config()
 
     if (config.gocardless_id == nil || config.gocardless_key == nil) do
       {:noconfig}
@@ -108,7 +106,7 @@ defmodule Oas.Gocardless do
   def get_accounts() do
     with pid when pid != nil <- Process.whereis(Oas.Gocardless.AuthServer),
       {:ok, access_token} <- GenServer.call(Oas.Gocardless.AuthServer, :get_access_token),
-      requisition_id <- from(cc in Oas.Config.Config, select: cc.gocardless_requisition_id) |> Oas.Repo.one(),
+      requisition_id <- Oas.Settings.get_config_value(:gocardless_requisition_id),
       {:ok, 200, _headers, client} <- :hackney.request(
       :get, "https://bankaccountdata.gocardless.com/api/v2/requisitions/#{requisition_id}/",
         get_headers(access_token)
@@ -194,7 +192,7 @@ defmodule Oas.Gocardless do
   # Oas.Gocardless.delete_requisitions()
   def delete_requisitions() do
     {:ok, access_token} = GenServer.call(Oas.Gocardless.AuthServer, :get_access_token)
-    requisition_id = from(cc in Oas.Config.Config, select: cc.gocardless_requisition_id) |> Oas.Repo.one()
+    requisition_id = Oas.Settings.get_config_value(:gocardless_requisition_id)
 
     {:ok, 200, _headers, client} = :hackney.request(
       :delete,

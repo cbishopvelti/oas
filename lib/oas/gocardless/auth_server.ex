@@ -1,5 +1,3 @@
-import Ecto.Query, only: [from: 2]
-
 defmodule Oas.Gocardless.AuthServer do
   require Logger
   use GenServer, restart: :transient
@@ -77,12 +75,9 @@ defmodule Oas.Gocardless.AuthServer do
   end
 
   def handle_call(:save_requisitions, _from, state) do
-    from(cc in Oas.Config.Config, select: cc)
-    |> Oas.Repo.one
-    |> Ecto.Changeset.cast(%{gocardless_requisition_id: state.requisition_id} , [
+    Oas.Settings.update_config(%{gocardless_requisition_id: state.requisition_id}, [
       :gocardless_requisition_id
     ])
-    |> Oas.Repo.update
 
     {:reply, {}, state |> Map.drop([:requisition_id])}
   end

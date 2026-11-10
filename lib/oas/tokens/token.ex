@@ -1,5 +1,3 @@
-import Ecto.Query, only: [from: 2]
-
 defmodule Oas.Tokens.Token do
   use Ecto.Schema
 
@@ -15,10 +13,7 @@ defmodule Oas.Tokens.Token do
   end
 
   def getPossibleTokenAmount do
-    from(tk in Oas.Config.Tokens, select: tk,
-      order_by: [desc: :value]
-    )
-      |> Oas.Repo.all
+    Oas.Settings.list_tokens([desc: :value])
 
     # [{1, 5}, {10, 4.5}, {20, 4.5}]
   end

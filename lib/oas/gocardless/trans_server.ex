@@ -1,5 +1,3 @@
-import Ecto.Query, only: [from: 2]
-
 defmodule Oas.Gocardless.TransServer do
   require Logger
   use GenServer, restart: :transient
@@ -13,7 +11,7 @@ defmodule Oas.Gocardless.TransServer do
   @impl true
   def init(_) do
     pid = Process.whereis(Oas.Gocardless.AuthServer)
-    account_id = from(cc in Oas.Config.Config, select: cc.gocardless_account_id) |> Oas.Repo.one()
+    account_id = Oas.Settings.get_config_value(:gocardless_account_id)
     case {pid && Process.alive?(pid), account_id} do
       {true, account_id } when account_id != nil ->
         # IO.puts("alive, start")

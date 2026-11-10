@@ -75,7 +75,7 @@ defmodule Oas.Pricing.LuaGuardTest do
 
   describe "booking with a broken rule" do
     setup do
-      from(c in Oas.Config.Config) |> Repo.update_all(set: [credits: true])
+      {:ok, _} = Oas.Settings.update_config(%{credits: true}, [:credits])
 
       member = Oas.MembersFixtures.member_fixture()
 

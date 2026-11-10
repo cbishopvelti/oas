@@ -167,9 +167,7 @@ defmodule Oas.Gocardless.Transactions do
 
   # Oas.Gocardless.Transactions.process_transacitons()
   def process_transactions_2(transactions) do
-    config = from(c in Oas.Config.Config,
-      limit: 1
-    ) |> Oas.Repo.one()
+    config = Oas.Settings.get_config()
 
     transactions
     # PREPROCESS
@@ -257,7 +255,7 @@ defmodule Oas.Gocardless.Transactions do
   # Oas.Gocardless.Transactions.get_transactions_real("2025-05-01", "2025-05-31")
   def get_transactions_real(from \\ nil, to \\ nil) do
     {:ok, access_token} = GenServer.call(Oas.Gocardless.AuthServer, :get_access_token)
-    account_id = from(cc in Oas.Config.Config, select: cc.gocardless_account_id) |> Oas.Repo.one()
+    account_id = Oas.Settings.get_config_value(:gocardless_account_id)
 
     query = []
     query = if (from != nil) do

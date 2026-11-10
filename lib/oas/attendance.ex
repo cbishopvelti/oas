@@ -103,10 +103,7 @@ defmodule Oas.Attendance do
 
       get_unsued_token_result = get_unused_token(member_id)
 
-      config = from(
-        c in Oas.Config.Config,
-        limit: 1
-      ) |> Oas.Repo.one!()
+      config = Oas.Settings.get_config!()
 
       if config.credits and training.exempt_membership_count != true do # Membership
         add_attendance_membership(
@@ -259,7 +256,7 @@ defmodule Oas.Attendance do
     value: value
   }) do
     # FIX DEBT
-    config = from(cc in Oas.Config.Config, select: cc) |> Oas.Repo.one
+    config = Oas.Settings.get_config()
     debtAttendances = from(a in Oas.Trainings.Attendance,
       left_join: to in assoc(a, :token), on: to.member_id == ^member_id,
       inner_join: tr in assoc(a, :training),
@@ -299,7 +296,7 @@ defmodule Oas.Attendance do
     value: value
   }, do_insert \\ true) do
     # FIX DEBT
-    config = from(cc in Oas.Config.Config, select: cc) |> Oas.Repo.one
+    config = Oas.Settings.get_config()
     debtAttendances = from(a in Oas.Trainings.Attendance,
       left_join: to in assoc(a, :token), on: to.member_id == ^member_id,
       inner_join: tr in assoc(a, :training),
@@ -367,8 +364,7 @@ defmodule Oas.Attendance do
       select: count(m.id)
     ) |> Oas.Repo.one
 
-    config = from(c in Oas.Config.Config, select: c)
-      |> Oas.Repo.one
+    config = Oas.Settings.get_config()
 
     cond do
       (member.honorary_member) ->

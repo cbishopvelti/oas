@@ -293,7 +293,7 @@ defmodule OasWeb.Schema.SchemaMember do
       arg :member_details, non_null(:member_details_arg)
       arg :password, :string
       resolve fn _, args, _ ->
-        config = from(c in Oas.Config.Config, select: c) |> Oas.Repo.one
+        config = Oas.Settings.get_config()
         attrs = if !config.enable_booking do
           length=12
           password = :crypto.strong_rand_bytes(length) |> Base.encode64 |> binary_part(0, length)

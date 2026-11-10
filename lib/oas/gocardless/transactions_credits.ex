@@ -1,5 +1,3 @@
-import Ecto.Query, only: [from: 2]
-
 defmodule Oas.Gocardless.TransactionsCredits do
 
 
@@ -13,7 +11,7 @@ defmodule Oas.Gocardless.TransactionsCredits do
     end
   end
   defp process_credits_2(changeset, data) do
-    config = from(cc in Oas.Config.Config, select: cc) |> Oas.Repo.one
+    config = Oas.Settings.get_config()
     configToken = case Oas.Attendance.get_token_amount(%{member_id: Ecto.Changeset.get_field(changeset, :who_member_id)}) do
       x when x < 0 ->
         configTokens = Oas.Tokens.Token.getPossibleTokenAmount()

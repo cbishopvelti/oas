@@ -101,7 +101,7 @@ defmodule OasWeb.Schema.SchemaCredits do
         end
 
         now = Date.utc_today()
-        config = from(cc in Oas.Config.Config, select: cc) |> Oas.Repo.one
+        config = Oas.Settings.get_config()
 
         debit = %Oas.Credits.Credit{}
         |> Ecto.Changeset.cast(%{

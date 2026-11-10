@@ -109,9 +109,7 @@ defmodule Oas.Analysis do
         # and mem.id == ^1 # DEBUG ONLY
     ) |> Oas.Repo.all
 
-    minValue = from(cto in Oas.Config.Tokens,
-      select: min(cto.value)
-    ) |> Oas.Repo.one
+    minValue = Oas.Settings.min_token_value()
 
     frequency = attendance
     |> Enum.reduce(%{}, fn (attendance, acc) ->
