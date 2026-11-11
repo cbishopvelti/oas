@@ -54,6 +54,10 @@ VOLUME [ "/dbs", "/dbs-backup" ]
 
 EXPOSE 80
 
+# GET /health returns 503 when the database can't be queried.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=120s --retries=3 \
+  CMD curl -fsS "http://localhost:${PORT:-4000}/health" > /dev/null || exit 1
+
 # CMD ["iex"]
 # CMD ["sleep", "86400"]
 # CMD ["iex", "-S", "mix"]
