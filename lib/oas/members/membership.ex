@@ -19,24 +19,42 @@ defmodule Oas.Members.Membership do
   def changeset(struct, params) do
     struct
     |> Ecto.Changeset.cast(params, [:member_id, :membership_period_id])
+    |> unique_constraint()
   end
 
+  # A member can only have one membership per period
+  # (unique index memberships_member_id_membership_period_id_index).
+  def unique_constraint(changeset) do
+    Ecto.Changeset.unique_constraint(changeset, [:member_id, :membership_period_id],
+      name: :memberships_member_id_membership_period_id_index,
+      message: "already has a membership for this period"
+    )
+  end
+
+  @doc """
+  Adds `member` to `membership_period`, charging the period's fee unless the
+  member is honorary.
+
+  Returns `{:ok, membership}` or `{:error, changeset}`. The membership and its
+  fee are saved together; callers in a transaction must roll back on error.
+  """
   def add_membership(membership_period, member, %{now: now}) do
-    changeset = %Oas.Members.Membership{}
-    |> changeset(%{
-      member_id: member.id,
-      membership_period_id: membership_period.id
-    })
+    Oas.Repo.transact(fn ->
+      changeset = %Oas.Members.Membership{}
+      |> changeset(%{
+        member_id: member.id,
+        membership_period_id: membership_period.id
+      })
 
-    changeset = if (!member.honorary_member) do
-      changeset
-      |> Oas.Credits.Credit.deduct_credit(member, Decimal.sub(0, membership_period.value), %{now: now, changeset: true})
-    else
-      changeset
-    end
+      changeset = if (!member.honorary_member) do
+        changeset
+        |> Oas.Credits.Credit.deduct_credit(member, Decimal.sub(0, membership_period.value), %{now: now, changeset: true})
+      else
+        changeset
+      end
 
-    Oas.Repo.insert(changeset)
-    nil
+      Oas.Repo.insert(changeset)
+    end)
   end
 
   def maybe_delete_membership(training, member) do
