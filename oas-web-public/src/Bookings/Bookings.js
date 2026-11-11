@@ -11,6 +11,7 @@ import { useOutletContext, redirect, useNavigate } from 'react-router-dom';
 import { UndoButton } from './UndoButton';
 import { CreditWarning } from './CreditWarning';
 import { parseErrors } from '../Members/MembershipForm';
+import { serverUrl } from '../config';
 
 const canUndo = ({
   user
@@ -54,7 +55,7 @@ export const Bookings = () => {
 
   useEffect(() => {
     if (!user && userLoading === false) {
-      window.location.href=`${process.env.REACT_APP_SERVER_URL}/members/log_in`
+      window.location.href=`${serverUrl}/members/log_in`
     }
   } , [user, userLoading])
 
