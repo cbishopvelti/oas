@@ -360,15 +360,10 @@ defmodule Oas.Credits.Credit do
       })
 
     if disable_warning_emails != true do
-      Task.Supervisor.start_child(
-        Oas.TaskSupervisor,
-        fn ->
-          Process.sleep(120_000)
-          # Process.sleep(10_000) # DEBUG ONLY
-          # Process.sleep(2_000)# DEBUG ONLY
-          # Oas.TokenMailer.maybe_send_credits_warning(member)
-          Oas.TokenMailer.warning_email(member, %{attendance: opts.attendance})
-        end
+      Oas.Mail.Background.run(
+        fn -> Oas.TokenMailer.warning_email(member, %{attendance: opts.attendance}) end,
+        delay: Application.get_env(:oas, :warning_email_delay, 120_000),
+        description: "Warning email to #{member.email}"
       )
     end
 
