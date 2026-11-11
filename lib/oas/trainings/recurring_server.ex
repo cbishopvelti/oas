@@ -44,9 +44,11 @@ defmodule Oas.Trainings.RecurringServer do
   end
 
   # Oas.Trainings.RecurringServer.check_and_create_recurring_events()
-  def check_and_create_recurring_events() do
-    now = Date.utc_today()
-    now_time = Time.utc_now()
+  #
+  # Training dates and start/end times are wall-clock values in the society's
+  # time zone, so "now" is too. `now_local` is only passed in by tests.
+  def check_and_create_recurring_events(now_local \\ Oas.Settings.now()) do
+    now = DateTime.to_date(now_local)
 
     # --- STEP 1: READ & CALCULATE (Outside Transaction) ---
     # We fetch data and calculate dates here. If the transaction below fails,
@@ -63,22 +65,7 @@ defmodule Oas.Trainings.RecurringServer do
       )
       |> Oas.Repo.all()
 
-    calculated_events =
-      Enum.map(training_where_time_list, fn recurring_time ->
-        case Integer.mod(recurring_time.day_of_week - Date.day_of_week(now), 7) do
-          0 ->
-            time_to_compare = recurring_time.end_time || recurring_time.start_time
-            if Time.compare(now_time, time_to_compare) in [:gt, :eq] do
-              {:ok, {recurring_time, Date.shift(now, day: 7)}}
-            else
-              {:event_not_finished, {recurring_time, now}}
-            end
-
-          d ->
-            when1 = Date.shift(now, day: d)
-            {:ok, {recurring_time, when1}}
-        end
-      end)
+    calculated_events = calculate_events(training_where_time_list, now_local)
 
     # --- STEP 2: WRITE (Inside Transaction) ---
     # We attempt to insert. We use try/rescue so that if a Race Condition (ConstraintError)
@@ -103,29 +90,71 @@ defmodule Oas.Trainings.RecurringServer do
 
     # --- STEP 3: SCHEDULE (Always Runs) ---
     # We use the list from Step 1, which exists regardless of Step 2's outcome.
-    schedule_next_run(calculated_events)
+    schedule_next_run(calculated_events, now_local)
   end
 
-  defp schedule_next_run(events) do
-    events
-    |> Enum.sort_by(fn {_, {recurring_time, when1}} ->
-      time_to_compare = recurring_time.end_time || recurring_time.start_time
-      NaiveDateTime.new!(when1, time_to_compare)
-    end, {:asc, NaiveDateTime})
-    |> List.first()
-    |> case do
-      nil ->
-        nil
+  @doc """
+  For each recurring time, the date of the next training to create, given
+  `now_local` (a `DateTime` in the society's time zone). Returns
+  `{:ok, {recurring_time, date}}`, or `{:event_not_finished, {recurring_time, today}}`
+  when today's session has not ended yet.
+  """
+  def calculate_events(training_where_time_list, %DateTime{} = now_local) do
+    now = DateTime.to_date(now_local)
+    now_time = DateTime.to_time(now_local)
 
-      {_, {recurring_time, when1}} ->
-        time_to_compare = recurring_time.end_time || recurring_time.start_time
-        next_run = NaiveDateTime.new!(when1, time_to_compare)
-        now_dt = NaiveDateTime.utc_now()
+    Enum.map(training_where_time_list, fn recurring_time ->
+      case Integer.mod(recurring_time.day_of_week - Date.day_of_week(now), 7) do
+        0 ->
+          time_to_compare = recurring_time.end_time || recurring_time.start_time
+          if Time.compare(now_time, time_to_compare) in [:gt, :eq] do
+            {:ok, {recurring_time, Date.shift(now, day: 7)}}
+          else
+            {:event_not_finished, {recurring_time, now}}
+          end
 
-        # Ensure we don't pass a negative number to send_after
-        next_run_ms = max(1000, NaiveDateTime.diff(next_run, now_dt, :millisecond))
+        d ->
+          when1 = Date.shift(now, day: d)
+          {:ok, {recurring_time, when1}}
+      end
+    end)
+  end
 
-        Process.send_after(self(), :after_join, next_run_ms)
+  @doc """
+  Milliseconds from `now_local` until the earliest event in `events` ends, at
+  least 1000. nil if there are no events. The event's date and time are read
+  in `now_local`'s time zone.
+  """
+  def next_run_ms([], _now_local), do: nil
+
+  def next_run_ms(events, %DateTime{} = now_local) do
+    {_, {recurring_time, when1}} =
+      Enum.min_by(events, fn {_, {recurring_time, when1}} ->
+        NaiveDateTime.new!(when1, recurring_time.end_time || recurring_time.start_time)
+      end, NaiveDateTime)
+
+    next_run =
+      local_datetime(when1, recurring_time.end_time || recurring_time.start_time, now_local.time_zone)
+
+    # Ensure we don't pass a negative number to send_after
+    max(1000, DateTime.diff(next_run, now_local, :millisecond))
+  end
+
+  # A wall-clock time that falls in a spring-forward gap runs at the first
+  # moment after the gap; one that happens twice in the autumn uses the
+  # first occurrence.
+  defp local_datetime(date, time, time_zone) do
+    case DateTime.new(date, time, time_zone) do
+      {:ok, dt} -> dt
+      {:ambiguous, first, _second} -> first
+      {:gap, _just_before, just_after} -> just_after
+    end
+  end
+
+  defp schedule_next_run(events, now_local) do
+    case next_run_ms(events, now_local) do
+      nil -> nil
+      ms -> Process.send_after(self(), :after_join, ms)
     end
   end
 

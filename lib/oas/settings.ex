@@ -133,11 +133,30 @@ defmodule Oas.Settings do
     get_config_value(:time_zone) || @default_time_zone
   end
 
-  @doc "Today's date in the society's time zone."
-  def today, do: now() |> DateTime.to_date()
+  @doc """
+  Today's date in the society's time zone. Pass a UTC `DateTime` to get the
+  society's date at that instant instead of now.
+  """
+  def today(utc \\ utc_now()), do: now(utc) |> DateTime.to_date()
 
-  @doc "The current time in the society's time zone."
-  def now, do: DateTime.now!(time_zone())
+  @doc """
+  The current time in the society's time zone. Pass a UTC `DateTime` to get
+  that instant in the society's time zone instead of now.
+  """
+  def now(utc \\ utc_now()), do: DateTime.shift_zone!(utc, time_zone())
+
+  # Tests can pin the clock for the calling process with
+  # `Oas.Settings.put_test_utc_now/1`. The override is compiled out of every
+  # other environment.
+  if Application.compile_env(:oas, :test_clock, false) do
+    defp utc_now, do: Process.get(:oas_test_utc_now) || DateTime.utc_now()
+
+    @doc false
+    def put_test_utc_now(nil), do: Process.delete(:oas_test_utc_now)
+    def put_test_utc_now(%DateTime{} = utc), do: Process.put(:oas_test_utc_now, utc)
+  else
+    defp utc_now, do: DateTime.utc_now()
+  end
 
   # ---- config_llm ----
 

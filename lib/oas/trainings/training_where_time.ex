@@ -73,7 +73,7 @@ defmodule Oas.Trainings.TrainingWhereTime do
     datetime |> to_utc() |> DateTime.shift_zone!(Oas.Settings.time_zone()) |> DateTime.to_date()
   end
 
-  def local_today(), do: local_date(DateTime.utc_now())
+  def local_today(), do: Oas.Settings.today()
 
   def get_booking_cutoff_2(training, training_where_time) do
     training_where_time = training_where_time || %{}

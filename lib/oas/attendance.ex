@@ -18,9 +18,11 @@ defmodule Oas.Attendance do
     nil
   end
   defp get_used_on(training_when) do
-    case Date.compare(Date.utc_today(), training_when) do
+    today = Oas.Settings.today()
+
+    case Date.compare(today, training_when) do
       :lt -> training_when
-      _ -> Date.utc_today
+      _ -> today
     end
   end
 

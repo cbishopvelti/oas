@@ -248,7 +248,7 @@ defmodule Oas.Credits.Credit do
     Map.put(totals, :total, total)
   end
 
-  def deduct_debit(ledger, debit, opts \\ %{now: Date.utc_today()})
+  def deduct_debit(ledger, debit, opts \\ %{now: Oas.Settings.today()})
 
   def deduct_debit([], debit, _opts) do
     [debit]
@@ -323,7 +323,7 @@ defmodule Oas.Credits.Credit do
         member,
         amount,
         opts = %{now: now} \\ %{
-          now: Date.utc_today(),
+          now: Oas.Settings.today(),
           changeset: false,
           attendance: nil,
           disable_warning_emails: false
@@ -381,7 +381,7 @@ defmodule Oas.Credits.Credit do
   end
 
   @deprecated "No longer used, use get_credit_amount"
-  def get_credits(member, now \\ Date.utc_today()) do
+  def get_credits(member, now \\ Oas.Settings.today()) do
     # """
     # # All credits that haven't expired
     # SELECT credits.*, credits.amount AS calc_credits from credits

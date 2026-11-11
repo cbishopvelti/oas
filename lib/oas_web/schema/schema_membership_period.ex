@@ -118,7 +118,7 @@ defmodule OasWeb.Schema.SchemaMembershipPeriod do
         Oas.Members.Membership.add_membership(
           Oas.Repo.get!(Oas.Members.MembershipPeriod, membership_period_id), # membership_period,
           Oas.Repo.get!(Oas.Members.Member, member_id), # member,
-          %{now: Date.utc_today()}
+          %{now: Oas.Settings.today()}
         )
         {:ok, %{success: true}}
       end
