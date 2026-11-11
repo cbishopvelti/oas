@@ -13,6 +13,7 @@ import { useEffect, useState } from 'react';
 import Cookies from "js-cookie";
 import { Socket as PhoenixSocket, Presence } from "phoenix";
 import { usePrevious } from './utils';
+import { serverUrl } from '../config';
 
 export const MenuChat = ({
   setPhoenixSocket: setPhoenixSocketState,
@@ -37,7 +38,7 @@ export const MenuChat = ({
   useEffect(() => {
     let isActive = true;
 
-    const phoenixSocket = new PhoenixSocket(`${process.env["REACT_APP_SERVER_URL"].replace(/^http/, "ws")}/public_socket`, {
+    const phoenixSocket = new PhoenixSocket(`${serverUrl.replace(/^http/, "ws")}/public_socket`, {
       // reconnectAfterMs: (() => 120_000),
      	// rejoinAfterMs: (() => 120_000),
       params: () => {

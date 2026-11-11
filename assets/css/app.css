@@ -1,6 +1,53 @@
 /* This file is for your main application CSS */
 @import "./phoenix.css";
 
+/* Society primary colour. The root layout sets --primary-color when the
+   society has one; otherwise these fall back to the stock #0069d9. */
+a {
+  color: var(--primary-color, #0069d9);
+}
+.button,
+button,
+input[type='button'],
+input[type='reset'],
+input[type='submit'],
+.button[disabled]:focus,
+.button[disabled]:hover,
+button[disabled]:focus,
+button[disabled]:hover,
+input[type='button'][disabled]:focus,
+input[type='button'][disabled]:hover,
+input[type='reset'][disabled]:focus,
+input[type='reset'][disabled]:hover,
+input[type='submit'][disabled]:focus,
+input[type='submit'][disabled]:hover {
+  background-color: var(--primary-color, #0069d9);
+  border-color: var(--primary-color, #0069d9);
+}
+input[type='color']:focus,
+input[type='date']:focus,
+input[type='datetime']:focus,
+input[type='datetime-local']:focus,
+input[type='email']:focus,
+input[type='month']:focus,
+input[type='number']:focus,
+input[type='password']:focus,
+input[type='search']:focus,
+input[type='tel']:focus,
+input[type='text']:focus,
+input[type='url']:focus,
+input[type='week']:focus,
+input:not([type]):focus,
+textarea:focus,
+select:focus {
+  border-color: var(--primary-color, #0069d9);
+}
+
+.society-logo img {
+  max-height: 4rem;
+  vertical-align: middle;
+}
+
 /* Alerts and form errors used by phx.new */
 .alert {
   padding: 15px;

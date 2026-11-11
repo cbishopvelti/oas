@@ -73,4 +73,28 @@ defmodule OasWeb.Schema.ConfigConfigTest do
     assert {:ok, %{errors: [_ | _]}} =
              Absinthe.run("{ public_config_config { phone_country_code } }", OasWeb.Schema, context: %{})
   end
+
+  @save_content """
+  mutation ($content: String!, $bacs: String!, $membership_terms: String) {
+    save_config_content(content: $content, bacs: $bacs, membership_terms: $membership_terms) {
+      membership_terms
+    }
+  }
+  """
+
+  test "admin can save membership terms, the public form can read them, and empty clears them" do
+    vars = %{"content" => "<p>Hi</p>", "bacs" => "00-00-00", "membership_terms" => "<p>Be careful</p>"}
+
+    assert {:ok, %{data: %{"save_config_content" => %{"membership_terms" => "<p>Be careful</p>"}}}} =
+             Absinthe.run(@save_content, OasWeb.Schema, variables: vars, context: @admin)
+
+    assert {:ok, %{data: %{"public_config_config" => %{"membership_terms" => "<p>Be careful</p>"}}}} =
+             Absinthe.run("{ public_config_config { membership_terms } }", OasWeb.Schema, context: %{})
+
+    assert {:ok, %{data: %{"save_config_content" => %{"membership_terms" => nil}}}} =
+             Absinthe.run(@save_content, OasWeb.Schema,
+               variables: Map.put(vars, "membership_terms", ""),
+               context: @admin
+             )
+  end
 end

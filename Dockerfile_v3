@@ -22,12 +22,9 @@ RUN apt-get install -y tmux
 RUN apt-get install -y inotify-tools
 RUN apt-get install -y nginx
 
-ARG SUBDOMAIN=""
-
-ENV REACT_APP_ADMIN_URL=https://admin${SUBDOMAIN}.oxfordshireacrosociety.co.uk
-ENV REACT_APP_SERVER_URL=https://server${SUBDOMAIN}.oxfordshireacrosociety.co.uk
-ENV REACT_APP_PUBLIC_URL=https://www${SUBDOMAIN}.oxfordshireacrosociety.co.uk
-# DOMAIN (cookie domain) is read at run time; pass it with -e DOMAIN=... or --env-file
+# No URLs or domains are baked into the image. The React apps read their URLs
+# from /api/config.js at run time, and the server reads ADMIN_URL, PUBLIC_URL and
+# DOMAIN (cookie domain) at start-up; pass them with -e ... or --env-file.
 
 WORKDIR /app
 COPY . .

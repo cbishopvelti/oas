@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import { findIndex, map, pickBy, get } from 'lodash';
 import { mergePresenceParticipants } from "./Llm";
 import { useOutletContext } from 'react-router-dom'
+import { serverUrl } from '../config';
 
 const LlmHistoryRow = ({
   history,
@@ -108,7 +109,7 @@ export const LlmHistory = () => {
 
   return <Box>
     {!get(outletContext, "user") && <Alert severity="warning">You must be <a
-      href={`${process.env.REACT_APP_SERVER_URL}/members/log_in`}>
+      href={`${serverUrl}/members/log_in`}>
         Logged in
     </a> to view your history.</Alert>}
     <TableContainer>

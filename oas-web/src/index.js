@@ -55,6 +55,7 @@ import { PricingInstance } from './Pricing/PricingInstance';
 import { Pricings } from './Pricing/Pricings';
 import { PricingInstances } from './Pricing/PricingInstances';
 import { SocietyProvider } from './Society/SocietyProvider';
+import { adminUrl, serverUrl } from './config';
 
 const router = createBrowserRouter([
   {
@@ -277,16 +278,16 @@ const router = createBrowserRouter([
 ]);
 
 // const uploadLink = new createUploadLink({
-//   uri: `${process.env["REACT_APP_ADMIN_URL"]}/api/graphql`
+//   uri: `${adminUrl}/api/graphql`
 // });
 const uploadLink = createLink({
-  uri: `${process.env["REACT_APP_ADMIN_URL"]}/api/graphql`
+  uri: `${adminUrl}/api/graphql`
 });
 
 // Create a standard Phoenix websocket connection. If you need
 // to provide additional params, like an authentication token,
 // you can configure them in the `params` option.
-const phoenixSocket = new PhoenixSocket(`${process.env["REACT_APP_SERVER_URL"].replace(/^http/, "ws")}/socket`, {
+const phoenixSocket = new PhoenixSocket(`${serverUrl.replace(/^http/, "ws")}/socket`, {
   reconnectAfterMs: (() => 120_000),
 	rejoinAfterMs: (() => 120_000),
   params: () => {
@@ -320,7 +321,7 @@ const theLink = split(
 
 const client = new ApolloClient({
   // uri: 'http://localhost:3999/',
-  // uri: `${process.env["REACT_APP_ADMIN_URL"]}/api/graphql`,
+  // uri: `${adminUrl}/api/graphql`,
   cache: new InMemoryCache({
     typePolicies: {
       // Screens ask for different config_config fields and some leave out

@@ -19,6 +19,7 @@ import Cookies from "js-cookie";
 import * as AbsintheSocket from "@absinthe/socket";
 import { createAbsintheSocketLink } from "@absinthe/socket-apollo-link";
 import { LlmHistory } from './Llm/LlmHistory';
+import { publicUrl, serverUrl } from './config';
 import { SocietyProvider } from './Society/SocietyProvider';
 
 const router = createBrowserRouter([
@@ -71,9 +72,9 @@ const router = createBrowserRouter([
 ]);
 
 const httpLink = new HttpLink({
-  uri: `${process.env["REACT_APP_PUBLIC_URL"]}/api/graphql`
+  uri: `${publicUrl}/api/graphql`
 });
-const phoenixSocket = new PhoenixSocket(`${process.env["REACT_APP_SERVER_URL"].replace(/^http/, "ws")}/socket`, {
+const phoenixSocket = new PhoenixSocket(`${serverUrl.replace(/^http/, "ws")}/socket`, {
   reconnectAfterMs: (() => 120_000),
 	rejoinAfterMs: (() => 120_000),
   params: () => {
@@ -103,7 +104,7 @@ const theLink = split(
 )
 
 const client = new ApolloClient({
-  // uri: `${process.env["REACT_APP_PUBLIC_URL"]}/api/graphql`,
+  // uri: `${publicUrl}/api/graphql`,
   cache: new InMemoryCache({
     typePolicies: {
       Query: {
