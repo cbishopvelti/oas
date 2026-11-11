@@ -147,10 +147,6 @@ function App() {
               <ListItemText>My Bookings</ListItemText>
             </MenuItem>}
 
-            {new Date() < new Date('2026-04-05') && <MenuItem component={NavLink} to={'/sjef-2026'}>
-              <ListItemText>Sjef's Workshop 2026</ListItemText>
-            </MenuItem>}
-
             {enableBooking && !get(data, 'user') && <MenuItem onClick={onClick} sx={{ padding: 0 }}>
               <a style={{
                 color: 'inherit',
