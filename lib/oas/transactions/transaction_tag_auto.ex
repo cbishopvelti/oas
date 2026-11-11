@@ -41,32 +41,28 @@ defmodule Oas.Transactions.TransactionTagAuto do
     # A new transaction has no old who; comparing a column with nil raises.
     old_who = old_who || who
 
-    # Delete
-    if (old_who !== who) do
-      case from(tr in Oas.Transactions.Transaction,
-        where: tr.who == ^old_who
-      ) |> Oas.Repo.exists?() do
-        true -> # Old still exist, delete relevent tags
+    renamed = old_who !== who
+    old_who_remains = renamed and (from(tr in Oas.Transactions.Transaction,
+      where: tr.who == ^old_who
+    ) |> Oas.Repo.exists?())
 
-          from(ta in Oas.Transactions.TransactionTagAuto,
-            where: (ta.who == ^old_who or ta.who == ^who)
-            and not(ta.transaction_tag_id in ^(auto_tags |> Enum.map(fn %{id: id} -> id end)))
-            and ta.transaction_tag_id in ^(transaction_tags |> Enum.map(fn %{id: id} -> id end))
-          ) |> Oas.Repo.delete_all()
-
-        false -> # No old who remaining, so delete all transaciton tags from old
-          from(ta in Oas.Transactions.TransactionTagAuto,
-            where: ta.who == ^old_who
-          )
-      end
-    else # old_who == who
-
+    # The transaction was renamed and no other transaction has the old who,
+    # so nothing can match the old who's auto tags any more: delete them all.
+    if renamed and not old_who_remains do
       from(ta in Oas.Transactions.TransactionTagAuto,
-        where: ta.who == ^who
-        and not(ta.transaction_tag_id in ^(auto_tags |> Enum.map(fn %{id: id} -> id end)))
-        and ta.transaction_tag_id in ^(transaction_tags |> Enum.map(fn %{id: id} -> id end))
+        where: ta.who == ^old_who
       ) |> Oas.Repo.delete_all()
     end
+
+    # Delete the auto tags that were switched off on this transaction, for the
+    # who and, when other transactions still use it, the old who.
+    whos = if old_who_remains, do: [old_who, who], else: [who]
+
+    from(ta in Oas.Transactions.TransactionTagAuto,
+      where: ta.who in ^whos
+      and not(ta.transaction_tag_id in ^(auto_tags |> Enum.map(fn %{id: id} -> id end)))
+      and ta.transaction_tag_id in ^(transaction_tags |> Enum.map(fn %{id: id} -> id end))
+    ) |> Oas.Repo.delete_all()
 
     still_exists = MapSet.intersection(
       MapSet.new(transaction_tags |> Enum.map(fn %{id: id} -> id end)),

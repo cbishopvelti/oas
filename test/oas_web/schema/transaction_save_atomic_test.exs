@@ -230,6 +230,44 @@ defmodule OasWeb.Schema.TransactionSaveAtomicTest do
       assert [%{who: "The Hall"}] = Repo.all(TransactionTagAuto)
     end
 
+    test "renaming the only transaction for a who deletes the old who's auto tags" do
+      {:ok, %{data: %{"transaction" => %{"id" => id}}}} =
+        run(%{
+          "what" => "Hall hire", "who" => "The Hall",
+          "transaction_tags" => [%{"name" => "Venue"}, %{"name" => "Rent"}],
+          "auto_tags" => [%{"name" => "Venue"}, %{"name" => "Rent"}]
+        })
+
+      assert count(TransactionTagAuto) == 2
+
+      # Rent is dropped from the transaction, so only the rename can remove it.
+      assert {:ok, %{data: %{"transaction" => %{"id" => ^id}}}} =
+               run(%{
+                 "id" => id, "what" => "Hall hire", "who" => "Another Hall",
+                 "transaction_tags" => [%{"name" => "Venue"}],
+                 "auto_tags" => [%{"name" => "Venue"}]
+               })
+
+      assert [%{who: "Another Hall"}] = Repo.all(TransactionTagAuto)
+    end
+
+    test "renaming keeps the old who's auto tags while another transaction has that who" do
+      base = %{
+        "what" => "Hall hire", "who" => "The Hall",
+        "transaction_tags" => [%{"name" => "Venue"}],
+        "auto_tags" => [%{"name" => "Venue"}]
+      }
+
+      {:ok, %{data: %{"transaction" => %{"id" => id}}}} = run(base)
+      {:ok, _} = run(base)
+
+      assert {:ok, %{data: %{"transaction" => %{"id" => ^id}}}} =
+               run(Map.merge(base, %{"id" => id, "who" => "Another Hall"}))
+
+      assert ["Another Hall", "The Hall"] =
+               Repo.all(from ta in TransactionTagAuto, select: ta.who, order_by: ta.who)
+    end
+
     test "an edit that leaves who out keeps the saved who for its auto tags" do
       {:ok, %{data: %{"transaction" => %{"id" => id}}}} =
         run(%{"what" => "Original", "who" => "The Hall", "transaction_tags" => [%{"name" => "Venue"}]})
