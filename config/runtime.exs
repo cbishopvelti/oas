@@ -34,6 +34,23 @@ if config_env() != :test do
 
   mailers = [Oas.Mailer, Oas.TokenMailer]
 
+  mail_adapter = fn v ->
+    case v do
+      "smtp" -> Swoosh.Adapters.SMTP
+      "local" -> Swoosh.Adapters.Local
+      _ -> raise "environment variable MAIL_ADAPTER must be smtp or local, got: #{inspect(v)}"
+    end
+  end
+
+  smtp_tls = fn v ->
+    case v do
+      "always" -> :always
+      "if_available" -> :if_available
+      "never" -> :never
+      _ -> raise "environment variable SMTP_TLS must be always, if_available or never, got: #{inspect(v)}"
+    end
+  end
+
   # {env var, function that applies its value}
   overrides = [
     {"DB_FILE", fn v -> config :oas, Oas.Repo, database: v end},
@@ -45,6 +62,11 @@ if config_env() != :test do
     {"DOMAIN", fn v -> config :oas, OasWeb.Endpoint, domain: v end},
     {"ADMIN_URL", fn v -> config :oas, app_url: v end},
     {"PUBLIC_URL", fn v -> config :oas, public_url: v end},
+    {"MAIL_ADAPTER",
+     fn v ->
+       adapter = mail_adapter.(v)
+       for m <- mailers, do: config(:oas, m, adapter: adapter)
+     end},
     {"SMTP_RELAY", fn v -> for m <- mailers, do: config(:oas, m, relay: v) end},
     {"SMTP_PORT",
      fn v ->
@@ -53,6 +75,11 @@ if config_env() != :test do
      end},
     {"SMTP_USERNAME", fn v -> for m <- mailers, do: config(:oas, m, username: v) end},
     {"SMTP_PASSWORD", fn v -> for m <- mailers, do: config(:oas, m, password: v) end},
+    {"SMTP_TLS",
+     fn v ->
+       tls = smtp_tls.(v)
+       for m <- mailers, do: config(:oas, m, tls: tls)
+     end},
     {"MAIL_FROM_ADDRESS",
      fn v ->
        name = read_env.("MAIL_FROM_NAME") || "OAS"
