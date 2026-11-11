@@ -16,6 +16,7 @@ import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import { useQuery, gql } from '@apollo/client'
 import { get } from 'lodash'
 import { MenuChat } from './MenuChat';
+import { useSociety } from '../Society/SocietyProvider';
 
 
 const DrawerHeader = styled('div')(({ theme }) => ({
@@ -32,6 +33,7 @@ function App() {
   const theme = useTheme();
   const matches = useMediaQuery(theme.breakpoints.down('md'));
   const routeMatchs = useMatches();
+  const society = useSociety();
 
   const { data, refetch, loading } = useQuery(gql`
   query {
@@ -128,7 +130,7 @@ function App() {
           style={{ backgroundColor: 'mediumpurple' }}
         >
           <Box m={2}>
-            <img width={212} src={logo} />
+            <img width={212} src={society.logoUrl || logo} alt={society.name || 'Logo'} />
           </Box>
           <MenuList sx={{ marginTop: 4 }}>
             <MenuItem component={NavLink} end to={`/`}>
