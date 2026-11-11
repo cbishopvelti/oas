@@ -10,6 +10,8 @@ const CONFIG_QUERY = gql`
       id
       name
       bacs
+      currency
+      phone_country_code
     }
   }
 `;
