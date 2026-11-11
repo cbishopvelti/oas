@@ -16,6 +16,37 @@ defmodule OasWeb.MemberSessionControllerTest do
       assert response =~ "Forgotten your password?</a>"
     end
 
+    test "uses OAS and the default colours when the society has no branding", %{conn: conn} do
+      {:ok, _} =
+        Oas.Settings.update_config(%{name: nil, logo_url: nil, primary_color: nil}, [
+          :name,
+          :logo_url,
+          :primary_color
+        ])
+
+      response = conn |> get(Routes.member_session_path(conn, :new)) |> html_response(200)
+      assert response =~ ~r/<title[^>]*>\s*OAS\s*<\/title>/
+      refute response =~ "--primary-color"
+      refute response =~ "society-logo"
+    end
+
+    test "shows the society's name, logo and colour", %{conn: conn} do
+      {:ok, _} =
+        Oas.Settings.update_config(
+          %{
+            name: "Sjef Aerial Club",
+            logo_url: "https://example.com/logo.png",
+            primary_color: "#aa3300"
+          },
+          [:name, :logo_url, :primary_color]
+        )
+
+      response = conn |> get(Routes.member_session_path(conn, :new)) |> html_response(200)
+      assert response =~ ~r/<title[^>]*>\s*Sjef Aerial Club\s*<\/title>/
+      assert response =~ ~s(<img src="https://example.com/logo.png" alt="Sjef Aerial Club")
+      assert response =~ "--primary-color: #aa3300;"
+    end
+
     test "redirects if already logged in", %{conn: conn, member: member} do
       conn = conn |> log_in_member(member) |> get(Routes.member_session_path(conn, :new))
       assert redirected_to(conn) == "/"

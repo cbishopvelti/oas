@@ -13,6 +13,7 @@ defmodule OasWeb.Router do
     plug :put_secure_browser_headers
     plug :fetch_current_member
     plug :callback_path_plug
+    plug OasWeb.SocietyBranding
   end
 
   pipeline :api do

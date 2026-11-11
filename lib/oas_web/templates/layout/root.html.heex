@@ -7,17 +7,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <%= csrf_meta_tag() %>
     <.live_title>
-      {assigns[:page_title] || "OAS"}
+      {assigns[:page_title] || branding(assigns).name}
     </.live_title>
-
 
     <link phx-track-static rel="stylesheet" href={Routes.static_path(@conn, "/assets/app.css")}/>
     <script defer phx-track-static type="text/javascript" src={Routes.static_path(@conn, "/assets/app.js")}></script>
+    <%= if color = branding(assigns).primary_color do %>
+      <style>:root { --primary-color: <%= color %>; }</style>
+    <% end %>
   </head>
   <body>
     <header>
       <section class="container">
         <nav>
+          <%= if logo_url = branding(assigns).logo_url do %>
+            <a href={Application.fetch_env!(:oas, :public_url)} class="society-logo">
+              <img src={logo_url} alt={branding(assigns).name} />
+            </a>
+          <% end %>
           <a href={Application.fetch_env!(:oas, :public_url)}>Home</a>
         </nav>
         <nav>
