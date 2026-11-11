@@ -59,7 +59,10 @@ The server side is covered by `test/oas_web/another_society_test.exs`, which run
 
 ### Deployment
 
-see [README_v2_prod.md](README_v2_prod.md)
+To build, run, set up or look after a society's server, see the
+[operator guide](docs/operator-guide.md).
+
+Older notes: [README_v3.md](README_v3.md), [README_v2_prod.md](README_v2_prod.md)
 
 ### Lisence
 
