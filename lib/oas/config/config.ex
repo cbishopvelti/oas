@@ -14,6 +14,8 @@ defmodule Oas.Config.Config do
     field :gocardless_key, :string
     field :gocardless_requisition_id, :string
     field :gocardless_account_id, :string
+    # Two-letter ISO code for the GoCardless bank list. Default lives in the DB.
+    field :bank_country, :string
     field :credits, :boolean
     field :backup_recipient, :string
 

@@ -120,6 +120,25 @@ defmodule Oas.SettingsTest do
       assert %{time_zone: [_], currency: [_], phone_country_code: [_]} = errors_on(changeset)
     end
 
+    test "bank_country defaults to GB, is validated and drives the bank list" do
+      assert Settings.get_config().bank_country == "GB"
+      assert Oas.Gocardless.institutions_url() =~ "?country=gb"
+
+      assert {:ok, _} = Settings.update_config(%{bank_country: "IE"}, [:bank_country])
+      assert Oas.Gocardless.institutions_url() =~ "?country=ie"
+
+      for bad <- ["ie", "IRL", "I1", ""] do
+        assert {:error, changeset} =
+                 Settings.update_config(%{bank_country: bad}, [:bank_country],
+                   empty_values: [[], ""]
+                 )
+
+        assert %{bank_country: [_]} = errors_on(changeset)
+      end
+
+      assert Settings.get_config().bank_country == "IE"
+    end
+
     test "valid_time_zone?/1" do
       assert Settings.valid_time_zone?("Australia/Sydney")
       refute Settings.valid_time_zone?("Not/AZone")
