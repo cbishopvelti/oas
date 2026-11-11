@@ -27,6 +27,11 @@ defmodule OasWeb.Router do
     get "/book-today", BookTodayController, :index
   end
 
+  # Public, no session: liveness/readiness for Docker and monitoring.
+  scope "/", OasWeb do
+    get "/health", HealthController, :show
+  end
+
   # Public, no session: run-time URLs for the admin and public front ends.
   scope "/api", OasWeb do
     get "/config.js", ConfigJsController, :show

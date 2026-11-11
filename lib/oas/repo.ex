@@ -62,7 +62,10 @@ defmodule Oas.Repo do
     File.close(file)
     Exqlite.Sqlite3.close(conn)
 
-    if !is_backup_file_valid(file_path) do
+    valid = is_backup_file_valid(file_path)
+    record_backup(valid)
+
+    if !valid do
       Logger.error("The backup file is not valid")
       Application.stop(:oas)
       System.halt(1)
@@ -74,6 +77,17 @@ defmodule Oas.Repo do
       send_backup_email(config.backup_recipient, name, data)
     end
   end
+
+  @last_backup_key {__MODULE__, :last_backup}
+
+  # Remembers (in memory, until restart) when the last backup ran and whether
+  # its file was valid, for GET /health.
+  defp record_backup(valid) do
+    :persistent_term.put(@last_backup_key, %{at: DateTime.utc_now(), valid: valid})
+  end
+
+  @doc "The last backup's `%{at: DateTime, valid: boolean}`, or nil before the first one."
+  def last_backup(), do: :persistent_term.get(@last_backup_key, nil)
 
   @backup_warning_key :backup_email_failed
 
