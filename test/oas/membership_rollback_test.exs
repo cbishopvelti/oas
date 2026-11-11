@@ -108,6 +108,55 @@ defmodule Oas.MembershipRollbackTest do
       assert credits(ctx.member) == []
     end
 
+    # Unlike the mocked test above, this goes through the real add_membership,
+    # so its own (nested) transaction fails inside the booking's transaction.
+    test "does not keep the booking when the real membership insert returns an error", ctx do
+      # The message makes the adapter report the membership's unique index, so
+      # Repo.insert returns {:error, changeset} instead of raising.
+      Repo.query!("""
+      CREATE TRIGGER test_fail_membership_unique
+      BEFORE INSERT ON memberships
+      BEGIN
+        SELECT RAISE(ABORT, 'UNIQUE constraint failed: memberships.member_id, memberships.membership_period_id');
+      END
+      """)
+
+      assert {:error, [%{message: "member_id: already has a membership for this period"}]} =
+               catch_throw(book(ctx.member, ctx.training))
+
+      assert attendances(ctx.member) == []
+      assert memberships(ctx.member) == []
+      assert credits(ctx.member) == []
+    end
+
+    test "does not keep an earlier membership when a later overlapping period fails", ctx do
+      {:ok, second} =
+        %Oas.Members.MembershipPeriod{
+          name: "2025 autumn",
+          value: Decimal.new("3"),
+          from: ~D[2025-09-01],
+          to: ~D[2025-12-31]
+        }
+        |> Repo.insert()
+
+      # Only the second period's membership fails; the first saves and must be undone.
+      Repo.query!("""
+      CREATE TRIGGER test_fail_second_membership
+      BEFORE INSERT ON memberships
+      WHEN NEW.membership_period_id = #{second.id}
+      BEGIN
+        SELECT RAISE(ABORT, 'UNIQUE constraint failed: memberships.member_id, memberships.membership_period_id');
+      END
+      """)
+
+      assert {:error, [%{message: "member_id: already has a membership for this period"}]} =
+               catch_throw(book(ctx.member, ctx.training))
+
+      assert attendances(ctx.member) == []
+      assert memberships(ctx.member) == []
+      assert credits(ctx.member) == []
+    end
+
     test "does not keep the booking when saving the membership raises", ctx do
       Repo.query!("""
       CREATE TRIGGER test_fail_membership_insert
@@ -122,6 +171,7 @@ defmodule Oas.MembershipRollbackTest do
       end
 
       assert attendances(ctx.member) == []
+      assert memberships(ctx.member) == []
       assert credits(ctx.member) == []
     end
   end
