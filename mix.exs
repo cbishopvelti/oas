@@ -86,7 +86,29 @@ defmodule Oas.MixProject do
       "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
       test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"],
+      "test.fresh_db": &test_fresh_db/1,
       "assets.deploy": ["esbuild default --minify", "phx.digest"]
     ]
+  end
+
+  # Runs every migration on a new empty SQLite file, boots the app on it and
+  # runs the tests tagged :fresh_db (test/oas_web/fresh_database_test.exs).
+  defp test_fresh_db(args) do
+    dir = Path.join(System.tmp_dir!(), "oas-fresh-db-#{System.unique_integer([:positive])}")
+    File.mkdir_p!(dir)
+    db = Path.join(dir, "fresh.db")
+
+    try do
+      {_, status} =
+        System.cmd("mix", ["test", "--only", "fresh_db" | args],
+          env: [{"MIX_ENV", "test"}, {"DB_FILE", db}],
+          into: IO.stream(:stdio, :line),
+          stderr_to_stdout: true
+        )
+
+      if status != 0, do: Mix.raise("mix test.fresh_db failed")
+    after
+      File.rm_rf!(dir)
+    end
   end
 end

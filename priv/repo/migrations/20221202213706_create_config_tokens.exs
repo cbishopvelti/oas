@@ -16,22 +16,17 @@ defmodule Oas.Repo.Migrations.CreateConfigTokens do
 
     flush()
 
-    Oas.Repo.insert(%Oas.Config.Tokens{
-      value: 5,
-      quantity: 1
-    });
-    Oas.Repo.insert(%Oas.Config.Tokens{
-      value: 4.5,
-      quantity: 10
-    });
-    Oas.Repo.insert(%Oas.Config.Tokens{
-      value: 4.5,
-      quantity: 20
-    });
+    # Plain SQL rather than the Ecto schemas: the schemas describe today's
+    # tables, which have columns this migration has not created yet.
+    execute("""
+    INSERT INTO config_tokens (value, quantity, inserted_at, updated_at) VALUES
+      (5, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+      (4.5, 10, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+      (4.5, 20, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    """)
 
-    Oas.Repo.insert(%Oas.Config.Config{
-      token_expiry_days: 365
-    });
+    # The single config_config row is inserted by
+    # 20261111120000_seed_config_rows.exs, once every column exists.
   end
 
   def down do
