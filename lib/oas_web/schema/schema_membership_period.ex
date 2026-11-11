@@ -120,7 +120,10 @@ defmodule OasWeb.Schema.SchemaMembershipPeriod do
           Oas.Repo.get!(Oas.Members.Member, member_id), # member,
           %{now: Date.utc_today()}
         )
-        {:ok, %{success: true}}
+        |> case do
+          {:ok, _} -> {:ok, %{success: true}}
+          error -> OasWeb.Schema.SchemaUtils.handle_error(error)
+        end
       end
     end
 
