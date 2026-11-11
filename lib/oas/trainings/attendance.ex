@@ -28,18 +28,16 @@ defmodule Oas.Trainings.Attendance do
     end
   end
 
-  # If this training is going to be full after this changeset is applied, then publish
-  def maybe_publish_full(changeset, %{limit: nil}) do
-    changeset
+  # Publishes when adding an attendance has filled the training. Call it after the
+  # attendance is committed, with the training as it was loaded before the insert.
+  def maybe_publish_full(%{limit: nil}) do
+    :ok
   end
-  def maybe_publish_full(changeset, training) do
+  def maybe_publish_full(training) do
     case (training.attendance |> length) >= (training.limit - 1) do
-      true ->
-        IO.puts("publish subscription")
-        Absinthe.Subscription.publish(OasWeb.Endpoint, %{success: true}, user_attendance_attendance: "global")
+      true -> Absinthe.Subscription.publish(OasWeb.Endpoint, %{success: true}, user_attendance_attendance: "global")
       false -> :ok
     end
-    changeset
   end
 
   def maybe_publish_spaces(%{limit: nil}) do

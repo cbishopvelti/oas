@@ -382,7 +382,8 @@ defmodule Oas.Members do
     inserted_by_member_id = Keyword.get(opts, :inserted_by_member_id, 1)
 
     result =
-      Repo.transact(fn ->
+      # Bookings and undos inside hold their emails and live updates until this commits
+      Oas.AfterCommit.transact(fn ->
         Ecto.Query.from(t in Oas.Trainings.Training,
           join: a in assoc(t, :attendance),
           join: m in assoc(a, :member),
