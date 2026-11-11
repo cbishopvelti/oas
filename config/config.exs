@@ -10,6 +10,12 @@ import Config
 config :oas,
   ecto_repos: [Oas.Repo]
 
+# Every database transaction takes SQLite's write lock at BEGIN, so two saves
+# at once queue up (up to the busy timeout) instead of one failing with
+# "Database busy". Set here, not per environment, so it also applies to the
+# git-ignored prod config (config/v2_prod.exs) unless that sets it itself.
+config :oas, Oas.Repo, default_transaction_mode: :immediate
+
 config :elixir, :time_zone_database, Tz.TimeZoneDatabase
 
 # Configures the endpoint

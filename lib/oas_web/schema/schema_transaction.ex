@@ -211,6 +211,7 @@ defmodule OasWeb.Schema.SchemaTransaction do
   end
 
   # Saves, moves or removes the membership paid for by this transaction.
+  # previous_member_id is the transaction's who_member_id before this save.
   # Returns {:ok, _} | {:error, _} so the caller can roll the save back.
   defp maybeDoMembership(
     args = %{
@@ -219,7 +220,8 @@ defmodule OasWeb.Schema.SchemaTransaction do
     %{
       id: id,
       who_member_id: member_id
-    }
+    },
+    previous_member_id
   ) when not is_nil(membership_period_id) do
     cond do
       is_nil(member_id) ->
@@ -239,8 +241,17 @@ defmodule OasWeb.Schema.SchemaTransaction do
           membership -> membership
         end
         |> Ecto.Changeset.cast(args, [:membership_period_id])
-        # The transaction may have been moved to another member.
-        |> Ecto.Changeset.change(member_id: member_id)
+        # The membership only follows the transaction when this save moves
+        # the transaction to another member. Otherwise it stays with its
+        # member, who may differ from the transaction's after
+        # Oas.Members.merge_members! handed it to the merge target.
+        |> (fn changeset ->
+          if member_id != previous_member_id do
+            Ecto.Changeset.change(changeset, member_id: member_id)
+          else
+            changeset
+          end
+        end).()
         |> Ecto.Changeset.unique_constraint([:member_id, :membership_period_id],
           message: "This member already has a membership for this period"
         )
@@ -250,7 +261,7 @@ defmodule OasWeb.Schema.SchemaTransaction do
         end)).()
     end
   end
-  defp maybeDoMembership(_args, result) do
+  defp maybeDoMembership(_args, result, _previous_member_id) do
     result
       |> Oas.Repo.preload(:membership)
       |> Ecto.Changeset.cast(%{}, [])
@@ -332,7 +343,7 @@ defmodule OasWeb.Schema.SchemaTransaction do
             # Adds tokens (deprecated)
             _ <- maybeDoTokens(args, result, when1),
             # Adds membership
-            {:ok, _} <- maybeDoMembership(args, result),
+            {:ok, _} <- maybeDoMembership(args, result, toSave.data.who_member_id),
             # Auto tag. Uses the saved row, not the args: an edit may leave
             # who or who_member_id out, which keeps the saved value.
             {:ok, _} <- (if is_nil(result.who_member_id) do

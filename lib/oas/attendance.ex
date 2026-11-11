@@ -51,7 +51,7 @@ defmodule Oas.Attendance do
           membership_periods ->
             # Stops at the first membership that fails to save
             with :ok <- Enum.reduce_while(membership_periods, :ok, fn membership_period, :ok ->
-              case Oas.Members.Membership.add_membership(membership_period, member, %{now: now}) do
+              case Oas.Members.Membership.add_membership(membership_period, member, %{now: now, from_booking: true}) do
                 {:ok, _} -> {:cont, :ok}
                 {:error, _} = error -> {:halt, error}
               end
