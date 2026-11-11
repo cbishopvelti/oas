@@ -318,22 +318,30 @@ defmodule Oas.Credits.Credit do
     }
   end
 
+  @doc """
+    Adds a credit of `amount` (zero or negative) for `member` to `from`, an
+    attendance or membership struct or changeset.
+
+    Returns the changeset when `opts.changeset` is true, otherwise the result of
+    the update.
+
+    This only writes. It is usually called inside a transaction that can still
+    roll back, so it does not send the low-credit warning email. Callers queue
+    that with `Oas.TokenMailer.queue_warning_email/2` once their write has
+    committed.
+    """
   def deduct_credit(
         from,
         member,
         amount,
         opts = %{now: now} \\ %{
           now: Date.utc_today(),
-          changeset: false,
-          attendance: nil,
-          disable_warning_emails: false
+          changeset: false
         }
       ) do
     if Decimal.positive?(amount) do
       raise "Oas.Credits.Credit.deduct_credit amount is positive"
     end
-
-    disable_warning_emails = Map.get(opts, :disable_warning_emails, false)
 
     {from, name} =
       case from do
@@ -358,19 +366,6 @@ defmodule Oas.Credits.Credit do
         amount: amount,
         who_member_id: member.id
       })
-
-    if disable_warning_emails != true do
-      Task.Supervisor.start_child(
-        Oas.TaskSupervisor,
-        fn ->
-          Process.sleep(120_000)
-          # Process.sleep(10_000) # DEBUG ONLY
-          # Process.sleep(2_000)# DEBUG ONLY
-          # Oas.TokenMailer.maybe_send_credits_warning(member)
-          Oas.TokenMailer.warning_email(member, %{attendance: opts.attendance})
-        end
-      )
-    end
 
     if opts |> Map.get(:changeset, false) do
       out_changeset

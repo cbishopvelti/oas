@@ -146,6 +146,22 @@ defmodule Oas.TokenMailer do
 
   # EO booking warning
 
+  @doc """
+    Queues the warning email (low credit, booked in by someone else) for a member
+    in the background. `warning_email/2` decides when it runs whether there is
+    anything to send.
+
+    Only call this once the write that caused it has committed, through
+    `Oas.AfterCommit.run/1` when that write may sit in an outer transaction.
+    """
+  def queue_warning_email(member, attendance \\ nil) do
+    Oas.Mail.Background.run(
+      fn -> warning_email(member, %{attendance: attendance}) end,
+      delay: Application.get_env(:oas, :warning_email_delay, 120_000),
+      description: "Warning email to #{member.email}"
+    )
+  end
+
   def warning_email(member, %{attendance: attendance} \\ %{attendance: nil}) do
     config = from(cc in Oas.Config.Config, select: cc) |> Oas.Repo.one
 
