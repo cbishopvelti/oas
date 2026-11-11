@@ -112,6 +112,28 @@ defmodule Oas.SettingsTest do
       refute Settings.valid_time_zone?("Not/AZone")
       refute Settings.valid_time_zone?(nil)
     end
+
+    test "time_zone, now and today follow the society's time zone" do
+      assert Settings.time_zone() == "Europe/London"
+      assert Settings.now().time_zone == "Europe/London"
+
+      {:ok, _} = Settings.update_config(%{time_zone: "Pacific/Kiritimati"}, [:time_zone])
+      assert Settings.time_zone() == "Pacific/Kiritimati"
+
+      now = Settings.now()
+      assert now.time_zone == "Pacific/Kiritimati"
+      assert abs(DateTime.diff(now, DateTime.utc_now())) < 5
+      assert Settings.today() == DateTime.to_date(DateTime.now!("Pacific/Kiritimati"))
+    end
+
+    test "local_date uses the society's time zone" do
+      # 2026-06-01 20:00 UTC is already 2 June in Kiritimati (UTC+14).
+      utc = ~N[2026-06-01 20:00:00]
+      assert Oas.Trainings.TrainingWhereTime.local_date(utc) == ~D[2026-06-01]
+
+      {:ok, _} = Settings.update_config(%{time_zone: "Pacific/Kiritimati"}, [:time_zone])
+      assert Oas.Trainings.TrainingWhereTime.local_date(utc) == ~D[2026-06-02]
+    end
   end
 
   describe "llm" do

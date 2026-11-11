@@ -90,6 +90,22 @@ defmodule Oas.Settings do
 
   def valid_time_zone?(_), do: false
 
+  @default_time_zone "Europe/London"
+
+  @doc """
+  The society's time zone, such as `"Europe/London"`. Falls back to
+  `"Europe/London"` if there is no settings row.
+  """
+  def time_zone do
+    get_config_value(:time_zone) || @default_time_zone
+  end
+
+  @doc "Today's date in the society's time zone."
+  def today, do: now() |> DateTime.to_date()
+
+  @doc "The current time in the society's time zone."
+  def now, do: DateTime.now!(time_zone())
+
   # ---- config_llm ----
 
   @doc "The LLM settings row, or nil if there is none."
