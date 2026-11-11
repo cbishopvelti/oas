@@ -25,7 +25,14 @@ defmodule Oas.AfterCommit do
   wraps code which calls `run/1` (for example a loop over
   `Oas.Attendance.add_attendance/2`). An outer plain `Oas.Repo.transact/1`
   does not hold anything back.
+
+  The write is already committed by the time a function runs, so a function
+  that raises, throws or exits is logged and does not fail the caller, and the
+  functions queued after it still run. Otherwise a failed publish would report
+  a saved booking as an error.
   """
+
+  require Logger
 
   @key {__MODULE__, :queue}
 
@@ -46,7 +53,7 @@ defmodule Oas.AfterCommit do
           end
 
         case result do
-          {:ok, _} -> queued |> Enum.reverse() |> Enum.each(& &1.())
+          {:ok, _} -> queued |> Enum.reverse() |> Enum.each(&safely/1)
           _ -> :ok
         end
 
@@ -63,10 +70,23 @@ defmodule Oas.AfterCommit do
   """
   def run(fun) when is_function(fun, 0) do
     case Process.get(@key) do
-      nil -> fun.()
+      nil -> safely(fun)
       queue -> Process.put(@key, [fun | queue])
     end
 
     :ok
+  end
+
+  defp safely(fun) do
+    fun.()
+    :ok
+  rescue
+    e ->
+      Logger.error("Oas.AfterCommit: side effect failed after commit: " <> Exception.format(:error, e, __STACKTRACE__))
+      :ok
+  catch
+    kind, reason ->
+      Logger.error("Oas.AfterCommit: side effect failed after commit: " <> Exception.format(kind, reason, __STACKTRACE__))
+      :ok
   end
 end
