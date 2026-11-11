@@ -7,12 +7,28 @@ import { Table, TableContainer, Box, Button,
   TableBody, IconButton, FormControl,
   Switch, FormControlLabel, InputLabel,
   MenuItem, Select,
-  InputAdornment, OutlinedInput
+  InputAdornment, OutlinedInput,
+  Autocomplete, FormHelperText
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { get, has } from 'lodash'
 import SaveIcon from '@mui/icons-material/Save';
 import { parseErrors } from "../utils/util";
+
+const supportedValues = (key, fallback) => {
+  try {
+    return Intl.supportedValuesOf(key)
+  } catch (e) {
+    return fallback
+  }
+}
+
+const TIME_ZONES = supportedValues('timeZone', ['Europe/London', 'UTC'])
+const CURRENCIES = supportedValues('currency', ['GBP', 'EUR', 'USD'])
+
+// Keeps the saved value selectable even if this browser's list lacks it.
+const withValue = (options, value) =>
+  value && !options.includes(value) ? [value, ...options] : options
 
 const onChange = ({formData, setFormData, key, isCheckbox}) => (event) => {
   if (isCheckbox) {
@@ -56,7 +72,15 @@ export const ConfigTokens = () => {
         enable_booking,
         name,
         credits,
-        backup_recipient
+        backup_recipient,
+        short_name,
+        contact_email,
+        time_zone,
+        currency,
+        phone_country_code,
+        logo_url,
+        primary_color,
+        public_site_title
       }
     }
   `);
@@ -83,6 +107,14 @@ export const ConfigTokens = () => {
       $name: String
       $credits: Boolean
       $backup_recipient: String
+      $short_name: String
+      $contact_email: String
+      $time_zone: String
+      $currency: String
+      $phone_country_code: String
+      $logo_url: String
+      $primary_color: String
+      $public_site_title: String
     ) {
       save_config_config(
         token_expiry_days: $token_expiry_days,
@@ -91,6 +123,14 @@ export const ConfigTokens = () => {
         name: $name,
         credits: $credits
         backup_recipient: $backup_recipient
+        short_name: $short_name
+        contact_email: $contact_email
+        time_zone: $time_zone
+        currency: $currency
+        phone_country_code: $phone_country_code
+        logo_url: $logo_url
+        primary_color: $primary_color
+        public_site_title: $public_site_title
       ) {
         id
       }
@@ -136,6 +176,7 @@ export const ConfigTokens = () => {
           temporary_trainings: parseInt(globalFormData.temporary_trainings)
         }
       })
+      refetch();
     } catch (error) {
       console.error(error);
     }
@@ -161,6 +202,94 @@ export const ConfigTokens = () => {
             onChange={onChange({formData: globalFormData, setFormData: setGlobalFormData, key: "name"})}
             error={has(errors, "name")}
             helperText={get(errors, 'name', []). join(" ")}
+          />
+      </FormControl>
+      <FormControl fullWidth sx={{mb: 2}}>
+        <TextField
+            label="Short name (e.g. OAS)"
+            value={get(globalFormData, "short_name", '') || ""}
+            type="text"
+            onChange={onChange({formData: globalFormData, setFormData: setGlobalFormData, key: "short_name"})}
+            error={has(errors, "short_name")}
+            helperText={get(errors, 'short_name', []).join(" ")}
+          />
+      </FormControl>
+      <FormControl fullWidth sx={{mb: 2}}>
+        <TextField
+            label="Public site title"
+            value={get(globalFormData, "public_site_title", '') || ""}
+            type="text"
+            onChange={onChange({formData: globalFormData, setFormData: setGlobalFormData, key: "public_site_title"})}
+            error={has(errors, "public_site_title")}
+            helperText={get(errors, 'public_site_title', []).join(" ")}
+          />
+      </FormControl>
+      <FormControl fullWidth sx={{mb: 2}}>
+        <TextField
+            label="Contact email"
+            value={get(globalFormData, "contact_email", '') || ""}
+            type="email"
+            onChange={onChange({formData: globalFormData, setFormData: setGlobalFormData, key: "contact_email"})}
+            error={has(errors, "contact_email")}
+            helperText={get(errors, 'contact_email', []).join(" ")}
+          />
+      </FormControl>
+      <FormControl fullWidth sx={{mb: 2}}>
+        <Autocomplete
+          options={withValue(TIME_ZONES, globalFormData.time_zone)}
+          value={get(globalFormData, "time_zone", null) || null}
+          onChange={(event, value) => setGlobalFormData({...globalFormData, time_zone: value || ""})}
+          renderInput={(params) => <TextField
+            {...params}
+            label="Time zone"
+            error={has(errors, "time_zone")}
+            helperText={get(errors, 'time_zone', []).join(" ")}
+          />}
+        />
+      </FormControl>
+      <FormControl fullWidth sx={{mb: 2}} error={has(errors, "currency")}>
+        <InputLabel id="config-currency-label">Currency</InputLabel>
+        <Select
+          labelId="config-currency-label"
+          label="Currency"
+          value={get(globalFormData, "currency", '') || ''}
+          onChange={onChange({formData: globalFormData, setFormData: setGlobalFormData, key: "currency"})}
+        >
+          {withValue(CURRENCIES, globalFormData.currency).map((code) => (
+            <MenuItem key={code} value={code}>{code}</MenuItem>
+          ))}
+        </Select>
+        <FormHelperText>{get(errors, 'currency', []).join(" ")}</FormHelperText>
+      </FormControl>
+      <FormControl fullWidth sx={{mb: 2}}>
+        <TextField
+            label="Phone country code (digits, no +)"
+            value={get(globalFormData, "phone_country_code", '') || ""}
+            type="text"
+            inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }}
+            onChange={onChange({formData: globalFormData, setFormData: setGlobalFormData, key: "phone_country_code"})}
+            error={has(errors, "phone_country_code")}
+            helperText={get(errors, 'phone_country_code', []).join(" ")}
+          />
+      </FormControl>
+      <FormControl fullWidth sx={{mb: 2}}>
+        <TextField
+            label="Logo URL"
+            value={get(globalFormData, "logo_url", '') || ""}
+            type="url"
+            onChange={onChange({formData: globalFormData, setFormData: setGlobalFormData, key: "logo_url"})}
+            error={has(errors, "logo_url")}
+            helperText={get(errors, 'logo_url', []).join(" ")}
+          />
+      </FormControl>
+      <FormControl fullWidth sx={{mb: 2}}>
+        <TextField
+            label="Primary colour (e.g. #1a2b3c)"
+            value={get(globalFormData, "primary_color", '') || ""}
+            type="text"
+            onChange={onChange({formData: globalFormData, setFormData: setGlobalFormData, key: "primary_color"})}
+            error={has(errors, "primary_color")}
+            helperText={get(errors, 'primary_color', []).join(" ")}
           />
       </FormControl>
       <FormControl fullWidth sx={{mb: 2}}>

@@ -21,6 +21,14 @@ defmodule OasWeb.Schema.SchemaConfig do
     field :gocardless_account_id, :string
     field :credits, :boolean
     field :backup_recipient, :string
+    field :short_name, :string
+    field :contact_email, :string
+    field :time_zone, :string
+    field :currency, :string
+    field :phone_country_code, :string
+    field :logo_url, :string
+    field :primary_color, :string
+    field :public_site_title, :string
   end
 
   object :config_llm do
@@ -29,10 +37,19 @@ defmodule OasWeb.Schema.SchemaConfig do
     field :context, :string
   end
 
+  # Public (unauthenticated) view of the settings row. contact_email and
+  # phone_country_code stay admin-only.
   object :public_config_config do
     field :enable_booking, :boolean
     field :content, :string
     field :credits, :boolean
+    field :name, :string
+    field :short_name, :string
+    field :time_zone, :string
+    field :currency, :string
+    field :logo_url, :string
+    field :primary_color, :string
+    field :public_site_title, :string
   end
 
   object :public_config_llm do
@@ -118,13 +135,23 @@ defmodule OasWeb.Schema.SchemaConfig do
       # arg :gocardless_account_id, :string
       arg :credits, :boolean
       arg :backup_recipient, :string
+      arg :short_name, :string
+      arg :contact_email, :string
+      arg :time_zone, :string
+      arg :currency, :string
+      arg :phone_country_code, :string
+      arg :logo_url, :string
+      arg :primary_color, :string
+      arg :public_site_title, :string
       resolve fn _, args, _ ->
 
         result = Oas.Settings.update_config(args, [
           :token_expiry_days, :temporary_trainings,
           :enable_booking, :name,
           # :gocardless_id, :gocardless_key, :gocardless_account_id,
-          :credits, :backup_recipient
+          :credits, :backup_recipient,
+          :short_name, :contact_email, :time_zone, :currency,
+          :phone_country_code, :logo_url, :primary_color, :public_site_title
         ], empty_values: [[], ""])
         |> OasWeb.Schema.SchemaUtils.handle_error
 
