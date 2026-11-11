@@ -446,7 +446,8 @@ defmodule Oas.Members do
 
   # Hands the source's memberships to the target, except for periods the target
   # already has one in (a member can only have one membership per period). A
-  # membership's fee credit moves with it.
+  # membership's fee credit moves with it. A membership left behind is removed,
+  # and its fee refunded, when the source's bookings in that period are undone.
   defp merge_move_memberships(from_id, to_id) do
     target_period_ids =
       Ecto.Query.from(m in Oas.Members.Membership,
