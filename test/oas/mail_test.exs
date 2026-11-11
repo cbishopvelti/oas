@@ -15,6 +15,13 @@ defmodule Oas.MailTest do
     end
   end
 
+  defmodule FailingAdapter do
+    use Swoosh.Adapter
+
+    @impl true
+    def deliver(_email, _config), do: {:error, :smtp_down}
+  end
+
   @token_mailer_from Application.compile_env(:oas, Oas.TokenMailer)[:from]
   @address elem(@token_mailer_from, 1)
   @from {"Test Acro", @address}
@@ -50,19 +57,19 @@ defmodule Oas.MailTest do
       )
     end
 
-    test "backup email carries the database as an attachment" do
+    test "backup email carries the database gzipped as an attachment" do
       {:ok, _} = Oas.Repo.send_backup_email("backup@example.com", "test-acro.db", <<1, 2, 3>>)
 
       assert_email_sent(fn email ->
         assert email.to == [{"backup_recipient", "backup@example.com"}]
         assert email.from == @from
         assert email.subject == "Test Acro backup"
-        assert email.text_body == "Backup database\n"
+        assert email.text_body =~ "gunzip test-acro.db.gz"
 
         assert [%Swoosh.Attachment{} = attachment] = email.attachments
-        assert attachment.filename == "test-acro.db"
-        assert attachment.content_type == "application/octet-stream"
-        assert attachment.data == <<1, 2, 3>>
+        assert attachment.filename == "test-acro.db.gz"
+        assert attachment.content_type == "application/gzip"
+        assert :zlib.gunzip(attachment.data) == <<1, 2, 3>>
       end)
     end
 
@@ -172,6 +179,37 @@ defmodule Oas.MailTest do
       assert_email_sent(fn email ->
         assert email.reply_to == nil
       end)
+    end
+  end
+
+  describe "backup email failure" do
+    setup do
+      mailer = Application.get_env(:oas, Oas.Mailer)
+      :ets.delete(:global_warnings, :backup_email_failed)
+
+      on_exit(fn ->
+        Application.put_env(:oas, Oas.Mailer, mailer)
+        :ets.delete(:global_warnings, :backup_email_failed)
+      end)
+
+      %{mailer: mailer}
+    end
+
+    test "a failed send raises a global warning, and the next success clears it", %{mailer: mailer} do
+      Application.put_env(:oas, Oas.Mailer, adapter: FailingAdapter)
+
+      assert {:error, :smtp_down} =
+               Oas.Repo.send_backup_email("backup@example.com", "b.db", "data")
+
+      assert [%{key: :backup_email_failed, warning: warning}] =
+               Enum.filter(Oas.Gocardless.list_warnings(), &(&1.key == :backup_email_failed))
+
+      assert warning =~ "backup@example.com"
+      assert warning =~ "smtp_down"
+
+      Application.put_env(:oas, Oas.Mailer, mailer)
+      assert {:ok, _} = Oas.Repo.send_backup_email("backup@example.com", "b.db", "data")
+      assert :ets.lookup(:global_warnings, :backup_email_failed) == []
     end
   end
 end

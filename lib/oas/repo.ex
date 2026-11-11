@@ -75,17 +75,46 @@ defmodule Oas.Repo do
     end
   end
 
+  @backup_warning_key :backup_email_failed
+
+  # Emails the backup gzipped (the attachment is named `filename <> ".gz"`).
+  # A failed send is logged and raised as an admin global warning; the next
+  # successful send clears that warning. Returns the result of Oas.Mail.deliver.
   def send_backup_email(recipient, filename, data) do
-    Oas.Mail.deliver(
-      {"backup_recipient", recipient},
-      "#{Oas.Settings.society_name()} backup",
-      "Backup database\n",
-      attachments: [
-        Swoosh.Attachment.new({:data, data},
-          filename: filename,
-          content_type: "application/octet-stream"
+    result =
+      try do
+        Oas.Mail.deliver(
+          {"backup_recipient", recipient},
+          "#{Oas.Settings.society_name()} backup",
+          "Backup database, gzipped. Restore with: gunzip #{filename}.gz\n",
+          attachments: [
+            Swoosh.Attachment.new({:data, :zlib.gzip(data)},
+              filename: filename <> ".gz",
+              content_type: "application/gzip"
+            )
+          ]
         )
-      ]
-    )
+      rescue
+        e -> {:error, Exception.message(e)}
+      end
+
+    case result do
+      {:ok, _} ->
+        if :ets.lookup(:global_warnings, @backup_warning_key) != [] do
+          Oas.Gocardless.delete_warning(@backup_warning_key)
+        end
+
+      error ->
+        Logger.error("Backup email to #{recipient} failed: #{inspect(error)}")
+
+        Oas.Gocardless.send_warning(
+          @backup_warning_key,
+          "The backup email to #{recipient} failed on " <>
+            "#{Calendar.strftime(DateTime.utc_now(), "%Y-%m-%d %H:%M:%S")} UTC: #{inspect(error)}. " <>
+            "The backup file was still written to disk."
+        )
+    end
+
+    result
   end
 end
