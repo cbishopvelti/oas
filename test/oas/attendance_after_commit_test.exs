@@ -476,30 +476,34 @@ defmodule Oas.AttendanceAfterCommitTest do
       %{to: Oas.MembersFixtures.member_fixture(), training_a: training_a, training_b: training_b}
     end
 
-    test "emails and publishes for the moved attendances go out after the merge commits", ctx do
+    test "publishes for the moved attendances go out after the merge commits, with no emails", ctx do
       with_mocks side_effect_mocks() do
         assert [_, _] = Oas.Members.merge_members!(ctx.member.id, ctx.to.id, inserted_by_member_id: ctx.to.id)
       end
 
-      # One low-credit warning queued per attendance re-added for the new member
-      assert_received {:mail_queued, :credit_warning, false}
-      assert_received {:mail_queued, :credit_warning, false}
+      # A merge sends the new member no warning emails
+      refute_received {:mail_queued, _, _}
       # training_a had a space, then was full again
       assert_received {:published, [user_attendance_attendance: "global"], false}
       assert_received {:published, [user_attendance_attendance: "global"], false}
       # Everything else also waited for the commit
-      refute_received {:mail_queued, _, true}
       refute_received {:published, _, true}
     end
 
     test "nothing goes out when the merge rolls back partway", ctx do
-      # The target already attends training_b, so the merge fails after
-      # training_a has been moved.
-      {:ok, _} = add(ctx.to, ctx.training_b)
-      flush_mailbox()
+      # Re-adding training_b for the target fails, after training_a has been
+      # moved. Created inside the test's sandbox transaction, so dropped after.
+      Repo.query!("""
+      CREATE TRIGGER test_fail_merge_insert
+      BEFORE INSERT ON attendance
+      WHEN NEW.member_id = #{ctx.to.id} AND NEW.training_id = #{ctx.training_b.id}
+      BEGIN
+        SELECT RAISE(ABORT, 'forced attendance insert failure');
+      END
+      """)
 
       with_mocks side_effect_mocks() do
-        assert_raise RuntimeError, ~r/rolled back/, fn ->
+        assert_raise Exqlite.Error, ~r/forced attendance insert failure/, fn ->
           Oas.Members.merge_members!(ctx.member.id, ctx.to.id, inserted_by_member_id: ctx.to.id)
         end
       end
