@@ -194,4 +194,136 @@ defmodule Oas.MergeMembersTest do
     assert snapshot(ctx.from) == before_from
     assert snapshot(ctx.to) == before_to
   end
+
+  # A training priced by its own pricing rule, so the rule can be made to fail
+  # for that training alone.
+  defp training_with_rule(ctx, lua, day, attrs \\ %{}) do
+    {:ok, pricing} =
+      %Oas.Pricing.Pricing{name: "test pricing #{System.unique_integer()}"} |> Repo.insert()
+
+    {:ok, pricing_instance} =
+      %Oas.Pricing.PricingInstance{
+        name: "test instance #{System.unique_integer()}",
+        is_active: true,
+        blockly_lua: lua,
+        pricing_id: pricing.id
+      }
+      |> Repo.insert()
+
+    {:ok, training} =
+      %Oas.Trainings.Training{
+        when: Date.new!(2025, 10, day),
+        notes: "",
+        training_where_id: ctx.training_a.training_where_id,
+        exempt_membership_count: true,
+        disable_warning_emails: true,
+        pricing_instance_id: pricing_instance.id
+      }
+      |> Map.merge(attrs)
+      |> Repo.insert()
+
+    {training, pricing_instance}
+  end
+
+  defp break_rule(pricing_instance) do
+    pricing_instance |> Ecto.Changeset.change(blockly_lua: "return nil + 1") |> Repo.update!()
+  end
+
+  defp memberships(member) do
+    from(m in Oas.Members.Membership,
+      where: m.member_id == ^member.id,
+      order_by: [asc: m.id],
+      select: {m.id, m.membership_period_id}
+    )
+    |> Repo.all()
+  end
+
+  test "a pricing rule that fails on the re-add rolls back the whole merge", ctx do
+    # Only the target is charged by a rule here: the source's attendance at
+    # this training is deleted fine, then the target's price can't be worked out.
+    {training_d, pricing_instance} = training_with_rule(ctx, "return 4", 6)
+
+    add(ctx.from, ctx.training_a)
+    add(ctx.from, training_d)
+    # Deleting still prices fine (nothing left to attend), so the failure is
+    # in the re-add.
+    pricing_instance
+    |> Ecto.Changeset.change(
+      blockly_lua: "if #user.attending == 0 then return 0 end return nil + 1"
+    )
+    |> Repo.update!()
+
+    before_from = snapshot(ctx.from)
+    before_to = snapshot(ctx.to)
+
+    error = assert_raise RuntimeError, fn -> merge(ctx) end
+    assert error.message =~ "rolled back, nothing was changed"
+    assert error.message =~ "price couldn't be calculated"
+
+    assert snapshot(ctx.from) == before_from
+    assert snapshot(ctx.to) == before_to
+  end
+
+  test "a pricing rule that fails on the delete rolls back the whole merge", ctx do
+    # delete_attendance returns {:error, _} here instead of raising.
+    {training_d, pricing_instance} = training_with_rule(ctx, "return 4", 6)
+
+    add(ctx.from, ctx.training_a)
+    add(ctx.from, training_d)
+    break_rule(pricing_instance)
+
+    before_from = snapshot(ctx.from)
+    before_to = snapshot(ctx.to)
+
+    error = assert_raise RuntimeError, fn -> merge(ctx) end
+    assert error.message =~ "rolled back, nothing was changed"
+    assert error.message =~ "#{training_d.id}"
+
+    assert snapshot(ctx.from) == before_from
+    assert snapshot(ctx.to) == before_to
+  end
+
+  test "moves an attendance at a full training", ctx do
+    # The source's place is freed before the target takes it, so the limit
+    # doesn't stop the merge even when the target isn't an admin.
+    {training_d, _} = training_with_rule(ctx, "return 4", 6, %{limit: 1})
+    add(ctx.from, training_d)
+
+    assert [_] = merge(ctx)
+    assert training_ids(ctx.from) == []
+    assert training_ids(ctx.to) == [training_d.id]
+  end
+
+  test "a failed merge leaves no membership or fee on the target", ctx do
+    {:ok, _} = Oas.Settings.update_config(%{temporary_trainings: 0}, [:temporary_trainings])
+
+    {:ok, period} =
+      %Oas.Members.MembershipPeriod{
+        name: "2025",
+        value: Decimal.new("12"),
+        from: ~D[2025-01-01],
+        to: ~D[2025-12-31]
+      }
+      |> Repo.insert()
+
+    # Counts towards membership, so moving it makes the target join.
+    {training_d, _} = training_with_rule(ctx, "return 4", 1, %{exempt_membership_count: false})
+
+    add(ctx.from, training_d)
+    add(ctx.from, ctx.training_b)
+    add(ctx.to, ctx.training_b)
+
+    assert [{_, period_id}] = memberships(ctx.from)
+    assert period_id == period.id
+
+    before = {snapshot(ctx.from), snapshot(ctx.to), memberships(ctx.from), memberships(ctx.to)}
+    assert memberships(ctx.to) == []
+
+    # training_d (1 Oct) moves first and adds the target's membership and
+    # fee, then training_b fails because the target already attends it.
+    assert_raise RuntimeError, ~r/rolled back, nothing was changed/, fn -> merge(ctx) end
+
+    assert {snapshot(ctx.from), snapshot(ctx.to), memberships(ctx.from), memberships(ctx.to)} ==
+             before
+  end
 end
