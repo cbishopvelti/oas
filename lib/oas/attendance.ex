@@ -70,7 +70,9 @@ defmodule Oas.Attendance do
     :ok
   end
 
-  def add_attendance(%{member_id: member_id, training_id: training_id}, %{inserted_by_member_id: inserted_by_member_id}) do
+  # opts.skip_emails: true sends no warning emails for this booking (low
+  # credit, booked in by someone else). Used by Oas.Members.merge_members!.
+  def add_attendance(%{member_id: member_id, training_id: training_id}, %{inserted_by_member_id: inserted_by_member_id} = opts) do
     transaction_result = Oas.Repo.transact(fn ->
       training = from(tr in Oas.Trainings.Training,
         left_join: tw in assoc(tr, :training_where),
@@ -163,7 +165,9 @@ defmodule Oas.Attendance do
         # this ran inside an outer Oas.AfterCommit.transact, they wait for that.
         # Run separately, so a failed publish can't stop the emails.
         Oas.AfterCommit.run(fn -> publish_added_attendance(written) end)
-        Oas.AfterCommit.run(fn -> email_added_attendance(written) end)
+        if Map.get(opts, :skip_emails, false) != true do
+          Oas.AfterCommit.run(fn -> email_added_attendance(written) end)
+        end
 
         {:ok, %{
           success: true,
