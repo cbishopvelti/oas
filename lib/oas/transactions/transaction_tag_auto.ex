@@ -21,13 +21,23 @@ defmodule Oas.Transactions.TransactionTagAuto do
     []
   end
 
+  # Returns {:ok, inserted_count} | {:error, message}.
   def do_auto_tags(old_who, who, transaction_tags, auto_tags) do
-    now = NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second)
-
     auto_tags = auto_tags
     |> Enum.map(fn %{id: _id} = tag -> tag
-      %{name: name} -> transaction_tags |> Enum.find(fn %{name: nam} -> nam == name end)
+      %{name: name} = tag -> Enum.find(transaction_tags, tag, fn %{name: nam} -> nam == name end)
     end)
+
+    case Enum.find(auto_tags, fn tag -> is_nil(Map.get(tag, :id)) end) do
+      nil -> do_auto_tags_checked(old_who, who, transaction_tags, auto_tags)
+      %{name: name} -> {:error, "Auto tag \"#{name}\" is not one of the transaction's tags"}
+    end
+  end
+
+  defp do_auto_tags_checked(old_who, who, transaction_tags, auto_tags) do
+    now = NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second)
+    # A new transaction has no old who; comparing a column with nil raises.
+    old_who = old_who || who
 
     # Delete
     if (old_who !== who) do
@@ -61,7 +71,7 @@ defmodule Oas.Transactions.TransactionTagAuto do
       MapSet.new(auto_tags |> Enum.map(fn %{id: id} -> id end))
     )
 
-    Oas.Repo.insert_all(Oas.Transactions.TransactionTagAuto, auto_tags
+    {count, _} = Oas.Repo.insert_all(Oas.Transactions.TransactionTagAuto, auto_tags
     |> Enum.filter(fn %{id: id} -> MapSet.member?(still_exists, id) end)
     |> Enum.map(fn %{id: id} ->
       %{
@@ -71,5 +81,7 @@ defmodule Oas.Transactions.TransactionTagAuto do
         updated_at: now
       }
     end), on_conflict: :nothing)
+
+    {:ok, count}
   end
 end

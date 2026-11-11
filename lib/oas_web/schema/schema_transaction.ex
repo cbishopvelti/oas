@@ -184,6 +184,20 @@ defmodule OasWeb.Schema.SchemaTransaction do
     end
   end
 
+  defp delete_unused_tags() do
+    from(
+      tt in Oas.Transactions.TransactionTags,
+      as: :transaction_tags,
+      where: not(exists(
+        from(
+          c in "transaction_transaction_tags",
+          where: c.transaction_tag_id == parent_as(:transaction_tags).id,
+          select: 1
+        )
+      ))
+    ) |> Oas.Repo.delete_all
+  end
+
   defp maybeDoTokens(args, result, when1) do
     if (Map.has_key?(args, :token_quantity) and !Map.has_key?(args, :id)) do
       Oas.Attendance.add_tokens(%{
@@ -196,6 +210,8 @@ defmodule OasWeb.Schema.SchemaTransaction do
     end
   end
 
+  # Saves, moves or removes the membership paid for by this transaction.
+  # Returns {:ok, _} | {:error, _} so the caller can roll the save back.
   defp maybeDoMembership(
     args = %{
       membership_period_id: membership_period_id
@@ -205,33 +221,39 @@ defmodule OasWeb.Schema.SchemaTransaction do
       who_member_id: member_id
     }
   ) do
-    _membershipPeriod = Oas.Repo.get!(Oas.Members.MembershipPeriod, membership_period_id)
-
-    _membership = from(m in Oas.Members.Membership, where:
-      m.transaction_id == ^id
-    ) |> Oas.Repo.one
-    |> case do
-      nil -> %Oas.Members.Membership{
-        transaction_id: id,
-        member_id: member_id,
-        membership_period_id: membership_period_id
-      }
-      membership -> membership
+    cond do
+      is_nil(member_id) ->
+        {:error, "A membership needs a member on the transaction"}
+      is_nil(Oas.Repo.get(Oas.Members.MembershipPeriod, membership_period_id)) ->
+        {:error, "Membership period not found"}
+      true ->
+        from(m in Oas.Members.Membership, where:
+          m.transaction_id == ^id
+        ) |> Oas.Repo.one
+        |> case do
+          nil -> %Oas.Members.Membership{
+            transaction_id: id,
+            member_id: member_id,
+            membership_period_id: membership_period_id
+          }
+          membership -> membership
+        end
+        |> Ecto.Changeset.cast(args, [:membership_period_id])
+        |> Ecto.Changeset.unique_constraint([:member_id, :membership_period_id],
+          message: "This member already has a membership for this period"
+        )
+        |> (&(case &1 do
+          %{data: %{id: nil}} -> Oas.Repo.insert(&1)
+          %{data: %{id: _id}} -> Oas.Repo.update(&1)
+        end)).()
     end
-    |> Ecto.Changeset.cast(args, [:membership_period_id])
-    |> (&(case &1 do
-      %{data: %{id: nil}} -> Oas.Repo.insert(&1)
-      %{data: %{id: _id}} -> Oas.Repo.update(&1)
-    end)).()
   end
-  defp maybeDoMembership(args, result) do
-    if (!Map.has_key?(args, :membership_period_id)) do
-      result
-        |> Oas.Repo.preload(:membership)
-        |> Ecto.Changeset.cast(%{}, [])
-        |> Ecto.Changeset.put_assoc(:membership, nil)
-        |> Oas.Repo.update
-    end
+  defp maybeDoMembership(_args, result) do
+    result
+      |> Oas.Repo.preload(:membership)
+      |> Ecto.Changeset.cast(%{}, [])
+      |> Ecto.Changeset.put_assoc(:membership, nil)
+      |> Oas.Repo.update
   end
   # defp maybeDoCredits(args = %{credits_amount: credit_amount}, %{id: id,
   #   who_member_id: member_id,
@@ -297,47 +319,34 @@ defmodule OasWeb.Schema.SchemaTransaction do
         |> Oas.Transactions.TransactionTags.doTransactionTags(args)
         |> Oas.Credits.Credit.doCredit(Map.get(args, :credit, nil))
 
-        result = toSave
-          |> (&(case &1 do
-            %{data: %{id: nil}} -> Oas.Repo.insert(&1)
-            %{data: %{id: _}} -> Oas.Repo.update(&1)
-          end)).()
-          |> OasWeb.Schema.SchemaUtils.handle_error
-
-        # delete unused tags
-        from(
-          tt in Oas.Transactions.TransactionTags,
-          as: :transaction_tags,
-          where: not(exists(
-            from(
-              c in "transaction_transaction_tags",
-              where: c.transaction_tag_id == parent_as(:transaction_tags).id,
-              select: 1
-            )
-          )) # and tt.id in ^removedTransactionTags
-        ) |> Oas.Repo.delete_all
-        # EO delete unused tags
-
-        case result do
-          {:error, error} -> {:error, error}
-          {:ok, result} ->
-            # Adds tokens
-            maybeDoTokens(args, result, when1)
+        # One database transaction: if the membership or the auto tags
+        # fail, the transaction row, its tags and its credit roll back too.
+        Oas.Repo.transact(fn ->
+          with {:ok, result} <- (case toSave do
+              %{data: %{id: nil}} -> Oas.Repo.insert(toSave)
+              %{data: %{id: _}} -> Oas.Repo.update(toSave)
+            end),
+            _ <- delete_unused_tags(),
+            # Adds tokens (deprecated)
+            _ <- maybeDoTokens(args, result, when1),
             # Adds membership
-            maybeDoMembership(args, result)
-
+            {:ok, _} <- maybeDoMembership(args, result),
             # Auto tag
-            if (is_nil(args.who_member_id)) do
+            {:ok, _} <- (if is_nil(Map.get(args, :who_member_id)) do
               Oas.Transactions.TransactionTagAuto.do_auto_tags(
                 toSave.data.who,
                 args.who,
                 result.transaction_tags,
                 Map.get(args, :auto_tags, [])
               )
-            end
-
+            else
+              {:ok, nil}
+            end)
+          do
             {:ok, result}
-        end
+          end
+        end)
+        |> OasWeb.Schema.SchemaUtils.handle_error
       end
     end
     field :delete_transaction, type: :success do
@@ -346,19 +355,7 @@ defmodule OasWeb.Schema.SchemaTransaction do
         Oas.Repo.get!(Oas.Transactions.Transaction, transaction_id) |>
           Oas.Repo.delete!
 
-        # delete unused tags
-        from(
-          tt in Oas.Transactions.TransactionTags,
-          as: :transaction_tags,
-          where: not(exists(
-            from(
-              c in "transaction_transaction_tags",
-              where: c.transaction_tag_id == parent_as(:transaction_tags).id,
-              select: 1
-            )
-          )) # and tt.id in ^removedTransactionTags
-        ) |> Oas.Repo.delete_all
-        # EO delete unused tags
+        delete_unused_tags()
 
         {:ok, %{success: true}}
       end
