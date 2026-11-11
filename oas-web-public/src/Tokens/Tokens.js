@@ -18,6 +18,7 @@ import { get, setWith, clone, has, chain, uniqBy } from 'lodash';
 import { useQuery, useLazyQuery, gql} from '@apollo/client';
 import moment from 'moment';
 import { useParams, useNavigate, useSearchParams, useOutletContext } from 'react-router-dom'
+import { formatMoney } from '../App/money';
 
 
 const onChange = ({formData, setFormData, key}) => (event) => {
@@ -87,6 +88,9 @@ export const Tokens = () => {
       },
       public_member(email: $email) {
         id
+      },
+      public_config_config {
+        currency
       }
     }
   `, {
@@ -165,7 +169,7 @@ export const Tokens = () => {
             <br/>
             {get(data, 'public_config_tokens.tokens', []).map(({value, quantity}, index) => {
               return <span key={index}>
-                {value * quantity} GBP for {quantity} token{quantity != 1 && 's'}{get(data, 'public_config_tokens.tokens', []).length - 1 == index ? '.' : ','}<br/>
+                {formatMoney(value * quantity, get(data, 'public_config_config.currency'))} for {quantity} token{quantity != 1 && 's'}{get(data, 'public_config_tokens.tokens', []).length - 1 == index ? '.' : ','}<br/>
               </span>
             })}
             Tokens are valid for {get(data, 'public_config_tokens.token_expiry_days', 'loading')} days from purchase and are non-refundable. Tokens can be transferred between members.<br/>

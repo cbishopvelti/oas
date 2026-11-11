@@ -5,6 +5,7 @@ import moment from 'moment';
 import { get, round } from 'lodash'
 import { useQuery, gql } from '@apollo/client';
 import { useOutletContext } from 'react-router-dom'
+import { formatMoney } from '../utils/money';
 
 const onChange = ({formData, setFormData, key}) => (event) => {
 
@@ -34,10 +35,17 @@ export const Analysis = () => {
         credit,
         debt
       }
+      config_config {
+        id
+        currency
+      }
     }
   `, {
     variables: filterData
   });
+  const currency = get(data, 'config_config.currency');
+  const money = (key) => formatMoney(get(data, `analysis.${key}`), currency);
+
   useEffect(() => {
     setTitle("Analysis");
     refetch();
@@ -77,16 +85,16 @@ export const Analysis = () => {
 
         <Box>
           <Box sx={{width: '100%'}}>
-            <h3>Income (GBP):</h3>
-            <div>{get(data, 'analysis.transactions_income') && round(get(data, 'analysis.transactions_income'), 2)}</div>
+            <h3>Income:</h3>
+            <div>{money('transactions_income')}</div>
           </Box>
           <Box sx={{width: '100%'}}>
-            <h3>Outgoing (GBP):</h3>
-            <div>{get(data, 'analysis.transactions_outgoing') && round(get(data, 'analysis.transactions_outgoing'), 2)}</div>
+            <h3>Outgoing:</h3>
+            <div>{money('transactions_outgoing')}</div>
           </Box>
           <Box sx={{width: '100%'}}>
-            <h3>Difference (GBP):</h3>
-            <div>{get(data, 'analysis.transactions_difference') && round(get(data, 'analysis.transactions_difference'), 2)}</div>
+            <h3>Difference:</h3>
+            <div>{money('transactions_difference')}</div>
           </Box>
         </Box>
       </Container>
@@ -96,11 +104,11 @@ export const Analysis = () => {
 
         <Box sx={{width: '100%'}}>
           <h3>Credits</h3>
-          <div>{get(data, 'analysis.credit') && round(get(data, 'analysis.credit'), 2)  || "0.0"}</div>
+          <div>{data ? formatMoney(get(data, 'analysis.credit') || 0, currency) : ''}</div>
         </Box>
         <Box sx={{width: '100%'}}>
           <h3>Debt</h3>
-          <div>{get(data, 'analysis.debt') && round(get(data, 'analysis.debt'), 2) || "0.0"}</div>
+          <div>{data ? formatMoney(get(data, 'analysis.debt') || 0, currency) : ''}</div>
         </Box>
 
         <Box sx={{width: '100%'}}>
@@ -109,13 +117,13 @@ export const Analysis = () => {
         </Box>
 
         <Box sx={{width: '100%'}}>
-          <h3>Total unused tokens amount (GBP):</h3>
-          <div>{get(data, 'analysis.unused_tokens_amount') && round(get(data, 'analysis.unused_tokens_amount'), 2)}</div>
+          <h3>Total unused tokens amount:</h3>
+          <div>{money('unused_tokens_amount')}</div>
         </Box>
 
         <Box sx={{width: '100%'}}>
-          <h3>Balance (GBP):</h3>
-          <div>{get(data, 'analysis.transactions_ballance') && round(get(data, 'analysis.transactions_ballance'), 2)}</div>
+          <h3>Balance:</h3>
+          <div>{money('transactions_ballance')}</div>
         </Box>
       </Container>
     </Box>
