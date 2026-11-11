@@ -71,21 +71,21 @@ defmodule Oas.Repo do
     config = Oas.Settings.get_config!()
     name = Oas.Settings.society_slug() <> "-" <> when1 <> ".db"
     if (config.backup_recipient) do
-      from = Application.get_env(:oas, Oas.TokenMailer)[:from]
-      email = Swoosh.Email.new()
-      |> Swoosh.Email.to({"backup_recipient", config.backup_recipient})
-      |> Swoosh.Email.from(from)
-      |> Swoosh.Email.subject("#{Oas.Settings.society_name()} backup")
-      |> Swoosh.Email.text_body("Backup database\n")
-      |> Swoosh.Email.attachment(
-        Swoosh.Attachment.new(
-          {:data, data},
-          filename: name,
-          content_type: "application/octet-stream"
-          # type: :inline
-        )
-      )
-      Oas.Mailer.deliver(email)
+      send_backup_email(config.backup_recipient, name, data)
     end
+  end
+
+  def send_backup_email(recipient, filename, data) do
+    Oas.Mail.deliver(
+      {"backup_recipient", recipient},
+      "#{Oas.Settings.society_name()} backup",
+      "Backup database\n",
+      attachments: [
+        Swoosh.Attachment.new({:data, data},
+          filename: filename,
+          content_type: "application/octet-stream"
+        )
+      ]
+    )
   end
 end
