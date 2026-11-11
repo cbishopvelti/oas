@@ -22,14 +22,7 @@ defmodule Oas do
 
   # Oas.testEmail("someone@example.com")
   def testEmail(recipient) do
-    email = Swoosh.Email.new()
-    |> Swoosh.Email.to(recipient)
-    |> Swoosh.Email.from(Application.get_env(:oas, Oas.TokenMailer)[:from])
-    |> Swoosh.Email.subject("#{Oas.Settings.society_name()} test")
-    # |> Swoosh.Email.html_body("<h1>Hello World</h1>")
-    |> Swoosh.Email.text_body("Hello World\n")
-
-    Oas.Mailer.deliver(email)
+    Oas.Mail.deliver(recipient, "#{Oas.Settings.society_name()} test", "Hello World\n")
   end
 
 end

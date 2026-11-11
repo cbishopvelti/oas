@@ -1,19 +1,7 @@
 defmodule Oas.Tokens.TokenNotifier do
-  import Swoosh.Email
-
-  alias Oas.TokenMailer
-
+  # Token and booking warnings go through Oas.TokenMailer, which prod
+  # configures separately from Oas.Mailer.
   def deliver(recipient, subject, body) do
-    from = Application.get_env(:oas, Oas.TokenMailer)[:from]
-    email =
-      new()
-      |> to(recipient)
-      |> from(from)
-      |> subject(subject)
-      |> text_body(body)
-
-    with {:ok, _metadata} <- TokenMailer.deliver(email) do
-      {:ok, email}
-    end
+    Oas.Mail.deliver(recipient, subject, body, mailer: Oas.TokenMailer)
   end
 end
