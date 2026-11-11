@@ -126,24 +126,24 @@ defmodule Oas.Pricing.CalcAttendance do
     Deducts credit for a new attendance and re-spreads the price over the member's
     other attendances in the same pricing instance.
 
-    Returns `{:ok, attendance}` or `{:error, reason}`. Callers run this inside a
-    transaction and must roll back on error, otherwise the attendance is kept
-    without its credit.
+    Returns `{:ok, attendance, respread_training_ids}` or `{:error, reason}`.
+    Callers run this inside a transaction and must roll back on error, otherwise
+    the attendance is kept without its credit. Once the transaction has
+    committed, they pass the ids to `publish_respread/2` and queue the member's
+    warning email.
     """
   def apply(%{pricing_instance: nil} = training, attendance, member) do
-    Oas.Credits.Credit.deduct_credit(
-      attendance,
-      member,
-      Decimal.sub(
-        0,
-        calculate_price(training, member) |> List.first() |> elem(1)
-      ),
-      %{
-        now: training.when,
-        attendance: attendance,
-        disable_warning_emails: training.disable_warning_emails
-      }
-    )
+    with {:ok, attendance} <- Oas.Credits.Credit.deduct_credit(
+           attendance,
+           member,
+           Decimal.sub(
+             0,
+             calculate_price(training, member) |> List.first() |> elem(1)
+           ),
+           %{now: training.when}
+         ) do
+      {:ok, attendance, []}
+    end
   end
   def apply(training, attendance, member) do
 
@@ -156,37 +156,47 @@ defmodule Oas.Pricing.CalcAttendance do
              0,
              first_item_amount |> elem(1)
            ),
-           %{
-             now: training.when,
-             attendance: attendance,
-             disable_warning_emails: training.disable_warning_emails
-           }
+           %{now: training.when}
          ),
-         :ok <- update_credit_amounts(item_amounts, member) do
-      {:ok, attendance}
+         {:ok, training_ids} <- update_credit_amounts(item_amounts) do
+      {:ok, attendance, training_ids}
     end
   end
 
   @doc """
     Re-spreads the price over the member's remaining attendances after one is deleted.
 
-    Returns `:ok` or `{:error, reason}`; callers must roll back on error.
+    Returns `{:ok, respread_training_ids}` or `{:error, reason}`; callers must
+    roll back on error, and pass the ids to `publish_respread/2` once committed.
     """
   def apply_delete(%{pricing_instance: nil}, _attendance, _member) do
     # Nothing, as there are no related trainings.
-    :ok
+    {:ok, []}
   end
   def apply_delete(training, _attendance, member) do
     case calculate_price(training, member, delete: true) do
       {:error, _} = error -> error
-      item_amounts -> update_credit_amounts(item_amounts, member)
+      item_amounts -> update_credit_amounts(item_amounts)
     end
   end
 
+  @doc """
+    Tells subscribers that the member's credits on these trainings changed. Only
+    call it after the transaction that changed them has committed.
+    """
+  def publish_respread(member, training_ids) do
+    Enum.each(training_ids, fn training_id ->
+      Absinthe.Subscription.publish(OasWeb.Endpoint, %{success: true}, user_attendance_attendance: member.id)
+      Absinthe.Subscription.publish(OasWeb.Endpoint, %{id: training_id}, attendance_attendance: training_id)
+    end)
+  end
+
   # Updates the credit of each attendance to its new share of the price. Stops at
-  # the first failed write and returns `{:error, changeset}`.
-  defp update_credit_amounts(item_amounts, member) do
-    Enum.reduce_while(item_amounts, :ok, fn ({training, item_amount}, :ok) ->
+  # the first failed write and returns `{:error, changeset}`, otherwise
+  # `{:ok, training_ids}` for the trainings whose credit was updated.
+  defp update_credit_amounts(item_amounts) do
+    item_amounts
+    |> Enum.reduce_while({:ok, []}, fn ({training, item_amount}, {:ok, training_ids}) ->
       [attendance] = training |> Map.get(:attendance) # Should only be one
       amount = to_debit_amount(item_amount)
 
@@ -198,15 +208,14 @@ defmodule Oas.Pricing.CalcAttendance do
       )
       |> Oas.Repo.update()
       |> case do
-        {:ok, _credit} ->
-          Absinthe.Subscription.publish(OasWeb.Endpoint, %{success: true}, user_attendance_attendance: member.id)
-          Absinthe.Subscription.publish(OasWeb.Endpoint, %{id: training.id}, attendance_attendance: training.id)
-          {:cont, :ok}
-
-        {:error, changeset} ->
-          {:halt, {:error, changeset}}
+        {:ok, _credit} -> {:cont, {:ok, [training.id | training_ids]}}
+        {:error, changeset} -> {:halt, {:error, changeset}}
       end
     end)
+    |> case do
+      {:ok, training_ids} -> {:ok, Enum.reverse(training_ids)}
+      error -> error
+    end
   end
 
   @doc """

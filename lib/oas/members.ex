@@ -365,20 +365,62 @@ defmodule Oas.Members do
     end
   end
 
-  # ONLY moves attendance, USE WITH CARE
-  # Oas.Members.merge_members!(106, 111)
-  def merge_members!(from_id, to_id) do
-    result = Ecto.Query.from(t in Oas.Trainings.Training,
+  @doc """
+  Moves every attendance of member `from_id` to member `to_id`.
 
-      join: a in assoc(t, :attendance),
-      join: m in assoc(a, :member),
-      where: m.id == ^from_id,
-      select: {t, a}
-    ) |> Repo.all()
+  ONLY moves attendance, USE WITH CARE. Run from the console, e.g.
+  `Oas.Members.merge_members!(106, 111)`.
 
-    result |> Enum.map(fn {training, attendance} ->
-      Oas.Attendance.delete_attendance(%{attendance_id: attendance.id})
-      Oas.Attendance.add_attendance(%{member_id: to_id, training_id: training.id}, %{inserted_by_member_id: 1})
-    end)
+  All or nothing: each attendance is deleted from `from_id` and re-added to
+  `to_id` inside one outer transaction. If any delete or re-add fails (for
+  example `to_id` already attends that training, or a credit write fails),
+  everything is rolled back, both members are left unchanged, and this raises.
+
+  Returns the list of re-added attendance results on success.
+  """
+  def merge_members!(from_id, to_id, opts \\ []) do
+    inserted_by_member_id = Keyword.get(opts, :inserted_by_member_id, 1)
+
+    result =
+      # Bookings and undos inside hold their emails and live updates until this commits
+      Oas.AfterCommit.transact(fn ->
+        Ecto.Query.from(t in Oas.Trainings.Training,
+          join: a in assoc(t, :attendance),
+          join: m in assoc(a, :member),
+          where: m.id == ^from_id,
+          order_by: [asc: t.when, asc: t.id, asc: a.id],
+          select: {t, a}
+        )
+        |> Repo.all()
+        |> Enum.reduce_while({:ok, []}, fn {training, attendance}, {:ok, moved} ->
+          with {:ok, _} <- Oas.Attendance.delete_attendance(%{attendance_id: attendance.id}),
+               {:ok, added} <-
+                 merge_add_attendance(to_id, training.id, inserted_by_member_id) do
+            {:cont, {:ok, [added | moved]}}
+          else
+            {:error, reason} -> {:halt, {:error, {:training_id, training.id, reason}}}
+          end
+        end)
+      end)
+
+    case result do
+      {:ok, moved} ->
+        Enum.reverse(moved)
+
+      {:error, reason} ->
+        raise "merge_members! #{from_id} -> #{to_id} rolled back, nothing was changed: " <>
+                inspect(reason)
+    end
+  end
+
+  # add_attendance throws its error instead of returning it, so turn the throw
+  # back into an error tuple for the outer transaction to roll back on.
+  defp merge_add_attendance(member_id, training_id, inserted_by_member_id) do
+    Oas.Attendance.add_attendance(
+      %{member_id: member_id, training_id: training_id},
+      %{inserted_by_member_id: inserted_by_member_id}
+    )
+  catch
+    {:error, _} = error -> error
   end
 end
