@@ -66,6 +66,9 @@ config :logger, :console,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
+# Model name sent to the LLM chat endpoint (:llm_sudio_url). LLM_MODEL overrides it.
+config :oas, :llm_model, "qwen/qwen3-14b"
+
 IO.puts("env: #{config_env()}")
 
 # Import environment specific config. This must remain at the bottom

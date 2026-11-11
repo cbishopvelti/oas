@@ -88,6 +88,7 @@ if config_env() != :test do
     # Wins over the society name as the From name (see Oas.Mail).
     {"MAIL_FROM_NAME", fn v -> config :oas, mail_from_name: v end},
     {"LLM_STUDIO_URL", fn v -> config :oas, llm_sudio_url: v end},
+    {"LLM_MODEL", fn v -> config :oas, llm_model: v end},
     {"GOCARDLESS_BACKUP_DIR", fn v -> config :oas, gocardless_backup_dir: v end}
   ]
 
