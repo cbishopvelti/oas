@@ -162,7 +162,9 @@ defmodule Oas.Attendance do
       {:ok, %{attendance: attendance} = written} ->
         # Emails and live updates only go out once the booking is committed. If
         # this ran inside an outer Oas.AfterCommit.transact, they wait for that.
-        Oas.AfterCommit.run(fn -> after_add_attendance(written) end)
+        # Run separately, so a failed publish can't stop the emails.
+        Oas.AfterCommit.run(fn -> publish_added_attendance(written) end)
+        Oas.AfterCommit.run(fn -> email_added_attendance(written) end)
 
         {:ok, %{
           success: true,
@@ -178,16 +180,18 @@ defmodule Oas.Attendance do
 
   # Side effects of a committed booking. Nothing in here may run for a booking
   # that rolled back.
-  defp after_add_attendance(%{
+  defp publish_added_attendance(%{training: training, member: member, respread_training_ids: respread_training_ids}) do
+    Oas.Trainings.Attendance.maybe_publish_full(training)
+    Oas.Pricing.CalcAttendance.publish_respread(member, respread_training_ids || [])
+  end
+
+  defp email_added_attendance(%{
     attendance: attendance,
     training: training,
     member: member,
     membership_charged: membership_charged,
     respread_training_ids: respread_training_ids
   }) do
-    Oas.Trainings.Attendance.maybe_publish_full(training)
-    Oas.Pricing.CalcAttendance.publish_respread(member, respread_training_ids || [])
-
     if training.disable_warning_emails != true do
       Oas.Mail.Background.run(
         fn -> Oas.TokenMailer.maybe_send_warnings_email(member) end,

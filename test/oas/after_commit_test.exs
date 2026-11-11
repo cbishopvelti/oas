@@ -74,4 +74,50 @@ defmodule Oas.AfterCommitTest do
 
     refute_received {:ran, _, _}
   end
+
+  describe "a side effect that fails after the commit" do
+    import ExUnit.CaptureLog
+
+    test "run/1 outside transact/1 logs it and still returns :ok" do
+      log =
+        capture_log(fn ->
+          assert :ok = AfterCommit.run(fn -> raise "publish is down" end)
+          assert :ok = AfterCommit.run(fn -> throw(:nope) end)
+          assert :ok = AfterCommit.run(fn -> exit(:gone) end)
+        end)
+
+      assert log =~ "publish is down"
+      assert log =~ "side effect failed after commit"
+    end
+
+    test "transact/1 still returns its result and runs the side effects queued after it" do
+      log =
+        capture_log(fn ->
+          assert {:ok, :done} =
+                   AfterCommit.transact(fn ->
+                     AfterCommit.run(note(:a))
+                     AfterCommit.run(fn -> raise "publish is down" end)
+                     AfterCommit.run(note(:b))
+                     {:ok, :done}
+                   end)
+        end)
+
+      assert log =~ "publish is down"
+      assert_received {:ran, :a, false}
+      assert_received {:ran, :b, false}
+    end
+
+    test "transact/1 can be used again afterwards" do
+      capture_log(fn ->
+        assert {:ok, :done} =
+                 AfterCommit.transact(fn ->
+                   AfterCommit.run(fn -> raise "publish is down" end)
+                   {:ok, :done}
+                 end)
+      end)
+
+      assert :ok = AfterCommit.run(note(:later))
+      assert_received {:ran, :later, false}
+    end
+  end
 end
