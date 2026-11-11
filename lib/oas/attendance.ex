@@ -45,20 +45,23 @@ defmodule Oas.Attendance do
     case check_membership(member) do
       {_, membership} when membership == :x_member or membership == :not_member or membership == :honorary_member ->
         case get_membership_periods(training.when) do
-          nil -> nil # No membership period to add to
-          [] -> nil
+          nil -> :ok # No membership period to add to
+          [] -> :ok
           membership_periods ->
-            membership_periods |> Enum.map(fn membership_period ->
-              Oas.Members.Membership.add_membership(membership_period, member, %{now: now})
+            # Stops at the first membership that fails to save
+            Enum.reduce_while(membership_periods, :ok, fn membership_period, :ok ->
+              case Oas.Members.Membership.add_membership(membership_period, member, %{now: now}) do
+                {:ok, _} -> {:cont, :ok}
+                {:error, _} = error -> {:halt, error}
+              end
             end)
-            nil
         end
       _membership -> # Temporary_member
-        nil
+        :ok
     end
   end
   defp add_attendance_membership(_, _, _) do # already a member, do nothing
-    nil
+    :ok
   end
 
   def add_attendance(%{member_id: member_id, training_id: training_id}, %{inserted_by_member_id: inserted_by_member_id}) do
@@ -108,11 +111,11 @@ defmodule Oas.Attendance do
       config = Oas.Settings.get_config!()
 
       if config.credits and training.exempt_membership_count != true do # Membership
-        add_attendance_membership(
-          training,
-          member,
-          %{now: now}
-        )
+        # A failed membership must not leave the attendance in place
+        case add_attendance_membership(training, member, %{now: now}) do
+          :ok -> nil
+          {:error, errors} -> Oas.Repo.rollback(errors)
+        end
       end
 
       case get_unsued_token_result do
