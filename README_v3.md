@@ -1,3 +1,7 @@
+> The [operator guide](docs/operator-guide.md) is the full reference for
+> building, running, setting up, upgrading and backing up a society, every
+> environment variable, and troubleshooting. This file keeps the short notes.
+
 ## Build
 
 The image is built per environment with the `MIX_ENV` build arg. The build also
