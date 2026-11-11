@@ -153,41 +153,127 @@ defmodule OasWeb.Schema.TransactionSaveAtomicTest do
     end
   end
 
-  describe "rollback when the auto tags fail" do
-    test "a new transaction is not saved when an auto tag is not one of its tags" do
+  describe "membership follows the transaction's member" do
+    test "moving the transaction to another member moves its membership" do
+      member = Oas.MembersFixtures.member_fixture()
+      other = Oas.MembersFixtures.member_fixture()
+      period = membership_period()
+
+      {:ok, %{data: %{"transaction" => %{"id" => id}}}} =
+        run(%{
+          "what" => "Membership", "who" => member.name, "who_member_id" => member.id,
+          "membership_period_id" => period.id
+        })
+
+      assert {:ok, %{data: %{"transaction" => %{"id" => ^id}}}} =
+               run(%{
+                 "id" => id, "what" => "Membership", "who" => other.name,
+                 "who_member_id" => other.id, "membership_period_id" => period.id
+               })
+
+      assert [%{member_id: member_id, transaction_id: ^id}] = Repo.all(Membership)
+      assert member_id == other.id
+    end
+
+    test "the move is undone when the other member already has that membership" do
+      member = Oas.MembersFixtures.member_fixture()
+      other = Oas.MembersFixtures.member_fixture()
+      period = membership_period()
+      %Membership{member_id: other.id, membership_period_id: period.id} |> Repo.insert!()
+
+      {:ok, %{data: %{"transaction" => %{"id" => id}}}} =
+        run(%{
+          "what" => "Membership", "who" => member.name, "who_member_id" => member.id,
+          "membership_period_id" => period.id
+        })
+
       assert {:ok, %{errors: [%{message: message}]}} =
+               run(%{
+                 "id" => id, "what" => "Edited", "who" => other.name,
+                 "who_member_id" => other.id, "membership_period_id" => period.id
+               })
+
+      assert message =~ "already has a membership"
+      transaction = Repo.get!(Transaction, id) |> Repo.preload(:membership)
+      assert transaction.what == "Membership"
+      assert transaction.who_member_id == member.id
+      assert transaction.membership.member_id == member.id
+      assert count(Membership) == 2
+    end
+
+    test "a null membership period removes the membership" do
+      member = Oas.MembersFixtures.member_fixture()
+      period = membership_period()
+      base = %{"what" => "Membership", "who" => member.name, "who_member_id" => member.id}
+
+      {:ok, %{data: %{"transaction" => %{"id" => id}}}} =
+        run(Map.put(base, "membership_period_id", period.id))
+
+      assert {:ok, %{data: %{"transaction" => %{"id" => ^id}}}} =
+               run(Map.merge(base, %{"id" => id, "membership_period_id" => nil}))
+
+      assert count(Membership) == 0
+    end
+  end
+
+  describe "auto tags" do
+    test "an auto tag that is not one of the transaction's tags is ignored" do
+      assert {:ok, %{data: %{"transaction" => %{"id" => id}}}} =
                run(%{
                  "what" => "Hall hire", "who" => "The Hall",
                  "transaction_tags" => [%{"name" => "Venue"}],
-                 "auto_tags" => [%{"name" => "Missing"}]
+                 "auto_tags" => [%{"name" => "Venue"}, %{"name" => "Removed"}]
                })
 
-      assert message =~ "Missing"
-      assert count(Transaction) == 0
-      assert count(TransactionTags) == 0
-      assert count(TransactionTagAuto) == 0
+      assert Repo.get!(Transaction, id)
+      assert ["Venue"] = Repo.all(from t in TransactionTags, select: t.name)
+      assert [%{who: "The Hall"}] = Repo.all(TransactionTagAuto)
     end
 
-    test "an edit is undone" do
+    test "an edit that leaves who out keeps the saved who for its auto tags" do
       {:ok, %{data: %{"transaction" => %{"id" => id}}}} =
-        run(%{
-          "what" => "Original", "who" => "The Hall",
-          "transaction_tags" => [%{"name" => "Venue"}],
-          "auto_tags" => [%{"name" => "Venue"}]
-        })
+        run(%{"what" => "Original", "who" => "The Hall", "transaction_tags" => [%{"name" => "Venue"}]})
 
-      assert {:ok, %{errors: [_]}} =
+      assert {:ok, %{data: %{"transaction" => %{"id" => ^id}}}} =
                run(%{
-                 "id" => id, "what" => "Edited", "who" => "Another Hall",
-                 "transaction_tags" => [%{"name" => "Other"}],
-                 "auto_tags" => [%{"name" => "Missing"}]
+                 "id" => id, "what" => "Edited",
+                 "transaction_tags" => [%{"name" => "Venue"}],
+                 "auto_tags" => [%{"name" => "Venue"}]
                })
 
-      transaction = Repo.get!(Transaction, id) |> Repo.preload(:transaction_tags)
-      assert transaction.what == "Original"
-      assert transaction.who == "The Hall"
-      assert [%{name: "Venue"}] = transaction.transaction_tags
+      assert Repo.get!(Transaction, id).what == "Edited"
       assert [%{who: "The Hall"}] = Repo.all(TransactionTagAuto)
+    end
+
+    test "an edit that leaves the member out does not auto tag a member's transaction" do
+      member = Oas.MembersFixtures.member_fixture()
+
+      {:ok, %{data: %{"transaction" => %{"id" => id}}}} =
+        run(%{"what" => "Original", "who" => member.name, "who_member_id" => member.id})
+
+      assert {:ok, %{data: %{"transaction" => %{"id" => ^id}}}} =
+               run(%{
+                 "id" => id, "what" => "Edited", "who" => member.name,
+                 "transaction_tags" => [%{"name" => "Fees"}],
+                 "auto_tags" => [%{"name" => "Fees"}]
+               })
+
+      assert Repo.get!(Transaction, id).who_member_id == member.id
+      assert count(TransactionTagAuto) == 0
+    end
+  end
+
+  describe "rollback when a later step raises" do
+    test "a new transaction is not saved" do
+      # A tag id that does not exist makes the save raise part-way through.
+      assert_raise Ecto.NoResultsError, fn ->
+        run(%{
+          "what" => "Hall hire", "who" => "The Hall",
+          "transaction_tags" => [%{"id" => 999_999, "name" => "Gone"}]
+        })
+      end
+
+      assert count(Transaction) == 0
     end
   end
 
