@@ -6,6 +6,7 @@ defmodule Oas.Config.Config do
     field :temporary_trainings, :integer
     field :bacs, :string
     field :content, :string
+    field :membership_terms, :string
     field :enable_booking, :boolean
     field :name, :string
     field :gocardless_enabled, :boolean

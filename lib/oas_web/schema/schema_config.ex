@@ -13,6 +13,7 @@ defmodule OasWeb.Schema.SchemaConfig do
     field :temporary_trainings, :integer
     field :bacs, :string
     field :content, :string
+    field :membership_terms, :string
     field :enable_booking, :boolean
     field :name, :string
     field :gocardless_enabled, :boolean
@@ -42,6 +43,7 @@ defmodule OasWeb.Schema.SchemaConfig do
   object :public_config_config do
     field :enable_booking, :boolean
     field :content, :string
+    field :membership_terms, :string
     field :credits, :boolean
     field :name, :string
     field :short_name, :string
@@ -161,9 +163,10 @@ defmodule OasWeb.Schema.SchemaConfig do
     field :save_config_content, :config_config do
       arg :bacs, non_null(:string)
       arg :content, non_null(:string)
+      arg :membership_terms, :string
       resolve fn _, args, _ ->
         result = Oas.Settings.update_config(args, [
-          :bacs, :content
+          :bacs, :content, :membership_terms
         ], empty_values: [[], ""])
         |> OasWeb.Schema.SchemaUtils.handle_error
 
