@@ -137,6 +137,27 @@ export const ConfigTokens = () => {
     }
   `)
 
+  const [testEmailTo, setTestEmailTo] = useState("")
+  const [testEmailResult, setTestEmailResult] = useState(null)
+  const [sendTestEmailMutation, {loading: sendingTestEmail}] = useMutation(gql`
+    mutation($to: String!) {
+      send_test_email(to: $to) {
+        success
+        error
+      }
+    }
+  `)
+
+  const sendTestEmail = async () => {
+    setTestEmailResult(null)
+    try {
+      const { data } = await sendTestEmailMutation({ variables: { to: testEmailTo } })
+      setTestEmailResult(data.send_test_email)
+    } catch (error) {
+      setTestEmailResult({ success: false, error: error.message })
+    }
+  }
+
   const [deleteMutation] = useMutation(gql`
     mutation($id: Int!) {
       delete_config_token(id: $id) {
@@ -350,6 +371,30 @@ export const ConfigTokens = () => {
       <FormControl fullWidth>
         <Button onClick={saveGlobal}>Save</Button>
       </FormControl>
+
+      <Stack direction="row" spacing={2} sx={{ width: '100%', mt: 2, mb: 2, alignItems: 'center' }}>
+        <TextField
+          sx={{ flexGrow: 1 }}
+          label="Send test email to"
+          type="email"
+          value={testEmailTo}
+          onChange={(event) => setTestEmailTo(event.target.value)}
+        />
+        <Button
+          variant="outlined"
+          disabled={!testEmailTo.trim() || sendingTestEmail}
+          onClick={sendTestEmail}
+        >
+          {sendingTestEmail ? "Sending…" : "Send test email"}
+        </Button>
+      </Stack>
+      {testEmailResult && (
+        <Alert sx={{ width: '100%', mb: 2 }} severity={testEmailResult.success ? "success" : "error"}>
+          {testEmailResult.success
+            ? `Test email sent to ${testEmailTo.trim()}.`
+            : `Test email failed: ${testEmailResult.error}`}
+        </Alert>
+      )}
       <TableContainer>
         <Table>
           <TableHead>
