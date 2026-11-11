@@ -41,7 +41,7 @@ if config_env() != :test do
     {"SECRET_KEY_BASE", fn v -> config :oas, OasWeb.Endpoint, secret_key_base: v end},
     {"PHX_HOST", fn v -> config :oas, OasWeb.Endpoint, url: [host: v] end},
     {"PORT", fn v -> config :oas, OasWeb.Endpoint, http: [port: to_int.("PORT", v)] end},
-    # Value only: the session cookie still reads :domain at compile time (item 1.3).
+    # Cookie domain for the session and remember-me cookies, read at runtime.
     {"DOMAIN", fn v -> config :oas, OasWeb.Endpoint, domain: v end},
     {"ADMIN_URL", fn v -> config :oas, app_url: v end},
     {"PUBLIC_URL", fn v -> config :oas, public_url: v end},

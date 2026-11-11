@@ -5,17 +5,26 @@ defmodule OasWeb.Endpoint do
   # The session will be stored in the cookie and signed,
   # this means its contents can be read but not tampered with.
   # Set :encryption_salt if you would also like to encrypt it.
+  # Domain is read at runtime (see session_options/0) so one release can
+  # serve any society's domain. Key, salt and http_only must not change or
+  # every existing session is invalidated.
   @session_options [
     store: :cookie,
     key: "oas_key",
-    domain: Application.compile_env(:oas, OasWeb.Endpoint)[:domain],
     signing_salt: "gM7uiSTx",
     http_only: false
   ]
 
   def signing_salt, do: @session_options[:signing_salt]
 
-  socket "/live", Phoenix.LiveView.Socket, websocket: [connect_info: [session: @session_options]]
+  @doc "The cookie domain from runtime config (`config :oas, OasWeb.Endpoint, domain: ...`)."
+  def cookie_domain, do: Application.get_env(:oas, __MODULE__)[:domain]
+
+  @doc "Session options with the runtime cookie domain. Used by Plug.Session and the /live socket."
+  def session_options, do: Keyword.put(@session_options, :domain, cookie_domain())
+
+  socket "/live", Phoenix.LiveView.Socket,
+    websocket: [connect_info: [session: {__MODULE__, :session_options, []}]]
   socket "/socket", OasWeb.UserSocket, longpoll: false
   socket "/public_socket", OasWeb.PublicSocket, longpoll: false
     # websocket: [connect_info: [session: @session_options]]
@@ -62,8 +71,26 @@ defmodule OasWeb.Endpoint do
 
   plug Plug.MethodOverride
   plug Plug.Head
-  plug Plug.Session, @session_options
+  plug :session
   plug OasWeb.Router
 
+  # Plug.Session with options built from runtime config. The initialised
+  # options are cached in :persistent_term, keyed on the domain they were
+  # built for, so they are rebuilt only if the configured domain changes.
+  defp session(conn, _opts) do
+    domain = cookie_domain()
 
+    opts =
+      case :persistent_term.get({__MODULE__, :session_opts}, nil) do
+        {^domain, opts} ->
+          opts
+
+        _ ->
+          opts = Plug.Session.init(session_options())
+          :persistent_term.put({__MODULE__, :session_opts}, {domain, opts})
+          opts
+      end
+
+    Plug.Session.call(conn, opts)
+  end
 end
