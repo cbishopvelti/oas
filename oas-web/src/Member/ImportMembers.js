@@ -27,7 +27,8 @@ const IMPORT_MEMBERS = gql`
       create_count
       skip_count
       error_count
-      rows { row name email outcome reason }
+      opening_credit_total
+      rows { row name email opening_credit outcome reason }
     }
   }
 `;
@@ -46,12 +47,14 @@ const OUTCOME_COLOR = {
 
 const downloadTemplate = (event) => {
   event.preventDefault();
-  const csv = unparse({ fields: ['name', 'email'], data: [] });
+  const csv = unparse({ fields: ['name', 'email', 'opening_credit'], data: [] });
   const link = document.createElement('a');
   link.download = 'members-template.csv';
   link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
   link.click();
 };
+
+const hasCredit = (summary) => parseFloat(summary?.opening_credit_total || '0') > 0;
 
 const parseFile = (file) => new Promise((resolve, reject) => {
   parse(file, {
@@ -63,7 +66,11 @@ const parseFile = (file) => new Promise((resolve, reject) => {
       if (!fields.includes('name') || !fields.includes('email')) {
         return reject(new Error('The CSV needs a header row with "name" and "email" columns.'));
       }
-      resolve(data.map((row) => ({ name: row.name || '', email: row.email || '' })));
+      resolve(data.map((row) => ({
+        name: row.name || '',
+        email: row.email || '',
+        opening_credit: row.opening_credit || ''
+      })));
     },
     error: reject
   });
@@ -139,9 +146,15 @@ export const ImportMembers = ({ onImported }) => {
       <DialogTitle>Import members</DialogTitle>
       <DialogContent>
         <Box sx={{ mb: 2 }}>
-          Choose a CSV with <code>name</code> and <code>email</code> columns.{' '}
+          Choose a CSV with <code>name</code> and <code>email</code> columns, and optionally
+          an <code>opening_credit</code> column.{' '}
           <Link href="#" onClick={downloadTemplate}>Download template CSV</Link>.
           {' '}Members whose email already exists are skipped and left unchanged. No emails are sent.
+        </Box>
+        <Box sx={{ mb: 2 }}>
+          Leave <code>opening_credit</code> blank or 0 for no credit. Each opening balance above 0 is
+          recorded as an incoming transaction ("Opening balance") on the import date, so it appears
+          in that day's income totals.
         </Box>
         {!result && <Button variant="outlined" component="label" disabled={loading}>
           Choose CSV
@@ -150,9 +163,11 @@ export const ImportMembers = ({ onImported }) => {
         {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
         {result && <Alert severity="success" sx={{ mt: 2 }}>
           Imported {result.create_count} member{result.create_count === 1 ? '' : 's'}, skipped {result.skip_count}.
+          {hasCredit(result) && ` Opening credit added: ${result.opening_credit_total}.`}
         </Alert>}
         {preview && !result && <Alert severity={preview.error_count > 0 ? 'warning' : 'info'} sx={{ mt: 2 }}>
           {preview.create_count} to create, {preview.skip_count} to skip, {preview.error_count} with errors.
+          {hasCredit(preview) && ` Opening credit to add: ${preview.opening_credit_total}.`}
           {preview.error_count > 0 && ' Fix the rows with errors and choose the file again; nothing is imported while any row has an error.'}
         </Alert>}
         {shown && <TableContainer sx={{ mt: 2, maxHeight: 400 }}>
@@ -162,6 +177,7 @@ export const ImportMembers = ({ onImported }) => {
                 <TableCell>Row</TableCell>
                 <TableCell>Name</TableCell>
                 <TableCell>Email</TableCell>
+                <TableCell>Opening credit</TableCell>
                 <TableCell>Outcome</TableCell>
               </TableRow>
             </TableHead>
@@ -170,6 +186,7 @@ export const ImportMembers = ({ onImported }) => {
                 <TableCell>{row.row}</TableCell>
                 <TableCell>{row.name}</TableCell>
                 <TableCell>{row.email}</TableCell>
+                <TableCell>{row.opening_credit}</TableCell>
                 <TableCell sx={{ color: OUTCOME_COLOR[row.outcome] }}>
                   {OUTCOME_LABEL[row.outcome]}{row.reason ? `: ${row.reason}` : ''}
                 </TableCell>

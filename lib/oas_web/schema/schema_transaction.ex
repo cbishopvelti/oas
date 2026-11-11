@@ -293,9 +293,7 @@ defmodule OasWeb.Schema.SchemaTransaction do
             |> Oas.Repo.preload(:transaction_tags)
             |> Oas.Repo.preload(:credit)
         end
-        |> Oas.Transactions.Transaction.changeset(args)
-        |> Oas.Transactions.TransactionTags.doTransactionTags(args)
-        |> Oas.Credits.Credit.doCredit(Map.get(args, :credit, nil))
+        |> Oas.Transactions.Transaction.save_changeset(args)
 
         result = toSave
           |> (&(case &1 do

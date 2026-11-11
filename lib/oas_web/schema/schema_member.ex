@@ -173,6 +173,7 @@ defmodule OasWeb.Schema.SchemaMember do
   input_object :member_import_row_arg do
     field :name, :string
     field :email, :string
+    field :opening_credit, :string
   end
 
   enum :member_import_outcome do
@@ -188,6 +189,8 @@ defmodule OasWeb.Schema.SchemaMember do
     field :outcome, :member_import_outcome
     field :reason, :string
     field :member_id, :integer
+    field :opening_credit, :string
+    field :transaction_id, :integer
   end
 
   object :member_import_result do
@@ -195,11 +198,12 @@ defmodule OasWeb.Schema.SchemaMember do
     field :create_count, :integer
     field :skip_count, :integer
     field :error_count, :integer
+    field :opening_credit_total, :string
     field :rows, list_of(:member_import_row)
   end
 
   object :member_mutations do
-    @desc "Import members from parsed CSV rows. dry_run saves nothing; otherwise all valid rows are created in one transaction, or nothing if any row has an error. Never changes existing members or sends email."
+    @desc "Import members from parsed CSV rows. dry_run saves nothing; otherwise all valid rows are created in one transaction, or nothing if any row has an error. A created row with opening_credit above zero also gets an INCOMING Opening balance transaction dated today, carrying that credit. Never changes existing members or sends email."
     field :import_members, type: :member_import_result do
       arg :rows, non_null(list_of(non_null(:member_import_row_arg)))
       arg :dry_run, non_null(:boolean)
