@@ -78,6 +78,18 @@ safe to run while the server is up.
 
 ### Backups
 
+The backup runs once a day at 03:00 in the society's time zone (set in Config).
+Change the time with `BACKUP_TIME=HH:MM` (24 hour). The time is worked out
+again after each run, so clock changes are handled.
+
+**Old backups are now deleted after 30 days by default.** After each backup
+that was written and checked, files in the backup directory older than
+`BACKUP_KEEP_DAYS` (default 30) are removed and each deletion is logged. Set
+`BACKUP_KEEP_DAYS=0` to keep everything. Only files the backup itself writes
+(`<backup_database>-<UTC timestamp>.db`) are ever touched, and nothing is
+deleted if that day's backup failed. Copy any backup you want to keep forever
+somewhere else.
+
 Each backup is written uncompressed to the `backup_database` path (e.g.
 `/oas-dbs-backup`). If a backup recipient is set in Config, the same database
 is also emailed to them gzipped, as `<society>-<time>.db.gz`.
