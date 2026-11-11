@@ -32,6 +32,11 @@ defmodule OasWeb.Schema.SchemaConfig do
     field :public_site_title, :string
   end
 
+  object :send_test_email_result do
+    field :success, :boolean
+    field :error, :string
+  end
+
   object :config_llm do
     field :chat_enabled, :boolean
     field :llm_enabled, :boolean
@@ -190,6 +195,16 @@ defmodule OasWeb.Schema.SchemaConfig do
       end
     end
 
+    # Sends the same email as Oas.testEmail/1, so an admin can check the mail
+    # settings work. A failed send comes back as success: false with the
+    # mailer's error text rather than as a GraphQL error.
+    field :send_test_email, :send_test_email_result do
+      arg :to, non_null(:string)
+      resolve fn _, %{to: to}, _ ->
+        {:ok, send_test_email(String.trim(to))}
+      end
+    end
+
     field :global_warnings_clear, list_of(:global_warning) do
       arg :key, non_null(:string)
       resolve fn _, %{key: key}, _ ->
@@ -269,4 +284,20 @@ defmodule OasWeb.Schema.SchemaConfig do
     # })
     Oas.Gocardless.delete_warning(:gocardless_get_accounts)
   end
+
+  def send_test_email(""), do: %{success: false, error: "Enter an email address"}
+
+  def send_test_email(to) do
+    case Oas.testEmail(to) do
+      {:ok, _email} -> %{success: true, error: nil}
+      {:error, reason} -> %{success: false, error: error_text(reason)}
+      other -> %{success: false, error: error_text(other)}
+    end
+  rescue
+    e -> %{success: false, error: Exception.message(e)}
+  end
+
+  defp error_text(reason) when is_binary(reason), do: reason
+  defp error_text(%{__exception__: true} = e), do: Exception.message(e)
+  defp error_text(reason), do: inspect(reason)
 end
