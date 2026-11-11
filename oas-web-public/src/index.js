@@ -20,6 +20,7 @@ import * as AbsintheSocket from "@absinthe/socket";
 import { createAbsintheSocketLink } from "@absinthe/socket-apollo-link";
 import { LlmHistory } from './Llm/LlmHistory';
 import { publicUrl, serverUrl } from './config';
+import { SocietyProvider } from './Society/SocietyProvider';
 
 const router = createBrowserRouter([
   {
@@ -122,9 +123,11 @@ const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
     <ApolloProvider client={client}>
-      <RouterProvider router={router}>
-        <App />
-      </RouterProvider>
+      <SocietyProvider>
+        <RouterProvider router={router}>
+          <App />
+        </RouterProvider>
+      </SocietyProvider>
     </ApolloProvider>
   </React.StrictMode>
 );
