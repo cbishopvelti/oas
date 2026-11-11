@@ -57,43 +57,65 @@ defmodule Oas.Members.Membership do
     end)
   end
 
+  @doc """
+  Called when `member`'s attendance of `training` is being removed (before the
+  attendance row is deleted). Deletes the memberships that booking earned the
+  member, which refunds their fee (the fee credit is deleted with its
+  membership), unless the member's remaining bookings still earn them.
+
+  Mirrors `Oas.Attendance.add_attendance`, so it leaves alone:
+    * everything when credits are off or the training doesn't count towards
+      membership;
+    * memberships paid for by a bank transaction;
+    * a period the member has another counting booking in, as long as they
+      would still be made a member for it (honorary, a member of another
+      period, or past the temporary trainings limit).
+
+  Raises if a delete fails, so the surrounding transaction rolls back.
+  """
   def maybe_delete_membership(training, member) do
-    # Get current membership periods which this training is in
-    membership_periods = from(mp in Oas.Members.MembershipPeriod,
-      inner_join: ms in assoc(mp, :memberships),
-      where: ms.member_id == ^member.id and
-        mp.from <= ^training.when and mp.to >= ^training.when,
-      preload: [memberships: ms]
-    ) |> Oas.Repo.all
+    config = (from(c in Oas.Config.Config, limit: 1) |> Oas.Repo.one())
 
-    total_attendance = from(a in Oas.Trainings.Attendance,
-      join: m in assoc(a, :member),
-      where: m.id == ^member.id,
-      select: count(m.id)
-    ) |> Oas.Repo.one
+    if config.credits and training.exempt_membership_count != true do
+      # Memberships (with their period) this training falls in
+      memberships = from(ms in Oas.Members.Membership,
+        inner_join: mp in assoc(ms, :membership_period),
+        where: ms.member_id == ^member.id and is_nil(ms.transaction_id) and
+          mp.from <= ^training.when and mp.to >= ^training.when,
+        preload: [membership_period: mp]
+      ) |> Oas.Repo.all()
 
-    config = from(c in Oas.Config.Config, select: c) |> Oas.Repo.one
-    membership_periods |> Enum.map(fn membership_period ->
-      # Does this member have any other trainings in that membership_period period?
-      other_trainings_in_period = from(
-        t in Oas.Trainings.Training,
-        inner_join: a in assoc(t, :attendance),
-        where: t.id != ^training.id and a.member_id == ^member.id and
-          t.when >= ^membership_period.from and t.when <= ^membership_period.to
-      )
-      |> Oas.Repo.all
+      if memberships != [] do
+        # The member's other bookings that count towards membership. This is
+        # called before the attendance is deleted, so leave its training out.
+        other_trainings = from(t in Oas.Trainings.Training,
+          inner_join: a in assoc(t, :attendance),
+          where: a.member_id == ^member.id and t.id != ^training.id and
+            (is_nil(t.exempt_membership_count) or t.exempt_membership_count == ^false),
+          select: t.when
+        ) |> Oas.Repo.all()
 
-      # If there are other trainings in that membership period, don't delete the membership
-      total_attendance = total_attendance - 1 # This is called before this attendance has been deleted.
-      if (
-        other_trainings_in_period |> length() > 0 and # true
-        total_attendance > config.temporary_trainings # false Not a temporary member
-      ) do
-        nil
-      else
-        [_membership] = membership_period.memberships
-        nil
+        membership_ids = Enum.map(memberships, & &1.id)
+        member_of_another_period = from(ms in Oas.Members.Membership,
+          where: ms.member_id == ^member.id and ms.id not in ^membership_ids
+        ) |> Oas.Repo.exists?()
+
+        still_joins = member.honorary_member == true or member_of_another_period or
+          length(other_trainings) > config.temporary_trainings
+
+        Enum.each(memberships, fn membership ->
+          period = membership.membership_period
+          other_training_in_period = Enum.any?(other_trainings, fn when1 ->
+            Date.compare(when1, period.from) != :lt and Date.compare(when1, period.to) != :gt
+          end)
+
+          if !(other_training_in_period and still_joins) do
+            Oas.Repo.delete!(membership)
+          end
+        end)
       end
-    end)
+    end
+
+    :ok
   end
 end
