@@ -48,6 +48,23 @@ Things to get right:
   `SECRET_KEY_BASE`, `DB_FILE`, `PHX_HOST`, `DOMAIN`, `ADMIN_URL`, `PUBLIC_URL`
   and `MAIL_FROM_ADDRESS`, or it inherits Oxfordshire's values.
 
+### Backups
+
+Each backup is written uncompressed to the `backup_database` path (e.g.
+`/oas-dbs-backup`). If a backup recipient is set in Config, the same database
+is also emailed to them gzipped, as `<society>-<time>.db.gz`.
+
+To restore from the emailed copy, unzip it and use the `.db` file as `DB_FILE`:
+
+```
+gunzip <society>-<time>.db.gz
+sqlite3 <society>-<time>.db "SELECT * FROM config_config"   # optional sanity check
+```
+
+If the email fails to send, the error is logged and a warning shows at the top
+of the admin site until a later backup email goes through. The file on disk is
+written either way.
+
 ### Ubuntu
 
 ```
