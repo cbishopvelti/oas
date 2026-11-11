@@ -32,6 +32,7 @@ export const ConfigContent = () => {
       config_config{
         content
         bacs
+        membership_terms
       }
     }
   `)
@@ -45,8 +46,8 @@ export const ConfigContent = () => {
   }, [gqlData])
 
   const [saveConfig, {error}] = useMutation(gql`
-    mutation($content: String!, $bacs: String!) {
-      save_config_content(content: $content, bacs: $bacs) {
+    mutation($content: String!, $bacs: String!, $membership_terms: String) {
+      save_config_content(content: $content, bacs: $bacs, membership_terms: $membership_terms) {
         id
       }
     }
@@ -97,6 +98,18 @@ export const ConfigContent = () => {
             onChange={onChange({formData: data, setFormData: setData, key: "content"})}
             error={has(errors, "content")}
             helperText={get(errors, 'content', []). join(" ")}
+            />
+      </FormControl>
+      <FormControl fullWidth sx={{mb: 2}}>
+        <TextField
+            label="Membership agreement"
+            value={get(data, "membership_terms", '') || ''}
+            type="text"
+            multiline
+            minRows={3}
+            onChange={onChange({formData: data, setFormData: setData, key: "membership_terms"})}
+            error={has(errors, "membership_terms")}
+            helperText={get(errors, 'membership_terms', []).join(" ") || "HTML shown above the \"I agree to the above\" switch on the public membership form. Leave empty to show only the switch."}
             />
       </FormControl>
       <FormControl fullWidth>
