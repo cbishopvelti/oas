@@ -242,6 +242,38 @@ defmodule Oas.AttendanceAfterCommitTest do
     end
   end
 
+  describe "a publish that fails after the commit" do
+    import ExUnit.CaptureLog
+
+    test "does not fail a booking that is already saved, and the warning is still queued", ctx do
+      training = training(ctx, %{limit: 1})
+      test = self()
+
+      mocks = [
+        {Oas.Mail.Background, [:passthrough],
+         run: fn _fun, _opts ->
+           send(test, :mail_queued)
+           {:ok, test}
+         end},
+        {Absinthe.Subscription, [:passthrough],
+         publish: fn _endpoint, _payload, _topics -> raise "pubsub is down" end}
+      ]
+
+      log =
+        capture_log(fn ->
+          with_mocks mocks do
+            assert {:ok, %{success: true}} = add(ctx.member, training)
+          end
+        end)
+
+      assert log =~ "pubsub is down"
+      assert attendance(ctx.member, training)
+      # The token warning and the low-credit warning
+      assert_received :mail_queued
+      assert_received :mail_queued
+    end
+  end
+
   describe "add_attendance with a membership fee" do
     setup ctx do
       {:ok, _} = Oas.Settings.update_config(%{temporary_trainings: 0}, [:temporary_trainings])
