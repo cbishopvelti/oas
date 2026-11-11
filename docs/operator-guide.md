@@ -289,7 +289,9 @@ the context text given to the LLM. The model and endpoint are set with
 `LLM_STUDIO_URL` and `LLM_MODEL`.
 
 **GoCardless** (`/config/config-gocardless` and `/config/gocardless`): turn
-the bank feed on, set the GoCardless id and key, and link the bank account.
+the bank feed on, set the GoCardless id and key, set the bank country
+(two-letter code, default `GB`, which picks the list of banks offered), and
+link the bank account.
 
 ## 7. Upgrading
 
