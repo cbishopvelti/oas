@@ -41,14 +41,6 @@ const onChange = ({formData, setFormData, key, required}) => (event) => {
   })
 }
 
-const rerun_time = (transactionData) => {
-  if (!get(transactionData, "gocardless_trans_status.next_run")) {
-    return ''
-  }
-
-  return `, Next import run: ${moment(get(transactionData, "gocardless_trans_status.next_run"), "HH:mm:ss.SSSSSS").format("HHmm")}`
-}
-
 const GocardlessImportStopped = ({ transactionData }) => {
   return <div style={{ color: "red" }}>
     Gocardless import stopped
@@ -69,16 +61,14 @@ const GocardlessImportCountdownComponent = ({
 const GocardlessImportCountdownTimer = ({
   transactionData
 }) => {
-  let when = moment(get(transactionData, "gocardless_trans_status.next_run"), "HH:mm:ss.SSSSSS")
+  // next_run is an ISO 8601 UTC datetime, so the countdown is right whatever
+  // the browser's time zone.
+  const when = moment(get(transactionData, "gocardless_trans_status.next_run"))
 
   const [countdown, setCountdown] = useState("");
 
   useEffect(() => {
     let interval = null
-
-    if (when.isBefore(moment())) {
-      when.add(1, 'day');
-    }
 
     const doTimer = () => {
       const now = moment()

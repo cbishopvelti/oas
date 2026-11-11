@@ -54,6 +54,7 @@ import { Pricing } from './Pricing/Pricing';
 import { PricingInstance } from './Pricing/PricingInstance';
 import { Pricings } from './Pricing/Pricings';
 import { PricingInstances } from './Pricing/PricingInstances';
+import { SocietyProvider } from './Society/SocietyProvider';
 
 const router = createBrowserRouter([
   {
@@ -320,7 +321,14 @@ const theLink = split(
 const client = new ApolloClient({
   // uri: 'http://localhost:3999/',
   // uri: `${process.env["REACT_APP_ADMIN_URL"]}/api/graphql`,
-  cache: new InMemoryCache(),
+  cache: new InMemoryCache({
+    typePolicies: {
+      // Screens ask for different config_config fields and some leave out
+      // the id. Merge them so the always-on SocietyProvider query and a
+      // screen's query don't keep replacing (and refetching) each other.
+      ConfigConfig: { merge: true },
+    },
+  }),
   // link: uploadLink,
   link: theLink,
   defaultOptions: {
@@ -333,9 +341,11 @@ root.render(
   <React.StrictMode>
     <LocalizationProvider dateAdapter={AdapterMoment} adapterLocale={ "en-gb" }>
       <ApolloProvider client={client}>
-        <RouterProvider router={router}>
-          <App />
-        </RouterProvider>
+        <SocietyProvider>
+          <RouterProvider router={router}>
+            <App />
+          </RouterProvider>
+        </SocietyProvider>
       </ApolloProvider>
     </LocalizationProvider>
   </React.StrictMode>

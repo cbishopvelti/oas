@@ -11,6 +11,7 @@ import {useEffect, useState} from 'react'
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import {useOutletContext, Link } from 'react-router-dom';
+import { useSociety, formatInTimeZone } from '../Society/SocietyProvider';
 
 const onChange = ({formData, setFormData, key, isCheckbox}) => (event) => {
   if (isCheckbox) {
@@ -50,9 +51,16 @@ export const ConfigGocardless = () => {
       gocardless_accounts {
         id
       }
+      gocardless_trans_status {
+        next_run
+        stopped_reason
+      }
     }
-  `)
+  `, { fetchPolicy: "network-only" })
   const gocardless_accounts = get(gqlData, 'gocardless_accounts', []) || []
+  const { timeZone } = useSociety()
+  const nextRun = get(gqlData, 'gocardless_trans_status.next_run')
+  const stoppedReason = get(gqlData, 'gocardless_trans_status.stopped_reason')
 
   useEffect(() => {
     setFormData(get(gqlData, "config_config", {}))
@@ -100,6 +108,12 @@ export const ConfigGocardless = () => {
           <Alert key={i} sx={{m:2}} severity="error">{message}</Alert>
         ))}
       </Stack>
+
+      {gqlData && get(formData, 'gocardless_enabled') && <Box sx={{ width: '100%', mb: 2 }}>
+        {nextRun
+          ? <>Next import run: {formatInTimeZone(nextRun, timeZone)}</>
+          : <span style={{ color: "red" }}>No import scheduled{stoppedReason ? `: ${stoppedReason}` : ''}</span>}
+      </Box>}
 
       <FormControl fullWidth sx={{mb: 2}}>
         <FormControlLabel

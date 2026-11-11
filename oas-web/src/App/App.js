@@ -10,6 +10,7 @@ import { AppMenu } from './AppMenu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import MenuIcon from '@mui/icons-material/Menu';
+import { useSociety, DEFAULT_HEADER_COLOR } from '../Society/SocietyProvider';
 
 const DrawerHeader = styled('div')(({ theme }) => ({
   display: 'flex',
@@ -94,6 +95,7 @@ function App() {
   const [components, setComponents] = useState([])
 
   const drawerWidth = 256;
+  const society = useSociety();
 
 
 
@@ -124,7 +126,7 @@ function App() {
         <AppMenu setOpen={setOpen} />
       </Drawer>
       <div className="content">
-        <Box sx={{backgroundColor: '#1D7C81', display: 'flex'}}>
+        <Box sx={{backgroundColor: society.primaryColor ? 'primary.main' : DEFAULT_HEADER_COLOR, display: 'flex'}}>
           <IconButton sx={{visibility: open ? 'hidden' : 'visible'}} onClick={() => setOpen(true)}>
             <MenuIcon />
           </IconButton>
