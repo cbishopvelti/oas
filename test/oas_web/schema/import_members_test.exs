@@ -4,6 +4,7 @@ defmodule OasWeb.Schema.ImportMembersTest do
   import Swoosh.TestAssertions
 
   alias Oas.Members.Member
+  alias Oas.Transactions.Transaction
 
   @admin %{current_member: %{is_admin: true, is_reviewer: false, is_active: true}}
   @reviewer %{current_member: %{is_admin: false, is_reviewer: true, is_active: true}}
@@ -11,8 +12,8 @@ defmodule OasWeb.Schema.ImportMembersTest do
   @import """
   mutation ($rows: [MemberImportRowArg!]!, $dry_run: Boolean!) {
     import_members(rows: $rows, dry_run: $dry_run) {
-      saved create_count skip_count error_count
-      rows { row name email outcome reason member_id }
+      saved create_count skip_count error_count opening_credit_total
+      rows { row name email opening_credit outcome reason member_id transaction_id }
     }
   }
   """
@@ -167,5 +168,127 @@ defmodule OasWeb.Schema.ImportMembersTest do
              run_import([%{"name" => "Ann", "email" => "ann@example.com"}], false, @reviewer)
 
     assert Repo.get_by(Member, email: "ann@example.com") == nil
+  end
+
+  defp transaction_count, do: Repo.aggregate(Transaction, :count)
+  defp credit_count, do: Repo.aggregate(Oas.Credits.Credit, :count)
+
+  describe "opening credit" do
+    test "creates an opening balance transaction and credit" do
+      result =
+        import!(
+          [
+            %{"name" => "Ann Smith", "email" => "ann@example.com", "opening_credit" => " 12.50 "},
+            %{"name" => "Bob Jones", "email" => "bob@example.com", "opening_credit" => "3"}
+          ],
+          false
+        )
+
+      assert %{"saved" => true, "create_count" => 2, "opening_credit_total" => "15.50"} = result
+      [ann_row, bob_row] = result["rows"]
+      assert ann_row["opening_credit"] == "12.50"
+
+      ann = Repo.get_by!(Member, email: "ann@example.com")
+
+      transaction =
+        Repo.get!(Transaction, ann_row["transaction_id"]) |> Repo.preload(:credit)
+
+      assert transaction.what == "Opening balance"
+      assert transaction.type == "INCOMING"
+      assert transaction.who == "Ann Smith"
+      assert transaction.who_member_id == ann.id
+      assert transaction.when == Oas.Settings.today()
+      assert Decimal.equal?(transaction.amount, "12.50")
+      assert transaction.my_reference == "opening-balance-member-#{ann.id}"
+      assert Decimal.equal?(transaction.credit.amount, "12.50")
+      assert transaction.credit.who_member_id == ann.id
+
+      bob_transaction = Repo.get!(Transaction, bob_row["transaction_id"])
+      assert bob_transaction.my_reference != transaction.my_reference
+
+      {_credits, total} = Oas.Credits.Credit2.get_credit_amount(%{member_id: ann.id})
+      assert Decimal.equal?(total, "12.50")
+    end
+
+    test "zero or blank opening credit creates no transaction" do
+      before = transaction_count()
+
+      result =
+        import!(
+          [
+            %{"name" => "Ann Smith", "email" => "ann@example.com", "opening_credit" => "0"},
+            %{"name" => "Bob Jones", "email" => "bob@example.com", "opening_credit" => ""},
+            %{"name" => "Cat Brown", "email" => "cat@example.com"}
+          ],
+          false
+        )
+
+      assert %{"saved" => true, "create_count" => 3, "opening_credit_total" => "0"} = result
+      assert Enum.all?(result["rows"], &(&1["transaction_id"] == nil))
+      assert transaction_count() == before
+    end
+
+    test "a bad amount is reported in the dry run" do
+      result =
+        import!(
+          [
+            %{"name" => "Ann Smith", "email" => "ann@example.com", "opening_credit" => "-5"},
+            %{"name" => "Bob Jones", "email" => "bob@example.com", "opening_credit" => "ten"},
+            %{"name" => "Cat Brown", "email" => "cat@example.com", "opening_credit" => "1.234"},
+            %{"name" => "Dan Green", "email" => "dan@example.com", "opening_credit" => "7.5"}
+          ],
+          true
+        )
+
+      reason = "Invalid opening credit (use a number of 0 or more, like 12.50)"
+
+      assert Enum.map(result["rows"], &{&1["outcome"], &1["reason"], &1["opening_credit"]}) == [
+               {"ERROR", reason, nil},
+               {"ERROR", reason, nil},
+               {"ERROR", reason, nil},
+               {"CREATE", nil, "7.5"}
+             ]
+
+      assert %{"saved" => false, "error_count" => 3, "opening_credit_total" => "7.5"} = result
+    end
+
+    test "existing members are skipped without credit" do
+      existing_member()
+      before = transaction_count()
+
+      result =
+        import!(
+          [%{"name" => "Someone", "email" => "existing@example.com", "opening_credit" => "10"}],
+          false
+        )
+
+      assert [%{"outcome" => "SKIP", "reason" => "A member with this email already exists; opening credit not added"}] =
+               result["rows"]
+
+      assert transaction_count() == before
+    end
+
+    test "a failed insert rolls back members and credits together" do
+      before = {member_count(), transaction_count(), credit_count()}
+
+      rows = [
+        %{name: "Ann Smith", email: "ann@example.com", opening_credit: "20"},
+        %{name: "Bob Jones", email: "bob@example.com", opening_credit: "5"}
+      ]
+
+      {:ok, _} =
+        Ecto.Adapters.SQL.query(
+          Repo,
+          """
+          CREATE TRIGGER import_credit_test_block BEFORE INSERT ON transactions
+          WHEN NEW.who = 'Bob Jones'
+          BEGIN SELECT RAISE(ABORT, 'blocked by test'); END
+          """,
+          []
+        )
+
+      assert_raise Exqlite.Error, fn -> Oas.Members.Import.run(rows, dry_run: false) end
+      assert {member_count(), transaction_count(), credit_count()} == before
+    end
   end
 end

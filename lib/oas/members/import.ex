@@ -2,7 +2,8 @@ defmodule Oas.Members.Import do
   @moduledoc """
   Bulk member import for onboarding a society from a spreadsheet.
 
-  Each row is `%{name: ..., email: ...}`. Every row gets an outcome:
+  Each row is `%{name: ..., email: ..., opening_credit: ...}`, where
+  `opening_credit` is optional. Every row gets an outcome:
 
     * `:create` - a new member will be (or was) created
     * `:skip`   - a member with that email already exists (compared trimmed
@@ -12,14 +13,23 @@ defmodule Oas.Members.Import do
   With `dry_run: true` nothing is saved. Otherwise every `:create` row is
   inserted in one transaction, and nothing is saved if any row has an error.
   Existing members are never changed or deleted, and no email is sent.
+
+  A created member with an opening credit above zero also gets one manual
+  INCOMING transaction for that amount ("Opening balance", dated the
+  society's today) carrying the credit, built the same way as the admin
+  "transaction" mutation. It is saved in the same database transaction, so
+  members and credits are saved or rolled back together. Skipped rows never
+  get credit.
   """
 
   import Ecto.Query, only: [from: 2]
 
   alias Oas.Repo
   alias Oas.Members.Member
+  alias Oas.Transactions.Transaction
 
   @email_format ~r/^[^\s]+@[^\s]+$/
+  @credit_format ~r/^\d+(\.\d{1,2})?$/
 
   def run(rows, opts \\ []) do
     dry_run = Keyword.get(opts, :dry_run, true)
@@ -31,7 +41,8 @@ defmodule Oas.Members.Import do
         %{
           row: index,
           name: trim(Map.get(row, :name)),
-          email: trim(Map.get(row, :email))
+          email: trim(Map.get(row, :email)),
+          opening_credit: trim(Map.get(row, :opening_credit))
         }
       end)
 
@@ -67,6 +78,8 @@ defmodule Oas.Members.Import do
         email = key(row.email)
         name = key(row.name)
 
+        credit = parse_credit(row.opening_credit)
+
         {outcome, reason, changeset} =
           cond do
             row.name == "" ->
@@ -77,6 +90,12 @@ defmodule Oas.Members.Import do
 
             not Regex.match?(@email_format, row.email) or String.length(row.email) > 160 ->
               {:error, "Invalid email", nil}
+
+            credit == :error ->
+              {:error, "Invalid opening credit (use a number of 0 or more, like 12.50)", nil}
+
+            MapSet.member?(existing, email) and credit != nil ->
+              {:skip, "A member with this email already exists; opening credit not added", nil}
 
             MapSet.member?(existing, email) ->
               {:skip, "A member with this email already exists", nil}
@@ -117,10 +136,23 @@ defmodule Oas.Members.Import do
               seen
           end
 
+        row = %{row | opening_credit: if(credit in [nil, :error], do: nil, else: credit)}
         {Map.merge(row, %{outcome: outcome, reason: reason, changeset: changeset}), seen}
       end)
 
     results
+  end
+
+  # nil for blank or zero (no transaction), a positive Decimal, or :error.
+  defp parse_credit(""), do: nil
+
+  defp parse_credit(value) do
+    if Regex.match?(@credit_format, value) do
+      amount = Decimal.new(value)
+      if Decimal.gt?(amount, 0), do: amount, else: nil
+    else
+      :error
+    end
   end
 
   defp changeset_reason(changeset) do
@@ -133,14 +165,16 @@ defmodule Oas.Members.Import do
   end
 
   defp insert_all(results) do
+    today = Oas.Settings.today()
+
     transaction =
       Repo.transaction(fn ->
         Enum.map(results, fn
           %{outcome: :create, changeset: changeset} = result ->
-            case Repo.insert(changeset) do
-              {:ok, member} ->
-                Map.put(result, :member_id, member.id)
-
+            with {:ok, member} <- Repo.insert(changeset),
+                 {:ok, transaction_id} <- insert_opening_credit(member, result.opening_credit, today) do
+              Map.merge(result, %{member_id: member.id, transaction_id: transaction_id})
+            else
               {:error, changeset} ->
                 Repo.rollback(%{result | outcome: :error, reason: changeset_reason(changeset)})
             end
@@ -161,6 +195,28 @@ defmodule Oas.Members.Import do
     end
   end
 
+  defp insert_opening_credit(_member, nil, _today), do: {:ok, nil}
+
+  defp insert_opening_credit(member, amount, today) do
+    %Transaction{}
+    |> Transaction.save_changeset(%{
+      what: "Opening balance",
+      when: today,
+      who: member.name,
+      who_member_id: member.id,
+      type: "INCOMING",
+      amount: amount,
+      my_reference: "opening-balance-member-#{member.id}",
+      notes: "Opening balance from member import",
+      credit: %{amount: Decimal.to_float(amount)}
+    })
+    |> Repo.insert()
+    |> case do
+      {:ok, transaction} -> {:ok, transaction.id}
+      error -> error
+    end
+  end
+
   defp summary(results, saved) do
     rows = Enum.map(results, &Map.drop(&1, [:changeset]))
     count = fn outcome -> Enum.count(rows, &(&1.outcome == outcome)) end
@@ -170,6 +226,10 @@ defmodule Oas.Members.Import do
       create_count: count.(:create),
       skip_count: count.(:skip),
       error_count: count.(:error),
+      opening_credit_total:
+        rows
+        |> Enum.filter(&(&1.outcome == :create and &1.opening_credit != nil))
+        |> Enum.reduce(Decimal.new(0), &Decimal.add(&1.opening_credit, &2)),
       rows: rows
     }
   end
