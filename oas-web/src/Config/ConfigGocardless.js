@@ -47,6 +47,7 @@ export const ConfigGocardless = () => {
         gocardless_id
         gocardless_key
         gocardless_account_id
+        bank_country
       }
       gocardless_accounts {
         id
@@ -71,13 +72,15 @@ export const ConfigGocardless = () => {
       $gocardless_enabled: Boolean!
       $gocardless_id: String,
       $gocardless_key: String,
-      $gocardless_account_id: String
+      $gocardless_account_id: String,
+      $bank_country: String
     ) {
       save_config_gocardless(
         gocardless_enabled: $gocardless_enabled,
         gocardless_id: $gocardless_id,
         gocardless_key: $gocardless_key,
-        gocardless_account_id: $gocardless_account_id
+        gocardless_account_id: $gocardless_account_id,
+        bank_country: $bank_country
       ) {
         id
       }
@@ -165,6 +168,22 @@ export const ConfigGocardless = () => {
             />
       </FormControl>
 
+      <FormControl fullWidth sx={{mb: 2}}>
+        <TextField
+            label="Bank country"
+            value={get(formData, "bank_country", '') || ''}
+            type="text"
+            inputProps={{ maxLength: 2 }}
+            onChange={(event) => setFormData({
+              ...formData,
+              bank_country: (event.target.value || '').toUpperCase()
+            })}
+            error={has(errors, "bank_country")}
+            helperText={has(errors, "bank_country")
+              ? get(errors, 'bank_country', []).join(" ")
+              : "Two-letter country code (e.g. GB) for the bank list in the requisition flow"}
+            />
+      </FormControl>
       <FormControl fullWidth sx={{mb: 2}}>
         <Button
           to={'/config/gocardless'}

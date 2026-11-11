@@ -89,7 +89,7 @@ defmodule Oas.Settings do
     changeset
     |> validate_format(:backup_recipient, ~r/@/)
     |> validate_format(:contact_email, ~r/^[^\s@]+@[^\s@]+$/)
-    |> validate_not_blank([:time_zone, :currency, :phone_country_code])
+    |> validate_not_blank([:time_zone, :currency, :phone_country_code, :bank_country])
     |> validate_change(:time_zone, fn :time_zone, tz ->
       if valid_time_zone?(tz), do: [], else: [time_zone: "is not a known time zone"]
     end)
@@ -98,6 +98,9 @@ defmodule Oas.Settings do
     )
     |> validate_format(:phone_country_code, ~r/^[0-9]{1,4}$/,
       message: "must be 1 to 4 digits, without a +"
+    )
+    |> validate_format(:bank_country, ~r/^[A-Z]{2}$/,
+      message: "must be a two-letter country code such as GB"
     )
     |> validate_format(:primary_color, ~r/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/,
       message: "must be a hex colour such as #1a2b3c"

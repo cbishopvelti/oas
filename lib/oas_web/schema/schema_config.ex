@@ -20,6 +20,7 @@ defmodule OasWeb.Schema.SchemaConfig do
     field :gocardless_id, :string
     field :gocardless_key, :string
     field :gocardless_account_id, :string
+    field :bank_country, :string
     field :credits, :boolean
     field :backup_recipient, :string
     field :short_name, :string
@@ -183,9 +184,11 @@ defmodule OasWeb.Schema.SchemaConfig do
       arg :gocardless_id, :string
       arg :gocardless_key, :string
       arg :gocardless_account_id, :string
+      arg :bank_country, :string
       resolve fn _, args, _ ->
         result = Oas.Settings.update_config(args, [
-          :gocardless_enabled, :gocardless_id, :gocardless_key, :gocardless_account_id
+          :gocardless_enabled, :gocardless_id, :gocardless_key, :gocardless_account_id,
+          :bank_country
         ], empty_values: [[], ""])
         |> OasWeb.Schema.SchemaUtils.handle_error
 

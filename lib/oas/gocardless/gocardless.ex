@@ -79,12 +79,18 @@ defmodule Oas.Gocardless do
   def get_banks() do
     {:ok, access_token} = GenServer.call(Oas.Gocardless.AuthServer, :get_access_token)
 
-    {:ok, 200, _headers, client} = :hackney.request(:get, "https://bankaccountdata.gocardless.com/api/v2/institutions/?country=gb",
+    {:ok, 200, _headers, client} = :hackney.request(:get, institutions_url(),
       get_headers(access_token)
     )
     {:ok, response_string} = :hackney.body(client)
     {:ok, data} = JSON.decode(response_string)
     data
+  end
+
+  @doc "URL listing the banks in the society's bank_country (lower-cased, as GoCardless expects)."
+  def institutions_url(country \\ Oas.Settings.get_config_value(:bank_country)) do
+    country = String.downcase(country || "GB")
+    "https://bankaccountdata.gocardless.com/api/v2/institutions/?country=#{URI.encode_www_form(country)}"
   end
 
   def get_requisitions(%{access_token: access_token}, %{institution_id: institution_id}) do
