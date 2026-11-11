@@ -39,13 +39,15 @@ defmodule Oas.Credits.Credit2 do
       out
     end)
 
+    today = Map.get(opts, :now) || Oas.Settings.today()
+
     {
       trans,
       Enum.reduce(
         active_ledger |> Enum.filter(fn
           %{expires_on: nil} -> true
           %{expires_on: expires_on} ->
-            Date.compare(expires_on, opts.now || Date.utc_today()) == :gt
+            Date.compare(expires_on, today) == :gt
         end),
         Decimal.new("0"),
         fn %{amount: amount}, acc -> Decimal.add(acc, amount) end
@@ -54,7 +56,7 @@ defmodule Oas.Credits.Credit2 do
   end
 
   # Returns new ledger
-  defp deduct_debit(ledger, debit, _opts) # \\ %{now: Date.utc_today()}
+  defp deduct_debit(ledger, debit, _opts) # \\ %{now: Oas.Settings.today()}
   defp deduct_debit([], debit, _opts) do
     [debit]
   end

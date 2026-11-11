@@ -29,7 +29,7 @@ defmodule OasWeb.Schema.SchemaMember do
     when1 = case args do
       %{member_status_when: when1} ->
         when1
-      _ -> Date.utc_today()
+      _ -> Oas.Settings.today()
     end
 
     member = from(m in Oas.Members.Member,

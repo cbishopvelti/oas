@@ -56,7 +56,7 @@ defmodule OasWeb.Schema.SchemaUser do
           left_join: memb in assoc(atte, :member),
           left_join: ac in subquery(attendance_counts), on: ac.training_id == trai.id,
           preload: [:pricing_instance, training_where: [:training_where_time], attendance: {atte, [:credit, member: memb]}],
-          where: trai.when >= ^Date.utc_today() and
+          where: trai.when >= ^Oas.Settings.today() and
           trai.is_active == true and
           (memb.id == ^member.id or is_nil(memb.id)),
           order_by: [asc: trai.when, desc: trai.id],

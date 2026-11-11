@@ -27,7 +27,7 @@ defmodule OasWeb.Schema.SchemaAttendance do
         when1 = case attendance do
           [attend] ->
             attend |> Oas.Repo.preload(:training) |> Map.get(:training) |> Map.get(:when)
-          _ -> Date.utc_today()
+          _ -> Oas.Settings.today()
         end
 
         member = from(m in Oas.Members.Member,

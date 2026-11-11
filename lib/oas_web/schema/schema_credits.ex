@@ -93,14 +93,14 @@ defmodule OasWeb.Schema.SchemaCredits do
             (amount |> Decimal.to_float()) + sum
           }
         end)
-        now = Date.utc_today()
+        now = Oas.Settings.today()
         average_date = case sum do
           +0.0 -> now
           -0.0 -> now
           sum -> Date.from_gregorian_days(round(sumprod / sum))
         end
 
-        now = Date.utc_today()
+        now = Oas.Settings.today()
         config = Oas.Settings.get_config()
 
         debit = %Oas.Credits.Credit{}
@@ -172,7 +172,7 @@ defmodule OasWeb.Schema.SchemaCredits do
         |> Ecto.Changeset.cast(%{
           what: "Attendance (admin added)",
           amount: amount,
-          when: Date.utc_today(),
+          when: Oas.Settings.today(),
           who_member_id: args.member_id,
           attendance_id: args.attendance_id
         }, [:what, :amount, :when, :who_member_id, :attendance_id])

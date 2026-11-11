@@ -79,7 +79,10 @@ defmodule Oas.Llm.LangChainLlm do
           member: init_args.member
         }
       })
-      |> LLMChain.add_message(Message.new_system!("Todays date: #{Date.utc_today()} and today is #{Date.day_of_week(Date.utc_today()) |> day_name}"))
+      |> then(fn chain ->
+        today = Oas.Settings.today()
+        LLMChain.add_message(chain, Message.new_system!("Todays date: #{today} and today is #{Date.day_of_week(today) |> day_name}"))
+      end)
       |> then(fn chain ->
         case Oas.Settings.get_llm!().context do
           "" -> chain
