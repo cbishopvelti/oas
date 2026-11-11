@@ -133,14 +133,14 @@ defmodule Oas.NonUkSocietyTest do
     assert balance.() == 0.0
 
     # ---- email ----
-    # Subject from the name setting. The sender address and display name come
-    # from the mailer config (MAIL_FROM_ADDRESS / MAIL_FROM_NAME), not settings.
+    # Subject and sender name from the name setting. The sender address comes
+    # from the mailer config (MAIL_FROM_ADDRESS).
     {:ok, _} = Oas.testEmail("member@example.com")
     {_sender_name, sender_address} = Application.get_env(:oas, Oas.TokenMailer)[:from]
 
     assert_email_sent(fn email ->
       assert email.subject == "#{@name} test"
-      assert {_, ^sender_address} = email.from
+      assert email.from == {@name, sender_address}
       true
     end)
 

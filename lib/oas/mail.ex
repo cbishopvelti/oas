@@ -2,8 +2,14 @@ defmodule Oas.Mail do
   @moduledoc """
   The one place that builds and sends email.
 
-  Every email uses the sender from the `Oas.TokenMailer` `:from` config
-  (set by MAIL_FROM_ADDRESS / MAIL_FROM_NAME in runtime.exs).
+  Sender:
+
+    * The From address is the one in the `Oas.TokenMailer` `:from` config
+      (MAIL_FROM_ADDRESS in runtime.exs, or the config file).
+    * The From name is the society name from the settings
+      (`Oas.Settings.society_name/0`), unless MAIL_FROM_NAME is set, in which
+      case that wins (runtime.exs puts it in `:oas, :mail_from_name`).
+    * Reply-To is the society's contact email from the settings, when set.
 
   Options:
 
@@ -24,7 +30,8 @@ defmodule Oas.Mail do
     email =
       new()
       |> to(recipient)
-      |> from(from())
+      |> from(sender())
+      |> put_reply_to()
       |> subject(subject)
       |> text_body(body)
 
@@ -38,5 +45,35 @@ defmodule Oas.Mail do
     end
   end
 
-  defp from(), do: Application.get_env(:oas, Oas.TokenMailer)[:from]
+  @doc "The `{name, address}` every email is sent from."
+  def sender do
+    {from_name(), from_address()}
+  end
+
+  defp from_name do
+    case Application.get_env(:oas, :mail_from_name) do
+      name when is_binary(name) and name != "" -> name
+      _ -> Oas.Settings.society_name()
+    end
+  end
+
+  defp from_address do
+    case Application.get_env(:oas, Oas.TokenMailer)[:from] do
+      {_name, address} -> address
+      address -> address
+    end
+  end
+
+  defp put_reply_to(email) do
+    case Oas.Settings.get_config_value(:contact_email) do
+      address when is_binary(address) ->
+        case String.trim(address) do
+          "" -> email
+          trimmed -> reply_to(email, trimmed)
+        end
+
+      _ ->
+        email
+    end
+  end
 end
