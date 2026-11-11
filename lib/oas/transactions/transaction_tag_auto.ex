@@ -21,17 +21,19 @@ defmodule Oas.Transactions.TransactionTagAuto do
     []
   end
 
-  # Returns {:ok, inserted_count} | {:error, message}.
+  # Returns {:ok, inserted_count}.
+  #
+  # An auto tag that isn't one of the transaction's tags is ignored, whether
+  # it came with an id or only a name: the admin form keeps a tag in
+  # auto_tags after it has been removed from the transaction.
   def do_auto_tags(old_who, who, transaction_tags, auto_tags) do
     auto_tags = auto_tags
-    |> Enum.map(fn %{id: _id} = tag -> tag
-      %{name: name} = tag -> Enum.find(transaction_tags, tag, fn %{name: nam} -> nam == name end)
+    |> Enum.map(fn %{id: id} = tag when not is_nil(id) -> tag
+      %{name: name} -> Enum.find(transaction_tags, fn %{name: nam} -> nam == name end)
     end)
+    |> Enum.reject(&is_nil/1)
 
-    case Enum.find(auto_tags, fn tag -> is_nil(Map.get(tag, :id)) end) do
-      nil -> do_auto_tags_checked(old_who, who, transaction_tags, auto_tags)
-      %{name: name} -> {:error, "Auto tag \"#{name}\" is not one of the transaction's tags"}
-    end
+    do_auto_tags_checked(old_who, who, transaction_tags, auto_tags)
   end
 
   defp do_auto_tags_checked(old_who, who, transaction_tags, auto_tags) do
