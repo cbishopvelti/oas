@@ -153,7 +153,16 @@ defmodule Oas.Gocardless do
   def report_stop(_server, reason) when reason in [:normal, :shutdown], do: :ok
   def report_stop(_server, {:shutdown, _}), do: :ok
   def report_stop(server, reason) do
-    stopped_on = DateTime.now!("Europe/London") |> Calendar.strftime("%Y-%m-%d %H:%M:%S")
+    # This runs from terminate/2, so it must not crash if the database is
+    # unreachable; fall back to UTC.
+    now =
+      try do
+        Oas.Settings.now()
+      rescue
+        _ -> DateTime.utc_now()
+      end
+
+    stopped_on = now |> Calendar.strftime("%Y-%m-%d %H:%M:%S")
     Logger.error("Gocardless #{inspect(server)} stopped: #{format_exit_reason(reason)}")
 
     send_warning(:gocardless_stopped, "Gocardless #{inspect(server)} stopped on #{stopped_on}: #{format_exit_reason(reason)}")
