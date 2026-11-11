@@ -5,10 +5,12 @@ defmodule Oas.Members.MemberNotifier do
 
   # Delivers the email using the application mailer.
   def deliver(recipient, subject, body) do
+    from = Application.get_env(:oas, Oas.TokenMailer)[:from]
+
     email =
       new()
       |> to(recipient)
-      |> from({"Oas", "chris@oxfordshireacrosociety.co.uk"})
+      |> from(from)
       |> subject(subject)
       |> text_body(body)
 

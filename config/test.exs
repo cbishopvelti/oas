@@ -26,6 +26,7 @@ config :oas, OasWeb.Endpoint,
 
 # In test we don't send emails.
 config :oas, Oas.Mailer, adapter: Swoosh.Adapters.Test
+config :oas, Oas.TokenMailer, from: {"OAS", "test@example.com"}
 
 # Print only warnings and errors during test
 config :logger, level: :warning

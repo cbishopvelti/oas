@@ -69,13 +69,13 @@ defmodule Oas.Repo do
     end
 
     config = Oas.Settings.get_config!()
-    name = "oas" <> "-" <> when1 <> ".db"
+    name = Oas.Settings.society_slug() <> "-" <> when1 <> ".db"
     if (config.backup_recipient) do
       from = Application.get_env(:oas, Oas.TokenMailer)[:from]
       email = Swoosh.Email.new()
       |> Swoosh.Email.to({"backup_recipient", config.backup_recipient})
       |> Swoosh.Email.from(from)
-      |> Swoosh.Email.subject("OAS backup")
+      |> Swoosh.Email.subject("#{Oas.Settings.society_name()} backup")
       |> Swoosh.Email.text_body("Backup database\n")
       |> Swoosh.Email.attachment(
         Swoosh.Attachment.new(
