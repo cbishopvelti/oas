@@ -168,13 +168,22 @@ defmodule OasWeb.Schema.SchemaUser do
                 )
 
                 if Oas.Trainings.TrainingWhereTime.can_undo?(result, training, training_where_time) do
-                  Oas.Attendance.delete_attendance(%{attendance_id: id})
-                  {:ok, %{
-                    success: true,
-                    attendance_id: id,
-                    training_id: result.training_id,
-                    member_id: member_id
-                  }}
+                  # A failed delete is rolled back, so the booking still stands: say so
+                  case Oas.Attendance.delete_attendance(%{attendance_id: id}) do
+                    {:ok, _} ->
+                      {:ok, %{
+                        success: true,
+                        attendance_id: id,
+                        training_id: result.training_id,
+                        member_id: member_id
+                      }}
+                    {:error, %Ecto.Changeset{}} = error ->
+                      OasWeb.Schema.SchemaUtils.handle_error(error)
+                    {:error, reason} when is_binary(reason) ->
+                      {:error, reason}
+                    {:error, _} ->
+                      {:error, "Unable to undo, please try again"}
+                  end
                 else
                   {:error, "Unable to undo due to being past the booking cutoff of over 1 minute"}
                 end
