@@ -220,7 +220,7 @@ defmodule OasWeb.Schema.SchemaTransaction do
       id: id,
       who_member_id: member_id
     }
-  ) do
+  ) when not is_nil(membership_period_id) do
     cond do
       is_nil(member_id) ->
         {:error, "A membership needs a member on the transaction"}
@@ -239,6 +239,8 @@ defmodule OasWeb.Schema.SchemaTransaction do
           membership -> membership
         end
         |> Ecto.Changeset.cast(args, [:membership_period_id])
+        # The transaction may have been moved to another member.
+        |> Ecto.Changeset.change(member_id: member_id)
         |> Ecto.Changeset.unique_constraint([:member_id, :membership_period_id],
           message: "This member already has a membership for this period"
         )
@@ -309,19 +311,19 @@ defmodule OasWeb.Schema.SchemaTransaction do
         #   end
         # end
 
-        toSave = case Map.get(args, :id) do
-          nil -> %Oas.Transactions.Transaction{}
-          id -> Oas.Repo.get!(Oas.Transactions.Transaction, id)
-            |> Oas.Repo.preload(:transaction_tags)
-            |> Oas.Repo.preload(:credit)
-        end
-        |> Oas.Transactions.Transaction.changeset(args)
-        |> Oas.Transactions.TransactionTags.doTransactionTags(args)
-        |> Oas.Credits.Credit.doCredit(Map.get(args, :credit, nil))
-
         # One database transaction: if the membership or the auto tags
         # fail, the transaction row, its tags and its credit roll back too.
+        # The existing row is read inside it, so the save can't be built on
+        # a stale copy.
         Oas.Repo.transact(fn ->
+          toSave = case Map.get(args, :id) do
+            nil -> %Oas.Transactions.Transaction{}
+            id -> Oas.Repo.get!(Oas.Transactions.Transaction, id)
+              |> Oas.Repo.preload(:transaction_tags)
+              |> Oas.Repo.preload(:credit)
+          end
+          |> Oas.Transactions.Transaction.save_changeset(args)
+
           with {:ok, result} <- (case toSave do
               %{data: %{id: nil}} -> Oas.Repo.insert(toSave)
               %{data: %{id: _}} -> Oas.Repo.update(toSave)
@@ -331,13 +333,14 @@ defmodule OasWeb.Schema.SchemaTransaction do
             _ <- maybeDoTokens(args, result, when1),
             # Adds membership
             {:ok, _} <- maybeDoMembership(args, result),
-            # Auto tag
-            {:ok, _} <- (if is_nil(Map.get(args, :who_member_id)) do
+            # Auto tag. Uses the saved row, not the args: an edit may leave
+            # who or who_member_id out, which keeps the saved value.
+            {:ok, _} <- (if is_nil(result.who_member_id) do
               Oas.Transactions.TransactionTagAuto.do_auto_tags(
                 toSave.data.who,
-                args.who,
+                result.who,
                 result.transaction_tags,
-                Map.get(args, :auto_tags, [])
+                Map.get(args, :auto_tags) || []
               )
             else
               {:ok, nil}
