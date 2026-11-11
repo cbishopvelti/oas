@@ -30,7 +30,15 @@ defmodule Oas.Settings do
   end
 
   @doc """
-  Casts `attrs` onto the settings row, limited to `fields`, and saves it.
+  Casts `attrs` onto the settings row, limited to `fields`, validates it and
+  saves it.
+
+  Validation (only on fields that change): the backup recipient and contact
+  email contain an `@`; the time zone exists in the time zone database; the
+  currency is a three-letter ISO 4217 style code such as `GBP`; the phone
+  country code is 1 to 4 digits with no `+`; the primary colour is a hex
+  colour such as `#1a2b3c` or `#abc`. The time zone, currency and phone
+  country code cannot be blank.
 
   Options:
     * `:empty_values` - passed to `Ecto.Changeset.cast/4`.
@@ -38,9 +46,49 @@ defmodule Oas.Settings do
   def update_config(attrs, fields, opts \\ []) do
     get_config()
     |> Ecto.Changeset.cast(attrs, fields, cast_opts(opts))
-    |> Ecto.Changeset.validate_format(:backup_recipient, ~r/@/)
+    |> validate_config()
     |> Repo.update()
   end
+
+  defp validate_config(changeset) do
+    import Ecto.Changeset
+
+    changeset
+    |> validate_format(:backup_recipient, ~r/@/)
+    |> validate_format(:contact_email, ~r/^[^\s@]+@[^\s@]+$/)
+    |> validate_not_blank([:time_zone, :currency, :phone_country_code])
+    |> validate_change(:time_zone, fn :time_zone, tz ->
+      if valid_time_zone?(tz), do: [], else: [time_zone: "is not a known time zone"]
+    end)
+    |> validate_format(:currency, ~r/^[A-Z]{3}$/,
+      message: "must be a three-letter code such as GBP"
+    )
+    |> validate_format(:phone_country_code, ~r/^[0-9]{1,4}$/,
+      message: "must be 1 to 4 digits, without a +"
+    )
+    |> validate_format(:primary_color, ~r/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/,
+      message: "must be a hex colour such as #1a2b3c"
+    )
+  end
+
+  # Casting "" gives nil, which would otherwise slip past the format checks
+  # and fail on the NOT NULL column.
+  defp validate_not_blank(changeset, fields) do
+    Enum.reduce(fields, changeset, fn f, cs ->
+      if Map.has_key?(cs.changes, f) and is_nil(Map.get(cs.changes, f)) do
+        Ecto.Changeset.add_error(cs, f, "can't be blank", validation: :required)
+      else
+        cs
+      end
+    end)
+  end
+
+  @doc "True if `tz` is a time zone the configured time zone database knows."
+  def valid_time_zone?(tz) when is_binary(tz) do
+    match?({:ok, _}, DateTime.now(tz))
+  end
+
+  def valid_time_zone?(_), do: false
 
   # ---- config_llm ----
 

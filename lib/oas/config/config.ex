@@ -16,6 +16,18 @@ defmodule Oas.Config.Config do
     field :credits, :boolean
     field :backup_recipient, :string
 
+    # Society settings (multi-society Phase 2). The defaults for time_zone,
+    # currency and phone_country_code live in the database, not here, because
+    # an old migration inserts this struct before those columns exist.
+    field :short_name, :string
+    field :contact_email, :string
+    field :time_zone, :string
+    field :currency, :string
+    field :phone_country_code, :string
+    field :logo_url, :string
+    field :primary_color, :string
+    field :public_site_title, :string
+
     timestamps()
   end
 end
