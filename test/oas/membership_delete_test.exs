@@ -142,6 +142,32 @@ defmodule Oas.MembershipDeleteTest do
     assert Decimal.eq?(balance(ctx.member), -10)
   end
 
+  test "a booking marks the membership it earns as earned by a booking", ctx do
+    book(ctx.member, training(ctx, ~D[2025-10-03]))
+    assert [%{from_booking: true}] = memberships(ctx.member)
+  end
+
+  test "a membership an admin added is kept when the member undoes a booking in that period", ctx do
+    # As the admin add_membership mutation does
+    {:ok, _} = Oas.Members.Membership.add_membership(ctx.period, ctx.member, %{now: ~D[2025-09-01]})
+
+    id = book(ctx.member, training(ctx, ~D[2025-10-03]))
+    assert {:ok, _} = undo(id)
+
+    assert [%{from_booking: false}] = memberships(ctx.member)
+    assert Decimal.eq?(balance(ctx.member), -12)
+  end
+
+  test "a membership an admin added for a member under the temporary limit is kept on undo", ctx do
+    configure(2)
+    {:ok, _} = Oas.Members.Membership.add_membership(ctx.period, ctx.member, %{now: ~D[2025-09-01]})
+
+    id = book(ctx.member, training(ctx, ~D[2025-10-03]))
+    assert {:ok, _} = undo(id)
+
+    assert [_] = memberships(ctx.member)
+  end
+
   test "a membership paid for by a bank transaction is kept", ctx do
     {:ok, transaction} =
       %Oas.Transactions.Transaction{

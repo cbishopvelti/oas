@@ -10,6 +10,9 @@ defmodule Oas.Members.Membership do
     belongs_to :transaction, Oas.Transactions.Transaction
 
     field :notes, :string
+    # true when a booking earned this membership; undoing a booking only
+    # removes these. false when an admin added it or a payment paid for it.
+    field :from_booking, :boolean, default: false
 
     has_one :credit, Oas.Credits.Credit, foreign_key: :membership_id
 
@@ -35,12 +38,16 @@ defmodule Oas.Members.Membership do
   Adds `member` to `membership_period`, charging the period's fee unless the
   member is honorary.
 
+  Pass `from_booking: true` when a booking earns the membership, so undoing
+  that booking can remove it again. Memberships added by an admin leave it
+  out and are never removed by an undo.
+
   Returns `{:ok, membership}` or `{:error, changeset}`. The membership and its
   fee are saved together; callers in a transaction must roll back on error.
   """
-  def add_membership(membership_period, member, %{now: now}) do
+  def add_membership(membership_period, member, %{now: now} = opts) do
     Oas.Repo.transact(fn ->
-      changeset = %Oas.Members.Membership{}
+      changeset = %Oas.Members.Membership{from_booking: Map.get(opts, :from_booking, false)}
       |> changeset(%{
         member_id: member.id,
         membership_period_id: membership_period.id
@@ -66,7 +73,8 @@ defmodule Oas.Members.Membership do
   Mirrors `Oas.Attendance.add_attendance`, so it leaves alone:
     * everything when credits are off or the training doesn't count towards
       membership;
-    * memberships paid for by a bank transaction;
+    * memberships an admin added by hand or a bank transaction paid for
+      (only `from_booking` ones are removed);
     * a period the member has another counting booking in, as long as they
       would still be made a member for it (honorary, a member of another
       period, or past the temporary trainings limit).
@@ -80,7 +88,8 @@ defmodule Oas.Members.Membership do
       # Memberships (with their period) this training falls in
       memberships = from(ms in Oas.Members.Membership,
         inner_join: mp in assoc(ms, :membership_period),
-        where: ms.member_id == ^member.id and is_nil(ms.transaction_id) and
+        where: ms.member_id == ^member.id and ms.from_booking == true and
+          is_nil(ms.transaction_id) and
           mp.from <= ^training.when and mp.to >= ^training.when,
         preload: [membership_period: mp]
       ) |> Oas.Repo.all()

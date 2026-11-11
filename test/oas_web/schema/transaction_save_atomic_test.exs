@@ -175,6 +175,40 @@ defmodule OasWeb.Schema.TransactionSaveAtomicTest do
       assert member_id == other.id
     end
 
+    test "an edit that keeps the member leaves a merged membership with the merge target" do
+      source = Oas.MembersFixtures.member_fixture()
+      target = Oas.MembersFixtures.member_fixture()
+      period = membership_period()
+      next_period =
+        %MembershipPeriod{name: "2025b", from: ~D[2025-01-01], to: ~D[2025-12-31], value: Decimal.new("12")}
+        |> Repo.insert!()
+
+      {:ok, %{data: %{"transaction" => %{"id" => id}}}} =
+        run(%{
+          "what" => "Membership", "who" => source.name, "who_member_id" => source.id,
+          "membership_period_id" => period.id
+        })
+
+      # The merge hands the membership to the target; the payment stays on the source
+      Oas.Members.merge_members!(source.id, target.id)
+      assert [%{member_id: member_id}] = Repo.all(Membership)
+      assert member_id == target.id
+
+      # Editing the old payment, even its period, leaves the membership with the target
+      assert {:ok, %{data: %{"transaction" => %{"id" => ^id}}}} =
+               run(%{
+                 "id" => id, "what" => "Membership (edited)", "who" => source.name,
+                 "who_member_id" => source.id, "membership_period_id" => next_period.id
+               })
+
+      assert [%{member_id: member_id, membership_period_id: period_id, transaction_id: ^id}] =
+               Repo.all(Membership)
+
+      assert member_id == target.id
+      assert period_id == next_period.id
+      assert Repo.get!(Transaction, id).who_member_id == source.id
+    end
+
     test "the move is undone when the other member already has that membership" do
       member = Oas.MembersFixtures.member_fixture()
       other = Oas.MembersFixtures.member_fixture()
