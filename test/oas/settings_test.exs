@@ -22,6 +22,19 @@ defmodule Oas.SettingsTest do
       assert Settings.get_config().name == "New name"
     end
 
+    test "society_name and society_slug use the name, falling back to OAS" do
+      {:ok, _} = Settings.update_config(%{name: "  Bristol Acro Club! "}, [:name])
+      assert Settings.society_name() == "Bristol Acro Club!"
+      assert Settings.society_slug() == "bristol-acro-club"
+
+      {:ok, _} = Settings.update_config(%{name: "   "}, [:name], empty_values: [])
+      assert Settings.society_name() == "OAS"
+      assert Settings.society_slug() == "oas"
+
+      {:ok, _} = Settings.update_config(%{name: nil}, [:name])
+      assert Settings.society_name() == "OAS"
+    end
+
     test "update_config rejects a backup recipient without an @" do
       assert {:error, changeset} =
                Settings.update_config(%{backup_recipient: "nope"}, [:backup_recipient])

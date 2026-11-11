@@ -30,6 +30,39 @@ defmodule Oas.Settings do
   end
 
   @doc """
+  The society's name, for emails and file names. Falls back to "OAS" when the
+  name is blank or there is no settings row.
+  """
+  def society_name do
+    case get_config_value(:name) do
+      name when is_binary(name) ->
+        case String.trim(name) do
+          "" -> "OAS"
+          trimmed -> trimmed
+        end
+
+      _ ->
+        "OAS"
+    end
+  end
+
+  @doc """
+  The society's name made safe for a file name: lower case, with runs of
+  anything other than letters and digits turned into a single `-`. Falls back
+  to "oas".
+  """
+  def society_slug do
+    society_name()
+    |> String.downcase()
+    |> String.replace(~r/[^a-z0-9]+/u, "-")
+    |> String.trim("-")
+    |> case do
+      "" -> "oas"
+      slug -> slug
+    end
+  end
+
+  @doc """
   Casts `attrs` onto the settings row, limited to `fields`, validates it and
   saves it.
 
