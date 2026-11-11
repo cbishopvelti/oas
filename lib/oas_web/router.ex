@@ -26,10 +26,10 @@ defmodule OasWeb.Router do
     get "/book-today", BookTodayController, :index
   end
 
-  # Other scopes may use custom stacks.
-  # scope "/api", OasWeb do
-  #   pipe_through :api
-  # end
+  # Public, no session: run-time URLs for the admin and public front ends.
+  scope "/api", OasWeb do
+    get "/config.js", ConfigJsController, :show
+  end
 
   # Enables LiveDashboard only for development
   #
