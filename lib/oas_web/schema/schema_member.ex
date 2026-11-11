@@ -170,7 +170,44 @@ defmodule OasWeb.Schema.SchemaMember do
     end
   end
 
+  input_object :member_import_row_arg do
+    field :name, :string
+    field :email, :string
+  end
+
+  enum :member_import_outcome do
+    value :create
+    value :skip
+    value :error
+  end
+
+  object :member_import_row do
+    field :row, :integer
+    field :name, :string
+    field :email, :string
+    field :outcome, :member_import_outcome
+    field :reason, :string
+    field :member_id, :integer
+  end
+
+  object :member_import_result do
+    field :saved, :boolean
+    field :create_count, :integer
+    field :skip_count, :integer
+    field :error_count, :integer
+    field :rows, list_of(:member_import_row)
+  end
+
   object :member_mutations do
+    @desc "Import members from parsed CSV rows. dry_run saves nothing; otherwise all valid rows are created in one transaction, or nothing if any row has an error. Never changes existing members or sends email."
+    field :import_members, type: :member_import_result do
+      arg :rows, non_null(list_of(non_null(:member_import_row_arg)))
+      arg :dry_run, non_null(:boolean)
+      resolve fn _, %{rows: rows, dry_run: dry_run}, _ ->
+        {:ok, Oas.Members.Import.run(rows, dry_run: dry_run)}
+      end
+    end
+
     @desc "Create or update member"
     field :member, type: :memberWithPassword do
       arg :id, :integer
@@ -196,11 +233,7 @@ defmodule OasWeb.Schema.SchemaMember do
 
         toSave = case Map.get(args, :id) do
           nil ->
-            length=12
-            password = :crypto.strong_rand_bytes(length) |> Base.encode64 |> binary_part(0, length)
-            attrs = Map.merge(%{password: password}, args)
-            %Oas.Members.Member{}
-            |> Oas.Members.Member.registration_changeset(attrs)
+            Oas.Members.new_member_changeset(args)
             |> Ecto.Changeset.cast_assoc(:gocardless, with: &Oas.Gocardless.GocardlessEcto.changeset/2)
 
           id ->
