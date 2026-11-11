@@ -355,22 +355,53 @@ defmodule Oas.Members do
   @doc """
   Moves every attendance of member `from_id` to member `to_id`.
 
-  ONLY moves attendance, USE WITH CARE. Run from the console, e.g.
-  `Oas.Members.merge_members!(106, 111)`.
+  USE WITH CARE. Run from the console, e.g.
+  `Oas.Members.merge_members!(106, 111)`. Credit from payments is not moved.
 
-  All or nothing: each attendance is deleted from `from_id` and re-added to
-  `to_id` inside one outer transaction. If any delete or re-add fails (for
-  example `to_id` already attends that training, or a credit write fails),
-  everything is rolled back, both members are left unchanged, and this raises.
+  Each attendance is deleted from `from_id` and re-added to `to_id`, so its
+  charge moves with it. A training both members attended is only removed from
+  `from_id`: `to_id` keeps the attendance they already have.
+
+  Memberships move too: a membership of `from_id`, with its fee or the
+  transaction that paid it, is handed to `to_id` rather than `to_id` being
+  charged again. Where `to_id` already has a membership for that period,
+  `from_id` keeps theirs.
+
+  `to_id` gets no warning emails for the moved attendances.
+
+  All or nothing: everything runs inside one outer transaction. If any step
+  fails (for example a pricing rule or a credit write fails), everything is
+  rolled back, both members are left unchanged, and this raises.
 
   Returns the list of re-added attendance results on success.
+
+  ## Options
+
+    * `:inserted_by_member_id` - who the re-added attendances are recorded as
+      added by. Defaults to 1.
   """
   def merge_members!(from_id, to_id, opts \\ []) do
     inserted_by_member_id = Keyword.get(opts, :inserted_by_member_id, 1)
 
+    if from_id == to_id do
+      raise ArgumentError, "merge_members! needs two different members, got #{from_id} twice"
+    end
+
     result =
       # Bookings and undos inside hold their emails and live updates until this commits
       Oas.AfterCommit.transact(fn ->
+        # First, so re-adding an attendance finds the target already a member
+        # and doesn't charge a second fee.
+        merge_move_memberships(from_id, to_id)
+
+        already_attending =
+          Ecto.Query.from(a in Oas.Trainings.Attendance,
+            where: a.member_id == ^to_id,
+            select: a.training_id
+          )
+          |> Repo.all()
+          |> MapSet.new()
+
         Ecto.Query.from(t in Oas.Trainings.Training,
           join: a in assoc(t, :attendance),
           join: m in assoc(a, :member),
@@ -382,8 +413,8 @@ defmodule Oas.Members do
         |> Enum.reduce_while({:ok, []}, fn {training, attendance}, {:ok, moved} ->
           with {:ok, _} <- Oas.Attendance.delete_attendance(%{attendance_id: attendance.id}),
                {:ok, added} <-
-                 merge_add_attendance(to_id, training.id, inserted_by_member_id) do
-            {:cont, {:ok, [added | moved]}}
+                 merge_add_attendance(to_id, training.id, inserted_by_member_id, already_attending) do
+            {:cont, {:ok, List.wrap(added) ++ moved}}
           else
             {:error, reason} -> {:halt, {:error, {:training_id, training.id, reason}}}
           end
@@ -400,13 +431,44 @@ defmodule Oas.Members do
     end
   end
 
+  # Hands the source's memberships to the target, except for periods the target
+  # already has one in (a member can only have one membership per period). A
+  # membership's fee credit moves with it.
+  defp merge_move_memberships(from_id, to_id) do
+    target_period_ids =
+      Ecto.Query.from(m in Oas.Members.Membership,
+        where: m.member_id == ^to_id,
+        select: m.membership_period_id
+      )
+
+    membership_ids =
+      Ecto.Query.from(m in Oas.Members.Membership,
+        where: m.member_id == ^from_id and m.membership_period_id not in subquery(target_period_ids),
+        select: m.id
+      )
+      |> Repo.all()
+
+    Ecto.Query.from(m in Oas.Members.Membership, where: m.id in ^membership_ids)
+    |> Repo.update_all(set: [member_id: to_id])
+
+    Ecto.Query.from(c in Oas.Credits.Credit, where: c.membership_id in ^membership_ids)
+    |> Repo.update_all(set: [who_member_id: to_id])
+
+    :ok
+  end
+
   # add_attendance throws its error instead of returning it, so turn the throw
   # back into an error tuple for the outer transaction to roll back on.
-  defp merge_add_attendance(member_id, training_id, inserted_by_member_id) do
-    Oas.Attendance.add_attendance(
-      %{member_id: member_id, training_id: training_id},
-      %{inserted_by_member_id: inserted_by_member_id}
-    )
+  # Returns {:ok, nil} when the target already attends the training.
+  defp merge_add_attendance(member_id, training_id, inserted_by_member_id, already_attending) do
+    if MapSet.member?(already_attending, training_id) do
+      {:ok, nil}
+    else
+      Oas.Attendance.add_attendance(
+        %{member_id: member_id, training_id: training_id},
+        %{inserted_by_member_id: inserted_by_member_id, skip_emails: true}
+      )
+    end
   catch
     {:error, _} = error -> error
   end
