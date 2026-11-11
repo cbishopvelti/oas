@@ -15,7 +15,9 @@ defmodule Oas.MailTest do
     end
   end
 
-  @from Application.compile_env(:oas, Oas.TokenMailer)[:from]
+  @token_mailer_from Application.compile_env(:oas, Oas.TokenMailer)[:from]
+  @address elem(@token_mailer_from, 1)
+  @from {"Test Acro", @address}
 
   setup do
     {:ok, _} = Oas.Settings.update_config(%{name: "Test Acro"}, [:name])
@@ -86,7 +88,7 @@ defmodule Oas.MailTest do
       Application.put_env(:oas, Oas.TokenMailer,
         adapter: TaggingAdapter,
         tag: :token_mailer,
-        from: @from
+        from: @token_mailer_from
       )
 
       on_exit(fn ->
@@ -109,6 +111,67 @@ defmodule Oas.MailTest do
 
       Oas.Tokens.TokenNotifier.deliver("m@example.com", "Test Acro notification", "Hi")
       assert_received {:sent_via, :token_mailer, %{subject: "Test Acro notification"}}
+    end
+  end
+
+  describe "sender" do
+    setup do
+      on_exit(fn -> Application.delete_env(:oas, :mail_from_name) end)
+    end
+
+    test "From name is the society name and follows changes to it" do
+      Oas.testEmail("a@example.com")
+      assert_email_sent(from: {"Test Acro", @address})
+
+      {:ok, _} = Oas.Settings.update_config(%{name: "Other Club"}, [:name])
+      Oas.testEmail("a@example.com")
+      assert_email_sent(from: {"Other Club", @address})
+    end
+
+    test "From name falls back to OAS when the society name is blank" do
+      {:ok, _} = Oas.Settings.update_config(%{name: "  "}, [:name], empty_values: [])
+      Oas.testEmail("a@example.com")
+      assert_email_sent(from: {"OAS", @address})
+    end
+
+    test "MAIL_FROM_NAME (:mail_from_name) wins over the society name" do
+      Application.put_env(:oas, :mail_from_name, "Env Sender")
+      Oas.testEmail("a@example.com")
+      assert_email_sent(from: {"Env Sender", @address})
+    end
+
+    test "a plain address in the :from config still works" do
+      token_mailer = Application.get_env(:oas, Oas.TokenMailer)
+
+      Application.put_env(
+        :oas,
+        Oas.TokenMailer,
+        Keyword.put(token_mailer, :from, "plain@example.com")
+      )
+
+      on_exit(fn -> Application.put_env(:oas, Oas.TokenMailer, token_mailer) end)
+
+      assert Oas.Mail.sender() == {"Test Acro", "plain@example.com"}
+    end
+
+    test "Reply-To is the contact email when set" do
+      {:ok, _} =
+        Oas.Settings.update_config(%{contact_email: "hello@example.com"}, [:contact_email])
+
+      Oas.testEmail("a@example.com")
+
+      assert_email_sent(fn email ->
+        assert email.reply_to == {"", "hello@example.com"}
+      end)
+    end
+
+    test "no Reply-To when the contact email is not set" do
+      {:ok, _} = Oas.Settings.update_config(%{contact_email: nil}, [:contact_email])
+      Oas.testEmail("a@example.com")
+
+      assert_email_sent(fn email ->
+        assert email.reply_to == nil
+      end)
     end
   end
 end

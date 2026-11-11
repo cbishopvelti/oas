@@ -58,6 +58,8 @@ if config_env() != :test do
        name = read_env.("MAIL_FROM_NAME") || "OAS"
        config :oas, Oas.TokenMailer, from: {name, v}
      end},
+    # Wins over the society name as the From name (see Oas.Mail).
+    {"MAIL_FROM_NAME", fn v -> config :oas, mail_from_name: v end},
     {"LLM_STUDIO_URL", fn v -> config :oas, llm_sudio_url: v end},
     {"GOCARDLESS_BACKUP_DIR", fn v -> config :oas, gocardless_backup_dir: v end}
   ]
@@ -77,8 +79,6 @@ if config_env() != :test do
           {[name | env_acc], file_acc}
       end
     end)
-
-  from_env = if read_env.("MAIL_FROM_NAME"), do: from_env ++ ["MAIL_FROM_NAME"], else: from_env
 
   # Browser origins (CORS and socket check_origin). Outside dev, only ADMIN_URL,
   # PUBLIC_URL and the server's own host are allowed; see OasWeb.Origins.
