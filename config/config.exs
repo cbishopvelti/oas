@@ -8,7 +8,11 @@
 import Config
 
 config :oas,
-  ecto_repos: [Oas.Repo]
+  ecto_repos: [Oas.Repo],
+  # Daily backup at this local time in the society time zone, and days to keep
+  # backups on disk (0 = never delete). Env: BACKUP_TIME, BACKUP_KEEP_DAYS.
+  backup_time: {3, 0},
+  backup_keep_days: 30
 
 config :elixir, :time_zone_database, Tz.TimeZoneDatabase
 

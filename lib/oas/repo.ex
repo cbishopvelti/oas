@@ -42,6 +42,8 @@ defmodule Oas.Repo do
   end
 
   # Oas.Repo.backup()
+  # Returns {:ok, file_path} once the file is written and valid (Oas.BackupJob
+  # only deletes old backups after that).
   def backup() do
     %{pid: _pid } = Ecto.Adapter.lookup_meta(Oas.Repo.get_dynamic_repo())
 
@@ -76,6 +78,8 @@ defmodule Oas.Repo do
     if (config.backup_recipient) do
       send_backup_email(config.backup_recipient, name, data)
     end
+
+    {:ok, file_path}
   end
 
   @last_backup_key {__MODULE__, :last_backup}

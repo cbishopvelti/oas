@@ -51,6 +51,17 @@ if config_env() != :test do
     end
   end
 
+  backup_time = fn v ->
+    with [h, m] <- String.split(v, ":"),
+         true <- String.length(m) == 2,
+         {hour, ""} when hour in 0..23 <- Integer.parse(h),
+         {minute, ""} when minute in 0..59 <- Integer.parse(m) do
+      {hour, minute}
+    else
+      _ -> raise "environment variable BACKUP_TIME must be HH:MM (24 hour), got: #{inspect(v)}"
+    end
+  end
+
   # {env var, function that applies its value}
   overrides = [
     {"DB_FILE", fn v -> config :oas, Oas.Repo, database: v end},
@@ -89,7 +100,20 @@ if config_env() != :test do
     {"MAIL_FROM_NAME", fn v -> config :oas, mail_from_name: v end},
     {"LLM_STUDIO_URL", fn v -> config :oas, llm_sudio_url: v end},
     {"LLM_MODEL", fn v -> config :oas, llm_model: v end},
-    {"GOCARDLESS_BACKUP_DIR", fn v -> config :oas, gocardless_backup_dir: v end}
+    {"GOCARDLESS_BACKUP_DIR", fn v -> config :oas, gocardless_backup_dir: v end},
+    # Local time (society time zone) of the daily backup. See Oas.BackupJob.
+    {"BACKUP_TIME", fn v -> config :oas, backup_time: backup_time.(v) end},
+    # Days to keep backups on disk; 0 never deletes. See Oas.BackupJob.
+    {"BACKUP_KEEP_DAYS",
+     fn v ->
+       days = to_int.("BACKUP_KEEP_DAYS", v)
+
+       if days < 0 do
+         raise "environment variable BACKUP_KEEP_DAYS must be 0 or more, got: #{inspect(v)}"
+       end
+
+       config :oas, backup_keep_days: days
+     end}
   ]
 
   if read_env.("MAIL_FROM_NAME") && !read_env.("MAIL_FROM_ADDRESS") do
