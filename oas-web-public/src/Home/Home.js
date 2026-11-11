@@ -2,6 +2,7 @@ import { Link } from "react-router-dom"
 import { useQuery, gql } from "@apollo/client"
 import { get } from 'lodash';
 import { Fragment } from "react";
+import { formatMoney } from '../App/money';
 
 
 export const Home = () => {
@@ -16,7 +17,8 @@ export const Home = () => {
       }
       public_config_config {
         content,
-        credits
+        credits,
+        currency
       }
     }
   `)
@@ -39,7 +41,7 @@ export const Home = () => {
       if (index == get(data, 'public_config_tokens', []).length - 1) {
         start = ' and ';
       }
-      return `${index == 0 ? '' : ', '}${quantity} token${quantity != 1 ? 's' : ''} cost${quantity == 1 ? 's' : ''} ${value * quantity} GBP`
+      return `${index == 0 ? '' : ', '}${quantity} token${quantity != 1 ? 's' : ''} cost${quantity == 1 ? 's' : ''} ${formatMoney(value * quantity, get(data, 'public_config_config.currency'))}`
     })}. Tokens are non refundable and expire after {get(data, 'public_config_tokens.token_expiry_days', 'loading')} days, but they can be transferred to other members.</p>}
   </div>
 }
