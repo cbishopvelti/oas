@@ -354,7 +354,9 @@ defmodule Oas.MergeMembersTest do
     assert length(snapshot(ctx.to).credits) == 2
   end
 
-  test "leaves the source's membership where the target already has one", ctx do
+  # Undoing the source's bookings removes the membership they earned
+  # (Membership.maybe_delete_membership), so the person pays one fee, not two.
+  test "removes and refunds the source's membership where the target already has one", ctx do
     membership_period()
 
     {training_d, _} = training_with_rule(ctx, "return 4", 1, %{exempt_membership_count: false})
@@ -369,9 +371,9 @@ defmodule Oas.MergeMembersTest do
 
     assert [_] = merge(ctx)
 
-    assert memberships(ctx.from) == before_from
+    assert memberships(ctx.from) == []
     assert memberships(ctx.to) == before_to
-    assert [_] = membership_fees(ctx.from)
+    assert membership_fees(ctx.from) == []
     assert [_] = membership_fees(ctx.to)
     assert training_ids(ctx.to) == [training_d.id, training_e.id]
   end
