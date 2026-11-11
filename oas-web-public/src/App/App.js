@@ -16,6 +16,8 @@ import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import { useQuery, gql } from '@apollo/client'
 import { get } from 'lodash'
 import { MenuChat } from './MenuChat';
+import { adminUrl, serverUrl } from '../config';
+import { useSociety } from '../Society/SocietyProvider';
 
 
 const DrawerHeader = styled('div')(({ theme }) => ({
@@ -32,6 +34,7 @@ function App() {
   const theme = useTheme();
   const matches = useMediaQuery(theme.breakpoints.down('md'));
   const routeMatchs = useMatches();
+  const society = useSociety();
 
   const { data, refetch, loading } = useQuery(gql`
   query {
@@ -128,7 +131,7 @@ function App() {
           style={{ backgroundColor: 'mediumpurple' }}
         >
           <Box m={2}>
-            <img width={212} src={logo} />
+            <img width={212} src={society.logoUrl || logo} alt={society.name || 'Logo'} />
           </Box>
           <MenuList sx={{ marginTop: 4 }}>
             <MenuItem component={NavLink} end to={`/`}>
@@ -147,10 +150,6 @@ function App() {
               <ListItemText>My Bookings</ListItemText>
             </MenuItem>}
 
-            {new Date() < new Date('2026-04-05') && <MenuItem component={NavLink} to={'/sjef-2026'}>
-              <ListItemText>Sjef's Workshop 2026</ListItemText>
-            </MenuItem>}
-
             {enableBooking && !get(data, 'user') && <MenuItem onClick={onClick} sx={{ padding: 0 }}>
               <a style={{
                 color: 'inherit',
@@ -159,7 +158,7 @@ function App() {
                 width: '100%',
                 padding: '6px 16px'
               }}
-                href={`${process.env.REACT_APP_SERVER_URL}/members/log_in?callback_path=${encodeURIComponent("/bookings")}&callback_domain=public_url`}>My Bookings</a>
+                href={`${serverUrl}/members/log_in?callback_path=${encodeURIComponent("/bookings")}&callback_domain=public_url`}>My Bookings</a>
             </MenuItem>}
 
             {get(data, 'public_config_llm.chat_enabled', false) && <MenuChat phoenixSocket={phoenixSocket} setPhoenixSocket={setPhoenixSocket} user={get(data, 'user')} />}
@@ -172,7 +171,7 @@ function App() {
                 width: '100%',
                 padding: '6px 16px'
               }}
-                href={`${process.env.REACT_APP_ADMIN_URL}`}>Admin</a>
+                href={`${adminUrl}`}>Admin</a>
             </MenuItem>}
 
             {enableBooking && /* Fixed on the branch v2-credits-booking */ <MenuList>
@@ -195,7 +194,7 @@ function App() {
                     width: '100%',
                     padding: '6px 16px'
                   }}
-                  href={`${process.env.REACT_APP_SERVER_URL}${get(data, "user.logout_link")}`}
+                  href={`${serverUrl}${get(data, "user.logout_link")}`}
                   data-method="delete"
                   rel="nofollow"
                 >
@@ -215,7 +214,7 @@ function App() {
                     width: '100%',
                     padding: '6px 16px'
                   }}
-                  href={`${process.env.REACT_APP_SERVER_URL}/members/log_in`}>
+                  href={`${serverUrl}/members/log_in`}>
                   Login
                 </a>
               </MenuItem>}
