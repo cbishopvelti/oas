@@ -139,11 +139,9 @@ defmodule Oas.Attendance do
       # so transaction_result will still match exactly like this:
       {:ok, %{attendance: attendance, training: training, member: member}} ->
         if training.disable_warning_emails != true do
-          Task.Supervisor.start_child(
-            Oas.TaskSupervisor,
-            fn ->
-              Oas.TokenMailer.maybe_send_warnings_email(member)
-            end
+          Oas.Mail.Background.run(
+            fn -> Oas.TokenMailer.maybe_send_warnings_email(member) end,
+            description: "Warning email to #{member.email}"
           )
         end
 
