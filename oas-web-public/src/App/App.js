@@ -16,6 +16,7 @@ import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import { useQuery, gql } from '@apollo/client'
 import { get } from 'lodash'
 import { MenuChat } from './MenuChat';
+import { adminUrl, serverUrl } from '../config';
 
 
 const DrawerHeader = styled('div')(({ theme }) => ({
@@ -155,7 +156,7 @@ function App() {
                 width: '100%',
                 padding: '6px 16px'
               }}
-                href={`${process.env.REACT_APP_SERVER_URL}/members/log_in?callback_path=${encodeURIComponent("/bookings")}&callback_domain=public_url`}>My Bookings</a>
+                href={`${serverUrl}/members/log_in?callback_path=${encodeURIComponent("/bookings")}&callback_domain=public_url`}>My Bookings</a>
             </MenuItem>}
 
             {get(data, 'public_config_llm.chat_enabled', false) && <MenuChat phoenixSocket={phoenixSocket} setPhoenixSocket={setPhoenixSocket} user={get(data, 'user')} />}
@@ -168,7 +169,7 @@ function App() {
                 width: '100%',
                 padding: '6px 16px'
               }}
-                href={`${process.env.REACT_APP_ADMIN_URL}`}>Admin</a>
+                href={`${adminUrl}`}>Admin</a>
             </MenuItem>}
 
             {enableBooking && /* Fixed on the branch v2-credits-booking */ <MenuList>
@@ -191,7 +192,7 @@ function App() {
                     width: '100%',
                     padding: '6px 16px'
                   }}
-                  href={`${process.env.REACT_APP_SERVER_URL}${get(data, "user.logout_link")}`}
+                  href={`${serverUrl}${get(data, "user.logout_link")}`}
                   data-method="delete"
                   rel="nofollow"
                 >
@@ -211,7 +212,7 @@ function App() {
                     width: '100%',
                     padding: '6px 16px'
                   }}
-                  href={`${process.env.REACT_APP_SERVER_URL}/members/log_in`}>
+                  href={`${serverUrl}/members/log_in`}>
                   Login
                 </a>
               </MenuItem>}
