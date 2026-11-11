@@ -27,7 +27,7 @@ ARG SUBDOMAIN=""
 ENV REACT_APP_ADMIN_URL=https://admin${SUBDOMAIN}.oxfordshireacrosociety.co.uk
 ENV REACT_APP_SERVER_URL=https://server${SUBDOMAIN}.oxfordshireacrosociety.co.uk
 ENV REACT_APP_PUBLIC_URL=https://www${SUBDOMAIN}.oxfordshireacrosociety.co.uk
-ENV DOMAIN=${SUBDOMAIN}.oxfordshireacrosociety.co.uk
+# DOMAIN (cookie domain) is read at run time; pass it with -e DOMAIN=... or --env-file
 
 WORKDIR /app
 COPY . .
