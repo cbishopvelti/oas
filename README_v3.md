@@ -48,6 +48,34 @@ Things to get right:
   `SECRET_KEY_BASE`, `DB_FILE`, `PHX_HOST`, `DOMAIN`, `ADMIN_URL`, `PUBLIC_URL`
   and `MAIL_FROM_ADDRESS`, or it inherits Oxfordshire's values.
 
+### Set up a new society
+
+On a new, empty database, run `mix oas.provision` once inside the container
+(it uses the container's environment, so the link points at the right host):
+
+```
+docker exec -it oas mix oas.provision \
+  --name "Bristol Acro" \
+  --time-zone Europe/London \
+  --currency GBP \
+  --admin-email admin@bristolacro.example \
+  --admin-name "Sam Smith"
+```
+
+It runs the migrations, sets the society name, time zone and currency (checked
+the same way as the admin Config page), and creates the first admin if no
+member has that email. It then prints a link for that admin to set their
+password, the same link the reset password email sends. The link is valid for
+one day; open it and choose a password. Nothing is emailed, and no password is
+ever passed in or printed. The rest of the settings (logo, colour, contact
+email and so on) are set from the admin site afterwards.
+
+All five options are required. If any value is invalid nothing is saved. Running
+it again with the same values changes nothing and prints `Nothing changed.`. If
+the link expired before it was used, run it again with `--new-link` to print a
+fresh one for the existing admin. It does not start the web server, so it is
+safe to run while the server is up.
+
 ### Backups
 
 Each backup is written uncompressed to the `backup_database` path (e.g.

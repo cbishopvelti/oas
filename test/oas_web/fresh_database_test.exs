@@ -50,4 +50,25 @@ defmodule OasWeb.FreshDatabaseTest do
     assert html_response(get(conn, "/"), 200) =~ "Society"
     assert html_response(get(build_conn(), "/members/log_in"), 200) =~ "Log in"
   end
+
+  # mix oas.provision on a new database (the task itself only adds running the
+  # migrations and printing around Oas.Provision.run/1).
+  test "provisioning a new society, then running it again" do
+    opts = %{
+      name: "New Society",
+      time_zone: "America/New_York",
+      currency: "USD",
+      admin_email: "admin@new-society.example",
+      admin_name: "New Admin"
+    }
+
+    assert {:ok, first} = Oas.Provision.run(opts)
+    assert first.admin == :created
+    assert first.link =~ "/members/reset_password/"
+    assert Enum.map(first.settings, &elem(&1, 0)) == [:name, :time_zone, :currency]
+
+    assert {:ok, second} = Oas.Provision.run(opts)
+    assert Oas.Provision.unchanged?(second)
+    assert Oas.Repo.aggregate(Oas.Members.Member, :count) == 1
+  end
 end
