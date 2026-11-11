@@ -1,11 +1,12 @@
-import { Link } from "react-router-dom"
 import { useQuery, gql } from "@apollo/client"
 import { get } from 'lodash';
 import { Fragment } from "react";
 import { formatMoney } from '../App/money';
+import { useSociety } from '../Society/SocietyProvider';
 
 
 export const Home = () => {
+  const society = useSociety();
   const {data} = useQuery(gql`
     query {
       public_config_tokens {
@@ -24,9 +25,7 @@ export const Home = () => {
   `)
 
   return <div>
-    <h1>Oxfordshire Acro Society</h1>
-    <p>This is the virtual home of the Oxfordshire Acro Society.</p>
-    <p>If you are joining for the first time, please go to “register” in the menu and sign up. You can come to 3 sessions as a temporary member before you must become a full member, full membership for this season runs until the 31st of October and is 12 GBP. Please register <Link to="/register">here</Link></p>
+    {society.name && <h1>{society.name}</h1>}
 
     <div dangerouslySetInnerHTML={{ __html: get(data, "public_config_config.content", "")}}>
     </div>
