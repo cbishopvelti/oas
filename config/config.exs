@@ -8,7 +8,11 @@
 import Config
 
 config :oas,
-  ecto_repos: [Oas.Repo]
+  ecto_repos: [Oas.Repo],
+  # Daily backup at this local time in the society time zone, and days to keep
+  # backups on disk (0 = never delete). Env: BACKUP_TIME, BACKUP_KEEP_DAYS.
+  backup_time: {3, 0},
+  backup_keep_days: 30
 
 config :elixir, :time_zone_database, Tz.TimeZoneDatabase
 
@@ -65,6 +69,9 @@ config :logger, :console,
 
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
+
+# Model name sent to the LLM chat endpoint (:llm_sudio_url). LLM_MODEL overrides it.
+config :oas, :llm_model, "qwen/qwen3-14b"
 
 IO.puts("env: #{config_env()}")
 

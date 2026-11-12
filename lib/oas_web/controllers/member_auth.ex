@@ -13,9 +13,12 @@ defmodule OasWeb.MemberAuth do
   @remember_me_options [
     sign: true,
     max_age: @max_age,
-    same_site: "Lax",
-    domain: Application.compile_env(:oas, OasWeb.Endpoint)[:domain]
+    same_site: "Lax"
   ]
+
+  # The domain is read at runtime so one release can serve any society.
+  defp remember_me_options,
+    do: Keyword.put(@remember_me_options, :domain, OasWeb.Endpoint.cookie_domain())
   # @remember_me_options [sign: true, max_age: @max_age, same_site: "None"]
 
   @doc """
@@ -59,7 +62,7 @@ defmodule OasWeb.MemberAuth do
   end
 
   defp maybe_write_remember_me_cookie(conn, token, %{"remember_me" => "true"}) do
-    put_resp_cookie(conn, @remember_me_cookie, token, @remember_me_options)
+    put_resp_cookie(conn, @remember_me_cookie, token, remember_me_options())
   end
 
   defp maybe_write_remember_me_cookie(conn, _token, _params) do
@@ -102,7 +105,7 @@ defmodule OasWeb.MemberAuth do
 
     conn
     |> renew_session()
-    |> delete_resp_cookie(@remember_me_cookie)
+    |> delete_resp_cookie(@remember_me_cookie, domain: OasWeb.Endpoint.cookie_domain())
     |> redirect(to: "/")
   end
 

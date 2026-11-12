@@ -1,5 +1,3 @@
-import Ecto.Query, only: [from: 2]
-
 defmodule Oas.Gocardless do
   require Logger
 
@@ -36,7 +34,7 @@ defmodule Oas.Gocardless do
 
   # Oas.Gocardless.get_access_token
   def get_access_token do
-    config = from(cc in Oas.Config.Config, select: cc) |> Oas.Repo.one
+    config = Oas.Settings.get_config()
 
     if (config.gocardless_id == nil || config.gocardless_key == nil) do
       {:noconfig}
@@ -81,12 +79,18 @@ defmodule Oas.Gocardless do
   def get_banks() do
     {:ok, access_token} = GenServer.call(Oas.Gocardless.AuthServer, :get_access_token)
 
-    {:ok, 200, _headers, client} = :hackney.request(:get, "https://bankaccountdata.gocardless.com/api/v2/institutions/?country=gb",
+    {:ok, 200, _headers, client} = :hackney.request(:get, institutions_url(),
       get_headers(access_token)
     )
     {:ok, response_string} = :hackney.body(client)
     {:ok, data} = JSON.decode(response_string)
     data
+  end
+
+  @doc "URL listing the banks in the society's bank_country (lower-cased, as GoCardless expects)."
+  def institutions_url(country \\ Oas.Settings.get_config_value(:bank_country)) do
+    country = String.downcase(country || "GB")
+    "https://bankaccountdata.gocardless.com/api/v2/institutions/?country=#{URI.encode_www_form(country)}"
   end
 
   def get_requisitions(%{access_token: access_token}, %{institution_id: institution_id}) do
@@ -108,7 +112,7 @@ defmodule Oas.Gocardless do
   def get_accounts() do
     with pid when pid != nil <- Process.whereis(Oas.Gocardless.AuthServer),
       {:ok, access_token} <- GenServer.call(Oas.Gocardless.AuthServer, :get_access_token),
-      requisition_id <- from(cc in Oas.Config.Config, select: cc.gocardless_requisition_id) |> Oas.Repo.one(),
+      requisition_id <- Oas.Settings.get_config_value(:gocardless_requisition_id),
       {:ok, 200, _headers, client} <- :hackney.request(
       :get, "https://bankaccountdata.gocardless.com/api/v2/requisitions/#{requisition_id}/",
         get_headers(access_token)
@@ -155,7 +159,16 @@ defmodule Oas.Gocardless do
   def report_stop(_server, reason) when reason in [:normal, :shutdown], do: :ok
   def report_stop(_server, {:shutdown, _}), do: :ok
   def report_stop(server, reason) do
-    stopped_on = DateTime.now!("Europe/London") |> Calendar.strftime("%Y-%m-%d %H:%M:%S")
+    # This runs from terminate/2, so it must not crash if the database is
+    # unreachable; fall back to UTC.
+    now =
+      try do
+        Oas.Settings.now()
+      rescue
+        _ -> DateTime.utc_now()
+      end
+
+    stopped_on = now |> Calendar.strftime("%Y-%m-%d %H:%M:%S")
     Logger.error("Gocardless #{inspect(server)} stopped: #{format_exit_reason(reason)}")
 
     send_warning(:gocardless_stopped, "Gocardless #{inspect(server)} stopped on #{stopped_on}: #{format_exit_reason(reason)}")
@@ -194,7 +207,7 @@ defmodule Oas.Gocardless do
   # Oas.Gocardless.delete_requisitions()
   def delete_requisitions() do
     {:ok, access_token} = GenServer.call(Oas.Gocardless.AuthServer, :get_access_token)
-    requisition_id = from(cc in Oas.Config.Config, select: cc.gocardless_requisition_id) |> Oas.Repo.one()
+    requisition_id = Oas.Settings.get_config_value(:gocardless_requisition_id)
 
     {:ok, 200, _headers, client} = :hackney.request(
       :delete,

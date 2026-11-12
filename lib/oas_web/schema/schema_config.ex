@@ -1,4 +1,3 @@
-  import Ecto.Query, only: [from: 2]
 defmodule OasWeb.Schema.SchemaConfig do
   use Absinthe.Schema.Notation
 
@@ -14,14 +13,29 @@ defmodule OasWeb.Schema.SchemaConfig do
     field :temporary_trainings, :integer
     field :bacs, :string
     field :content, :string
+    field :membership_terms, :string
     field :enable_booking, :boolean
     field :name, :string
     field :gocardless_enabled, :boolean
     field :gocardless_id, :string
     field :gocardless_key, :string
     field :gocardless_account_id, :string
+    field :bank_country, :string
     field :credits, :boolean
     field :backup_recipient, :string
+    field :short_name, :string
+    field :contact_email, :string
+    field :time_zone, :string
+    field :currency, :string
+    field :phone_country_code, :string
+    field :logo_url, :string
+    field :primary_color, :string
+    field :public_site_title, :string
+  end
+
+  object :send_test_email_result do
+    field :success, :boolean
+    field :error, :string
   end
 
   object :config_llm do
@@ -30,10 +44,20 @@ defmodule OasWeb.Schema.SchemaConfig do
     field :context, :string
   end
 
+  # Public (unauthenticated) view of the settings row. contact_email and
+  # phone_country_code stay admin-only.
   object :public_config_config do
     field :enable_booking, :boolean
     field :content, :string
+    field :membership_terms, :string
     field :credits, :boolean
+    field :name, :string
+    field :short_name, :string
+    field :time_zone, :string
+    field :currency, :string
+    field :logo_url, :string
+    field :primary_color, :string
+    field :public_site_title, :string
   end
 
   object :public_config_llm do
@@ -50,49 +74,41 @@ defmodule OasWeb.Schema.SchemaConfig do
     field :config_token, :config_token do
       arg :token_quantity, non_null(:integer)
       resolve fn _, %{token_quantity: token_quantity}, _ ->
-        result = from(ct in Oas.Config.Tokens, where: ct.quantity <= ^token_quantity, order_by: [desc: ct.quantity], limit: 1)
-          |> Oas.Repo.one
+        result = Oas.Settings.get_token_for_quantity(token_quantity)
         {:ok, result}
       end
     end
     field :config_tokens, list_of(:config_token) do
       resolve fn _, _, _ ->
-        results = from(ct in Oas.Config.Tokens, select: ct, order_by: [asc: ct.quantity])
-          |> Oas.Repo.all
+        results = Oas.Settings.list_tokens()
 
         {:ok, results}
       end
     end
     field :config_config, :config_config do
       resolve fn _, _, _ ->
-        result = from(cc in Oas.Config.Config, select: cc)
-          |> Oas.Repo.one
+        result = Oas.Settings.get_config()
 
         {:ok, result}
       end
     end
     field :public_config_config, :public_config_config do
       resolve fn _, _, _ ->
-        result = from(cc in Oas.Config.Config, select: cc)
-          |> Oas.Repo.one
+        result = Oas.Settings.get_config()
 
         {:ok, result}
       end
     end
     field :public_config_llm, :public_config_llm do
       resolve fn _, _, _ ->
-        result = from(cc in Oas.Config.ConfigLlm, select: cc)
-          |> Oas.Repo.one
+        result = Oas.Settings.get_llm()
 
         {:ok, result}
       end
     end
     field :config_llm, :config_llm do
       resolve fn _, _, _ ->
-        result = from(cl in Oas.Config.ConfigLlm,
-          select: cl
-        )
-        |> Oas.Repo.one()
+        result = Oas.Settings.get_llm()
         {:ok, result}
       end
     end
@@ -103,17 +119,14 @@ defmodule OasWeb.Schema.SchemaConfig do
       arg :quantity, non_null(:integer)
       arg :value, non_null(:string)
       resolve fn _, args, _ ->
-        %Oas.Config.Tokens{}
-        |> Ecto.Changeset.cast(args, [:quantity, :value])
-        |> Oas.Repo.insert
+        Oas.Settings.create_token(args)
         |> OasWeb.Schema.SchemaUtils.handle_error
       end
     end
     field :delete_config_token, :success do
       arg :id, non_null(:integer)
       resolve fn _, %{id: id}, _ ->
-        Oas.Repo.get!(Oas.Config.Tokens, id) |>
-          Oas.Repo.delete!
+        Oas.Settings.delete_token!(id)
 
         {:ok, %{success: true}}
       end
@@ -130,18 +143,24 @@ defmodule OasWeb.Schema.SchemaConfig do
       # arg :gocardless_account_id, :string
       arg :credits, :boolean
       arg :backup_recipient, :string
+      arg :short_name, :string
+      arg :contact_email, :string
+      arg :time_zone, :string
+      arg :currency, :string
+      arg :phone_country_code, :string
+      arg :logo_url, :string
+      arg :primary_color, :string
+      arg :public_site_title, :string
       resolve fn _, args, _ ->
 
-        result = from(cc in Oas.Config.Config, select: cc)
-        |> Oas.Repo.one
-        |> Ecto.Changeset.cast(args, [
+        result = Oas.Settings.update_config(args, [
           :token_expiry_days, :temporary_trainings,
           :enable_booking, :name,
           # :gocardless_id, :gocardless_key, :gocardless_account_id,
-          :credits, :backup_recipient
+          :credits, :backup_recipient,
+          :short_name, :contact_email, :time_zone, :currency,
+          :phone_country_code, :logo_url, :primary_color, :public_site_title
         ], empty_values: [[], ""])
-        |> Ecto.Changeset.validate_format(:backup_recipient, ~r/@/)
-        |> Oas.Repo.update
         |> OasWeb.Schema.SchemaUtils.handle_error
 
         result
@@ -150,13 +169,11 @@ defmodule OasWeb.Schema.SchemaConfig do
     field :save_config_content, :config_config do
       arg :bacs, non_null(:string)
       arg :content, non_null(:string)
+      arg :membership_terms, :string
       resolve fn _, args, _ ->
-        result = from(cc in Oas.Config.Config, select: cc)
-        |> Oas.Repo.one
-        |> Ecto.Changeset.cast(args, [
-          :bacs, :content
+        result = Oas.Settings.update_config(args, [
+          :bacs, :content, :membership_terms
         ], empty_values: [[], ""])
-        |> Oas.Repo.update
         |> OasWeb.Schema.SchemaUtils.handle_error
 
         result
@@ -167,18 +184,27 @@ defmodule OasWeb.Schema.SchemaConfig do
       arg :gocardless_id, :string
       arg :gocardless_key, :string
       arg :gocardless_account_id, :string
+      arg :bank_country, :string
       resolve fn _, args, _ ->
-        result = from(cc in Oas.Config.Config, select: cc)
-        |> Oas.Repo.one
-        |> Ecto.Changeset.cast(args, [
-          :gocardless_enabled, :gocardless_id, :gocardless_key, :gocardless_account_id
+        result = Oas.Settings.update_config(args, [
+          :gocardless_enabled, :gocardless_id, :gocardless_key, :gocardless_account_id,
+          :bank_country
         ], empty_values: [[], ""])
-        |> Oas.Repo.update
         |> OasWeb.Schema.SchemaUtils.handle_error
 
         Oas.Gocardless.Supervisor.restart()
 
         result
+      end
+    end
+
+    # Sends the same email as Oas.testEmail/1, so an admin can check the mail
+    # settings work. A failed send comes back as success: false with the
+    # mailer's error text rather than as a GraphQL error.
+    field :send_test_email, :send_test_email_result do
+      arg :to, non_null(:string)
+      resolve fn _, %{to: to}, _ ->
+        {:ok, send_test_email(String.trim(to))}
       end
     end
 
@@ -202,14 +228,11 @@ defmodule OasWeb.Schema.SchemaConfig do
       arg :llm_enabled, non_null(:boolean)
       arg :context, non_null(:string)
       resolve fn _, %{context: context, chat_enabled: chat_enabled, llm_enabled: llm_enabled}, _ ->
-        result = from(cl in Oas.Config.ConfigLlm, select: cl)
-        |> Oas.Repo.one()
-        |> Ecto.Changeset.cast(%{
+        result = Oas.Settings.update_llm(%{
           context: context,
           chat_enabled: chat_enabled,
           llm_enabled: llm_enabled
         }, [:context, :chat_enabled, :llm_enabled], empty_values: [])
-        |> Oas.Repo.update
         |> OasWeb.Schema.SchemaUtils.handle_error()
 
         result
@@ -264,4 +287,20 @@ defmodule OasWeb.Schema.SchemaConfig do
     # })
     Oas.Gocardless.delete_warning(:gocardless_get_accounts)
   end
+
+  def send_test_email(""), do: %{success: false, error: "Enter an email address"}
+
+  def send_test_email(to) do
+    case Oas.testEmail(to) do
+      {:ok, _email} -> %{success: true, error: nil}
+      {:error, reason} -> %{success: false, error: error_text(reason)}
+      other -> %{success: false, error: error_text(other)}
+    end
+  rescue
+    e -> %{success: false, error: Exception.message(e)}
+  end
+
+  defp error_text(reason) when is_binary(reason), do: reason
+  defp error_text(%{__exception__: true} = e), do: Exception.message(e)
+  defp error_text(reason), do: inspect(reason)
 end

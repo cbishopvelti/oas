@@ -63,4 +63,17 @@ defmodule Oas.Transactions.Transaction do
     |> validate_amount
     |> validate_who_id
   end
+
+  @doc """
+  Changeset for saving a transaction with its tags and credit, as the admin
+  "transaction" mutation does. `args` uses the mutation's argument names;
+  `args.credit` (`%{amount: float}`) attaches a credit to `who_member_id`,
+  and leaving it out removes any existing credit.
+  """
+  def save_changeset(transaction, args) do
+    transaction
+    |> changeset(args)
+    |> Oas.Transactions.TransactionTags.doTransactionTags(args)
+    |> Oas.Credits.Credit.doCredit(Map.get(args, :credit, nil))
+  end
 end

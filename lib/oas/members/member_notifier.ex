@@ -1,20 +1,7 @@
 defmodule Oas.Members.MemberNotifier do
-  import Swoosh.Email
-
-  alias Oas.Mailer
-
-  # Delivers the email using the application mailer.
+  # Member account mail goes through Oas.Mailer (the Oas.Mail default).
   def deliver(recipient, subject, body) do
-    email =
-      new()
-      |> to(recipient)
-      |> from({"Oas", "chris@oxfordshireacrosociety.co.uk"})
-      |> subject(subject)
-      |> text_body(body)
-
-    with {:ok, _metadata} <- Mailer.deliver(email) do
-      {:ok, email}
-    end
+    Oas.Mail.deliver(recipient, subject, body)
   end
 
   @doc """

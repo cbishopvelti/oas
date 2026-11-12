@@ -19,7 +19,8 @@ import Cookies from "js-cookie";
 import * as AbsintheSocket from "@absinthe/socket";
 import { createAbsintheSocketLink } from "@absinthe/socket-apollo-link";
 import { LlmHistory } from './Llm/LlmHistory';
-import { Sjef2026 } from './Static/Sjef2026';
+import { publicUrl, serverUrl } from './config';
+import { SocietyProvider } from './Society/SocietyProvider';
 
 const router = createBrowserRouter([
   {
@@ -65,20 +66,15 @@ const router = createBrowserRouter([
         id: "llm-history",
         path: "llm-history",
         element: <LlmHistory />
-      },
-      {
-        id: "sjef2026",
-        path: "sjef-2026",
-        element: <Sjef2026 />
       }
     ],
   },
 ]);
 
 const httpLink = new HttpLink({
-  uri: `${process.env["REACT_APP_PUBLIC_URL"]}/api/graphql`
+  uri: `${publicUrl}/api/graphql`
 });
-const phoenixSocket = new PhoenixSocket(`${process.env["REACT_APP_SERVER_URL"].replace(/^http/, "ws")}/socket`, {
+const phoenixSocket = new PhoenixSocket(`${serverUrl.replace(/^http/, "ws")}/socket`, {
   reconnectAfterMs: (() => 120_000),
 	rejoinAfterMs: (() => 120_000),
   params: () => {
@@ -108,7 +104,7 @@ const theLink = split(
 )
 
 const client = new ApolloClient({
-  // uri: `${process.env["REACT_APP_PUBLIC_URL"]}/api/graphql`,
+  // uri: `${publicUrl}/api/graphql`,
   cache: new InMemoryCache({
     typePolicies: {
       Query: {
@@ -127,9 +123,11 @@ const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
     <ApolloProvider client={client}>
-      <RouterProvider router={router}>
-        <App />
-      </RouterProvider>
+      <SocietyProvider>
+        <RouterProvider router={router}>
+          <App />
+        </RouterProvider>
+      </SocietyProvider>
     </ApolloProvider>
   </React.StrictMode>
 );

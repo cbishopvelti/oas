@@ -55,14 +55,13 @@ defmodule Oas.Trainings.TrainingWhereTime do
     end
   end
 
-  @time_zone "Europe/London"
-
-  # Training dates/times are wall-clock London times, timestamps are naive UTC
+  # Training dates/times are wall-clock times in the society's time zone
+  # (Oas.Settings.time_zone/0), timestamps are naive UTC
   defp to_utc(%NaiveDateTime{} = naive), do: DateTime.from_naive!(naive, "Etc/UTC")
   defp to_utc(%DateTime{} = dt), do: DateTime.shift_zone!(dt, "Etc/UTC")
 
   defp local_to_utc(date, time) do
-    case DateTime.new(date, time, @time_zone) do
+    case DateTime.new(date, time, Oas.Settings.time_zone()) do
       {:ok, dt} -> dt
       {:ambiguous, first, _second} -> first
       {:gap, _just_before, just_after} -> just_after
@@ -71,10 +70,10 @@ defmodule Oas.Trainings.TrainingWhereTime do
   end
 
   def local_date(datetime) do
-    datetime |> to_utc() |> DateTime.shift_zone!(@time_zone) |> DateTime.to_date()
+    datetime |> to_utc() |> DateTime.shift_zone!(Oas.Settings.time_zone()) |> DateTime.to_date()
   end
 
-  def local_today(), do: local_date(DateTime.utc_now())
+  def local_today(), do: Oas.Settings.today()
 
   def get_booking_cutoff_2(training, training_where_time) do
     training_where_time = training_where_time || %{}

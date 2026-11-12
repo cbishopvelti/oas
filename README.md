@@ -45,9 +45,24 @@ Start the public ui ```cd oas-web-public && npm run start && cd ../```
 To setup an admin user, register through the UI then reset your password. In the dev environment, the reset email will be available at /dev/mailbox.
 Open the sqlite database manually and set is_admin to true for that user.
 
+### Checking a build is not tied to one society
+
+One build of each app has to serve any society, so nothing Oxfordshire-specific may end up in the bundles. To check:
+
+```
+scripts/check-no-oxfordshire.sh
+```
+
+It builds `oas-web` and `oas-web-public` once each (running `npm ci` first if `node_modules` is missing), then fails if any text file in either `build/` folder contains "oxfordshire" in any case, and prints where it was found. Pass `--skip-build` to only search existing builds.
+
+The server side is covered by `test/oas_web/another_society_test.exs`, which runs as a made-up society and checks `/api/config.js`, the log in page, the landing page and the `public_config_config` query all show that society and never mention Oxfordshire.
+
 ### Deployment
 
-see [README_v2_prod.md](README_v2_prod.md)
+To build, run, set up or look after a society's server, see the
+[operator guide](docs/operator-guide.md).
+
+Older notes: [README_v3.md](README_v3.md), [README_v2_prod.md](README_v2_prod.md)
 
 ### Lisence
 

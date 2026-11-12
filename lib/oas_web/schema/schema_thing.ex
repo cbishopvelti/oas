@@ -116,7 +116,7 @@ defmodule OasWeb.Schema.SchemaThing do
       arg :who_member_id, non_null(:integer)
       resolve fn _, %{id: id, who_member_id: who_member_id}, _ ->
         thing = Oas.Repo.get(Oas.Things.Thing, id)
-        now = Date.utc_today()
+        now = Oas.Settings.today()
 
         %Oas.Credits.Credit{}
         |> Ecto.Changeset.cast(%{

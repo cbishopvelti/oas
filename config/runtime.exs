@@ -1,87 +1,150 @@
 import Config
 
-# config/runtime.exs is executed for all environments, including
-# during releases. It is executed after compilation and before the
-# system starts, so it is typically used to load production configuration
-# and secrets from environment variables or elsewhere. Do not define
-# any compile-time configuration in here, as it won't be applied.
-# The block below contains prod specific runtime configuration.
-
+# config/runtime.exs runs at start-up, after the compile-time config files
+# (config.exs and the env file it imports, e.g. v2_prod.exs or v3_staging.exs).
+#
+# Every setting below can be overridden with an environment variable:
+#   * a variable that is set (and not empty) replaces the value from the file
+#   * a variable that is unset or empty leaves the file's value alone
+#
+# So with no variables set, behaviour is exactly as before. See .env.example
+# for the full list. At start-up Oas.Application logs which settings came from
+# the environment and which came from the file (names only, never values).
 
 # Start the phoenix server if environment is set and running in a release
 if System.get_env("PHX_SERVER") && System.get_env("RELEASE_NAME") do
   config :oas, OasWeb.Endpoint, server: true
 end
 
+if config_env() != :test do
+  read_env = fn name ->
+    case System.get_env(name) do
+      nil -> nil
+      "" -> nil
+      value -> value
+    end
+  end
 
-if config_env() == :prod and false do
-  database_url =
-    System.get_env("DATABASE_URL") ||
-      raise """
-      environment variable DATABASE_URL is missing.
-      For example: ecto://USER:PASS@HOST/DATABASE
-      """
+  to_int = fn name, value ->
+    case Integer.parse(value) do
+      {int, ""} -> int
+      _ -> raise "environment variable #{name} must be a whole number, got: #{inspect(value)}"
+    end
+  end
 
-  maybe_ipv6 = if System.get_env("ECTO_IPV6"), do: [:inet6], else: []
+  mailers = [Oas.Mailer, Oas.TokenMailer]
 
-  config :oas, Oas.Repo,
-    # ssl: true,
-    url: database_url,
-    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
-    socket_options: maybe_ipv6
+  mail_adapter = fn v ->
+    case v do
+      "smtp" -> Swoosh.Adapters.SMTP
+      "local" -> Swoosh.Adapters.Local
+      _ -> raise "environment variable MAIL_ADAPTER must be smtp or local, got: #{inspect(v)}"
+    end
+  end
 
-  # The secret key base is used to sign/encrypt cookies and other secrets.
-  # A default value is used in config/dev.exs and config/test.exs but you
-  # want to use a different value for prod and you most likely don't want
-  # to check this value into version control, so we use an environment
-  # variable instead.
-  secret_key_base =
-    System.get_env("SECRET_KEY_BASE") ||
-      raise """
-      environment variable SECRET_KEY_BASE is missing.
-      You can generate one by calling: mix phx.gen.secret
-      """
+  smtp_tls = fn v ->
+    case v do
+      "always" -> :always
+      "if_available" -> :if_available
+      "never" -> :never
+      _ -> raise "environment variable SMTP_TLS must be always, if_available or never, got: #{inspect(v)}"
+    end
+  end
 
-  host = System.get_env("PHX_HOST") || "example.com"
-  port = String.to_integer(System.get_env("PORT") || "4000")
+  backup_time = fn v ->
+    with [h, m] <- String.split(v, ":"),
+         true <- String.length(m) == 2,
+         {hour, ""} when hour in 0..23 <- Integer.parse(h),
+         {minute, ""} when minute in 0..59 <- Integer.parse(m) do
+      {hour, minute}
+    else
+      _ -> raise "environment variable BACKUP_TIME must be HH:MM (24 hour), got: #{inspect(v)}"
+    end
+  end
 
-  config :oas, OasWeb.Endpoint,
-    url: [host: host, port: 443],
-    http: [
-      # Enable IPv6 and bind on all interfaces.
-      # Set it to  {0, 0, 0, 0, 0, 0, 0, 1} for local network only access.
-      # See the documentation on https://hexdocs.pm/plug_cowboy/Plug.Cowboy.html
-      # for details about using IPv6 vs IPv4 and loopback vs public addresses.
-      ip: {0, 0, 0, 0, 0, 0, 0, 0},
-      port: port
-    ],
-    secret_key_base: secret_key_base
+  # {env var, function that applies its value}
+  overrides = [
+    {"DB_FILE", fn v -> config :oas, Oas.Repo, database: v end},
+    {"DB_BACKUP_PATH", fn v -> config :oas, Oas.Repo, backup_database: v end},
+    {"SECRET_KEY_BASE", fn v -> config :oas, OasWeb.Endpoint, secret_key_base: v end},
+    {"PHX_HOST", fn v -> config :oas, OasWeb.Endpoint, url: [host: v] end},
+    {"PORT", fn v -> config :oas, OasWeb.Endpoint, http: [port: to_int.("PORT", v)] end},
+    # Cookie domain for the session and remember-me cookies, read at runtime.
+    {"DOMAIN", fn v -> config :oas, OasWeb.Endpoint, domain: v end},
+    {"ADMIN_URL", fn v -> config :oas, app_url: v end},
+    {"PUBLIC_URL", fn v -> config :oas, public_url: v end},
+    {"MAIL_ADAPTER",
+     fn v ->
+       adapter = mail_adapter.(v)
+       for m <- mailers, do: config(:oas, m, adapter: adapter)
+     end},
+    {"SMTP_RELAY", fn v -> for m <- mailers, do: config(:oas, m, relay: v) end},
+    {"SMTP_PORT",
+     fn v ->
+       port = to_int.("SMTP_PORT", v)
+       for m <- mailers, do: config(:oas, m, port: port)
+     end},
+    {"SMTP_USERNAME", fn v -> for m <- mailers, do: config(:oas, m, username: v) end},
+    {"SMTP_PASSWORD", fn v -> for m <- mailers, do: config(:oas, m, password: v) end},
+    {"SMTP_TLS",
+     fn v ->
+       tls = smtp_tls.(v)
+       for m <- mailers, do: config(:oas, m, tls: tls)
+     end},
+    {"MAIL_FROM_ADDRESS",
+     fn v ->
+       name = read_env.("MAIL_FROM_NAME") || "OAS"
+       config :oas, Oas.TokenMailer, from: {name, v}
+     end},
+    # Wins over the society name as the From name (see Oas.Mail).
+    {"MAIL_FROM_NAME", fn v -> config :oas, mail_from_name: v end},
+    {"LLM_STUDIO_URL", fn v -> config :oas, llm_sudio_url: v end},
+    {"LLM_MODEL", fn v -> config :oas, llm_model: v end},
+    {"GOCARDLESS_BACKUP_DIR", fn v -> config :oas, gocardless_backup_dir: v end},
+    # Local time (society time zone) of the daily backup. See Oas.BackupJob.
+    {"BACKUP_TIME", fn v -> config :oas, backup_time: backup_time.(v) end},
+    # Days to keep backups on disk; 0 never deletes. See Oas.BackupJob.
+    {"BACKUP_KEEP_DAYS",
+     fn v ->
+       days = to_int.("BACKUP_KEEP_DAYS", v)
 
-  # ## Using releases
-  #
-  # If you are doing OTP releases, you need to instruct Phoenix
-  # to start each relevant endpoint:
-  #
-  #     config :oas, OasWeb.Endpoint, server: true
-  #
-  # Then you can assemble a release by calling `mix release`.
-  # See `mix help release` for more information.
+       if days < 0 do
+         raise "environment variable BACKUP_KEEP_DAYS must be 0 or more, got: #{inspect(v)}"
+       end
 
-  # ## Configuring the mailer
-  #
-  # In production you need to configure the mailer to use a different adapter.
-  # Also, you may need to configure the Swoosh API client of your choice if you
-  # are not using SMTP. Here is an example of the configuration:
-  #
-      #  config :oas, Oas.Mailer,
-      #    adapter: Swoosh.Adapters.Mailgun,
-      #    api_key: System.get_env("MAILGUN_API_KEY"),
-      #    domain: System.get_env("MAILGUN_DOMAIN")
-  #
-  # For this example you need include a HTTP client required by Swoosh API client.
-  # Swoosh supports Hackney and Finch out of the box:
-  #
-  #     config :swoosh, :api_client, Swoosh.ApiClient.Hackney
-  #
-  # See https://hexdocs.pm/swoosh/Swoosh.html#module-installation for details.
+       config :oas, backup_keep_days: days
+     end}
+  ]
+
+  if read_env.("MAIL_FROM_NAME") && !read_env.("MAIL_FROM_ADDRESS") do
+    raise "MAIL_FROM_NAME is set but MAIL_FROM_ADDRESS is not. Set both, or only MAIL_FROM_ADDRESS."
+  end
+
+  {from_env, from_file} =
+    Enum.reduce(overrides, {[], []}, fn {name, apply}, {env_acc, file_acc} ->
+      case read_env.(name) do
+        nil ->
+          {env_acc, [name | file_acc]}
+
+        value ->
+          apply.(value)
+          {[name | env_acc], file_acc}
+      end
+    end)
+
+  # Browser origins (CORS and socket check_origin). Outside dev, only ADMIN_URL,
+  # PUBLIC_URL and the server's own host are allowed; see OasWeb.Origins.
+  # ALLOW_ANY_ORIGIN=true turns this off (escape hatch, not for normal use).
+  allow_any_origin = read_env.("ALLOW_ANY_ORIGIN") == "true"
+
+  if config_env() not in [:dev, :dev_mac] and not allow_any_origin do
+    config :oas, :restrict_origins, true
+    config :oas, OasWeb.Endpoint, check_origin: {OasWeb.Origins, :socket_allowed?, []}
+  end
+
+  from_env = if allow_any_origin, do: from_env ++ ["ALLOW_ANY_ORIGIN"], else: from_env
+
+  config :oas, :config_sources,
+    from_env: Enum.reverse(from_env),
+    from_file: Enum.reverse(from_file)
 end

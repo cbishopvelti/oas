@@ -1,5 +1,3 @@
-import Ecto.Query, only: [from: 2]
-
 defmodule Oas.Llm.LangChainLlm do
   alias LangChain.MessageDelta
   alias LangChain.Message
@@ -72,18 +70,20 @@ defmodule Oas.Llm.LangChainLlm do
           ChatOpenAI.new!(%{
             # endpoint: "http://localhost:1234/v1/chat/completions",
             endpoint: Application.fetch_env!(:oas, :llm_sudio_url),
-            # model: "qwen/qwen3-4b-2507",
-            # model: "qwen/qwen3-8b",
-            model: "qwen/qwen3-14b",
+            # Set with LLM_MODEL (default "qwen/qwen3-14b", see config.exs).
+            model: Application.get_env(:oas, :llm_model, "qwen/qwen3-14b"),
             stream: true
           }),
         custom_context: %{
           member: init_args.member
         }
       })
-      |> LLMChain.add_message(Message.new_system!("Todays date: #{Date.utc_today()} and today is #{Date.day_of_week(Date.utc_today()) |> day_name}"))
       |> then(fn chain ->
-        case Oas.Repo.one!(from c in Oas.Config.ConfigLlm, select: c.context) do
+        today = Oas.Settings.today()
+        LLMChain.add_message(chain, Message.new_system!("Todays date: #{today} and today is #{Date.day_of_week(today) |> day_name}"))
+      end)
+      |> then(fn chain ->
+        case Oas.Settings.get_llm!().context do
           "" -> chain
           ctx -> LLMChain.add_message(chain, Message.new_system!(ctx))
         end

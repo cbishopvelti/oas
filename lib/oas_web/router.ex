@@ -13,6 +13,7 @@ defmodule OasWeb.Router do
     plug :put_secure_browser_headers
     plug :fetch_current_member
     plug :callback_path_plug
+    plug OasWeb.SocietyBranding
   end
 
   pipeline :api do
@@ -26,10 +27,15 @@ defmodule OasWeb.Router do
     get "/book-today", BookTodayController, :index
   end
 
-  # Other scopes may use custom stacks.
-  # scope "/api", OasWeb do
-  #   pipe_through :api
-  # end
+  # Public, no session: liveness/readiness for Docker and monitoring.
+  scope "/", OasWeb do
+    get "/health", HealthController, :show
+  end
+
+  # Public, no session: run-time URLs for the admin and public front ends.
+  scope "/api", OasWeb do
+    get "/config.js", ConfigJsController, :show
+  end
 
   # Enables LiveDashboard only for development
   #

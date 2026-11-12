@@ -1,5 +1,3 @@
-import Ecto.Query, only: [from: 2]
-
 defmodule Oas.Gocardless.TransServer do
   require Logger
   use GenServer, restart: :transient
@@ -13,7 +11,7 @@ defmodule Oas.Gocardless.TransServer do
   @impl true
   def init(_) do
     pid = Process.whereis(Oas.Gocardless.AuthServer)
-    account_id = from(cc in Oas.Config.Config, select: cc.gocardless_account_id) |> Oas.Repo.one()
+    account_id = Oas.Settings.get_config_value(:gocardless_account_id)
     case {pid && Process.alive?(pid), account_id} do
       {true, account_id } when account_id != nil ->
         # IO.puts("alive, start")
@@ -40,8 +38,7 @@ defmodule Oas.Gocardless.TransServer do
 
     case Oas.Gocardless.Transactions.process_transacitons() do
       {:ok, _headers} ->
-        london_dt = DateTime.now!("Europe/London")
-        local_time = DateTime.to_time(london_dt)
+        local_time = Oas.Settings.now() |> DateTime.to_time()
         rerun_in_ms_9 = Time.diff(Time.from_iso8601!("09:30:00"), local_time, :millisecond)
         |> Integer.mod(
            86_400_000
@@ -52,7 +49,7 @@ defmodule Oas.Gocardless.TransServer do
         {:noreply,
           state
           |> Map.put(:timer_ref, timer_ref)
-          |> Map.put(:success_on, DateTime.now!("Europe/London"))
+          |> Map.put(:success_on, Oas.Settings.now())
           |> Map.delete(:failed_on)
         }
       {:to_many_requests, headers} ->
@@ -73,7 +70,7 @@ defmodule Oas.Gocardless.TransServer do
         {:noreply,
           state
           |> Map.put(:timer_ref, timer_ref)
-          |> Map.put(:failed_on, DateTime.now!("Europe/London"))
+          |> Map.put(:failed_on, Oas.Settings.now())
         }
       {:unauth_401, error} ->
         Logger.error("Gocardless unathenticated #{error}")

@@ -82,7 +82,7 @@ defmodule Oas.Llm.Tools do
     # 1. Start with the base query to get all future trainings.
     base_query =
       from(trai in Oas.Trainings.Training,
-        where: trai.when >= ^Date.utc_today(),
+        where: trai.when >= ^Oas.Settings.today(),
         order_by: [asc: trai.when, desc: trai.id]
       )
 

@@ -13,11 +13,15 @@ defmodule OasWeb.BookTodayController do
   def get_one_training([training], _now) do
     {:ok, training}
   end
+  # `now` is a DateTime in the society's time zone; training start and end
+  # times are wall-clock times there.
   def get_one_training(trainings, now) do
+    now = DateTime.to_time(now)
+
     distances = Enum.flat_map(trainings, fn (%{start_time: start_time, end_time: end_time} = training) ->
       [
-        (if !is_nil(start_time), do: {DateTime.diff(now, start_time) |> abs(), training}, else: nil),
-        (if !is_nil(end_time), do: {DateTime.diff(now, end_time) |> abs(), training}, else: nil)
+        (if !is_nil(start_time), do: {Time.diff(now, start_time) |> abs(), training}, else: nil),
+        (if !is_nil(end_time), do: {Time.diff(now, end_time) |> abs(), training}, else: nil)
       ]
     end)
     |> Enum.filter(fn nil -> false
@@ -42,7 +46,7 @@ defmodule OasWeb.BookTodayController do
             end)
             |> Enum.uniq()
             |> Enum.filter(fn %{start_time: start_time, end_time: end_time} ->
-              DateTime.compare(start_time, now) in [:lt, :eq] and DateTime.compare(end_time, now) in [:gt, :eq]
+              Time.compare(start_time, now) in [:lt, :eq] and Time.compare(end_time, now) in [:gt, :eq]
             end)
             case candidates do
               [one] -> {:ok, one}
@@ -54,10 +58,11 @@ defmodule OasWeb.BookTodayController do
 
   def index(conn, _params) do
 
-    now = NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second)
+    now = Oas.Settings.now()
+    today = DateTime.to_date(now)
 
     trainings = from(t in Oas.Trainings.Training,
-      where: t.when == ^now
+      where: t.when == ^today
     ) |> Oas.Repo.all()
 
     {status, training} = get_one_training(trainings, now)

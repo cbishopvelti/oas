@@ -23,7 +23,7 @@ defmodule Oas.TokenMailer do
       [_firstAttendance, %{token: nil, training: %{when: when1}}] when when1 > lastTransaction.when  ->
         nil
       _ ->
-        config = from(c in Oas.Config.Config, limit: 1) |> Oas.Repo.one!()
+        config = Oas.Settings.get_config!()
         case config.credits do
           true -> nil #TODO
           false -> maybe_send_warnings_email_2(member)
@@ -56,7 +56,7 @@ defmodule Oas.TokenMailer do
     case (warnings) do
       [] -> nil
       warnings ->
-        config = from(cc in Oas.Config.Config, select: cc) |> Oas.Repo.one
+        config = Oas.Settings.get_config()
         Oas.Tokens.TokenNotifier.deliver(member.email, "#{config.name} notification",
         """
         Hi #{member.name}
@@ -107,7 +107,7 @@ defmodule Oas.TokenMailer do
     end
   end
   def send_credits_warning(_member, last_transaction) do
-    # config = from(cc in Oas.Config.Config, select: cc) |> Oas.Repo.one
+    # config = Oas.Settings.get_config()
 
     # last_two_cerdits = from(c from Oas.Credits.Credit,
     #   where: c.member_id == ^member.id and amount < 0
@@ -147,7 +147,7 @@ defmodule Oas.TokenMailer do
   # EO booking warning
 
   def warning_email(member, %{attendance: attendance} \\ %{attendance: nil}) do
-    config = from(cc in Oas.Config.Config, select: cc) |> Oas.Repo.one
+    config = Oas.Settings.get_config()
 
     items = maybe_send_credits_warning(member) ++
     case attendance do

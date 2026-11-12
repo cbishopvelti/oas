@@ -25,6 +25,7 @@ import DownloadIcon from '@mui/icons-material/Download';
 import TollIcon from '@mui/icons-material/Toll'
 import { unparse } from 'papaparse'
 import { useState } from '../utils/useState';
+import { ImportMembers } from './ImportMembers';
 
 export const DeleteMember = ({ refetch }) => {
   const [mutation] = useMutation(gql`
@@ -196,6 +197,7 @@ export const Members = () => {
         }}>
           <DownloadIcon />
         </IconButton>
+        <ImportMembers onImported={refetch} />
       </FormControl>
     </Box>
     <MembersDisplay showStatus={true} data={members} ExtraActions={DeleteMember({refetch})} />

@@ -20,15 +20,9 @@ defmodule Oas do
     Oas.Repo.insert(toSave)
   end
 
-  def testEmail do
-    email = Swoosh.Email.new()
-    |> Swoosh.Email.to({"chris", "chrisjbishop155@hotmail.com"})
-    |> Swoosh.Email.from({"chris", "chris@oxfordshireacrosociety.co.uk"})
-    |> Swoosh.Email.subject("OAS test")
-    # |> Swoosh.Email.html_body("<h1>Hello World</h1>")
-    |> Swoosh.Email.text_body("Hello World\n")
-
-    Oas.Mailer.deliver(email)
+  # Oas.testEmail("someone@example.com")
+  def testEmail(recipient) do
+    Oas.Mail.deliver(recipient, "#{Oas.Settings.society_name()} test", "Hello World\n")
   end
 
 end

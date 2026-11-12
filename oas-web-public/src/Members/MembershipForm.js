@@ -12,7 +12,7 @@ import {
   FormHelperText
 } from "@mui/material"
 import { get, setWith, clone, find, snakeCase, has, startsWith } from 'lodash'
-import { useMutation, gql} from '@apollo/client'
+import { useMutation, useQuery, gql} from '@apollo/client'
 import { useNavigate, generatePath, createSearchParams, useOutletContext } from 'react-router-dom'
 import moment from 'moment';
 
@@ -68,6 +68,15 @@ export const MembershipForm = () => {
   const [disableLocalStorageUntil, setDisableLocalStorageUntil] = useState(
     localStorage.getItem("disable_registration_until") ? moment(localStorage.getItem("disable_registration_until")) : false
   )
+
+  const { data: configData } = useQuery(gql`
+    query {
+      public_config_config {
+        membership_terms
+      }
+    }
+  `)
+  const membershipTerms = get(configData, "public_config_config.membership_terms")
 
   const [mutation, { error }] = useMutation(gql`
     mutation ($name: String!, $email: String!, $password: String, $member_details: MemberDetailsArg!) {
@@ -246,19 +255,7 @@ export const MembershipForm = () => {
       />
     </FormControl>
 
-    <div>
-
-      <h3>Agreement of Release and Waiver of Liability</h3>
-      <p>
-        The constitution: <a href="https://drive.google.com/file/d/1g2blgY6CL9IMuXT-8EJzvLMQTaiIGt2p/view">https://drive.google.com/file/d/1g2blgY6CL9IMuXT-8EJzvLMQTaiIGt2p/view?usp=sharing</a><br />
-        <br/>
-        By agreeing to the membership form<br/>
-        - you recognize that insurance is in the responsibility of the participant and that you have an adequate accident insurance.<br/>
-        - you agree that acrobatics require physical exertion that may be strenuous and may cause physical injury, and that you're fully aware of the risks and hazards involved.<br/>
-        - you verify, and warrant that you're physically fit and that you have no medical condition that would prevent your full participation in this workshop.<br/>
-        - you knowingly, voluntarily and expressly waive any claim you may have against by the organisers, for injury or damages that you may sustain as a result of participating in jams organised by the society.<br/>
-      </p>
-    </div>
+    {membershipTerms && <div dangerouslySetInnerHTML={{ __html: membershipTerms }} />}
     <FormControl>
 
         <FormControlLabel

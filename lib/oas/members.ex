@@ -81,6 +81,19 @@ defmodule Oas.Members do
   end
 
   @doc """
+  Changeset for a member created by an admin (the admin "new member" form and
+  the member import). The member gets a random password they never see; they
+  set their own through a reset link.
+  """
+  def new_member_changeset(attrs, opts \\ []) do
+    length = 12
+    password = :crypto.strong_rand_bytes(length) |> Base.encode64() |> binary_part(0, length)
+
+    %Member{}
+    |> Member.registration_changeset(Map.merge(%{password: password}, attrs), opts)
+  end
+
+  @doc """
   Returns an `%Ecto.Changeset{}` for tracking member changes.
 
   ## Examples

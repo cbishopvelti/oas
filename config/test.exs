@@ -26,6 +26,9 @@ config :oas, OasWeb.Endpoint,
 
 # In test we don't send emails.
 config :oas, Oas.Mailer, adapter: Swoosh.Adapters.Test
+config :oas, Oas.TokenMailer,
+  adapter: Swoosh.Adapters.Test,
+  from: {"OAS", "test@example.com"}
 
 # Print only warnings and errors during test
 config :logger, level: :warning
@@ -34,5 +37,6 @@ config :logger, level: :warning
 config :phoenix, :plug_init_mode, :runtime
 
 config :oas,
+  test_clock: true,
   app_url: "http://localhost:3999",
   public_url: System.get_env("REACT_APP_PUBLIC_URL") || "http://localhost:3998"

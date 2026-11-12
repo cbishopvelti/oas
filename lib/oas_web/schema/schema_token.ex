@@ -99,12 +99,12 @@ defmodule OasWeb.Schema.SchemaToken do
           nil ->
             {:error, "Member not found"}
           _ ->
-            config = from(cc in Oas.Config.Config, select: cc) |> Oas.Repo.one
+            config = Oas.Settings.get_config()
             {:ok, String.split(config.bacs || "", "\n", trim: true)}
         end
 
         _, _, %{context: %{current_member: _current_member}} ->
-          config = from(cc in Oas.Config.Config, select: cc) |> Oas.Repo.one
+          config = Oas.Settings.get_config()
           {:ok, String.split(config.bacs || "", "\n", trim: true)}
         _, _, _ ->
           {:error, "Member not found"}
@@ -113,13 +113,9 @@ defmodule OasWeb.Schema.SchemaToken do
 
     field :public_config_tokens, type: :public_config_tokens do
       resolve fn _, _, _ ->
-        token_expiry_days = from(con in Oas.Config.Config,
-          select: con.token_expiry_days
-        ) |> Oas.Repo.one
+        token_expiry_days = Oas.Settings.get_config_value(:token_expiry_days)
 
-        tokens = from(tok in Oas.Config.Tokens,
-          order_by: [asc: tok.quantity]
-        ) |> Oas.Repo.all
+        tokens = Oas.Settings.list_tokens()
 
         last_transaction = from(tra in Oas.Transactions.Transaction,
           select: max(tra.when)

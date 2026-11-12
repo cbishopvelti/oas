@@ -324,6 +324,6 @@ defmodule Oas.Pricing.CalcAttendance do
     (training  |> Map.get(:credit_amount)) ||
     (training_where_time |> Map.get(:credit_amount)) ||
     (training_where |> Map.get(:credit_amount)) ||
-    Oas.Config.Tokens.get_min_token().value
+    Oas.Settings.get_min_token!().value
   end
 end

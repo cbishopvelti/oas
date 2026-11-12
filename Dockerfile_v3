@@ -22,12 +22,9 @@ RUN apt-get install -y tmux
 RUN apt-get install -y inotify-tools
 RUN apt-get install -y nginx
 
-ARG SUBDOMAIN=""
-
-ENV REACT_APP_ADMIN_URL=https://admin${SUBDOMAIN}.oxfordshireacrosociety.co.uk
-ENV REACT_APP_SERVER_URL=https://server${SUBDOMAIN}.oxfordshireacrosociety.co.uk
-ENV REACT_APP_PUBLIC_URL=https://www${SUBDOMAIN}.oxfordshireacrosociety.co.uk
-ENV DOMAIN=${SUBDOMAIN}.oxfordshireacrosociety.co.uk
+# No URLs or domains are baked into the image. The React apps read their URLs
+# from /api/config.js at run time, and the server reads ADMIN_URL, PUBLIC_URL and
+# DOMAIN (cookie domain) at start-up; pass them with -e ... or --env-file.
 
 WORKDIR /app
 COPY . .
@@ -47,6 +44,8 @@ RUN mix local.rebar --force
 ARG MIX_ENV=gcloud
 ENV MIX_ENV=${MIX_ENV}
 RUN mix compile
+# The esbuild watcher is off outside dev, so build the Phoenix JS/CSS once here
+RUN mix esbuild default --minify
 ENV ELIXIR_ERL_OPTIONS="-kernel shell_history enabled"
 
 RUN cp ./nginx/v3_nginx.conf /etc/nginx/nginx.conf
@@ -54,6 +53,10 @@ RUN cp ./nginx/v3_nginx.conf /etc/nginx/nginx.conf
 VOLUME [ "/dbs", "/dbs-backup" ]
 
 EXPOSE 80
+
+# GET /health returns 503 when the database can't be queried.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=120s --retries=3 \
+  CMD curl -fsS "http://localhost:${PORT:-4000}/health" > /dev/null || exit 1
 
 # CMD ["iex"]
 # CMD ["sleep", "86400"]

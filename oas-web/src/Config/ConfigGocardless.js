@@ -11,6 +11,7 @@ import {useEffect, useState} from 'react'
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import {useOutletContext, Link } from 'react-router-dom';
+import { useSociety, formatInTimeZone } from '../Society/SocietyProvider';
 
 const onChange = ({formData, setFormData, key, isCheckbox}) => (event) => {
   if (isCheckbox) {
@@ -46,13 +47,21 @@ export const ConfigGocardless = () => {
         gocardless_id
         gocardless_key
         gocardless_account_id
+        bank_country
       }
       gocardless_accounts {
         id
       }
+      gocardless_trans_status {
+        next_run
+        stopped_reason
+      }
     }
-  `)
+  `, { fetchPolicy: "network-only" })
   const gocardless_accounts = get(gqlData, 'gocardless_accounts', []) || []
+  const { timeZone } = useSociety()
+  const nextRun = get(gqlData, 'gocardless_trans_status.next_run')
+  const stoppedReason = get(gqlData, 'gocardless_trans_status.stopped_reason')
 
   useEffect(() => {
     setFormData(get(gqlData, "config_config", {}))
@@ -63,13 +72,15 @@ export const ConfigGocardless = () => {
       $gocardless_enabled: Boolean!
       $gocardless_id: String,
       $gocardless_key: String,
-      $gocardless_account_id: String
+      $gocardless_account_id: String,
+      $bank_country: String
     ) {
       save_config_gocardless(
         gocardless_enabled: $gocardless_enabled,
         gocardless_id: $gocardless_id,
         gocardless_key: $gocardless_key,
-        gocardless_account_id: $gocardless_account_id
+        gocardless_account_id: $gocardless_account_id,
+        bank_country: $bank_country
       ) {
         id
       }
@@ -100,6 +111,12 @@ export const ConfigGocardless = () => {
           <Alert key={i} sx={{m:2}} severity="error">{message}</Alert>
         ))}
       </Stack>
+
+      {gqlData && get(formData, 'gocardless_enabled') && <Box sx={{ width: '100%', mb: 2 }}>
+        {nextRun
+          ? <>Next import run: {formatInTimeZone(nextRun, timeZone)}</>
+          : <span style={{ color: "red" }}>No import scheduled{stoppedReason ? `: ${stoppedReason}` : ''}</span>}
+      </Box>}
 
       <FormControl fullWidth sx={{mb: 2}}>
         <FormControlLabel
@@ -151,6 +168,22 @@ export const ConfigGocardless = () => {
             />
       </FormControl>
 
+      <FormControl fullWidth sx={{mb: 2}}>
+        <TextField
+            label="Bank country"
+            value={get(formData, "bank_country", '') || ''}
+            type="text"
+            inputProps={{ maxLength: 2 }}
+            onChange={(event) => setFormData({
+              ...formData,
+              bank_country: (event.target.value || '').toUpperCase()
+            })}
+            error={has(errors, "bank_country")}
+            helperText={has(errors, "bank_country")
+              ? get(errors, 'bank_country', []).join(" ")
+              : "Two-letter country code (e.g. GB) for the bank list in the requisition flow"}
+            />
+      </FormControl>
       <FormControl fullWidth sx={{mb: 2}}>
         <Button
           to={'/config/gocardless'}

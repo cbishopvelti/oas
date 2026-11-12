@@ -16,6 +16,8 @@ defmodule OasWeb.Schema.SchemaGocardless do
   end
 
   object :gocardless_trans_status do
+    # When the next import runs, as an ISO 8601 UTC datetime. Show it in the
+    # society's time zone.
     field :next_run, :string
     field :success_on, :string
     field :failed_on, :string
@@ -47,11 +49,9 @@ defmodule OasWeb.Schema.SchemaGocardless do
     field :gocardless_trans_status, :gocardless_trans_status do
       resolve fn _, _, _ ->
         if (!is_nil(Process.whereis(Oas.Gocardless.TransServer)) && Process.whereis(Oas.Gocardless.TransServer) |> Process.alive?() ) do
-          status = Process.whereis(Oas.Gocardless.TransServer) |> GenServer.call(:status)
-          next_run = case status |> Map.get(:next_in) do
-            nil -> nil
-            ms_to_next_run -> Time.add(Time.utc_now(), ms_to_next_run, :millisecond)
-          end
+          # :status is nil until the first run has been scheduled.
+          status = (Process.whereis(Oas.Gocardless.TransServer) |> GenServer.call(:status)) || %{}
+          next_run = __MODULE__.next_run(status |> Map.get(:next_in))
 
           {:ok, %{
             next_run: next_run,
@@ -77,6 +77,21 @@ defmodule OasWeb.Schema.SchemaGocardless do
         end
       end
     end
+  end
+
+  @doc """
+  The instant the next import runs, `ms_to_next_run` milliseconds after `now`,
+  as an ISO 8601 UTC string. `nil` when no run is scheduled.
+  """
+  def next_run(ms_to_next_run, now \\ DateTime.utc_now())
+  def next_run(nil, _now), do: nil
+  def next_run(false, _now), do: nil
+
+  def next_run(ms_to_next_run, now) when is_integer(ms_to_next_run) do
+    now
+    |> DateTime.add(ms_to_next_run, :millisecond)
+    |> DateTime.truncate(:second)
+    |> DateTime.to_iso8601()
   end
 
   object :gocardless_mutations do

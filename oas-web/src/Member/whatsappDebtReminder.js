@@ -1,10 +1,12 @@
 // Builds a wa.me link with a pre-filled debt reminder for a member.
 // Nothing is sent automatically: the link opens WhatsApp and the admin presses send.
 
-// Numbers stored in national format (e.g. 07700 900123) are assumed to be UK.
-const DEFAULT_COUNTRY_CODE = '44';
+import { formatMoney } from '../utils/money';
 
-export const normalizePhoneForWhatsApp = (phone) => {
+// Numbers stored in national format (e.g. 07700 900123) get the society's
+// configured phone_country_code. Without one, a national number can't be
+// turned into a WhatsApp number, so no link is offered.
+export const normalizePhoneForWhatsApp = (phone, countryCode) => {
   if (!phone) {
     return null;
   }
@@ -18,7 +20,11 @@ export const normalizePhoneForWhatsApp = (phone) => {
   } else if (digits.startsWith('00')) {
     digits = digits.slice(2);
   } else if (digits.startsWith('0')) {
-    digits = DEFAULT_COUNTRY_CODE + digits.slice(1);
+    const code = `${countryCode || ''}`.replace(/\D/g, '');
+    if (!code) {
+      return null;
+    }
+    digits = code + digits.slice(1);
   }
   return digits.length >= 8 ? digits : null;
 };
@@ -43,7 +49,7 @@ export const buildDebtReminderMessage = (member, config = {}) => {
 
   const owed = [];
   if (credit > 0) {
-    owed.push(`£${credit.toFixed(2)} in credits`);
+    owed.push(`${formatMoney(credit, config?.currency)} in credits`);
   }
   if (tokens > 0) {
     owed.push(`${tokens} token${tokens === 1 ? '' : 's'}`);
@@ -62,7 +68,7 @@ export const buildDebtReminderMessage = (member, config = {}) => {
 };
 
 export const buildWhatsAppDebtLink = (member, config) => {
-  const phone = normalizePhoneForWhatsApp(member?.member_details?.phone);
+  const phone = normalizePhoneForWhatsApp(member?.member_details?.phone, config?.phone_country_code);
   if (!phone) {
     return null;
   }

@@ -23,6 +23,7 @@ import { MenuVenue } from './MenuVenue';
 import { MenuThing } from './MenuThing';
 import { MenuConfig } from './MenuConfig';
 import { MenuBundle } from './MenuBundle';
+import { publicUrl, serverUrl } from '../config';
 
 
 export const AppMenu = ({ setOpen }) => {
@@ -121,7 +122,7 @@ export const AppMenu = ({ setOpen }) => {
           width: '100%',
           padding: '6px 16px'
         }}
-        href={`${process.env.REACT_APP_PUBLIC_URL}`}
+        href={`${publicUrl}`}
         rel="nofollow"
       >Public Site</a>
     </MenuItem>
@@ -151,7 +152,7 @@ export const AppMenu = ({ setOpen }) => {
           width: '100%',
           padding: '6px 16px'
         }}
-        href={`${process.env.REACT_APP_SERVER_URL}${get(data, "user.logout_link")}`}
+        href={`${serverUrl}${get(data, "user.logout_link")}`}
         data-method="delete"
         rel="nofollow"
         >
@@ -176,7 +177,7 @@ export const AppMenu = ({ setOpen }) => {
           width: '100%',
           padding: '6px 16px'
         }}
-        href={`${process.env.REACT_APP_SERVER_URL}/members/log_in?callback_path=${encodeURIComponent("/")}&callback_domain=app_url`}>
+        href={`${serverUrl}/members/log_in?callback_path=${encodeURIComponent("/")}&callback_domain=app_url`}>
         Login
       </a>
     </MenuItem>}
