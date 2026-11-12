@@ -39,27 +39,38 @@ defmodule Oas.Attendance do
     ) |> Oas.Repo.all()
   end
 
+  # Returns :charged when a membership fee was deducted from the member's
+  # credit, :ok when nothing was charged, or {:error, _} when a membership
+  # couldn't be saved.
   defp add_attendance_membership(training, %{membership_periods: []} = member, %{now: now}) do
     case check_membership(member) do
       {_, membership} when membership == :x_member or membership == :not_member or membership == :honorary_member ->
         case get_membership_periods(training.when) do
-          nil -> nil # No membership period to add to
-          [] -> nil
+          nil -> :ok # No membership period to add to
+          [] -> :ok
           membership_periods ->
-            membership_periods |> Enum.map(fn membership_period ->
-              Oas.Members.Membership.add_membership(membership_period, member, %{now: now})
-            end)
-            nil
+            # Stops at the first membership that fails to save
+            with :ok <- Enum.reduce_while(membership_periods, :ok, fn membership_period, :ok ->
+              case Oas.Members.Membership.add_membership(membership_period, member, %{now: now, from_booking: true}) do
+                {:ok, _} -> {:cont, :ok}
+                {:error, _} = error -> {:halt, error}
+              end
+            end) do
+              # Honorary members are added without a fee
+              if member.honorary_member, do: :ok, else: :charged
+            end
         end
       _membership -> # Temporary_member
-        nil
+        :ok
     end
   end
   defp add_attendance_membership(_, _, _) do # already a member, do nothing
-    nil
+    :ok
   end
 
-  def add_attendance(%{member_id: member_id, training_id: training_id}, %{inserted_by_member_id: inserted_by_member_id}) do
+  # opts.skip_emails: true sends no warning emails for this booking (low
+  # credit, booked in by someone else). Used by Oas.Members.merge_members!.
+  def add_attendance(%{member_id: member_id, training_id: training_id}, %{inserted_by_member_id: inserted_by_member_id} = opts) do
     transaction_result = Oas.Repo.transact(fn ->
       training = from(tr in Oas.Trainings.Training,
         left_join: tw in assoc(tr, :training_where),
@@ -94,7 +105,6 @@ defmodule Oas.Attendance do
         }, [:member_id, :training_id, :inserted_by_member_id])
         |> Ecto.Changeset.unique_constraint([:training_id, :member_id, :dedub_training_member])
         |> Oas.Trainings.Attendance.validate_limit(training, inserted_by_member)
-        |> Oas.Trainings.Attendance.maybe_publish_full(training)
         |> Oas.Repo.insert()
       do
         {:ok, attendance} -> attendance
@@ -108,44 +118,56 @@ defmodule Oas.Attendance do
         limit: 1
       ) |> Oas.Repo.one!()
 
-      if config.credits and training.exempt_membership_count != true do # Membership
-        add_attendance_membership(
-          training,
-          member,
-          %{now: now}
-        )
+      membership_charged = if config.credits and training.exempt_membership_count != true do # Membership
+        # A failed membership must not leave the attendance in place
+        case add_attendance_membership(training, member, %{now: now}) do
+          :ok -> false
+          :charged -> true
+          {:error, errors} -> Oas.Repo.rollback(errors)
+        end
+      else
+        false
       end
 
-      case get_unsued_token_result do
+      # The ids of the member's other trainings whose credit was re-spread, or
+      # nil when no credit was deducted for this attendance.
+      respread_training_ids = case get_unsued_token_result do
         nil -> # User has no tokens, use credits instead
           if config.credits do
             # A failed credit write must not leave the attendance in place
             case Oas.Pricing.CalcAttendance.apply(training, attendance, member) do
-              {:ok, _} -> nil
+              {:ok, _, training_ids} -> training_ids
               {:error, errors} -> Oas.Repo.rollback(errors)
             end
           else
             nil
           end
-        token -> use_token(token, attendance.id, training.when)
+        token ->
+          use_token(token, attendance.id, training.when)
+          nil
       end
 
       # THE FIX: Wrap the return map in an :ok tuple so `transact` accepts it
-      {:ok, %{attendance: attendance, training: training, member: member}}
+      {:ok, %{
+        attendance: attendance,
+        training: training,
+        member: member,
+        membership_charged: membership_charged,
+        respread_training_ids: respread_training_ids
+      }}
     end)
 
     # Evaluate the transaction result
     case transaction_result do
       # Note: transact strips the outer ok tuple of the lambda and replaces it,
       # so transaction_result will still match exactly like this:
-      {:ok, %{attendance: attendance, training: training, member: member}} ->
-        if training.disable_warning_emails != true do
-          Task.Supervisor.start_child(
-            Oas.TaskSupervisor,
-            fn ->
-              Oas.TokenMailer.maybe_send_warnings_email(member)
-            end
-          )
+      {:ok, %{attendance: attendance} = written} ->
+        # Emails and live updates only go out once the booking is committed. If
+        # this ran inside an outer Oas.AfterCommit.transact, they wait for that.
+        # Run separately, so a failed publish can't stop the emails.
+        Oas.AfterCommit.run(fn -> publish_added_attendance(written) end)
+        if Map.get(opts, :skip_emails, false) != true do
+          Oas.AfterCommit.run(fn -> email_added_attendance(written) end)
         end
 
         {:ok, %{
@@ -157,6 +179,42 @@ defmodule Oas.Attendance do
 
       {:error, errors} ->
         throw OasWeb.Schema.SchemaUtils.handle_error({:error, errors})
+    end
+  end
+
+  # Side effects of a committed booking. Nothing in here may run for a booking
+  # that rolled back.
+  defp publish_added_attendance(%{training: training, member: member, respread_training_ids: respread_training_ids}) do
+    Oas.Trainings.Attendance.maybe_publish_full(training)
+    Oas.Pricing.CalcAttendance.publish_respread(member, respread_training_ids || [])
+  end
+
+  defp email_added_attendance(%{
+    attendance: attendance,
+    training: training,
+    member: member,
+    membership_charged: membership_charged,
+    respread_training_ids: respread_training_ids
+  }) do
+    if training.disable_warning_emails != true do
+      Oas.Mail.Background.run(
+        fn -> Oas.TokenMailer.maybe_send_warnings_email(member) end,
+        description: "Warning email to #{member.email}"
+      )
+    end
+
+    # One low-credit warning per booking, whether credit went on the training,
+    # a membership fee or both. Turning warning emails off on the training only
+    # covers the training's own charge, not a membership fee.
+    cond do
+      respread_training_ids != nil and training.disable_warning_emails != true ->
+        Oas.TokenMailer.queue_warning_email(member, attendance)
+
+      membership_charged ->
+        Oas.TokenMailer.queue_warning_email(member)
+
+      true ->
+        nil
     end
   end
 
@@ -204,17 +262,21 @@ defmodule Oas.Attendance do
       Oas.Repo.delete!(attendance)
 
       # Calculate the pricing spread, rolling back the delete if a credit write fails
-      with :ok <- Oas.Pricing.CalcAttendance.apply_delete(attendance.training, attendance, attendance.member) do
+      with {:ok, respread_training_ids} <- Oas.Pricing.CalcAttendance.apply_delete(attendance.training, attendance, attendance.member) do
         # Return an :ok tuple so `transact` knows to commit!
-        {:ok, attendance}
+        {:ok, {attendance, respread_training_ids}}
       end
     end)
 
     # Handle the result outside the transaction
     case result do
-      {:ok, attendance} ->
-        # The DB committed successfully! Now it is safe to publish the spaces.
-        Oas.Trainings.Attendance.maybe_publish_spaces(attendance.training)
+      {:ok, {attendance, respread_training_ids}} ->
+        # The DB committed successfully! Now it is safe to publish. If this ran
+        # inside an outer Oas.AfterCommit.transact, the publishes wait for that.
+        Oas.AfterCommit.run(fn ->
+          Oas.Trainings.Attendance.maybe_publish_spaces(attendance.training)
+          Oas.Pricing.CalcAttendance.publish_respread(attendance.member, respread_training_ids)
+        end)
 
         {:ok, %{
           success: true,

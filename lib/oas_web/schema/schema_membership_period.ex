@@ -115,12 +115,21 @@ defmodule OasWeb.Schema.SchemaMembershipPeriod do
       arg :membership_period_id, non_null(:integer)
       arg :member_id, non_null(:integer)
       resolve fn _, %{membership_period_id: membership_period_id, member_id: member_id}, _ ->
+        member = Oas.Repo.get!(Oas.Members.Member, member_id)
         Oas.Members.Membership.add_membership(
           Oas.Repo.get!(Oas.Members.MembershipPeriod, membership_period_id), # membership_period,
-          Oas.Repo.get!(Oas.Members.Member, member_id), # member,
+          member,
           %{now: Date.utc_today()}
         )
-        {:ok, %{success: true}}
+        |> case do
+          {:ok, _} ->
+            # The fee is saved by now, so the low-credit warning can be queued
+            if !member.honorary_member do
+              Oas.TokenMailer.queue_warning_email(member)
+            end
+            {:ok, %{success: true}}
+          error -> OasWeb.Schema.SchemaUtils.handle_error(error)
+        end
       end
     end
 
