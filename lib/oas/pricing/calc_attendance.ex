@@ -328,7 +328,16 @@ defmodule Oas.Pricing.CalcAttendance do
 
   defp calculate_without_pricing(training) do
     training_where = training |> Map.get(:training_where) || %{}
-    training_where_time = (training_where || %{}) |> Map.get(:training_where_time) |> List.first() || %{}
+    # Use the time for this training's day of week, as booking does
+    # (Oas.Attendance.add_attendance). The first time in the list can be for
+    # another day, so its amount override would be wrong.
+    training_where_time =
+      case training_where |> Map.get(:training_where_time) do
+        times when is_list(times) ->
+          day_of_week = Date.day_of_week(training.when)
+          Enum.find(times, %{}, fn time -> time.day_of_week == day_of_week end)
+        _ -> %{}
+      end
 
     (training  |> Map.get(:credit_amount)) ||
     (training_where_time |> Map.get(:credit_amount)) ||
