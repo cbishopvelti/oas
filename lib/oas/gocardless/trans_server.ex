@@ -13,6 +13,10 @@ defmodule Oas.Gocardless.TransServer do
   # 503 from GoCardless or a network error.
   def retry_ms, do: Application.get_env(:oas, :gocardless_retry_ms, 60 * 60 * 1000)
 
+  # After this many failed syncs in a row the server stops, and an admin has to
+  # press Restart import. With the default hourly retry that is about 6 hours.
+  def max_failures, do: Application.get_env(:oas, :gocardless_max_failures, 6)
+
   def alive? do
     pid = Process.whereis(__MODULE__)
     pid != nil && Process.alive?(pid)
@@ -108,6 +112,7 @@ defmodule Oas.Gocardless.TransServer do
           |> Map.put(:success_on, DateTime.now!("Europe/London"))
           |> Map.delete(:failed_on)
           |> Map.delete(:last_error)
+          |> Map.delete(:failures)
         }
       {:to_many_requests, headers} ->
         remaining = List.keyfind!(headers, "http_x_ratelimit_account_success_remaining", 0) |> elem(1) |> String.to_integer()
@@ -130,15 +135,18 @@ defmodule Oas.Gocardless.TransServer do
           |> Map.put(:failed_on, DateTime.now!("Europe/London"))
         }
       {:error, error} ->
-        Logger.error("Gocardless import failed, retrying in #{div(retry_ms(), 1000)}s: #{error}")
-        timer_ref = Process.send_after(self(), :init, retry_ms())
-        Absinthe.Subscription.publish(OasWeb.Endpoint, %{}, gocardless_trans_status: "*")
-        {:noreply,
-          state
-          |> Map.put(:timer_ref, timer_ref)
-          |> Map.put(:failed_on, DateTime.now!("Europe/London"))
-          |> Map.put(:last_error, error)
-        }
+        failures = Map.get(state, :failures, 0) + 1
+        if failures >= max_failures() do
+          stopped_on = DateTime.now!("Europe/London") |> Calendar.strftime("%Y-%m-%d %H:%M:%S")
+          message = "Gocardless #{inspect(__MODULE__)} stopped on #{stopped_on} after #{failures} failed imports in a row: #{error}"
+          Logger.error(message)
+          # :normal so the supervisor doesn't restart it straight away; the
+          # warning shows why it stopped, next to the Restart import button.
+          Oas.Gocardless.send_warning(:gocardless_stopped, message)
+          {:stop, :normal, state |> Map.put(:timer_ref, nil)}
+        else
+          retry_failed(state, error, failures)
+        end
       {:unauth_401, error} ->
         Logger.error("Gocardless unathenticated #{error}")
         Oas.Gocardless.send_warning(:gocardless_get_accounts, error)
@@ -168,6 +176,19 @@ defmodule Oas.Gocardless.TransServer do
         last_error: Map.get(state, :last_error)
       },
       state
+    }
+  end
+
+  defp retry_failed(state, error, failures) do
+    Logger.error("Gocardless import failed (#{failures}/#{max_failures()}), retrying in #{div(retry_ms(), 1000)}s: #{error}")
+    timer_ref = Process.send_after(self(), :init, retry_ms())
+    Absinthe.Subscription.publish(OasWeb.Endpoint, %{}, gocardless_trans_status: "*")
+    {:noreply,
+      state
+      |> Map.put(:timer_ref, timer_ref)
+      |> Map.put(:failed_on, DateTime.now!("Europe/London"))
+      |> Map.put(:last_error, error)
+      |> Map.put(:failures, failures)
     }
   end
 

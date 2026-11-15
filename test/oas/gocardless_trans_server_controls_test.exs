@@ -24,6 +24,7 @@ defmodule Oas.GocardlessTransServerControlsTest do
 
     on_exit(fn ->
       Application.delete_env(:oas, :gocardless_retry_ms)
+      Application.delete_env(:oas, :gocardless_max_failures)
       # Don't leave a server running that uses the mocks or the sandbox.
       Supervisor.terminate_child(Oas.Supervisor, Oas.Gocardless.Supervisor)
     end)
@@ -66,6 +67,29 @@ defmodule Oas.GocardlessTransServerControlsTest do
       :timer.sleep(400)
       assert TransServer.alive?()
       assert :meck.num_calls(:hackney, :request, :_) >= 2
+    end
+  end
+
+  test "stops after too many failures in a row, and says why" do
+    Application.put_env(:oas, :gocardless_max_failures, 2)
+
+    with_mocks([
+      gocardless_mock(),
+      {Oas.Gocardless.Transactions, [],
+       [process_transacitons: fn -> {:error, "HTTP 503: down"} end]}
+    ]) do
+      Oas.Gocardless.Supervisor.restart()
+      :timer.sleep(150)
+      assert TransServer.alive?()
+
+      # Second failure, after retry_ms, stops it
+      :timer.sleep(400)
+      refute TransServer.alive?()
+      assert_called_exactly(Oas.Gocardless.Transactions.process_transacitons(), 2)
+
+      assert {:ok, %{data: %{"gocardless_trans_status" => status}}} = run(@status_query)
+      assert status["stopped"] == true
+      assert status["stopped_reason"] =~ "after 2 failed imports in a row: HTTP 503: down"
     end
   end
 
