@@ -19,7 +19,10 @@ export const PendingTransactions = () => {
         next_run,
         success_on,
         failed_on,
-        stopped_reason
+        stopped_reason,
+        last_error,
+        running,
+        stopped
       }
     }
   `)
