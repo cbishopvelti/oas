@@ -20,6 +20,11 @@ defmodule OasWeb.Schema.SchemaGocardless do
     field :success_on, :string
     field :failed_on, :string
     field :stopped_reason, :string
+    field :last_error, :string
+    # true while a sync is in progress
+    field :running, :boolean
+    # true when the import server isn't running and needs a restart
+    field :stopped, :boolean
   end
 
   object :gocardless_queries do
@@ -46,40 +51,56 @@ defmodule OasWeb.Schema.SchemaGocardless do
     end
     field :gocardless_trans_status, :gocardless_trans_status do
       resolve fn _, _, _ ->
-        if (!is_nil(Process.whereis(Oas.Gocardless.TransServer)) && Process.whereis(Oas.Gocardless.TransServer) |> Process.alive?() ) do
-          status = Process.whereis(Oas.Gocardless.TransServer) |> GenServer.call(:status)
-          next_run = case status |> Map.get(:next_in) do
-            nil -> nil
-            ms_to_next_run -> Time.add(Time.utc_now(), ms_to_next_run, :millisecond)
-          end
+        format = fn
+          nil -> nil
+          x -> Calendar.strftime(x, "%Y-%m-%d %H:%M:%S")
+        end
 
-          {:ok, %{
-            next_run: next_run,
-            success_on: status |> Map.get(:success_on)
-              |> case do
+        case Oas.Gocardless.TransServer.status() do
+          nil ->
+            {:ok, %{
+              running: false,
+              stopped: true,
+              next_run: nil,
+              success_on: nil,
+              failed_on: "PERMANENT",
+              stopped_reason: Oas.Gocardless.stopped_reason()
+            }}
+          status ->
+            {:ok, %{
+              running: Map.get(status, :running, false),
+              stopped: false,
+              next_run: case Map.get(status, :next_in) do
                 nil -> nil
-                x -> Calendar.strftime(x, "%Y-%m-%d %H:%M:%S")
+                ms_to_next_run -> Time.add(Time.utc_now(), ms_to_next_run, :millisecond)
               end,
-            failed_on: status |> Map.get(:failed_on)
-              |> case do
-                nil -> nil
-                x -> Calendar.strftime(x, "%Y-%m-%d %H:%M:%S")
-              end,
-            stopped_reason: nil
-          }}
-        else
-          {:ok, %{
-            next_run: nil,
-            success_on: nil,
-            failed_on: "PERMANENT",
-            stopped_reason: Oas.Gocardless.stopped_reason()
-          }}
+              success_on: format.(Map.get(status, :success_on)),
+              failed_on: format.(Map.get(status, :failed_on)),
+              last_error: Map.get(status, :last_error),
+              stopped_reason: nil
+            }}
         end
       end
     end
   end
 
   object :gocardless_mutations do
+    field :gocardless_trans_restart, :success do
+      resolve fn _, _, _ ->
+        case Oas.Gocardless.TransServer.restart() do
+          :ok -> {:ok, %{success: true}}
+          {:error, message} -> {:error, message}
+        end
+      end
+    end
+    field :gocardless_trans_run_now, :success do
+      resolve fn _, _, _ ->
+        case Oas.Gocardless.TransServer.run_now() do
+          :ok -> {:ok, %{success: true}}
+          {:error, message} -> {:error, message}
+        end
+      end
+    end
     field :gocardless_requisitions, :gocardless_requisition do
       arg :institution_id, non_null(:string)
       resolve fn _, %{institution_id: institution_id}, _ ->

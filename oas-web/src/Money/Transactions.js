@@ -49,21 +49,51 @@ const rerun_time = (transactionData) => {
   return `, Next import run: ${moment(get(transactionData, "gocardless_trans_status.next_run"), "HH:mm:ss.SSSSSS").format("HHmm")}`
 }
 
+const GocardlessImportControls = ({ transactionData }) => {
+  const [error, setError] = useState(null)
+  const onError = (e) => setError(e.message)
+  const onCompleted = () => setError(null)
+  const [restart, { loading: restarting }] = useMutation(gql`
+    mutation { gocardless_trans_restart { success } }
+  `, { onError, onCompleted })
+  const [runNow, { loading: starting }] = useMutation(gql`
+    mutation { gocardless_trans_run_now { success } }
+  `, { onError, onCompleted })
+
+  const stopped = get(transactionData, "gocardless_trans_status.stopped")
+  const running = get(transactionData, "gocardless_trans_status.running")
+
+  return <>
+    {stopped
+      ? <Button size="small" variant="outlined" disabled={restarting}
+          onClick={() => restart()}>Restart import</Button>
+      : <Button size="small" variant="outlined" disabled={starting || running}
+          onClick={() => runNow()}>Run import now</Button>}
+    {error && <span style={{ color: "red" }}>&nbsp;{error}</span>}
+  </>
+}
+
 const GocardlessImportStopped = ({ transactionData }) => {
   return <div style={{ color: "red" }}>
     Gocardless import stopped
     {get(transactionData, "gocardless_trans_status.stopped_reason") &&
       <span>: {get(transactionData, "gocardless_trans_status.stopped_reason")}</span>}
+    &nbsp;<GocardlessImportControls transactionData={transactionData} />
   </div>
 }
 
 const GocardlessImportCountdownComponent = ({
   transactionData
 }) => {
+  if (get(transactionData, "gocardless_trans_status.running")) {
+    return <div>Gocardless import running...</div>
+  }
   if (!get(transactionData, "gocardless_trans_status.next_run")) {
     return <GocardlessImportStopped transactionData={transactionData} />
   }
-  return <GocardlessImportCountdownTimer transactionData={transactionData} />
+  return <GocardlessImportCountdownTimer
+    key={get(transactionData, "gocardless_trans_status.next_run")}
+    transactionData={transactionData} />
 }
 
 const GocardlessImportCountdownTimer = ({
@@ -107,7 +137,10 @@ const GocardlessImportCountdownTimer = ({
       <span>,&nbsp;Successfully imported on: {get(transactionData, "gocardless_trans_status.success_on")}</span>}
     {get(transactionData, "gocardless_trans_status.failed_on") &&
       <><span>,</span><span style={{ color: "red" }}>&nbsp;Failed import on: {get(transactionData, "gocardless_trans_status.failed_on")}
+      {get(transactionData, "gocardless_trans_status.last_error") &&
+        <>: {get(transactionData, "gocardless_trans_status.last_error")}</>}
     </span></>}
+    &nbsp;<GocardlessImportControls transactionData={transactionData} />
   </div>
 }
 export const GocardlessImportCountdown = (transactionData) => {
@@ -164,7 +197,10 @@ export const Transactions = () => {
       next_run,
       success_on,
       failed_on,
-      stopped_reason
+      stopped_reason,
+      last_error,
+      running,
+      stopped
     }
   }`, {
     variables: {
