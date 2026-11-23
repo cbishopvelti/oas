@@ -160,6 +160,25 @@ defmodule Oas.GocardlessTransServerControlsTest do
     end
   end
 
+  test "a sync still runs when the UI can't be notified, e.g. while the app is starting" do
+    with_mocks([
+      gocardless_mock(),
+      {Oas.Gocardless.Transactions, [],
+       [process_transacitons: fn -> {:ok, []} end]},
+      {Absinthe.Subscription, [:passthrough],
+       [publish: fn _, _, _ ->
+          raise ArgumentError, "unknown registry: OasWeb.Endpoint.Registry"
+        end]}
+    ]) do
+      Oas.Gocardless.Supervisor.restart()
+      :timer.sleep(150)
+
+      assert TransServer.alive?()
+      assert_called_exactly(Oas.Gocardless.Transactions.process_transacitons(), 1)
+      assert TransServer.status().success_on != nil
+    end
+  end
+
   test "only admins can restart or run now" do
     for mutation <- ["gocardless_trans_restart", "gocardless_trans_run_now"] do
       assert {:ok, %{errors: [%{message: message}]}} =

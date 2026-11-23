@@ -40,7 +40,7 @@ defmodule Oas.Gocardless.TransServer do
     else
       Oas.Gocardless.delete_warning(:gocardless_stopped)
       Oas.Gocardless.Supervisor.restart()
-      Absinthe.Subscription.publish(OasWeb.Endpoint, %{}, gocardless_trans_status: "*")
+      Oas.Gocardless.publish_trans_status()
 
       if alive?() do
         :ok
@@ -93,7 +93,7 @@ defmodule Oas.Gocardless.TransServer do
     # Process.sleep(12_000)
 
     # Lets the admin UI show that a sync is in progress.
-    Absinthe.Subscription.publish(OasWeb.Endpoint, %{}, gocardless_trans_status: "*")
+    Oas.Gocardless.publish_trans_status()
 
     case safe_process_transactions() do
       {:ok, _headers} ->
@@ -104,7 +104,7 @@ defmodule Oas.Gocardless.TransServer do
            86_400_000
         )
 
-        Absinthe.Subscription.publish(OasWeb.Endpoint, %{}, gocardless_trans_status: "*")
+        Oas.Gocardless.publish_trans_status()
         timer_ref = Process.send_after(self(), :init, rerun_in_ms_9)
         {:noreply,
           state
@@ -126,7 +126,7 @@ defmodule Oas.Gocardless.TransServer do
 
         rerun_in_ms_reset = reset_seconds * 1000
 
-        Absinthe.Subscription.publish(OasWeb.Endpoint, %{}, gocardless_trans_status: "*")
+        Oas.Gocardless.publish_trans_status()
 
         timer_ref = Process.send_after(self(), :init, rerun_in_ms_reset)
         {:noreply,
@@ -182,7 +182,7 @@ defmodule Oas.Gocardless.TransServer do
   defp retry_failed(state, error, failures) do
     Logger.error("Gocardless import failed (#{failures}/#{max_failures()}), retrying in #{div(retry_ms(), 1000)}s: #{error}")
     timer_ref = Process.send_after(self(), :init, retry_ms())
-    Absinthe.Subscription.publish(OasWeb.Endpoint, %{}, gocardless_trans_status: "*")
+    Oas.Gocardless.publish_trans_status()
     {:noreply,
       state
       |> Map.put(:timer_ref, timer_ref)
