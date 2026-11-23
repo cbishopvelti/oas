@@ -243,6 +243,8 @@ defmodule Oas.Gocardless.Transactions do
         {:to_many_requests, headers}
       {:unauth_401, _, error} ->
         {:unauth_401, error}
+      {:error, _, error} ->
+        {:error, error}
     end
   end
 
@@ -300,6 +302,18 @@ defmodule Oas.Gocardless.Transactions do
           other -> inspect(other)
         end
         {:unauth_401, nil, error}
+      # Any other status (e.g. a 503 from GoCardless or Cloudflare) is treated
+      # as temporary: TransServer logs it and tries again later.
+      {:ok, status, _headers, client} ->
+        body = case :hackney.body(client) do
+          {:ok, body} -> body
+          other -> inspect(other)
+        end
+        Logger.warning("Gocardless.Transactions.get_transactions_real(#{from}) failed with HTTP #{status}: #{body}")
+        {:error, nil, "HTTP #{status}: #{String.slice(body, 0, 500)}"}
+      {:error, reason} ->
+        Logger.warning("Gocardless.Transactions.get_transactions_real(#{from}) request failed: #{inspect(reason)}")
+        {:error, nil, "Request failed: #{inspect(reason)}"}
     end
   end
 
