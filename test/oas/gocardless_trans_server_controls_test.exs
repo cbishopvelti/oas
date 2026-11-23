@@ -70,6 +70,24 @@ defmodule Oas.GocardlessTransServerControlsTest do
     end
   end
 
+  test "a request timeout is logged and retried instead of stopping the server" do
+    with_mocks([
+      gocardless_mock(),
+      {:hackney, [:passthrough],
+       [request: fn _method, _url, _headers -> {:error, :timeout} end]}
+    ]) do
+      Oas.Gocardless.Supervisor.restart()
+      :timer.sleep(150)
+
+      assert TransServer.alive?()
+      assert TransServer.status().last_error =~ "Request failed: :timeout"
+
+      :timer.sleep(400)
+      assert TransServer.alive?()
+      assert :meck.num_calls(:hackney, :request, :_) >= 2
+    end
+  end
+
   test "stops after too many failures in a row, and says why" do
     Application.put_env(:oas, :gocardless_max_failures, 2)
 
