@@ -23,8 +23,9 @@ defmodule Oas.Application do
       {Task.Supervisor, name: Oas.TaskSupervisor},
       # Start the Endpoint (http/https)
       OasWeb.Endpoint,
-      Oas.Gocardless.Supervisor,
-      {Absinthe.Subscription, OasWeb.Endpoint}
+      {Absinthe.Subscription, OasWeb.Endpoint},
+      # After the endpoint and subscriptions, which it publishes to.
+      Oas.Gocardless.Supervisor
     ]
 
     :ets.new(:user_table, [:named_table, :public, :set, read_concurrency: true])

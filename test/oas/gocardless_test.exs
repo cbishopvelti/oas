@@ -19,7 +19,7 @@ defmodule Oas.GocardlessTest do
               ]}
            end
          ]},
-        {Oas.Gocardless, [],
+        {Oas.Gocardless, [:passthrough],
          [
            get_access_token: fn -> {:ok, %{access_token: "mock_token", access_expires: 86400}} end,
            refresh_access_token: fn _ -> %{access_token: "mock_token", access_expires: 86400} end

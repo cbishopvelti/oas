@@ -144,10 +144,27 @@ defmodule Oas.Gocardless do
     end)
   end
 
+  # Tells subscribed admin pages to refresh. Never raises: while the app is
+  # still starting, OasWeb.Endpoint and Absinthe.Subscription may not be
+  # running yet, and a failed UI notification must not stop the import.
+  def publish(data, topics) do
+    try do
+      Absinthe.Subscription.publish(OasWeb.Endpoint, data, topics)
+    rescue
+      e ->
+        Logger.debug("Gocardless publish skipped: #{Exception.message(e)}")
+        :ok
+    catch
+      :exit, _ -> :ok
+    end
+  end
+
+  def publish_trans_status, do: publish(%{}, gocardless_trans_status: "*")
+
   def send_warning(key, warning) do
     :ets.insert(:global_warnings, {key, warning})
 
-    Absinthe.Subscription.publish(OasWeb.Endpoint, list_warnings(), [global_warnings: "*"])
+    publish(list_warnings(), [global_warnings: "*"])
   end
 
   # Called from the GenServers' terminate/2 so that every crash, not just the
@@ -159,7 +176,7 @@ defmodule Oas.Gocardless do
     Logger.error("Gocardless #{inspect(server)} stopped: #{format_exit_reason(reason)}")
 
     send_warning(:gocardless_stopped, "Gocardless #{inspect(server)} stopped on #{stopped_on}: #{format_exit_reason(reason)}")
-    Absinthe.Subscription.publish(OasWeb.Endpoint, %{}, gocardless_trans_status: "*")
+    publish_trans_status()
   end
 
   def stopped_reason() do
@@ -188,7 +205,7 @@ defmodule Oas.Gocardless do
       }
     end)
 
-    Absinthe.Subscription.publish(OasWeb.Endpoint, items, [global_warnings: "*"])
+    publish(items, [global_warnings: "*"])
   end
 
   # Oas.Gocardless.delete_requisitions()
